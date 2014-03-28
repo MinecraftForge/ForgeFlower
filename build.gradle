@@ -1,0 +1,88 @@
+plugins {
+    id 'application'
+    id 'jvm-test-suite'
+    id 'maven-publish'
+    id 'eclipse'
+    alias libs.plugins.gradleutils
+    alias libs.plugins.gitversion
+    alias libs.plugins.changelog
+    alias libs.plugins.licenser
+    alias libs.plugins.renamer
+}
+
+gradleutils.displayName = 'ForgeFlower'
+description = 'A Modified version of the Fernflower decompiler to fix issues related to Minecraft decompilation'
+group = 'net.minecraftforge'
+version = gitversion.tagOffset
+println "Version: $version"
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+repositories {
+    mavenCentral()
+    maven gradleutils.forgeMaven
+}
+
+dependencies {
+    implementation renamer.dependency(libs.fernflower.get().toString()){
+        map = files('fernflower.tsrg')
+    }
+
+    implementation libs.jopt
+    implementation libs.bundles.asm
+
+    implementation(project('fernflower-fixer-inject')) {
+        transitive = false
+    }
+}
+
+license {
+    header = rootProject.file('LICENSE-header.txt')
+    newLine false
+}
+
+application {
+    mainClass = 'net.minecraftforge.fffixer.Main'
+}
+
+tasks.named('jar', Jar) {
+    manifest {
+        attributes([
+            'Main-Class'           : 'net.minecraftforge.fffixer.Main',
+            'Automatic-Module-Name': 'net.minecraftforge.fffixer'
+        ])
+        gradleutils.manifestDefaults(it, 'net/minecraftforge/fffixer/')
+    }
+}
+
+final patched = layout.buildDirectory.file('fernflower-patched.jar').get().asFile
+final run = tasks.named('run', JavaExec) {
+    args '--out', patched.absolutePath
+}
+
+changelog {
+    fromBase()
+}
+
+publishing {
+    repositories {
+        maven gradleutils.publishingForgeMaven
+    }
+
+    publications.register('mavenJava', MavenPublication) {
+        // Only publish the patched Fernflower
+        artifact(patched) {
+            builtBy run
+        }
+
+        changelog.publish(it)
+        gradleutils.promote(it)
+
+        pom { pom ->
+            name = gradleutils.displayName
+            description = project.description
+            artifactId = 'forgeflower'  // Publish as ForgeFlower
+
+            gradleutils.pom.addRemoteDetails(pom)
+        }
+    }
+}

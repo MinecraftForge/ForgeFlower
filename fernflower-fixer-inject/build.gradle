@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+    alias libs.plugins.gradleutils
+    alias libs.plugins.gitversion
+    alias libs.plugins.licenser
+    alias libs.plugins.renamer
+}
+
+gradleutils.displayName = 'FernFlower Fixes'
+description = 'A collection of fixes for the closed source version of Fernflower, used for legacy Minecraft mod development'
+group = 'net.minecraftforge'
+version = gitversion.tagOffset
+println "Version: $version"
+java.toolchain.languageVersion = JavaLanguageVersion.of(7)
+
+repositories {
+    mavenCentral()
+    maven gradleutils.forgeMaven
+}
+
+dependencies {
+    implementation renamer.dependency(libs.fernflower.get().toString()) {
+        map = rootProject.files('fernflower.tsrg')
+    }
+}
+
+license {
+    header = rootProject.file('LICENSE-header.txt')
+    newLine false
+}

@@ -1,0 +1,20 @@
+#eclipse
+**/bin
+**/.settings
+**/.classpath
+**/.project
+
+#idea
+**/.idea
+**/*.iml
+
+#gradle
+**/build
+**/.gradle
+
+#occupational hazards
+**/eclipse/
+/repo/
+/fernflower-fixer-inject/.factorypath
+/test.bat
+/test/
