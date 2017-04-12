@@ -33,7 +33,10 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class InitializerProcessor {
   public static void extractInitializers(ClassWrapper wrapper) {
@@ -156,14 +159,15 @@ public class InitializerProcessor {
   private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
     RootStatement root = method.root;
     StructClass cl = wrapper.getClassStruct();
+    Set<String> whitelist = new HashSet<String>();
+    
     Statement firstData = Statements.findFirstData(root);
     if (firstData != null) {
       boolean inlineInitializers = cl.hasModifier(CodeConstants.ACC_INTERFACE) || cl.hasModifier(CodeConstants.ACC_ENUM);
 
-      while (!firstData.getExprents().isEmpty()) {
-        Exprent exprent = firstData.getExprents().get(0);
-
-        boolean found = false;
+      Iterator<Exprent> itr = firstData.getExprents().iterator();
+      while (itr.hasNext()) {
+        Exprent exprent = itr.next();
 
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
           AssignmentExprent assignExpr = (AssignmentExprent)exprent;
@@ -173,20 +177,16 @@ public class InitializerProcessor {
                 cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
 
               // interfaces fields should always be initialized inline
-              if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method)) {
-                String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
+              String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
+              if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method, cl, whitelist, cl.getFields().getIndexByKey(keyField))) {
                 if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
                   wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
-                  firstData.getExprents().remove(0);
-                  found = true;
+                  whitelist.add(keyField);
+                  itr.remove();
                 }
               }
             }
           }
-        }
-
-        if (!found) {
-          break;
         }
       }
     }
@@ -222,7 +222,9 @@ public class InitializerProcessor {
     if (lstFirst.isEmpty()) {
       return;
     }
-
+    
+    Set<String> whitelist = new HashSet<String>();
+    
     while (true) {
       String fieldWithDescr = null;
       Exprent value = null;
@@ -245,8 +247,8 @@ public class InitializerProcessor {
             if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
                 cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
 
-              if (isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i))) {
-                String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
+              String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
+              if (isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i), cl, whitelist, cl.getFields().getIndexByKey(fieldKey))) {
                 if (fieldWithDescr == null) {
                   fieldWithDescr = fieldKey;
                   value = assignExpr.getRight();
@@ -281,7 +283,7 @@ public class InitializerProcessor {
     }
   }
 
-  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper method) {
+  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper method, StructClass cl, Set<String> whitelist, int fidx) {
     List<Exprent> lst = exprent.getAllExprents(true);
     lst.add(exprent);
 
@@ -297,7 +299,18 @@ public class InitializerProcessor {
           }
           break;
         case Exprent.EXPRENT_FIELD:
-          return false;
+          FieldExprent fexpr = (FieldExprent)expr;
+          if (cl.qualifiedName.equals(fexpr.getClassname())) {
+            String key = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+            if (!whitelist.contains(key)) {
+              return false;
+            } else if (cl.getFields().getIndexByKey(key) > fidx) {
+                return false;
+            }
+          }
+          else if (!fexpr.isStatic()) {
+            return false;
+          }
       }
     }
 
