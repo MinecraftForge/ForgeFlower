@@ -9,18 +9,6 @@ public class TestInnerSignature<A, B, C> {
       this.c = var3;// 25
    }// 26
 
-   public static class InnerStatic<A, B, C> {
-      A a;
-      B b;
-      C c;
-
-      public InnerStatic(A var1, B var2, C var3) {
-         this.a = var1;// 46
-         this.b = var2;// 47
-         this.c = var3;// 48
-      }// 49
-   }
-
    public class Inner {
       A a;
       B b;
@@ -31,6 +19,18 @@ public class TestInnerSignature<A, B, C> {
          this.b = var3;// 35
          this.c = var4;// 36
       }// 37
+   }
+
+   public static class InnerStatic<A, B, C> {
+      A a;
+      B b;
+      C c;
+
+      public InnerStatic(A var1, B var2, C var3) {
+         this.a = var1;// 46
+         this.b = var2;// 47
+         this.c = var3;// 48
+      }// 49
    }
 }
 
@@ -43,21 +43,21 @@ class 'TestInnerSignature' {
    }
 }
 
-class 'TestInnerSignature$InnerStatic' {
-   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      6      17
-      b      18
-      10      19
-      13      20
+class 'TestInnerSignature$Inner' {
+   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      b      17
+      10      18
+      16      19
+      19      20
    }
 }
 
-class 'TestInnerSignature$Inner' {
-   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
-      b      29
-      10      30
-      16      31
-      19      32
+class 'TestInnerSignature$InnerStatic' {
+   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+      6      29
+      b      30
+      10      31
+      13      32
    }
 }
 
@@ -66,14 +66,14 @@ Lines mapping:
 24 <-> 8
 25 <-> 9
 26 <-> 10
-34 <-> 30
-35 <-> 31
-36 <-> 32
-37 <-> 33
-46 <-> 18
-47 <-> 19
-48 <-> 20
-49 <-> 21
+34 <-> 18
+35 <-> 19
+36 <-> 20
+37 <-> 21
+46 <-> 30
+47 <-> 31
+48 <-> 32
+49 <-> 33
 Not mapped:
 22
 33

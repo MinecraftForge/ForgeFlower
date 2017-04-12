@@ -237,7 +237,15 @@ public class VarVersionsProcessor {
     Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
 
     // map var-version pairs on new var indexes
-    for (VarVersionPair pair : new ArrayList<>(mapExprentMinTypes.keySet())) {
+    List<VarVersionPair> lst = new ArrayList<>(mapExprentMinTypes.keySet());
+    Collections.sort(lst, new Comparator<VarVersionPair>() {
+      public int compare(VarVersionPair o1, VarVersionPair o2) {
+        if (o1.var != o2.var) return o1.var - o2.var;
+        return o1.version - o2.version;
+      }
+    });
+
+    for (VarVersionPair pair : lst) {
 
       if (pair.version >= 0) {
         int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);

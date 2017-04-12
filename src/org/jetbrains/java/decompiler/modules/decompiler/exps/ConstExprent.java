@@ -190,15 +190,15 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Float.isNaN(floatVal)) {
-          return new TextBuffer("0.0F / 0.0");
+          return new TextBuffer("0.0F / 0.0F");
         }
         else if (floatVal == Float.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0F / 0.0");
+          return new TextBuffer("1.0F / 0.0F");
         }
         else if (floatVal == Float.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0F / 0.0");
+          return new TextBuffer("-1.0F / 0.0F");
         }
-        return new TextBuffer(value.toString()).append('F');
+        return new TextBuffer(trimZeros(value.toString())).append('F');
 
       case CodeConstants.TYPE_DOUBLE:
         double doubleVal = ((Double)value).doubleValue();
@@ -220,15 +220,15 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Double.isNaN(doubleVal)) {
-          return new TextBuffer("0.0D / 0.0");
+          return new TextBuffer("0.0D / 0.0D");
         }
         else if (doubleVal == Double.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0D / 0.0");
+          return new TextBuffer("1.0D / 0.0D");
         }
         else if (doubleVal == Double.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0D / 0.0");
+          return new TextBuffer("-1.0D / 0.0D");
         }
-        return new TextBuffer(value.toString()).append('D');
+        return new TextBuffer(trimZeros(value.toString())).append('D');
 
       case CodeConstants.TYPE_NULL:
         return new TextBuffer("null");
@@ -245,6 +245,18 @@ public class ConstExprent extends Exprent {
     }
 
     throw new RuntimeException("invalid constant type: " + constType);
+  }
+  
+  // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
+  // This trims them all down to only the necessary amount.
+  private static String trimZeros(String value) {
+      int i = value.length() - 1;
+      while (i >= 0 && value.charAt(i) == '0') {
+          i--;
+      }
+      if (value.charAt(i) == '.')
+        i++;
+      return value.substring(0, i + 1);
   }
 
   private static String convertStringToJava(String value, boolean ascii) {

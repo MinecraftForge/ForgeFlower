@@ -27,10 +27,10 @@ public class DominatorTreeExceptionFilter {
   private final Statement statement;
 
   // idom, nodes
-  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<>();
+  private final Map<Integer, Set<Integer>> mapTreeBranches = new LinkedHashMap<>();
 
   // handler, range nodes
-  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<>();
+  private final Map<Integer, Set<Integer>> mapExceptionRanges = new LinkedHashMap<>();
 
   // handler, head dom
   private Map<Integer, Integer> mapExceptionDoms = new HashMap<>();
@@ -86,7 +86,7 @@ public class DominatorTreeExceptionFilter {
 
       Set<Integer> set = mapTreeBranches.get(idom);
       if (set == null) {
-        mapTreeBranches.put(idom, set = new HashSet<>());
+        mapTreeBranches.put(idom, set = new LinkedHashSet<>());
       }
       set.add(key);
     }
@@ -101,7 +101,7 @@ public class DominatorTreeExceptionFilter {
       List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
       if (!lstPreds.isEmpty()) {
 
-        Set<Integer> set = new HashSet<>();
+        Set<Integer> set = new LinkedHashSet<>();
 
         for (Statement st : lstPreds) {
           set.add(st.id);
@@ -164,7 +164,7 @@ public class DominatorTreeExceptionFilter {
             }
             else {
               // exit = map.containsKey(handler)?-1:mapChild.get(handler); FIXME: Eclipse bug?
-              exit = map.containsKey(handler) ? -1 : mapChild.get(handler);
+              exit = map.containsKey(handler) ? Integer.valueOf(-1) : mapChild.get(handler);
             }
 
             if (exit != null) {

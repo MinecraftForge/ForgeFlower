@@ -30,6 +30,14 @@ public class TestInnerLocalPkg {
       new TestInnerLocalPkg.Inner1Static.Inner2Static("test");// 42
    }// 43
 
+   class Inner1 {
+      final String x;
+
+      public Inner1(String var2) {
+         this.x = var2;// 48
+      }// 49
+   }
+
    static class Inner1Static {
       final String x;
 
@@ -44,14 +52,6 @@ public class TestInnerLocalPkg {
             this.x = var1;// 61
          }// 62
       }
-   }
-
-   class Inner1 {
-      final String x;
-
-      public Inner1(String var2) {
-         this.x = var2;// 48
-      }// 49
    }
 }
 
@@ -86,24 +86,24 @@ class 'pkg/TestInnerLocalPkg$2Inner' {
    }
 }
 
+class 'pkg/TestInnerLocalPkg$Inner1' {
+   method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
+      b      36
+      e      37
+   }
+}
+
 class 'pkg/TestInnerLocalPkg$Inner1Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      36
-      9      37
+      6      44
+      9      45
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      43
-      9      44
-   }
-}
-
-class 'pkg/TestInnerLocalPkg$Inner1' {
-   method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
-      b      52
-      e      53
+      6      51
+      9      52
    }
 }
 
@@ -121,12 +121,12 @@ Lines mapping:
 41 <-> 29
 42 <-> 30
 43 <-> 31
-48 <-> 53
-49 <-> 54
-55 <-> 37
-56 <-> 38
-61 <-> 44
-62 <-> 45
+48 <-> 37
+49 <-> 38
+55 <-> 45
+56 <-> 46
+61 <-> 52
+62 <-> 53
 Not mapped:
 23
 35

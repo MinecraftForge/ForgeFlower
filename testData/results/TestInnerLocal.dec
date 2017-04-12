@@ -28,6 +28,14 @@ public class TestInnerLocal {
       new TestInnerLocal.Inner1Static.Inner2Static("test");// 40
    }// 41
 
+   class Inner1 {
+      final String x;
+
+      public Inner1(String var2) {
+         this.x = var2;// 46
+      }// 47
+   }
+
    static class Inner1Static {
       final String x;
 
@@ -42,14 +50,6 @@ public class TestInnerLocal {
             this.x = var1;// 59
          }// 60
       }
-   }
-
-   class Inner1 {
-      final String x;
-
-      public Inner1(String var2) {
-         this.x = var2;// 46
-      }// 47
    }
 }
 
@@ -84,24 +84,24 @@ class 'TestInnerLocal$2Inner' {
    }
 }
 
+class 'TestInnerLocal$Inner1' {
+   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
+      b      34
+      e      35
+   }
+}
+
 class 'TestInnerLocal$Inner1Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      34
-      9      35
+      6      42
+      9      43
    }
 }
 
 class 'TestInnerLocal$Inner1Static$Inner2Static' {
    method '<init> (Ljava/lang/String;)V' {
-      6      41
-      9      42
-   }
-}
-
-class 'TestInnerLocal$Inner1' {
-   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
-      b      50
-      e      51
+      6      49
+      9      50
    }
 }
 
@@ -119,12 +119,12 @@ Lines mapping:
 39 <-> 27
 40 <-> 28
 41 <-> 29
-46 <-> 51
-47 <-> 52
-53 <-> 35
-54 <-> 36
-59 <-> 42
-60 <-> 43
+46 <-> 35
+47 <-> 36
+53 <-> 43
+54 <-> 44
+59 <-> 50
+60 <-> 51
 Not mapped:
 21
 33
