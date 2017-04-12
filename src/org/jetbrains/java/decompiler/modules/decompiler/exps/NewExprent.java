@@ -331,7 +331,7 @@ public class NewExprent extends Exprent {
 
               if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
                 ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
-                if (node != null && node.namelessConstructorStub) {
+                if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
                   break;  // skip last parameter of synthetic constructor call
                 }
               }

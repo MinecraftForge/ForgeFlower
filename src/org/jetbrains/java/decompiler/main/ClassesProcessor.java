@@ -31,6 +31,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -90,6 +91,31 @@ public class ClassesProcessor {
               rec.simpleName = simpleName;
               rec.type = entry.outerNameIdx != 0 ? ClassNode.CLASS_MEMBER : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
               rec.accessFlags = entry.accessFlags;
+
+              // nested class type
+              if (entry.innerName != null) {
+                if (entry.simpleName == null) {
+                  rec.type = ClassNode.CLASS_ANONYMOUS;
+                }
+                else {
+                  StructClass in = context.getClass(entry.innerName);
+                  if (in == null) { // A referenced library that was not added to the context, make assumptions
+                      rec.type = ClassNode.CLASS_MEMBER;
+                  }
+                  else {
+                    StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttribute("EnclosingMethod");
+                    if (attr != null && attr.getMethodName() != null) {
+                      rec.type = ClassNode.CLASS_LOCAL;
+                    }
+                    else {
+                      rec.type = ClassNode.CLASS_MEMBER;
+                    }
+                  }
+                }
+              }
+              else { // This should never happen as inner_class and outer_class are NOT optional, make assumptions
+                rec.type = ClassNode.CLASS_MEMBER;
+              }
 
               // enclosing class
               String enclClassName;
