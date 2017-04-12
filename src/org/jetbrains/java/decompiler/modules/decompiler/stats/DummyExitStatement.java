@@ -15,28 +15,24 @@
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.BitSet;
 
 /**
  * @author egor
  */
 public class DummyExitStatement extends Statement {
-  public Set<Integer> bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
+  public BitSet bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
 
   public DummyExitStatement() {
     type = Statement.TYPE_DUMMYEXIT;
   }
 
-  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
+  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
     if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
       if (bytecode == null) {
-        bytecode = new HashSet<>(bytecodeOffsets);
+        bytecode = new BitSet();
       }
-      else {
-        bytecode.addAll(bytecodeOffsets);
-      }
+      bytecode.or(bytecodeOffsets);
     }
   }
 }

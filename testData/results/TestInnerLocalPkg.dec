@@ -57,7 +57,11 @@ public class TestInnerLocalPkg {
 
 class 'pkg/TestInnerLocalPkg$1Inner' {
    method '<init> (Ljava/lang/String;)V' {
+      4      8
+      5      8
       6      8
+      7      8
+      8      8
       9      9
    }
 }
@@ -65,44 +69,67 @@ class 'pkg/TestInnerLocalPkg$1Inner' {
 class 'pkg/TestInnerLocalPkg' {
    method 'testStaticMethod ()V' {
       4      12
+      5      12
       e      13
+      f      13
       18      14
+      19      14
       1e      15
    }
 
    method 'testMethod ()V' {
       5      26
+      6      26
       f      27
+      10      27
       1a      28
+      1b      28
       24      29
+      25      29
       2a      30
    }
 }
 
 class 'pkg/TestInnerLocalPkg$2Inner' {
    method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
+      9      22
+      a      22
       b      22
+      c      22
+      d      22
       e      23
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1' {
    method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
+      9      36
+      a      36
       b      36
+      c      36
+      d      36
       e      37
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1Static' {
    method '<init> (Ljava/lang/String;)V' {
+      4      44
+      5      44
       6      44
+      7      44
+      8      44
       9      45
    }
 }
 
 class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
    method '<init> (Ljava/lang/String;)V' {
+      4      51
+      5      51
       6      51
+      7      51
+      8      51
       9      52
    }
 }

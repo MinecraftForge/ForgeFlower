@@ -34,9 +34,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class NewExprent extends Exprent {
   private InvocationExprent constructor;
@@ -49,11 +49,11 @@ public class NewExprent extends Exprent {
   private boolean lambda;
   private boolean enumConst;
 
-  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
+  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
   }
 
-  public NewExprent(VarType newType, List<Exprent> lstDims, Set<Integer> bytecodeOffsets) {
+  public NewExprent(VarType newType, List<Exprent> lstDims, BitSet bytecodeOffsets) {
     super(EXPRENT_NEW);
     this.newType = newType;
     this.lstDims = lstDims;
@@ -473,6 +473,14 @@ public class NewExprent extends Exprent {
            InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
            directArrayInit == ne.directArrayInit &&
            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, lstArrayElements);
+    measureBytecode(values, lstDims);
+    measureBytecode(values, constructor);
+    measureBytecode(values);
   }
 
   public InvocationExprent getConstructor() {

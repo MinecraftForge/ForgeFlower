@@ -50,15 +50,15 @@ public class ConstExprent extends Exprent {
   private final Object value;
   private final boolean boolPermitted;
 
-  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
+  public ConstExprent(int val, boolean boolPermitted, BitSet bytecodeOffsets) {
     this(guessType(val, boolPermitted), Integer.valueOf(val), boolPermitted, bytecodeOffsets);
   }
 
-  public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
+  public ConstExprent(VarType constType, Object value, BitSet bytecodeOffsets) {
     this(constType, value, false, bytecodeOffsets);
   }
 
-  private ConstExprent(VarType constType, Object value, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
+  private ConstExprent(VarType constType, Object value, boolean boolPermitted, BitSet bytecodeOffsets) {
     super(EXPRENT_CONST);
     this.constType = constType;
     this.value = value;
@@ -410,6 +410,11 @@ public class ConstExprent extends Exprent {
 
   public boolean isBoolPermitted() {
     return boolPermitted;
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values);
   }
   
   // *****************************************************************************

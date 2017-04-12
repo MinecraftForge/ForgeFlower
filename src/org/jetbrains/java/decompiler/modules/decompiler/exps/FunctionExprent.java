@@ -198,7 +198,7 @@ public class FunctionExprent extends Exprent {
   private VarType implicitType;
   private final List<Exprent> lstOperands;
 
-  public FunctionExprent(int funcType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
+  public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
     this(funcType, new ArrayList<>(), bytecodeOffsets);
 
     if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
@@ -214,7 +214,7 @@ public class FunctionExprent extends Exprent {
     }
   }
 
-  public FunctionExprent(int funcType, List<Exprent> operands, Set<Integer> bytecodeOffsets) {
+  public FunctionExprent(int funcType, List<Exprent> operands, BitSet bytecodeOffsets) {
     super(EXPRENT_FUNCTION);
     this.funcType = funcType;
     this.lstOperands = operands;
@@ -222,7 +222,7 @@ public class FunctionExprent extends Exprent {
     addBytecodeOffsets(bytecodeOffsets);
   }
 
-  public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
+  public FunctionExprent(int funcType, Exprent operand, BitSet bytecodeOffsets) {
     this(funcType, new ArrayList<>(1), bytecodeOffsets);
     lstOperands.add(operand);
   }
@@ -618,6 +618,12 @@ public class FunctionExprent extends Exprent {
 
   public void setImplicitType(VarType implicitType) {
     this.implicitType = implicitType;
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, lstOperands);
+    measureBytecode(values);
   }
   
   // *****************************************************************************

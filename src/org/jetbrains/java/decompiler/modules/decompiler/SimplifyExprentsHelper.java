@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -777,7 +778,7 @@ public class SimplifyExprentsHelper {
       IfStatement stif = (IfStatement)stat;
 
       Exprent ifheadexpr = stif.getHeadexprent();
-      Set<Integer> ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
+      BitSet ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
 
       if (stif.iftype == IfStatement.IFTYPE_IFELSE) {
         Statement ifstat = stif.getIfstat();

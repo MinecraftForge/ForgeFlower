@@ -38,7 +38,10 @@ class 'pkg/TestLocalClass' {
       0      4
       1      4
       a      12
+      b      13
       c      13
+      d      13
+      e      13
       f      14
    }
 

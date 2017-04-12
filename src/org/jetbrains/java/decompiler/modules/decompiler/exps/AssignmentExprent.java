@@ -27,8 +27,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
-import java.util.Set;
 
 public class AssignmentExprent extends Exprent {
 
@@ -52,7 +52,7 @@ public class AssignmentExprent extends Exprent {
   private Exprent right;
   private int condType = CONDITION_NONE;
 
-  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecodeOffsets) {
+  public AssignmentExprent(Exprent left, Exprent right, BitSet bytecodeOffsets) {
     super(EXPRENT_ASSIGNMENT);
     this.left = left;
     this.right = right;
@@ -180,6 +180,13 @@ public class AssignmentExprent extends Exprent {
     return InterpreterUtil.equalObjects(left, as.getLeft()) &&
            InterpreterUtil.equalObjects(right, as.getRight()) &&
            condType == as.getCondType();
+  }
+
+  @Override
+  public void getBytecodeRange(BitSet values) {
+    measureBytecode(values, left);
+    measureBytecode(values, right);
+    measureBytecode(values);
   }
 
   // *****************************************************************************

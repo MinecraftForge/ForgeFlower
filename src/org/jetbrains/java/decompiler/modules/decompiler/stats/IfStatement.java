@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
 import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
@@ -424,7 +425,14 @@ public class IfStatement extends Statement {
   public StatEdge getElseEdge() {
     return elseedge;
   }
-  
+
+  @Override
+  public StartEndPair getStartEndRange() {
+    return StartEndPair.join(super.getStartEndRange(), 
+      ifstat != null ? ifstat.getStartEndRange() : null, 
+      elsestat != null ? elsestat.getStartEndRange(): null);
+  }
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
