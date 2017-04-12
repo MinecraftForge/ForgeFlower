@@ -29,6 +29,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
     };
   }
 
+  @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }

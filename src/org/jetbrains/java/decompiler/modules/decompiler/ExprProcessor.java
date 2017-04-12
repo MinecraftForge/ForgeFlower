@@ -349,7 +349,9 @@ public class ExprProcessor implements CodeConstants {
         case opc_fload:
         case opc_dload:
         case opc_aload:
-          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offsets));
+          VarExprent varExprent = new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offsets);
+          varProcessor.findLVT(varExprent, bytecode_offset + instr.length());
+          pushEx(stack, exprlist, varExprent);
           break;
         case opc_iaload:
         case opc_laload:
@@ -382,8 +384,9 @@ public class ExprProcessor implements CodeConstants {
           if (bytecode_offsets != null) { //TODO: Figure out why this nulls in some cases
             bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length()); 
           }
-          AssignmentExprent assign = new AssignmentExprent(
-            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets), top, bytecode_offsets);
+          varExprent = new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets);
+          varProcessor.findLVT(varExprent, bytecode_offset + instr.length());
+          AssignmentExprent assign = new AssignmentExprent(varExprent, top, bytecode_offsets);
           exprlist.add(assign);
           break;
         case opc_iastore:
@@ -446,6 +449,7 @@ public class ExprProcessor implements CodeConstants {
           break;
         case opc_iinc:
           VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor, bytecode_offsets);
+          varProcessor.findLVT(vevar, bytecode_offset + instr.length());
           exprlist.add(new AssignmentExprent(vevar, new FunctionExprent(
             instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
             .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),

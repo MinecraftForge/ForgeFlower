@@ -31,6 +31,7 @@ public class DoStatement extends Statement {
   public static final int LOOP_DOWHILE = 1;
   public static final int LOOP_WHILE = 2;
   public static final int LOOP_FOR = 3;
+  public static final int LOOP_FOREACH = 4;
 
   private int looptype;
 
@@ -135,6 +136,13 @@ public class DoStatement extends Statement {
         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
         buf.appendIndent(indent).append("}").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
+        break;
+      case LOOP_FOREACH:
+        buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
+        buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+        buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
+        buf.appendIndent(indent).append("}").appendLineSeparator();
     }
 
     return buf;
@@ -151,6 +159,10 @@ public class DoStatement extends Statement {
         }
       case LOOP_WHILE:
         lst.add(getConditionExprent());
+        break;
+      case LOOP_FOREACH:
+        lst.add(getInitExprent());
+        lst.add(getIncExprent());
     }
 
     lst.add(first);

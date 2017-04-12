@@ -132,7 +132,10 @@ public class InlineSingleBlockHelper {
       StatEdge edge = lst.get(0);
 
       if (sameCatchRanges(edge)) {
-        if (edge.explicit) {
+        if (!edge.canInline) {
+          return false; //Dirty hack, but lets do it!
+        }
+        else if (edge.explicit) {
           return true;
         }
         else {

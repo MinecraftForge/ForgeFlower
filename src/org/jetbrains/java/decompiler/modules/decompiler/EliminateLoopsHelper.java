@@ -17,32 +17,34 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.struct.StructClass;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 
 public class EliminateLoopsHelper {
 
 
-  //	public static boolean eliminateLoops(Statement root) {
-  //
-  //		boolean ret = eliminateLoopsRec(root);
-  //
-  //		if(ret) {
-  //			SequenceHelper.condenseSequences(root);
-  //
-  //			HashSet<Integer> setReorderedIfs = new HashSet<Integer>();
-  //
-  //			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(false);
-  //			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, null)) {
-  //				SequenceHelper.condenseSequences(root);
-  //			}
-  //		}
-  //
-  //		return ret;
-  //	}
+	public static boolean eliminateLoops(Statement root, StructClass cl) {
+
+		boolean ret = eliminateLoopsRec(root);
+
+		if(ret) {
+			SequenceHelper.condenseSequences(root);
+
+			HashSet<Integer> setReorderedIfs = new HashSet<>();
+
+			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(false);
+			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, null, cl)) {
+				SequenceHelper.condenseSequences(root);
+			}
+		}
+
+		return ret;
+	}
 
   private static boolean eliminateLoopsRec(Statement stat) {
 

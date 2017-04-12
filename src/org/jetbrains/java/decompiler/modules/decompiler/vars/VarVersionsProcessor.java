@@ -36,7 +36,7 @@ import java.util.Map.Entry;
 
 public class VarVersionsProcessor {
   private final StructMethod method;
-  private Map<Integer, Integer> mapOriginalVarIndices = Collections.emptyMap();
+  private Map<Integer, VarVersionPair> mapOriginalVarIndices = Collections.emptyMap();
   private VarTypeProcessor typeProcessor;
 
   public VarVersionsProcessor(StructMethod mt, MethodDescriptor md) {
@@ -57,7 +57,7 @@ public class VarVersionsProcessor {
 
     typeProcessor.calculateVarTypes(root, graph);
 
-    simpleMerge(typeProcessor, graph, method);
+    //simpleMerge(typeProcessor, graph, method);
 
     // FIXME: advanced merging
 
@@ -237,7 +237,8 @@ public class VarVersionsProcessor {
     CounterContainer counters = DecompilerContext.getCounterContainer();
 
     final Map<VarVersionPair, Integer> mapVarPaar = new HashMap<>();
-    Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
+    Map<Integer, VarVersionPair> mapOriginalVarIndices = new HashMap<>();
+    mapOriginalVarIndices.putAll(this.mapOriginalVarIndices);
 
     // map var-version pairs on new var indexes
     List<VarVersionPair> lst = new ArrayList<>(mapExprentMinTypes.keySet());
@@ -263,7 +264,7 @@ public class VarVersionsProcessor {
         }
 
         mapVarPaar.put(pair, newIndex);
-        mapOriginalVarIndices.put(newIndex, pair.var);
+        mapOriginalVarIndices.put(newIndex, pair);
       }
     }
 
@@ -296,11 +297,11 @@ public class VarVersionsProcessor {
     });
 
     if (previousVersionsProcessor != null) {
-      Map<Integer, Integer> oldIndices = previousVersionsProcessor.getMapOriginalVarIndices();
+      Map<Integer, VarVersionPair> oldIndices = previousVersionsProcessor.getMapOriginalVarIndices();
       this.mapOriginalVarIndices = new HashMap<>(mapOriginalVarIndices.size());
-      for (Entry<Integer, Integer> entry : mapOriginalVarIndices.entrySet()) {
-        Integer value = entry.getValue();
-        Integer oldValue = oldIndices.get(value);
+      for (Entry<Integer, VarVersionPair> entry : mapOriginalVarIndices.entrySet()) {
+        VarVersionPair value = entry.getValue();
+        VarVersionPair oldValue = oldIndices.get(value.var);
         value = oldValue != null ? oldValue : value;
         this.mapOriginalVarIndices.put(entry.getKey(), value);
       }
@@ -332,7 +333,11 @@ public class VarVersionsProcessor {
     typeProcessor.getMapFinalVars().put(pair, finalType);
   }
 
-  public Map<Integer, Integer> getMapOriginalVarIndices() {
+  public Map<Integer, VarVersionPair> getMapOriginalVarIndices() {
     return mapOriginalVarIndices;
+  }
+
+  public VarTypeProcessor getTypeProcessor() {
+    return typeProcessor;
   }
 }

@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.*;
+
 public class StructMember {
 
   protected int accessFlags;
@@ -63,12 +65,12 @@ public class StructMember {
       StructGeneralAttribute attribute = readAttribute(in, pool, name);
 
       if (attribute != null) {
-        if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
+        if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
           StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.get(name);
           table.add((StructLocalVariableTableAttribute)attribute);
         }
-        else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
+        else if (ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
           // merge all variable tables
           StructLocalVariableTypeTableAttribute table = (StructLocalVariableTypeTableAttribute)attributes.get(name);
           table.add((StructLocalVariableTypeTableAttribute)attribute);
@@ -79,6 +81,8 @@ public class StructMember {
       }
     }
 
+    if (attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE) && attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE))
+      ((StructLocalVariableTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TABLE)).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE));
     return attributes;
   }
 

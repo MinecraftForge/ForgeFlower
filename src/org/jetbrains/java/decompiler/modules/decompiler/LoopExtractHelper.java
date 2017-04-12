@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 
@@ -79,21 +80,33 @@ public class LoopExtractHelper {
       return false;
     }
 
+    List<Statement> stats = new ArrayList<>();
     for (StatEdge edge : stat.getLabelEdges()) {
       if (edge.getType() != StatEdge.TYPE_CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
+        if (edge.getType() == StatEdge.TYPE_BREAK && isExternStatement(stat, edge.getSource(), edge.getSource())) {
+          stats.add(edge.getSource());
+        }
+        else {
+          return false;
+        }
+      }
+    }
+
+    if (stats.size() > 0) { // In this case prioritize first to help the Loop enhancer
+      if (stat.getParent().getStats().getLast() != stat) {
         return false;
       }
     }
 
-    if (!extractLastIf(stat)) {
-      return extractFirstIf(stat);
+    if (!extractFirstIf(stat, stats)) {
+      return extractLastIf(stat, stats);
     }
     else {
       return true;
     }
   }
 
-  private static boolean extractLastIf(DoStatement stat) {
+  private static boolean extractLastIf(DoStatement stat, List<Statement> stats) {
 
     // search for an if condition at the end of the loop
     Statement last = stat.getFirst();
@@ -114,6 +127,11 @@ public class LoopExtractHelper {
 
           if (set.isEmpty()) { // no direct continues in a do{}while loop
             if (isExternStatement(stat, ifstat, ifstat)) {
+              for (Statement s : stats) {
+                if (!ifstat.containsStatement(s)) {
+                  return false;
+                }
+              }
               extractIfBlock(stat, lastif);
               return true;
             }
@@ -124,7 +142,7 @@ public class LoopExtractHelper {
     return false;
   }
 
-  private static boolean extractFirstIf(DoStatement stat) {
+  private static boolean extractFirstIf(DoStatement stat, List<Statement> stats) {
 
     // search for an if condition at the entrance of the loop
     Statement first = stat.getFirst();
@@ -142,6 +160,11 @@ public class LoopExtractHelper {
           Statement ifstat = firstif.getIfstat();
 
           if (isExternStatement(stat, ifstat, ifstat)) {
+            for (Statement s : stats) {
+              if (!ifstat.containsStatement(s)) {
+                return false;
+              }
+            }
             extractIfBlock(stat, firstif);
             return true;
           }
@@ -201,6 +224,11 @@ public class LoopExtractHelper {
         edge.getSource().changeEdgeNode(Statement.DIRECTION_FORWARD, edge, loop);
         loop.addPredecessor(edge);
       }
+    }
+
+    List<StatEdge> link = target.getPredecessorEdges(StatEdge.TYPE_BREAK);
+    if (link.size() == 1) {
+      link.get(0).canInline = false;
     }
   }
 }

@@ -25,7 +25,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.*;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -119,11 +125,11 @@ public class MethodProcessorRunnable implements Runnable {
       DecompilerContext.getLogger().writeMessage("Heavily obfuscated exception ranges found!", IFernflowerLogger.Severity.WARN);
     }
 
-    RootStatement root = DomHelper.parseGraph(graph);
+    RootStatement root = DomHelper.parseGraph(graph, mt);
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(mt, root, graph)) {
-      root = DomHelper.parseGraph(graph);
+      root = DomHelper.parseGraph(graph, mt);
     }
 
     // remove synchronized exception handler
@@ -147,7 +153,7 @@ public class MethodProcessorRunnable implements Runnable {
 
       varProc.setVarVersions(root);
 
-      if (!new PPandMMHelper().findPPandMM(root)) {
+      if (!new PPandMMHelper(varProc).findPPandMM(root)) {
         break;
       }
     }
@@ -156,11 +162,15 @@ public class MethodProcessorRunnable implements Runnable {
       LabelHelper.cleanUpEdges(root);
 
       while (true) {
-        MergeHelper.enhanceLoops(root);
+        if (EliminateLoopsHelper.eliminateLoops(root, cl)) {
+          continue;
+        }
 
         if (LoopExtractHelper.extractLoops(root)) {
           continue;
         }
+
+        MergeHelper.enhanceLoops(root);
 
         if (!IfHelper.mergeAllIfs(root)) {
           break;
@@ -199,6 +209,8 @@ public class MethodProcessorRunnable implements Runnable {
 
     SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
 
+    cleanSynchronizedVar(root);
+
     varProc.setVarDefinitions(root);
 
     // must be the last invocation, because it makes the statement structure inconsistent
@@ -218,5 +230,31 @@ public class MethodProcessorRunnable implements Runnable {
 
   public boolean isFinished() {
     return finished;
+  }
+
+
+  public static void cleanSynchronizedVar(Statement stat) {
+    for (Statement st : stat.getStats()) {
+      cleanSynchronizedVar(st);
+    }
+
+    if (stat.type == Statement.TYPE_SYNCRONIZED) {
+      SynchronizedStatement sync = (SynchronizedStatement)stat;
+      if (sync.getHeadexprent().type == Exprent.EXPRENT_MONITOR) {
+        MonitorExprent mon = (MonitorExprent)sync.getHeadexprent();
+        for (Exprent e : sync.getFirst().getExprents()) {
+          if (e.type == Exprent.EXPRENT_ASSIGNMENT) {
+            AssignmentExprent ass = (AssignmentExprent)e;
+            if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
+              VarExprent var = (VarExprent)ass.getLeft();
+              if (ass.getRight().equals(mon.getValue()) && !var.isVarReferenced(stat.getParent())) {
+                sync.getFirst().getExprents().remove(e);
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
