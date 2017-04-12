@@ -1,0 +1,19 @@
+plugins {
+    id 'net.minecrell.gitpatcher' version '0.9.0'
+}
+
+patches {
+    submodule = 'FernFlower'
+    target = file('ForgeFlower')
+    patches = file('FernFlower-Patches')
+}
+applyPatches.dependsOn.remove('updateSubmodules') // We don't want to update the submodule without asking. 
+
+project(':ForgeFlower') {
+    apply from: rootProject.file('fernflower.gradle')
+    compileJava.dependsOn rootProject.tasks.applyPatches
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14.1'
+}
