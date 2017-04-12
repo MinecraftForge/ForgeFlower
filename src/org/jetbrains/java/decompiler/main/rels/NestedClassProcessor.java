@@ -238,9 +238,9 @@ public class NestedClassProcessor {
     final MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambdaInformation.content_method_descriptor);
 
     final int vars_count = md_content.params.length - md_lambda.params.length;
-    //		if(vars_count < 0) { // should not happen, but just in case...
-    //			vars_count = 0;
-    //		}
+    //        if(vars_count < 0) { // should not happen, but just in case...
+    //            vars_count = 0;
+    //        }
 
     final boolean is_static_lambda_content = child.lambdaInformation.is_content_method_static;
 
@@ -558,6 +558,10 @@ public class NestedClassProcessor {
         Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
         Map<VarVersionPair, LocalVariable> mapNewLVTs = new HashMap<>(); // local var table entries
 
+        if (enclosingMethod != null) {
+          method.methodStruct.getVariableNamer().addParentContext(enclosingMethod.methodStruct.getVariableNamer());
+        }
+
         final Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
         if (method.signatureFields != null) {
           int index = 0, varIndex = 1;
@@ -721,7 +725,7 @@ public class NestedClassProcessor {
               String key = InterpreterUtil.makeUniqueKey(fExpr.getClassname(), fExpr.getName(), fExpr.getDescriptor().descriptorString);
               if (mapFieldsToNewVars.containsKey(key)) {
                 //if(fExpr.getClassname().equals(child.classStruct.qualifiedName) &&
-                //		mapFieldsToNewVars.containsKey(key)) {
+                //        mapFieldsToNewVars.containsKey(key)) {
                 VarVersionPair newVar = mapFieldsToNewVars.get(key);
                 method.varproc.getExternalVars().add(newVar);
                 VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);

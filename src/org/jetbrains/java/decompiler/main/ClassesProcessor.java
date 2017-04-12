@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
 import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
@@ -349,6 +350,7 @@ public class ClassesProcessor {
   private static void destroyWrappers(ClassNode node) {
     node.wrapper = null;
     node.classStruct.releaseResources();
+    node.classStruct.getMethods().forEach(m -> m.clearVariableNamer());
 
     for (ClassNode nd : node.nested) {
       destroyWrappers(nd);
