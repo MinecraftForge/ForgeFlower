@@ -1,0 +1,237 @@
+From a002854125af7d998f431bc70a5bd3b2452857cf Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Tue, 11 Apr 2017 23:18:58 -0700
+Subject: [PATCH] Test Framework upgrades
+
+
+diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
+index df27781..86a0315 100644
+--- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
++++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
+@@ -33,6 +33,7 @@ public class DecompilerTestFixture {
+   private File tempDir;
+   private File targetDir;
+   private ConsoleDecompiler decompiler;
++  private boolean cleanup = true;
+ 
+   public void setUp(String... optionPairs) throws IOException {
+     assertThat(optionPairs.length % 2).isEqualTo(0);
+@@ -66,7 +67,7 @@ public class DecompilerTestFixture {
+   }
+ 
+   public void tearDown() {
+-    if (tempDir != null) {
++    if (tempDir != null && cleanup) {
+       delete(tempDir);
+     }
+   }
+@@ -86,6 +87,14 @@ public class DecompilerTestFixture {
+   public ConsoleDecompiler getDecompiler() {
+     return decompiler;
+   }
++  
++  public void setCleanup(boolean value) {
++    this.cleanup = value;
++  }
++  
++  public boolean getCleanup() {
++    return cleanup;
++  }
+ 
+   private static boolean isTestDataDir(File dir) {
+     return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+index 1c2779c..4ba4deb 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+@@ -15,35 +15,18 @@
+  */
+ package org.jetbrains.java.decompiler;
+ 
+-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+-import org.junit.After;
+-import org.junit.Before;
+ import org.junit.Test;
+ 
+-import java.io.File;
+-import java.io.IOException;
+-import java.util.ArrayList;
+-import java.util.Collections;
+-import java.util.List;
+-
+-import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
+-import static org.junit.Assert.assertTrue;
+-
+-public class SingleClassesTest {
+-  private DecompilerTestFixture fixture;
+-
+-  @Before
+-  public void setUp() throws IOException {
+-    fixture = new DecompilerTestFixture();
+-    fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+-                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+-  }
+-
+-  @After
+-  public void tearDown() {
+-    fixture.tearDown();
+-    fixture = null;
++public class SingleClassesTest extends SingleClassesTestBase {
++  protected DecompilerTestFixture fixture;
++  
++  @Override
++  protected String[] getDecompilerOptions() {
++    return new String[] {
++      IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
++      IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1"
++    };
+   }
+ 
+   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+@@ -101,45 +84,4 @@ public class SingleClassesTest {
+   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
+   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
+   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+-
+-  private void doTest(String testFile, String... companionFiles) {
+-    ConsoleDecompiler decompiler = fixture.getDecompiler();
+-
+-    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
+-    assertTrue(classFile.isFile());
+-    for (File file : collectClasses(classFile)) {
+-      decompiler.addSpace(file, true);
+-    }
+-
+-    for (String companionFile : companionFiles) {
+-      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
+-      assertTrue(companionClassFile.isFile());
+-      for (File file : collectClasses(companionClassFile)) {
+-        decompiler.addSpace(file, true);
+-      }
+-    }
+-
+-    decompiler.decompileContext();
+-
+-    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
+-    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
+-    assertTrue(decompiledFile.isFile());
+-    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
+-    assertTrue(referenceFile.isFile());
+-    assertFilesEqual(referenceFile, decompiledFile);
+-  }
+-
+-  private static List<File> collectClasses(File classFile) {
+-    List<File> files = new ArrayList<>();
+-    files.add(classFile);
+-
+-    File parent = classFile.getParentFile();
+-    if (parent != null) {
+-      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
+-      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
+-      if (inner != null) Collections.addAll(files, inner);
+-    }
+-
+-    return files;
+-  }
+ }
+\ No newline at end of file
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
+new file mode 100644
+index 0000000..eadf5e8
+--- /dev/null
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
+@@ -0,0 +1,89 @@
++/*
++ * Copyright 2000-2017 JetBrains s.r.o.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.jetbrains.java.decompiler;
++
++import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
++import org.junit.After;
++import org.junit.Before;
++import java.io.File;
++import java.io.IOException;
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
++import static org.junit.Assert.assertTrue;
++
++public class SingleClassesTestBase {
++  protected DecompilerTestFixture fixture;
++  
++  protected String[] getDecompilerOptions() {
++    return new String[] {};
++  }
++
++  @Before
++  public void setUp() throws IOException {
++    fixture = new DecompilerTestFixture();
++    fixture.setUp(getDecompilerOptions());
++  }
++
++  @After
++  public void tearDown() {
++    fixture.tearDown();
++    fixture = null;
++  }
++
++  protected void doTest(String testFile, String... companionFiles) {
++    ConsoleDecompiler decompiler = fixture.getDecompiler();
++
++    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
++    assertTrue(classFile.isFile());
++    for (File file : collectClasses(classFile)) {
++      decompiler.addSpace(file, true);
++    }
++
++    for (String companionFile : companionFiles) {
++      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
++      assertTrue(companionClassFile.isFile());
++      for (File file : collectClasses(companionClassFile)) {
++        decompiler.addSpace(file, true);
++      }
++    }
++
++    decompiler.decompileContext();
++
++    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
++    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
++    assertTrue(decompiledFile.isFile());
++    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
++    assertTrue(referenceFile.isFile());
++    assertFilesEqual(referenceFile, decompiledFile);
++  }
++
++  protected static List<File> collectClasses(File classFile) {
++    List<File> files = new ArrayList<>();
++    files.add(classFile);
++
++    File parent = classFile.getParentFile();
++    if (parent != null) {
++      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
++      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
++      if (inner != null) Collections.addAll(files, inner);
++    }
++
++    return files;
++  }
++}
+\ No newline at end of file
+-- 
+2.10.0.windows.1
+

@@ -1,0 +1,971 @@
+From 3f868d2f2973d1043cbbf647fb1c0ea056154a68 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Wed, 12 Apr 2017 10:08:10 -0700
+Subject: [PATCH] Fix output discrepancies based on running JVM
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index 227c987..0c11cb4 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -248,6 +248,7 @@ public class ClassesProcessor {
+                 stack.add(nestedClass);
+               }
+             }
++            Collections.sort(superNode.nested);
+           }
+         }
+       }
+@@ -359,7 +360,7 @@ public class ClassesProcessor {
+   }
+ 
+ 
+-  public static class ClassNode {
++  public static class ClassNode implements Comparable<ClassNode> {
+     public static final int CLASS_ROOT = 0;
+     public static final int CLASS_MEMBER = 1;
+     public static final int CLASS_ANONYMOUS = 2;
+@@ -443,6 +444,12 @@ public class ClassesProcessor {
+       return node.wrapper;
+     }
+ 
++    @Override
++    public int compareTo(ClassNode o) {
++      //TODO: Take line numbers into account?
++      return this.classStruct.qualifiedName.compareTo(o.classStruct.qualifiedName);
++    }
++
+     public static class LambdaInformation {
+       public String class_name;
+       public String method_name;
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
+index 0063a15..69002c9 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
+@@ -126,6 +126,8 @@ public class LambdaProcessor {
+       mt.releaseResources();
+     }
+ 
++    Collections.sort(node.nested);
++
+     // build class hierarchy on lambda
+     for (ClassNode nd : node.nested) {
+       if (nd.type == ClassNode.CLASS_LAMBDA) {
+@@ -135,6 +137,7 @@ public class LambdaProcessor {
+ 
+           parent_class.nested.add(nd);
+           nd.parent = parent_class;
++          Collections.sort(parent_class.nested);
+         }
+       }
+     }
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 897b394..1ac9669 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -234,6 +234,7 @@ public class NestedClassProcessor {
+       if (setEnclosing.contains(node.classStruct.qualifiedName)) {
+         node.nested.add(child);
+         child.parent = node;
++        Collections.sort(node.nested);
+ 
+         return true;
+       }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index cffc5ac..61edb37 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -812,6 +812,7 @@ public class ExprProcessor implements CodeConstants {
+     }
+ 
+     TextBuffer buf = new TextBuffer();
++    lst = Exprent.sortIndexed(lst);
+ 
+     for (Exprent expr : lst) {
+       TextBuffer content = expr.toJava(indent, tracer);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index 962bb77..59d00bc 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -198,7 +198,7 @@ public class ConstExprent extends Exprent {
+         else if (floatVal == Float.NEGATIVE_INFINITY) {
+           return new TextBuffer("-1.0F / 0.0");
+         }
+-        return new TextBuffer(value.toString()).append('F');
++        return new TextBuffer(trimZeros(value.toString())).append('F');
+ 
+       case CodeConstants.TYPE_DOUBLE:
+         double doubleVal = ((Double)value).doubleValue();
+@@ -228,7 +228,7 @@ public class ConstExprent extends Exprent {
+         else if (doubleVal == Double.NEGATIVE_INFINITY) {
+           return new TextBuffer("-1.0D / 0.0");
+         }
+-        return new TextBuffer(value.toString()).append('D');
++        return new TextBuffer(trimZeros(value.toString())).append('D');
+ 
+       case CodeConstants.TYPE_NULL:
+         return new TextBuffer("null");
+@@ -246,6 +246,18 @@ public class ConstExprent extends Exprent {
+ 
+     throw new RuntimeException("invalid constant type: " + constType);
+   }
++  
++  // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
++  // This trims them all down to only the necessary amount.
++  private static String trimZeros(String value) {
++      int i = value.length() - 1;
++      while (i >= 0 && value.charAt(i) == '0') {
++          i--;
++      }
++      if (value.charAt(i) == '.')
++        i++;
++      return value.substring(0, i + 1);
++  }
+ 
+   private static String convertStringToJava(String value, boolean ascii) {
+     char[] arr = value.toCharArray();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index a530915..21b4317 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -135,6 +135,38 @@ public class Exprent implements IMatchable {
+       }
+     }
+   }
++
++  public static List<Exprent> sortIndexed(List<Exprent> lst) {
++      List<Exprent> ret = new ArrayList<Exprent>();
++      List<VarExprent> defs = new ArrayList<VarExprent>();
++
++      Comparator<VarExprent> comp = new Comparator<VarExprent>() {
++        public int compare(VarExprent o1, VarExprent o2) {
++          return o1.getIndex() - o2.getIndex();
++        }
++      };
++
++      for (Exprent exp : lst) {
++        boolean isDef = exp instanceof VarExprent && ((VarExprent)exp).isDefinition();
++        if (!isDef) {
++          if (defs.size() > 0) {
++            Collections.sort(defs, comp);
++            ret.addAll(defs);
++            defs.clear();
++          }
++          ret.add(exp);
++        }
++        else {
++          defs.add((VarExprent)exp);
++        }
++      }
++
++      if (defs.size() > 0) {
++        Collections.sort(defs, comp);
++        ret.addAll(defs);
++      }
++      return ret;
++    }
+   
+   // *****************************************************************************
+   // IMatchable implementation
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+index 7aff2d2..ea9dd6b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+@@ -73,7 +73,7 @@ public class SSAConstructorSparseEx {
+     // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
+     // } catch(Exception ex) {ex.printStackTrace();}
+ 
+-    HashSet<Integer> setInit = new HashSet<>();
++    List<Integer> setInit = new ArrayList<>();
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+index 5beb232..452c7a3 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+@@ -88,7 +88,7 @@ public class SSAUConstructorSparseEx {
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+ 
+-    HashSet<Integer> setInit = new HashSet<>();
++    List<Integer> setInit = new ArrayList<>();
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+index 4544004..fa95f4b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+@@ -238,8 +238,15 @@ public class VarVersionsProcessor {
+     Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
+ 
+     // map var-version pairs on new var indexes
+-    Set<VarVersionPair> set = new HashSet<>(mapExprentMinTypes.keySet());
+-    for (VarVersionPair pair : set) {
++    List<VarVersionPair> lst = new ArrayList<VarVersionPair>(mapExprentMinTypes.keySet());
++    Collections.sort(lst, new Comparator<VarVersionPair>() {
++      public int compare(VarVersionPair o1, VarVersionPair o2) {
++        if (o1.var != o2.var) return o1.var - o2.var;
++        return o1.version - o2.version;
++      }
++    });
++
++    for (VarVersionPair pair : lst) {
+ 
+       if (pair.version >= 0) {
+         int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
+diff --git a/testData/results/MoreAnnotations.dec b/testData/results/MoreAnnotations.dec
+index 37302cc..c7419ad 100644
+--- a/testData/results/MoreAnnotations.dec
++++ b/testData/results/MoreAnnotations.dec
+@@ -95,13 +95,13 @@ public @interface MoreAnnotations {
+ 
+    Class<? extends CharSequence>[] classArray() default {CharSequence.class, String.class, StringBuilder.class};
+ 
++   public @interface NestedAnnotation {
++      String value() default "MyString";
++   }
++
+    public static enum TestEnum {
+       FirstValue,
+       SecondValue;
+    }
+-
+-   public @interface NestedAnnotation {
+-      String value() default "MyString";
+-   }
+ }
+ 
+diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
+index 924b764..14c92f9 100644
+--- a/testData/results/TestAnonymousClass.dec
++++ b/testData/results/TestAnonymousClass.dec
+@@ -67,15 +67,8 @@ public abstract class TestAnonymousClass {
+       boolean var1 = true;// 39
+    }// 40
+ 
+-   static class InnerRecursive {
+-      TestAnonymousClass.InnerRecursive r;
+-
+-      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
+-         this.r = var1;// 105
+-      }// 106
+-
+-      void foo() {
+-      }// 110
++   interface I {
++      void foo() throws Exception;
+    }
+ 
+    private static class Inner {
+@@ -87,8 +80,15 @@ public abstract class TestAnonymousClass {
+       };
+    }
+ 
+-   interface I {
+-      void foo() throws Exception;
++   static class InnerRecursive {
++      TestAnonymousClass.InnerRecursive r;
++
++      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
++         this.r = var1;// 105
++      }// 106
++
++      void foo() {
++      }// 110
+    }
+ }
+ 
+@@ -180,24 +180,24 @@ class 'pkg/TestAnonymousClass' {
+    }
+ }
+ 
++class 'pkg/TestAnonymousClass$Inner$1' {
++   method 'run ()V' {
++      0      76
++      1      76
++      2      77
++      3      77
++      4      78
++   }
++}
++
+ class 'pkg/TestAnonymousClass$InnerRecursive' {
+    method '<init> (Lpkg/TestAnonymousClass$InnerRecursive;)V' {
+-      6      73
+-      9      74
++      6      86
++      9      87
+    }
+ 
+    method 'foo ()V' {
+-      0      77
+-   }
+-}
+-
+-class 'pkg/TestAnonymousClass$Inner$1' {
+-   method 'run ()V' {
+-      0      83
+-      1      83
+-      2      84
+-      3      84
+-      4      85
++      0      90
+    }
+ }
+ 
+@@ -223,9 +223,9 @@ Lines mapping:
+ 53 <-> 18
+ 54 <-> 19
+ 55 <-> 20
+-66 <-> 84
+-67 <-> 85
+-68 <-> 86
++66 <-> 77
++67 <-> 78
++68 <-> 79
+ 75 <-> 24
+ 76 <-> 25
+ 77 <-> 26
+@@ -234,9 +234,9 @@ Lines mapping:
+ 91 <-> 37
+ 92 <-> 38
+ 93 <-> 39
+-105 <-> 74
+-106 <-> 75
+-110 <-> 78
++105 <-> 87
++106 <-> 88
++110 <-> 91
+ Not mapped:
+ 18
+ 104
+diff --git a/testData/results/TestAnonymousClassConstructor.dec b/testData/results/TestAnonymousClassConstructor.dec
+index 66960ce..63abd4a 100644
+--- a/testData/results/TestAnonymousClassConstructor.dec
++++ b/testData/results/TestAnonymousClassConstructor.dec
+@@ -65,16 +65,16 @@ class TestAnonymousClassConstructor {
+       System.out.println("n(): " + s);// 53
+    }// 54
+ 
+-   static class InnerStaticPublic {
+-      public InnerStaticPublic(long a, int b) {
+-         TestAnonymousClassConstructor.n(a + "+" + b);// 100
+-      }// 101
++   class InnerPrivate {
++      private InnerPrivate(long a, int b) {
++         TestAnonymousClassConstructor.n(a + "+" + b);// 64
++      }// 65
+    }
+ 
+-   static class InnerStaticPublicString {
+-      public InnerStaticPublicString(String s) {
+-         TestAnonymousClassConstructor.n(s);// 94
+-      }// 95
++   class InnerPrivateString {
++      private InnerPrivateString(String s) {
++         TestAnonymousClassConstructor.n(s);// 58
++      }// 59
+    }
+ 
+    class InnerPublic {
+@@ -101,16 +101,16 @@ class TestAnonymousClassConstructor {
+       }// 71
+    }
+ 
+-   class InnerPrivate {
+-      private InnerPrivate(long a, int b) {
+-         TestAnonymousClassConstructor.n(a + "+" + b);// 64
+-      }// 65
++   static class InnerStaticPublic {
++      public InnerStaticPublic(long a, int b) {
++         TestAnonymousClassConstructor.n(a + "+" + b);// 100
++      }// 101
+    }
+ 
+-   class InnerPrivateString {
+-      private InnerPrivateString(String s) {
+-         TestAnonymousClassConstructor.n(s);// 58
+-      }// 59
++   static class InnerStaticPublicString {
++      public InnerStaticPublicString(String s) {
++         TestAnonymousClassConstructor.n(s);// 94
++      }// 95
+    }
+ }
+ 
+@@ -190,19 +190,19 @@ class 'pkg/TestAnonymousClassConstructor' {
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
+-   method '<init> (JI)V' {
+-      f      69
+-      18      69
+-      1b      69
+-      1e      70
++class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
++   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
++      14      69
++      1e      69
++      21      69
++      24      70
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
+-   method '<init> (Ljava/lang/String;)V' {
+-      5      75
+-      8      76
++class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
++   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
++      a      75
++      d      76
+    }
+ }
+ 
+@@ -238,19 +238,19 @@ class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
+-   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
+-      14      105
+-      1e      105
+-      21      105
+-      24      106
++class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
++   method '<init> (JI)V' {
++      f      105
++      18      105
++      1b      105
++      1e      106
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
+-   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
+-      a      111
+-      d      112
++class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
++   method '<init> (Ljava/lang/String;)V' {
++      5      111
++      8      112
+    }
+ }
+ 
+@@ -281,10 +281,10 @@ Lines mapping:
+ 50 <-> 62
+ 53 <-> 65
+ 54 <-> 66
+-58 <-> 112
+-59 <-> 113
+-64 <-> 106
+-65 <-> 107
++58 <-> 76
++59 <-> 77
++64 <-> 70
++65 <-> 71
+ 70 <-> 100
+ 71 <-> 101
+ 76 <-> 94
+@@ -293,10 +293,10 @@ Lines mapping:
+ 83 <-> 89
+ 88 <-> 82
+ 89 <-> 83
+-94 <-> 76
+-95 <-> 77
+-100 <-> 70
+-101 <-> 71
++94 <-> 112
++95 <-> 113
++100 <-> 106
++101 <-> 107
+ Not mapped:
+ 57
+ 63
+diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
+index 8883fab..d5f7070 100644
+--- a/testData/results/TestClassSimpleBytecodeMapping.dec
++++ b/testData/results/TestClassSimpleBytecodeMapping.dec
+@@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
+       var1.run();// 49
+    }// 50
+ 
+-   public class InnerClass2 {
+-      public void print() {
+-         System.out.println("Inner2");// 54
+-      }// 55
+-   }
+-
+    public class InnerClass {
+       public void print() {
+          System.out.println("Inner");// 44
+       }// 45
+    }
++
++   public class InnerClass2 {
++      public void print() {
++         System.out.println("Inner2");// 54
++      }// 55
++   }
+ }
+ 
+ class 'pkg/TestClassSimpleBytecodeMapping$1' {
+@@ -96,7 +96,7 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
+    }
+ }
+ 
+-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
++class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+    method 'print ()V' {
+       0      37
+       3      37
+@@ -105,7 +105,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    }
+ }
+ 
+-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
++class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    method 'print ()V' {
+       0      43
+       3      43
+@@ -130,11 +130,11 @@ Lines mapping:
+ 36 <-> 25
+ 38 <-> 27
+ 40 <-> 30
+-44 <-> 44
+-45 <-> 45
++44 <-> 38
++45 <-> 39
+ 49 <-> 33
+ 50 <-> 34
+-54 <-> 38
+-55 <-> 39
++54 <-> 44
++55 <-> 45
+ Not mapped:
+ 39
+diff --git a/testData/results/TestExtendingSubclass.dec b/testData/results/TestExtendingSubclass.dec
+index 5e13985..2caf740 100644
+--- a/testData/results/TestExtendingSubclass.dec
++++ b/testData/results/TestExtendingSubclass.dec
+@@ -1,35 +1,35 @@
+ package pkg;
+ 
+ public class TestExtendingSubclass {
++   class Subclass1 {
++      Subclass1(String name) {
++      }// 9
++   }
++
+    class Subclass2 extends TestExtendingSubclass.Subclass1 {
+       Subclass2(String name) {
+          super(name);// 14
+       }// 15
+    }
+-
+-   class Subclass1 {
+-      Subclass1(String name) {
+-      }// 9
+-   }
+ }
+ 
+-class 'pkg/TestExtendingSubclass$Subclass2' {
++class 'pkg/TestExtendingSubclass$Subclass1' {
+    method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+-      8      5
+-      b      6
++      9      5
+    }
+ }
+ 
+-class 'pkg/TestExtendingSubclass$Subclass1' {
++class 'pkg/TestExtendingSubclass$Subclass2' {
+    method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+-      9      11
++      8      10
++      b      11
+    }
+ }
+ 
+ Lines mapping:
+-9 <-> 12
+-14 <-> 6
+-15 <-> 7
++9 <-> 6
++14 <-> 11
++15 <-> 12
+ Not mapped:
+ 8
+ 13
+diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
+index 6ca3a7e..e5aba7d 100644
+--- a/testData/results/TestInnerLocal.dec
++++ b/testData/results/TestInnerLocal.dec
+@@ -28,6 +28,14 @@ public class TestInnerLocal {
+       new TestInnerLocal.Inner1Static.Inner2Static("test");// 40
+    }// 41
+ 
++   class Inner1 {
++      final String x;
++
++      public Inner1(String var2) {
++         this.x = var2;// 46
++      }// 47
++   }
++
+    static class Inner1Static {
+       final String x;
+ 
+@@ -43,14 +51,6 @@ public class TestInnerLocal {
+          }// 60
+       }
+    }
+-
+-   class Inner1 {
+-      final String x;
+-
+-      public Inner1(String var2) {
+-         this.x = var2;// 46
+-      }// 47
+-   }
+ }
+ 
+ class 'TestInnerLocal$1Inner' {
+@@ -84,24 +84,24 @@ class 'TestInnerLocal$2Inner' {
+    }
+ }
+ 
+-class 'TestInnerLocal$Inner1Static' {
+-   method '<init> (Ljava/lang/String;)V' {
+-      6      34
+-      9      35
++class 'TestInnerLocal$Inner1' {
++   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
++      b      34
++      e      35
+    }
+ }
+ 
+-class 'TestInnerLocal$Inner1Static$Inner2Static' {
++class 'TestInnerLocal$Inner1Static' {
+    method '<init> (Ljava/lang/String;)V' {
+-      6      41
+-      9      42
++      6      42
++      9      43
+    }
+ }
+ 
+-class 'TestInnerLocal$Inner1' {
+-   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
+-      b      50
+-      e      51
++class 'TestInnerLocal$Inner1Static$Inner2Static' {
++   method '<init> (Ljava/lang/String;)V' {
++      6      49
++      9      50
+    }
+ }
+ 
+@@ -119,12 +119,12 @@ Lines mapping:
+ 39 <-> 27
+ 40 <-> 28
+ 41 <-> 29
+-46 <-> 51
+-47 <-> 52
+-53 <-> 35
+-54 <-> 36
+-59 <-> 42
+-60 <-> 43
++46 <-> 35
++47 <-> 36
++53 <-> 43
++54 <-> 44
++59 <-> 50
++60 <-> 51
+ Not mapped:
+ 21
+ 33
+diff --git a/testData/results/TestInnerLocalPkg.dec b/testData/results/TestInnerLocalPkg.dec
+index 7cafa41..7ddb0ce 100644
+--- a/testData/results/TestInnerLocalPkg.dec
++++ b/testData/results/TestInnerLocalPkg.dec
+@@ -30,6 +30,14 @@ public class TestInnerLocalPkg {
+       new TestInnerLocalPkg.Inner1Static.Inner2Static("test");// 42
+    }// 43
+ 
++   class Inner1 {
++      final String x;
++
++      public Inner1(String var2) {
++         this.x = var2;// 48
++      }// 49
++   }
++
+    static class Inner1Static {
+       final String x;
+ 
+@@ -45,14 +53,6 @@ public class TestInnerLocalPkg {
+          }// 62
+       }
+    }
+-
+-   class Inner1 {
+-      final String x;
+-
+-      public Inner1(String var2) {
+-         this.x = var2;// 48
+-      }// 49
+-   }
+ }
+ 
+ class 'pkg/TestInnerLocalPkg$1Inner' {
+@@ -86,24 +86,24 @@ class 'pkg/TestInnerLocalPkg$2Inner' {
+    }
+ }
+ 
+-class 'pkg/TestInnerLocalPkg$Inner1Static' {
+-   method '<init> (Ljava/lang/String;)V' {
+-      6      36
+-      9      37
++class 'pkg/TestInnerLocalPkg$Inner1' {
++   method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
++      b      36
++      e      37
+    }
+ }
+ 
+-class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
++class 'pkg/TestInnerLocalPkg$Inner1Static' {
+    method '<init> (Ljava/lang/String;)V' {
+-      6      43
+-      9      44
++      6      44
++      9      45
+    }
+ }
+ 
+-class 'pkg/TestInnerLocalPkg$Inner1' {
+-   method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
+-      b      52
+-      e      53
++class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
++   method '<init> (Ljava/lang/String;)V' {
++      6      51
++      9      52
+    }
+ }
+ 
+@@ -121,12 +121,12 @@ Lines mapping:
+ 41 <-> 29
+ 42 <-> 30
+ 43 <-> 31
+-48 <-> 53
+-49 <-> 54
+-55 <-> 37
+-56 <-> 38
+-61 <-> 44
+-62 <-> 45
++48 <-> 37
++49 <-> 38
++55 <-> 45
++56 <-> 46
++61 <-> 52
++62 <-> 53
+ Not mapped:
+ 23
+ 35
+diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
+index 3087a40..406e1f4 100644
+--- a/testData/results/TestInnerSignature.dec
++++ b/testData/results/TestInnerSignature.dec
+@@ -9,18 +9,6 @@ public class TestInnerSignature<A, B, C> {
+       this.c = var3;// 25
+    }// 26
+ 
+-   public static class InnerStatic<A, B, C> {
+-      A a;
+-      B b;
+-      C c;
+-
+-      public InnerStatic(A var1, B var2, C var3) {
+-         this.a = var1;// 46
+-         this.b = var2;// 47
+-         this.c = var3;// 48
+-      }// 49
+-   }
+-
+    public class Inner {
+       A a;
+       B b;
+@@ -32,6 +20,18 @@ public class TestInnerSignature<A, B, C> {
+          this.c = var4;// 36
+       }// 37
+    }
++
++   public static class InnerStatic<A, B, C> {
++      A a;
++      B b;
++      C c;
++
++      public InnerStatic(A var1, B var2, C var3) {
++         this.a = var1;// 46
++         this.b = var2;// 47
++         this.c = var3;// 48
++      }// 49
++   }
+ }
+ 
+ class 'TestInnerSignature' {
+@@ -43,21 +43,21 @@ class 'TestInnerSignature' {
+    }
+ }
+ 
+-class 'TestInnerSignature$InnerStatic' {
+-   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+-      6      17
+-      b      18
+-      10      19
+-      13      20
++class 'TestInnerSignature$Inner' {
++   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      b      17
++      10      18
++      16      19
++      19      20
+    }
+ }
+ 
+-class 'TestInnerSignature$Inner' {
+-   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+-      b      29
+-      10      30
+-      16      31
+-      19      32
++class 'TestInnerSignature$InnerStatic' {
++   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      6      29
++      b      30
++      10      31
++      13      32
+    }
+ }
+ 
+@@ -66,14 +66,14 @@ Lines mapping:
+ 24 <-> 8
+ 25 <-> 9
+ 26 <-> 10
+-34 <-> 30
+-35 <-> 31
+-36 <-> 32
+-37 <-> 33
+-46 <-> 18
+-47 <-> 19
+-48 <-> 20
+-49 <-> 21
++34 <-> 18
++35 <-> 19
++36 <-> 20
++37 <-> 21
++46 <-> 30
++47 <-> 31
++48 <-> 32
++49 <-> 33
+ Not mapped:
+ 22
+ 33
+diff --git a/testData/results/TestMethodParameters.dec b/testData/results/TestMethodParameters.dec
+index 21f0f12..af7ce86 100644
+--- a/testData/results/TestMethodParameters.dec
++++ b/testData/results/TestMethodParameters.dec
+@@ -21,6 +21,14 @@ public class TestMethodParameters {
+ 
+    }// 39
+ 
++   class C1 {
++      C1(@Deprecated int var2) {
++      }// 24
++
++      void m(@Deprecated int var1) {
++      }// 25
++   }
++
+    static class C2 {
+       C2(@Deprecated int var1) {
+       }// 29
+@@ -31,14 +39,6 @@ public class TestMethodParameters {
+       static void m2(@Deprecated int var0) {
+       }// 31
+    }
+-
+-   class C1 {
+-      C1(@Deprecated int var2) {
+-      }// 24
+-
+-      void m(@Deprecated int var1) {
+-      }// 25
+-   }
+ }
+ 
+ class 'pkg/TestMethodParameters' {
+@@ -69,26 +69,26 @@ class 'pkg/TestMethodParameters$1Local' {
+    }
+ }
+ 
+-class 'pkg/TestMethodParameters$C2' {
+-   method '<init> (I)V' {
+-      4      25
++class 'pkg/TestMethodParameters$C1' {
++   method '<init> (Lpkg/TestMethodParameters;I)V' {
++      9      25
+    }
+ 
+-   method 'm1 (I)V' {
++   method 'm (I)V' {
+       0      28
+    }
++}
+ 
+-   method 'm2 (I)V' {
+-      0      31
++class 'pkg/TestMethodParameters$C2' {
++   method '<init> (I)V' {
++      4      33
+    }
+-}
+ 
+-class 'pkg/TestMethodParameters$C1' {
+-   method '<init> (Lpkg/TestMethodParameters;I)V' {
+-      9      36
++   method 'm1 (I)V' {
++      0      36
+    }
+ 
+-   method 'm (I)V' {
++   method 'm2 (I)V' {
+       0      39
+    }
+ }
+@@ -97,11 +97,11 @@ Lines mapping:
+ 19 <-> 5
+ 20 <-> 8
+ 21 <-> 11
+-24 <-> 37
+-25 <-> 40
+-29 <-> 26
+-30 <-> 29
+-31 <-> 32
++24 <-> 26
++25 <-> 29
++29 <-> 34
++30 <-> 37
++31 <-> 40
+ 36 <-> 16
+ 37 <-> 19
+ 39 <-> 22
+-- 
+2.10.0.windows.1
+

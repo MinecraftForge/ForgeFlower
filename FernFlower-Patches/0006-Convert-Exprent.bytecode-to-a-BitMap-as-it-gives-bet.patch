@@ -1,0 +1,3402 @@
+From d3557fb5cf0c42598dfacced8dffe985fc113353 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Wed, 12 Apr 2017 15:18:38 -0700
+Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
+ speed and functionality. Added method to gather bytecode markers for every
+ expression. Allows us to get the bytecode offsets for an entire block of
+ code. Also more agressivly capture bytecode ranges to better understand how
+ much of the code we are processing/outputting
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
+index 18e1b78..50ff12f 100644
+--- a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
++++ b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
+@@ -47,10 +47,10 @@ public class BytecodeMappingTracer {
+     }
+   }
+ 
+-  public void addMapping(Set<Integer> bytecode_offsets) {
++  public void addMapping(BitSet bytecode_offsets) {
+     if (bytecode_offsets != null) {
+-      for (Integer bytecode_offset : bytecode_offsets) {
+-        addMapping(bytecode_offset);
++      for (int i = bytecode_offsets.nextSetBit(0); i >= 0; i = bytecode_offsets.nextSetBit(i+1)) {
++        addMapping(i);
+       }
+     }
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
+index aea5afa..c68bb9a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
+@@ -24,8 +24,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class ConcatenationHelper {
+ 
+@@ -138,7 +138,7 @@ public class ConcatenationHelper {
+     return createConcatExprent(lstOperands, expr.bytecode);
+   }
+ 
+-  private static Exprent createConcatExprent(List<Exprent> lstOperands, Set<Integer> bytecode) {
++  private static Exprent createConcatExprent(List<Exprent> lstOperands, BitSet bytecode) {
+     // build exprent to return
+     Exprent func = lstOperands.get(0);
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 61edb37..cf81f91 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -301,7 +301,15 @@ public class ExprProcessor implements CodeConstants {
+ 
+       Instruction instr = seq.getInstr(i);
+       Integer bytecode_offset = block.getOldOffset(i);
+-      Set<Integer> bytecode_offsets = bytecode_offset >= 0 ? Collections.singleton(bytecode_offset) : null;
++      BitSet bytecode_offsets = null;
++      if (bytecode_offset >= 0) {
++        bytecode_offsets = new BitSet();
++        bytecode_offsets.set(bytecode_offset);
++        int end_offset = block.getOldOffset(i+1);
++        if (end_offset > bytecode_offset) {
++          bytecode_offsets.set(bytecode_offset, end_offset);
++        }
++      }
+ 
+       switch (instr.opcode) {
+         case opc_aconst_null:
+@@ -341,7 +349,7 @@ public class ExprProcessor implements CodeConstants {
+         case opc_fload:
+         case opc_dload:
+         case opc_aload:
+-          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offset));
++          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offsets));
+           break;
+         case opc_iaload:
+         case opc_laload:
+@@ -372,7 +380,7 @@ public class ExprProcessor implements CodeConstants {
+           Exprent top = stack.pop();
+           int varindex = instr.getOperand(0);
+           AssignmentExprent assign = new AssignmentExprent(
+-            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), top, bytecode_offsets);
++            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i, bytecode_offsets)), top, bytecode_offsets);
+           exprlist.add(assign);
+           break;
+         case opc_iastore:
+@@ -434,7 +442,7 @@ public class ExprProcessor implements CodeConstants {
+           pushEx(stack, exprlist, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, bytecode_offsets));
+           break;
+         case opc_iinc:
+-          VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor);
++          VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor, bytecode_offsets);
+           exprlist.add(new AssignmentExprent(vevar, new FunctionExprent(
+             instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
+             .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),
+@@ -624,7 +632,9 @@ public class ExprProcessor implements CodeConstants {
+     }
+   }
+ 
+-  private static int nextMeaningfulOffset(BasicBlock block, int index) {
++  private static BitSet nextMeaningfulOffset(BasicBlock block, int index, BitSet _default) {
++    BitSet ret = new BitSet();
++    ret.set(block.getOldOffset(index));
+     InstructionSequence seq = block.getSeq();
+     while (++index < seq.length()) {
+       switch (seq.getInstr(index).opcode) {
+@@ -634,11 +644,13 @@ public class ExprProcessor implements CodeConstants {
+         case opc_fstore:
+         case opc_dstore:
+         case opc_astore:
++          ret.set(block.getOldOffset(index));
+           continue;
+       }
+-      return block.getOldOffset(index);
++      ret.set(block.getOldOffset(index)-1);
++      return ret;
+     }
+-    return -1;
++    return _default;
+   }
+ 
+   private void pushEx(ExprentStack stack, List<Exprent> exprlist, Exprent exprent) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+index 0be7d59..3d6a79e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.BitSet;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
+@@ -777,7 +778,7 @@ public class SimplifyExprentsHelper {
+       IfStatement stif = (IfStatement)stat;
+ 
+       Exprent ifheadexpr = stif.getHeadexprent();
+-      Set<Integer> ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
++      BitSet ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
+ 
+       if (stif.iftype == IfStatement.IFTYPE_IFELSE) {
+         Statement ifstat = stif.getIfstat();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
+index c17d921..dca2ead 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
+@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
++import java.util.BitSet;
+ import java.util.List;
+ 
+ public class AnnotationExprent extends Exprent {
+@@ -107,4 +108,10 @@ public class AnnotationExprent extends Exprent {
+            InterpreterUtil.equalLists(parNames, ann.parNames) &&
+            InterpreterUtil.equalLists(parValues, ann.parValues);
+   }
++  
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, parValues);
++    measureBytecode(values);
++  }
+ }
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
+index 3590b48..7e3bcfd 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
+@@ -23,15 +23,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class ArrayExprent extends Exprent {
+   private Exprent array;
+   private Exprent index;
+   private final VarType hardType;
+ 
+-  public ArrayExprent(Exprent array, Exprent index, VarType hardType, Set<Integer> bytecodeOffsets) {
++  public ArrayExprent(Exprent array, Exprent index, VarType hardType, BitSet bytecodeOffsets) {
+     super(EXPRENT_ARRAY);
+     this.array = array;
+     this.index = index;
+@@ -120,4 +120,11 @@ public class ArrayExprent extends Exprent {
+   public Exprent getIndex() {
+     return index;
+   }
++  
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, array);
++    measureBytecode(values, index);
++    measureBytecode(values);
++  }
+ }
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
+index af95d15..82305f3 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
+@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ 
++import java.util.BitSet;
+ import java.util.List;
+ 
+ public class AssertExprent extends Exprent {
+@@ -51,4 +52,10 @@ public class AssertExprent extends Exprent {
+ 
+     return buffer;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, parameters);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+index 957f3f5..58017ef 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+@@ -27,8 +27,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class AssignmentExprent extends Exprent {
+ 
+@@ -52,7 +52,7 @@ public class AssignmentExprent extends Exprent {
+   private Exprent right;
+   private int condType = CONDITION_NONE;
+ 
+-  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecodeOffsets) {
++  public AssignmentExprent(Exprent left, Exprent right, BitSet bytecodeOffsets) {
+     super(EXPRENT_ASSIGNMENT);
+     this.left = left;
+     this.right = right;
+@@ -178,6 +178,13 @@ public class AssignmentExprent extends Exprent {
+            condType == as.getCondType();
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, left);
++    measureBytecode(values, right);
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // getter and setter methods
+   // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index 59d00bc..2bf8659 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -50,15 +50,15 @@ public class ConstExprent extends Exprent {
+   private final Object value;
+   private final boolean boolPermitted;
+ 
+-  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
++  public ConstExprent(int val, boolean boolPermitted, BitSet bytecodeOffsets) {
+     this(guessType(val, boolPermitted), new Integer(val), boolPermitted, bytecodeOffsets);
+   }
+ 
+-  public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
++  public ConstExprent(VarType constType, Object value, BitSet bytecodeOffsets) {
+     this(constType, value, false, bytecodeOffsets);
+   }
+ 
+-  private ConstExprent(VarType constType, Object value, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
++  private ConstExprent(VarType constType, Object value, boolean boolPermitted, BitSet bytecodeOffsets) {
+     super(EXPRENT_CONST);
+     this.constType = constType;
+     this.value = value;
+@@ -383,6 +383,11 @@ public class ConstExprent extends Exprent {
+   public boolean isBoolPermitted() {
+     return boolPermitted;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values);
++  }
+   
+   // *****************************************************************************
+   // IMatchable implementation
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+index abfc4ab..0c3a1f9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+@@ -30,8 +30,8 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class ExitExprent extends Exprent {
+ 
+@@ -42,7 +42,7 @@ public class ExitExprent extends Exprent {
+   private Exprent value;
+   private final VarType retType;
+ 
+-  public ExitExprent(int exitType, Exprent value, VarType retType, Set<Integer> bytecodeOffsets) {
++  public ExitExprent(int exitType, Exprent value, VarType retType, BitSet bytecodeOffsets) {
+     super(EXPRENT_EXIT);
+     this.exitType = exitType;
+     this.value = value;
+@@ -153,6 +153,13 @@ public class ExitExprent extends Exprent {
+   public VarType getRetType() {
+     return retType;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, value);
++    measureBytecode(values);
++  }
++
+   
+   // *****************************************************************************
+   // IMatchable implementation
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index 21b4317..63ff8b2 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -30,7 +30,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+ import java.util.*;
+ import java.util.Map.Entry;
+ 
+-public class Exprent implements IMatchable {
++public abstract class Exprent implements IMatchable {
+   public static final int MULTIPLE_USES = 1;
+   public static final int SIDE_EFFECTS_FREE = 2;
+   public static final int BOTH_FLAGS = 3;
+@@ -52,7 +52,7 @@ public class Exprent implements IMatchable {
+ 
+   public final int type;
+   public final int id;
+-  public Set<Integer> bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
++  public BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
+ 
+   public Exprent(int type) {
+     this.type = type;
+@@ -125,14 +125,31 @@ public class Exprent implements IMatchable {
+ 
+   public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
+ 
+-  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
+-    if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
++  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
++    if (bytecodeOffsets != null) {
+       if (bytecode == null) {
+-        bytecode = new HashSet<>(bytecodeOffsets);
+-      }
+-      else {
+-        bytecode.addAll(bytecodeOffsets);
++        bytecode = new BitSet();
+       }
++      bytecode.or(bytecodeOffsets);
++    }
++  }
++
++  public abstract void getBytecodeRange(BitSet values);
++
++  protected void measureBytecode(BitSet values) {
++    if (bytecode != null)
++      values.or(bytecode);
++  }
++
++  protected static void measureBytecode(BitSet values, Exprent exprent) {
++    if (exprent != null)
++      exprent.getBytecodeRange(values);
++  }
++
++  protected static void measureBytecode(BitSet values, List<Exprent> list) {
++    if (list != null && !list.isEmpty()) {
++      for (Exprent e : list)
++        e.getBytecodeRange(values);
+     }
+   }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+index 472823f..959fdf6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+@@ -34,8 +34,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.TextUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class FieldExprent extends Exprent {
+   private final String name;
+@@ -44,11 +44,11 @@ public class FieldExprent extends Exprent {
+   private Exprent instance;
+   private final FieldDescriptor descriptor;
+ 
+-  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
++  public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
+     this(cn.elementname, cn.classname, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
+   }
+ 
+-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
++  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets) {
+     super(EXPRENT_FIELD);
+     this.name = name;
+     this.classname = classname;
+@@ -196,6 +196,12 @@ public class FieldExprent extends Exprent {
+   public String getName() {
+     return name;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, instance);
++    measureBytecode(values);
++  }
+   
+   // *****************************************************************************
+   // IMatchable implementation
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index 6662965..cbc78b5 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -198,7 +198,7 @@ public class FunctionExprent extends Exprent {
+   private VarType implicitType;
+   private final List<Exprent> lstOperands;
+ 
+-  public FunctionExprent(int funcType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
++  public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
+     this(funcType, new ArrayList<>(), bytecodeOffsets);
+ 
+     if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
+@@ -214,7 +214,7 @@ public class FunctionExprent extends Exprent {
+     }
+   }
+ 
+-  public FunctionExprent(int funcType, List<Exprent> operands, Set<Integer> bytecodeOffsets) {
++  public FunctionExprent(int funcType, List<Exprent> operands, BitSet bytecodeOffsets) {
+     super(EXPRENT_FUNCTION);
+     this.funcType = funcType;
+     this.lstOperands = operands;
+@@ -222,7 +222,7 @@ public class FunctionExprent extends Exprent {
+     addBytecodeOffsets(bytecodeOffsets);
+   }
+ 
+-  public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
++  public FunctionExprent(int funcType, Exprent operand, BitSet bytecodeOffsets) {
+     this(funcType, new ArrayList<>(1), bytecodeOffsets);
+     lstOperands.add(operand);
+   }
+@@ -606,6 +606,12 @@ public class FunctionExprent extends Exprent {
+   public void setImplicitType(VarType implicitType) {
+     this.implicitType = implicitType;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, lstOperands);
++    measureBytecode(values);
++  }
+   
+   // *****************************************************************************
+   // IMatchable implementation
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
+index d1537bd..e4dfd21 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
+@@ -75,7 +75,7 @@ public class IfExprent extends Exprent {
+ 
+   private Exprent condition;
+ 
+-  public IfExprent(int ifType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
++  public IfExprent(int ifType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
+     this(null, bytecodeOffsets);
+ 
+     if (ifType <= IF_LE) {
+@@ -93,7 +93,7 @@ public class IfExprent extends Exprent {
+     }
+   }
+ 
+-  private IfExprent(Exprent condition, Set<Integer> bytecodeOffsets) {
++  private IfExprent(Exprent condition, BitSet bytecodeOffsets) {
+     super(EXPRENT_IF);
+     this.condition = condition;
+ 
+@@ -146,4 +146,10 @@ public class IfExprent extends Exprent {
+   public void setCondition(Exprent condition) {
+     this.condition = condition;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, condition);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 5b2ffbd..a38c2ee 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -76,7 +76,7 @@ public class InvocationExprent extends Exprent {
+                            LinkConstant cn,
+                            List<PooledConstant> bootstrapArguments,
+                            ListStack<Exprent> stack,
+-                           Set<Integer> bytecodeOffsets) {
++                           BitSet bytecodeOffsets) {
+     this();
+ 
+     name = cn.elementname;
+@@ -514,6 +514,13 @@ public class InvocationExprent extends Exprent {
+     return bootstrapArguments;
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, lstParameters);
++    measureBytecode(values, instance);
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
+index 1546064..0cc24ac 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
+@@ -20,8 +20,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class MonitorExprent extends Exprent {
+ 
+@@ -31,7 +31,7 @@ public class MonitorExprent extends Exprent {
+   private final int monType;
+   private Exprent value;
+ 
+-  public MonitorExprent(int monType, Exprent value, Set<Integer> bytecodeOffsets) {
++  public MonitorExprent(int monType, Exprent value, BitSet bytecodeOffsets) {
+     super(EXPRENT_MONITOR);
+     this.monType = monType;
+     this.value = value;
+@@ -87,4 +87,10 @@ public class MonitorExprent extends Exprent {
+   public Exprent getValue() {
+     return value;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, value);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index fdbb692..da3f3aa 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -34,9 +34,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.ListStack;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.Collections;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class NewExprent extends Exprent {
+   private InvocationExprent constructor;
+@@ -48,11 +48,11 @@ public class NewExprent extends Exprent {
+   private boolean lambda;
+   private boolean enumConst;
+ 
+-  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
++  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
+     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
+   }
+ 
+-  public NewExprent(VarType newType, List<Exprent> lstDims, Set<Integer> bytecodeOffsets) {
++  public NewExprent(VarType newType, List<Exprent> lstDims, BitSet bytecodeOffsets) {
+     super(EXPRENT_NEW);
+     this.newType = newType;
+     this.lstDims = lstDims;
+@@ -450,6 +450,14 @@ public class NewExprent extends Exprent {
+            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, lstArrayElements);
++    measureBytecode(values, lstDims);
++    measureBytecode(values, constructor);
++    measureBytecode(values);
++  }
++
+   public InvocationExprent getConstructor() {
+     return constructor;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
+index 27730a9..c358d6d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
+@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+ import java.util.Set;
+ 
+@@ -30,7 +31,7 @@ public class SwitchExprent extends Exprent {
+   private Exprent value;
+   private List<List<ConstExprent>> caseValues = new ArrayList<>();
+ 
+-  public SwitchExprent(Exprent value, Set<Integer> bytecodeOffsets) {
++  public SwitchExprent(Exprent value, BitSet bytecodeOffsets) {
+     super(EXPRENT_SWITCH);
+     this.value = value;
+ 
+@@ -112,6 +113,22 @@ public class SwitchExprent extends Exprent {
+     return InterpreterUtil.equalObjects(value, sw.getValue());
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    if (caseValues != null && !caseValues.isEmpty()) {
++      for (List<ConstExprent> l : caseValues) {
++        if (l != null && !l.isEmpty()) {
++          for (Exprent e : l) {
++            if (e != null)
++              e.getBytecodeRange(values);
++          }
++        }
++      }
++    }
++    measureBytecode(values, value);
++    measureBytecode(values);
++  }
++
+   public Exprent getValue() {
+     return value;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 0cb7fd1..b02493d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -41,6 +41,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.TextUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+ 
+ public class VarExprent extends Exprent {
+@@ -52,21 +53,20 @@ public class VarExprent extends Exprent {
+   private VarType varType;
+   private boolean definition = false;
+   private VarProcessor processor;
+-  private final int visibleOffset;
+   private int version = 0;
+   private boolean classDef = false;
+   private boolean stack = false;
+ 
+   public VarExprent(int index, VarType varType, VarProcessor processor) {
+-    this(index, varType, processor, -1);
++    this(index, varType, processor, null);
+   }
+ 
+-  public VarExprent(int index, VarType varType, VarProcessor processor, int visibleOffset) {
++  public VarExprent(int index, VarType varType, VarProcessor processor, BitSet bytecode) {
+     super(EXPRENT_VAR);
+     this.index = index;
+     this.varType = varType;
+     this.processor = processor;
+-    this.visibleOffset = visibleOffset;
++    this.addBytecodeOffsets(bytecode);
+   }
+ 
+   @Override
+@@ -86,7 +86,7 @@ public class VarExprent extends Exprent {
+ 
+   @Override
+   public Exprent copy() {
+-    VarExprent var = new VarExprent(index, getVarType(), processor, visibleOffset);
++    VarExprent var = new VarExprent(index, getVarType(), processor, bytecode);
+     var.setDefinition(definition);
+     var.setVersion(version);
+     var.setClassDef(classDef);
+@@ -135,7 +135,7 @@ public class VarExprent extends Exprent {
+     if (attr != null && processor != null) {
+       Integer origIndex = processor.getVarOriginalIndex(index);
+       if (origIndex != null) {
+-        String name = attr.getName(origIndex, visibleOffset);
++        String name = attr.getName(origIndex, bytecode == null ? -1 : bytecode.nextSetBit(0));
+         if (name != null && TextUtil.isValidIdentifier(name, method.getClassStruct().getBytecodeVersion())) {
+           return name;
+         }
+@@ -152,6 +152,7 @@ public class VarExprent extends Exprent {
+         if (processor != null) {
+           originalIndex = processor.getVarOriginalIndex(index);
+         }
++        int visibleOffset = bytecode == null ? -1 : bytecode.nextSetBit(0);
+         if (originalIndex != null) {
+           // first try from signature
+           if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+@@ -196,6 +197,11 @@ public class VarExprent extends Exprent {
+            InterpreterUtil.equalObjects(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values);
++  }
++
+   public int getIndex() {
+     return index;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
+index f74e745..2add759 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
+@@ -15,28 +15,24 @@
+  */
+ package org.jetbrains.java.decompiler.modules.decompiler.stats;
+ 
+-import java.util.Collection;
+-import java.util.HashSet;
+-import java.util.Set;
++import java.util.BitSet;
+ 
+ /**
+  * @author egor
+  */
+ public class DummyExitStatement extends Statement {
+-  public Set<Integer> bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
++  public BitSet bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
+ 
+   public DummyExitStatement() {
+     type = Statement.TYPE_DUMMYEXIT;
+   }
+ 
+-  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
++  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
+     if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
+       if (bytecode == null) {
+-        bytecode = new HashSet<>(bytecodeOffsets);
+-      }
+-      else {
+-        bytecode.addAll(bytecodeOffsets);
++        bytecode = new BitSet();
+       }
++      bytecode.or(bytecodeOffsets);
+     }
+   }
+ }
+diff --git a/testData/results/InvalidMethodSignature.dec b/testData/results/InvalidMethodSignature.dec
+index e2a15b3..485c46e 100644
+--- a/testData/results/InvalidMethodSignature.dec
++++ b/testData/results/InvalidMethodSignature.dec
+@@ -26,19 +26,51 @@ class i implements bg {
+ 
+ class 'a/a/a/a/e/f/i' {
+    method '<init> (La/a/a/a/e/f/b;La/a/a/a/c/j;)V' {
++      0      13
++      1      13
+       2      13
++      3      13
++      4      13
++      5      14
++      6      14
+       7      14
++      8      14
++      9      14
+       e      15
+    }
+ 
+    method 'a (La/a/a/a/c/c;La/a/a/a/a/k;Z)V' {
++      0      18
+       1      18
++      2      18
++      3      18
+       4      18
++      5      18
++      6      18
++      7      18
++      8      18
++      9      18
+       a      18
++      b      18
++      c      18
++      d      18
++      e      18
+       f      18
++      10      18
++      11      19
+       12      19
++      13      19
++      14      19
+       15      19
++      16      19
++      17      19
++      18      19
++      19      19
+       1a      19
++      1b      19
++      1c      19
++      1d      19
++      1e      19
+       20      20
+    }
+ 
+diff --git a/testData/results/TestAbstractMethods.dec b/testData/results/TestAbstractMethods.dec
+index 781cbfc..c0e60eb 100644
+--- a/testData/results/TestAbstractMethods.dec
++++ b/testData/results/TestAbstractMethods.dec
+@@ -16,12 +16,18 @@ public abstract class TestAbstractMethods {
+ 
+ class 'pkg/TestAbstractMethods' {
+    method 'test (I)I' {
++      0      6
+       1      6
+    }
+ 
+    method 'test2 (Ljava/lang/String;)V' {
+       0      12
++      1      12
++      2      12
++      3      12
+       4      12
++      5      12
++      6      12
+       7      13
+    }
+ }
+diff --git a/testData/results/TestAccessReplace.dec b/testData/results/TestAccessReplace.dec
+index 1177aa2..26a2e11 100644
+--- a/testData/results/TestAccessReplace.dec
++++ b/testData/results/TestAccessReplace.dec
+@@ -44,13 +44,19 @@ class 'pkg/TestAccessReplace' {
+ class 'pkg/TestAccessReplace$Inner' {
+    method '<init> (Lpkg/TestAccessReplace;Ljava/lang/String;)V' {
+       0      17
+-      1      18
+-      2      19
+-      3      20
++      1      17
++      2      17
++      3      18
++      4      19
++      5      20
+       10      19
+       11      19
++      12      19
++      13      19
+       18      20
+       19      20
++      1a      20
++      1b      20
+       1f      21
+    }
+ }
+diff --git a/testData/results/TestAmbiguousCall.dec b/testData/results/TestAmbiguousCall.dec
+index a48730d..dec7ba0 100644
+--- a/testData/results/TestAmbiguousCall.dec
++++ b/testData/results/TestAmbiguousCall.dec
+@@ -28,16 +28,38 @@ class 'pkg/TestAmbiguousCall' {
+ 
+    method 'test ()V' {
+       7      10
++      8      11
++      9      11
+       a      11
++      b      11
+       c      11
++      d      11
++      e      11
++      f      12
++      10      12
+       11      12
++      12      12
+       13      12
++      14      12
++      15      12
+       1d      13
++      1e      14
++      1f      14
+       20      14
++      21      14
+       22      14
++      23      14
++      24      14
++      25      15
++      26      15
+       27      15
++      28      15
++      29      15
+       2a      15
++      2b      15
+       2c      15
++      2d      15
++      2e      15
+       2f      16
+    }
+ }
+diff --git a/testData/results/TestAmbiguousCallWithDebugInfo.dec b/testData/results/TestAmbiguousCallWithDebugInfo.dec
+index b697e79..e873e7e 100644
+--- a/testData/results/TestAmbiguousCallWithDebugInfo.dec
++++ b/testData/results/TestAmbiguousCallWithDebugInfo.dec
+@@ -28,16 +28,38 @@ class 'pkg/TestAmbiguousCall' {
+ 
+    method 'test ()V' {
+       7      10
++      8      11
++      9      11
+       a      11
++      b      11
+       c      11
++      d      11
++      e      11
++      f      12
++      10      12
+       11      12
++      12      12
+       13      12
++      14      12
++      15      12
+       1d      13
++      1e      14
++      1f      14
+       20      14
++      21      14
+       22      14
++      23      14
++      24      14
++      25      15
++      26      15
+       27      15
++      28      15
++      29      15
+       2a      15
++      2b      15
+       2c      15
++      2d      15
++      2e      15
+       2f      16
+    }
+ }
+diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
+index 14c92f9..b86b5fd 100644
+--- a/testData/results/TestAnonymousClass.dec
++++ b/testData/results/TestAnonymousClass.dec
+@@ -46,12 +46,12 @@ public abstract class TestAnonymousClass {
+ 
+    void foo(int var1) throws Exception {
+       if (var1 > 0) {// 10
+-         TestAnonymousClass.I var2 = new TestAnonymousClass.I() {
++         TestAnonymousClass.I var2 = new TestAnonymousClass.I() {// 11
+             public void foo() throws Exception {
+                boolean var1 = true;// 13
+                boolean var2 = true;// 14
+             }// 15
+-         };// 11
++         };
+          var2.foo();// 17
+       } else {
+          System.out.println(5);// 21
+@@ -158,10 +158,18 @@ class 'pkg/TestAnonymousClass$1' {
+ 
+ class 'pkg/TestAnonymousClass' {
+    method 'foo (I)V' {
++      0      47
+       1      47
+-      c      53
++      c      48
++      d      54
+       e      54
++      f      54
++      10      54
++      11      54
++      12      54
+       16      56
++      17      56
++      18      56
+       19      56
+       1a      56
+       1d      59
+@@ -192,7 +200,11 @@ class 'pkg/TestAnonymousClass$Inner$1' {
+ 
+ class 'pkg/TestAnonymousClass$InnerRecursive' {
+    method '<init> (Lpkg/TestAnonymousClass$InnerRecursive;)V' {
++      4      86
++      5      86
+       6      86
++      7      86
++      8      86
+       9      87
+    }
+ 
+@@ -203,7 +215,7 @@ class 'pkg/TestAnonymousClass$InnerRecursive' {
+ 
+ Lines mapping:
+ 10 <-> 48
+-11 <-> 54
++11 <-> 49
+ 13 <-> 51
+ 14 <-> 52
+ 15 <-> 53
+diff --git a/testData/results/TestAnonymousClassConstructor.dec b/testData/results/TestAnonymousClassConstructor.dec
+index 63abd4a..e0ab2c8 100644
+--- a/testData/results/TestAnonymousClassConstructor.dec
++++ b/testData/results/TestAnonymousClassConstructor.dec
+@@ -117,139 +117,207 @@ class TestAnonymousClassConstructor {
+ class 'pkg/TestAnonymousClassConstructor' {
+    method 'innerPrivateString ()V' {
+       5      4
++      6      4
+       b      6
+    }
+ 
+    method 'innerPrivate ()V' {
+       5      9
++      6      9
++      7      9
+       8      9
+       d      11
+    }
+ 
+    method 'innerStaticPrivateString ()V' {
+       5      14
++      6      14
+       b      16
+    }
+ 
+    method 'innerStaticPrivate ()V' {
+       5      19
++      6      19
++      7      19
+       8      19
+       d      21
+    }
+ 
+    method 'innerStaticPrivateStringStatic ()V' {
+       4      24
++      5      24
+       a      26
+    }
+ 
+    method 'innerStaticPrivateStatic ()V' {
+       4      29
++      5      29
++      6      29
+       7      29
+       c      31
+    }
+ 
+    method 'innerPublicString ()V' {
+       5      34
++      6      34
+       b      36
+    }
+ 
+    method 'innerPublic ()V' {
+       5      39
++      6      39
++      7      39
+       8      39
+       d      41
+    }
+ 
+    method 'innerStaticPublicString ()V' {
+       5      44
++      6      44
+       b      46
+    }
+ 
+    method 'innerStaticPublic ()V' {
+       5      49
++      6      49
++      7      49
+       8      49
+       d      51
+    }
+ 
+    method 'innerStaticPublicStringStatic ()V' {
+       4      54
++      5      54
+       a      56
+    }
+ 
+    method 'innerStaticPublicStatic ()V' {
+       4      59
++      5      59
++      6      59
+       7      59
+       c      61
+    }
+ 
+    method 'n (Ljava/lang/String;)V' {
+       0      64
++      1      64
++      2      64
+       a      64
++      b      64
++      f      64
+       13      64
++      14      64
++      15      64
+       16      64
++      17      64
++      18      64
+       19      65
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
+    method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
++      10      69
+       14      69
++      15      69
++      19      69
++      1a      69
+       1e      69
++      1f      69
++      20      69
+       21      69
++      22      69
++      23      69
+       24      70
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
+    method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
++      9      75
+       a      75
++      b      75
++      c      75
+       d      76
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerPublic' {
+    method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
++      10      81
+       14      81
++      15      81
++      19      81
++      1a      81
+       1e      81
++      1f      81
++      20      81
+       21      81
++      22      81
++      23      81
+       24      82
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerPublicString' {
+    method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
++      9      87
+       a      87
++      b      87
++      c      87
+       d      88
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivate' {
+    method '<init> (JI)V' {
++      b      93
+       f      93
++      10      93
++      14      93
+       18      93
++      19      93
++      1a      93
+       1b      93
++      1c      93
++      1d      93
+       1e      94
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      99
+       5      99
++      6      99
++      7      99
+       8      100
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
+    method '<init> (JI)V' {
++      b      105
+       f      105
++      10      105
++      14      105
+       18      105
++      19      105
++      1a      105
+       1b      105
++      1c      105
++      1d      105
+       1e      106
+    }
+ }
+ 
+ class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      111
+       5      111
++      6      111
++      7      111
+       8      112
+    }
+ }
+diff --git a/testData/results/TestAnonymousParams.dec b/testData/results/TestAnonymousParams.dec
+index c487941..27e948a 100644
+--- a/testData/results/TestAnonymousParams.dec
++++ b/testData/results/TestAnonymousParams.dec
+@@ -6,11 +6,11 @@ import java.io.InputStream;
+ 
+ public class TestAnonymousParams {
+    void foo(InputStream in, final int a) throws IOException {
+-      FilterInputStream filterInputStream = new FilterInputStream(in) {
++      FilterInputStream filterInputStream = new FilterInputStream(in) {// 24
+          public int read() throws IOException {
+             return a;// 27
+          }
+-      };// 24
++      };
+       filterInputStream.read();// 30
+    }// 31
+ }
+@@ -23,14 +23,18 @@ class 'pkg/TestAnonymousParams$1' {
+ 
+ class 'pkg/TestAnonymousParams' {
+    method 'foo (Ljava/io/InputStream;I)V' {
+-      a      12
++      5      8
++      a      8
++      b      13
+       c      13
++      d      13
++      e      13
+       10      14
+    }
+ }
+ 
+ Lines mapping:
+-24 <-> 13
++24 <-> 9
+ 27 <-> 11
+ 30 <-> 14
+ 31 <-> 15
+diff --git a/testData/results/TestAnonymousSignature.dec b/testData/results/TestAnonymousSignature.dec
+index 95ad203..0c183ba 100644
+--- a/testData/results/TestAnonymousSignature.dec
++++ b/testData/results/TestAnonymousSignature.dec
+@@ -21,6 +21,8 @@ public class TestAnonymousSignature {
+ class 'pkg/TestAnonymousSignature$1' {
+    method 'size ()I' {
+       1      9
++      2      9
++      3      9
+       4      9
+    }
+ }
+@@ -35,9 +37,17 @@ class 'pkg/TestAnonymousSignature$2' {
+ class 'pkg/TestAnonymousSignature' {
+    method 'main ([Ljava/lang/String;)V' {
+       0      7
++      1      7
++      2      7
+       a      7
++      b      7
++      c      7
+       d      12
++      e      12
++      f      12
+       17      12
++      18      12
++      19      12
+       1a      17
+    }
+ }
+diff --git a/testData/results/TestAsserts.dec b/testData/results/TestAsserts.dec
+index f260d9e..c9e51a5 100644
+--- a/testData/results/TestAsserts.dec
++++ b/testData/results/TestAsserts.dec
+@@ -16,10 +16,13 @@ class 'pkg/TestAsserts' {
+    method 'foo ()I' {
+       0      4
+       1      4
++      8      6
+       9      6
+       a      6
++      1b      8
+       1c      8
+       1d      8
++      20      8
+       21      8
+       22      8
+       2d      10
+diff --git a/testData/results/TestClassCast.dec b/testData/results/TestClassCast.dec
+index e807294..f602eea 100644
+--- a/testData/results/TestClassCast.dec
++++ b/testData/results/TestClassCast.dec
+@@ -16,14 +16,29 @@ public class TestClassCast {
+ 
+ class 'pkg/TestClassCast' {
+    method 'test (Ljava/util/List;)V' {
++      0      7
+       1      7
+       3      8
+       f      9
+       10      9
++      11      9
+       12      9
++      13      9
++      14      9
++      15      9
++      16      9
+       18      12
++      19      12
++      1a      12
++      1b      12
+       1c      12
++      1d      12
++      1e      12
++      1f      12
++      20      12
+       21      12
++      22      12
++      23      12
+       24      13
+    }
+ }
+diff --git a/testData/results/TestClassFields.dec b/testData/results/TestClassFields.dec
+index 852ae47..1547551 100644
+--- a/testData/results/TestClassFields.dec
++++ b/testData/results/TestClassFields.dec
+@@ -17,8 +17,12 @@ public class TestClassFields {
+ class 'pkg/TestClassFields' {
+    method '<clinit> ()V' {
+       11      8
++      12      8
++      13      8
+       14      8
+       17      8
++      18      8
++      19      8
+       20      9
+    }
+ }
+diff --git a/testData/results/TestClassLambda.dec b/testData/results/TestClassLambda.dec
+index 751537c..2e5601a 100644
+--- a/testData/results/TestClassLambda.dec
++++ b/testData/results/TestClassLambda.dec
+@@ -25,12 +25,12 @@ public class TestClassLambda {
+ 
+    public void testLambda1() {
+       int var1 = (int)Math.random();// 39
+-      Runnable var2 = () -> {
++      Runnable var2 = () -> {// 40
+          System.out.println("hello1" + var1);
+-      };// 40
+-      Runnable var3 = () -> {
++      };
++      Runnable var3 = () -> {// 41
+          System.out.println("hello2" + var1);
+-      };// 41
++      };
+    }// 42
+ 
+    public void testLambda2() {
+@@ -79,130 +79,228 @@ public class TestClassLambda {
+ 
+    public void nestedLambdas() {
+       byte var1 = 5;// 85
+-      Runnable var2 = () -> {
+-         Runnable var1x = () -> {
++      Runnable var2 = () -> {// 86
++         Runnable var1x = () -> {// 87
+             System.out.println("hello2" + var1);
+-         };// 87
++         };
+          System.out.println("hello1" + var1);// 88
+-      };// 86 89
++      };// 89
+    }// 90
+ }
+ 
+ class 'pkg/TestClassLambda' {
+    method 'lambda$testLambda$0 (ILjava/lang/Integer;)V' {
+       0      20
++      1      20
+       2      20
++      3      20
++      4      20
+       5      20
+       6      20
+       7      21
++      8      21
++      9      21
++      a      21
++      b      21
+       c      21
++      d      21
+       e      21
++      f      21
++      10      21
+       11      21
+       12      21
++      13      21
++      14      21
+       15      22
+    }
+ 
+    method 'testLambda ()V' {
+       7      17
+       8      17
++      9      17
++      a      17
+       e      17
+       f      17
++      10      17
++      11      17
+       15      17
+       16      17
++      17      17
++      18      17
+       1c      17
+       1d      17
++      1e      17
++      1f      17
+       23      17
+       24      17
++      25      17
++      26      17
+       2a      17
++      2b      17
+       2c      17
++      2d      17
++      2e      17
+       33      17
++      34      17
+       35      17
++      36      17
++      37      17
+       39      17
++      3a      17
++      3b      17
+       3c      17
+       3d      18
++      3e      18
++      3f      18
+       40      18
+       41      18
++      42      19
+       4a      19
++      4b      19
++      4c      19
++      4d      19
++      4e      19
+       4f      23
+    }
+ 
+    method 'lambda$testLambda1$1 (I)V' {
+       0      28
++      1      28
++      2      28
+       a      28
++      b      28
++      f      28
+       13      28
++      14      28
++      15      28
+       16      28
++      17      28
++      18      28
+       19      29
+    }
+ 
+    method 'lambda$testLambda1$2 (I)V' {
+       0      31
++      1      31
++      2      31
+       a      31
++      b      31
++      f      31
+       13      31
++      14      31
++      15      31
+       16      31
++      17      31
++      18      31
+       19      32
+    }
+ 
+    method 'testLambda1 ()V' {
+       0      26
++      1      26
++      2      26
+       3      26
+       4      26
+-      b      29
+-      12      32
++      b      27
++      12      30
+       13      33
+    }
+ 
+    method 'lambda$testLambda2$3 (II)I' {
++      0      37
++      1      37
+       2      37
++      3      37
++      4      37
+       5      37
+    }
+ 
+    method 'testLambda2 ()V' {
+       5      36
++      6      36
++      7      36
+       9      39
+    }
+ 
+    method 'testLambda3 ()V' {
+       5      42
++      6      42
++      7      42
+       9      43
+    }
+ 
+    method 'testLambda4 ()V' {
+       5      46
++      6      46
++      7      46
+       9      47
+    }
+ 
+    method 'testLambda5 ()V' {
+       0      50
++      1      50
+       2      50
+       e      51
++      f      51
++      10      51
+       12      52
+    }
+ 
+    method 'lambda$testLambda6$4 (IILjava/lang/String;)Z' {
++      0      59
++      1      59
+       2      59
++      3      59
++      4      59
+       5      59
++      8      59
+       9      59
++      a      59
++      b      59
++      c      59
+       d      59
+       15      59
+    }
+ 
+    method 'testLambda6 ()V' {
+       7      55
++      8      56
+       9      56
++      a      56
++      b      56
++      c      56
++      d      56
+       e      56
+       f      56
+       10      56
++      11      57
+       12      57
++      13      57
++      14      57
++      15      57
++      16      57
+       17      57
+       18      57
+       19      57
++      1a      58
+       22      58
++      23      58
++      24      58
++      25      58
++      26      58
+       28      61
+    }
+ 
+    method 'testLambda7 ([Ljava/lang/annotation/Annotation;)V' {
++      0      64
+       1      64
++      2      64
++      3      64
+       9      64
++      a      64
++      b      64
++      c      64
++      d      64
+       f      65
+    }
+ 
+@@ -212,8 +310,15 @@ class 'pkg/TestClassLambda' {
+    }
+ 
+    method 'function (Ljava/util/function/Supplier;)Ljava/lang/String;' {
++      0      72
+       1      72
++      2      72
++      3      72
++      4      72
++      5      72
+       6      72
++      7      72
++      8      72
+       9      72
+    }
+ 
+@@ -224,25 +329,41 @@ class 'pkg/TestClassLambda' {
+ 
+    method 'lambda$null$5 (I)V' {
+       0      83
++      1      83
++      2      83
+       a      83
++      b      83
++      f      83
+       13      83
++      14      83
++      15      83
+       16      83
++      17      83
++      18      83
+       19      84
+    }
+ 
+    method 'lambda$nestedLambdas$6 (I)V' {
+-      6      84
++      6      82
+       7      85
++      8      85
++      9      85
+       11      85
++      12      85
++      16      85
+       1a      85
++      1b      85
++      1c      85
+       1d      85
++      1e      85
++      1f      85
+       20      86
+    }
+ 
+    method 'nestedLambdas ()V' {
+       0      80
+       1      80
+-      8      86
++      8      81
+       9      87
+    }
+ }
+@@ -256,8 +377,8 @@ Lines mapping:
+ 35 <-> 23
+ 36 <-> 24
+ 39 <-> 27
+-40 <-> 30
+-41 <-> 33
++40 <-> 28
++41 <-> 31
+ 42 <-> 34
+ 45 <-> 37
+ 46 <-> 40
+@@ -279,8 +400,8 @@ Lines mapping:
+ 77 <-> 73
+ 81 <-> 77
+ 85 <-> 81
+-86 <-> 87
+-87 <-> 85
++86 <-> 82
++87 <-> 83
+ 88 <-> 86
+ 89 <-> 87
+ 90 <-> 88
+diff --git a/testData/results/TestClassLoop.dec b/testData/results/TestClassLoop.dec
+index ba29595..0fad315 100644
+--- a/testData/results/TestClassLoop.dec
++++ b/testData/results/TestClassLoop.dec
+@@ -78,41 +78,68 @@ public class TestClassLoop {
+ class 'pkg/TestClassLoop' {
+    method 'testSimpleInfinite ()V' {
+       0      5
++      1      5
++      2      5
+       3      5
++      4      5
++      5      5
+    }
+ 
+    method 'testFinally ()V' {
+       0      10
++      1      10
++      2      10
+       3      10
+       4      10
+       d      10
++      e      14
+       f      14
+       1a      15
+       26      18
+       27      18
++      28      18
++      29      18
+       2a      18
++      2b      18
+    }
+ 
+    method 'testFinallyContinue ()V' {
+       0      24
++      1      24
++      2      24
+       3      24
+       4      24
+       d      24
+       e      29
++      f      29
++      10      29
+       11      29
++      12      29
+       13      29
++      25      32
+       26      32
+       2a      33
++      2b      33
++      2c      33
+       2d      33
++      2e      33
+       2f      33
++      30      33
++      31      33
+       32      34
+       37      39
++      38      39
++      39      39
+       3a      39
++      3b      39
+       3c      39
+    }
+ 
+    method 'testWhileCombined (Ljava/lang/String;)I' {
++      0      44
+       1      44
++      2      44
++      3      44
+       4      44
+       5      45
+       6      45
+@@ -120,29 +147,57 @@ class 'pkg/TestClassLoop' {
+       8      46
+       9      47
+       a      47
++      b      47
+       c      48
+       d      48
++      e      48
+       f      49
+       10      49
++      11      49
+       12      51
+       13      51
++      15      51
++      16      51
+       17      51
++      1a      52
++      1b      52
+       1c      52
++      1d      52
++      1e      52
+       1f      52
++      20      52
++      21      53
++      22      53
+       23      53
++      24      53
+       25      53
+       28      54
++      29      54
++      2a      54
++      2e      56
++      2f      56
+       30      56
++      31      56
+       32      56
++      35      60
+       36      60
+       3d      61
++      3e      61
+       42      61
++      43      64
+       44      64
++      45      64
++      46      65
++      47      65
+       48      65
+       4b      66
+       4e      69
+       4f      69
+       50      51
++      51      51
++      52      51
++      56      73
++      57      73
+       58      73
+    }
+ }
+diff --git a/testData/results/TestClassNestedInitializer.dec b/testData/results/TestClassNestedInitializer.dec
+index 0576e74..f2617df 100644
+--- a/testData/results/TestClassNestedInitializer.dec
++++ b/testData/results/TestClassNestedInitializer.dec
+@@ -4,34 +4,45 @@ public class TestClassNestedInitializer {
+    public String secret;
+ 
+    public void test() {
+-      TestClassNestedInitializer var1 = new TestClassNestedInitializer() {
++      TestClassNestedInitializer var1 = new TestClassNestedInitializer() {// 22
+          {
+             this.secret = "one";
+          }
+-      };// 22
++      };
+       System.out.println(var1.secret);// 23
+    }// 24
+ }
+ 
+ class 'pkg/TestClassNestedInitializer$1' {
+    method '<init> (Lpkg/TestClassNestedInitializer;)V' {
++      9      8
+       a      8
++      b      8
+       c      8
++      d      8
++      e      8
+       f      9
+    }
+ }
+ 
+ class 'pkg/TestClassNestedInitializer' {
+    method 'test ()V' {
+-      8      10
++      8      6
+       9      11
++      a      11
++      b      11
++      c      11
+       d      11
++      e      11
++      f      11
+       10      11
++      11      11
++      12      11
+       13      12
+    }
+ }
+ 
+ Lines mapping:
+-22 <-> 11
++22 <-> 7
+ 23 <-> 12
+ 24 <-> 13
+diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
+index d5f7070..c033983 100644
+--- a/testData/results/TestClassSimpleBytecodeMapping.dec
++++ b/testData/results/TestClassSimpleBytecodeMapping.dec
+@@ -49,8 +49,13 @@ public class TestClassSimpleBytecodeMapping {
+ class 'pkg/TestClassSimpleBytecodeMapping$1' {
+    method 'run ()V' {
+       0      7
++      1      7
++      2      7
+       3      7
++      4      7
+       5      7
++      6      7
++      7      7
+       8      8
+    }
+ }
+@@ -58,40 +63,77 @@ class 'pkg/TestClassSimpleBytecodeMapping$1' {
+ class 'pkg/TestClassSimpleBytecodeMapping' {
+    method 'test ()I' {
+       0      4
++      1      4
++      2      4
+       3      4
++      4      4
+       5      4
++      6      4
++      7      4
++      8      5
+       11      5
++      12      5
++      13      5
++      14      10
+       15      10
++      16      10
+       17      10
++      18      10
++      19      10
+       1a      11
++      1b      11
++      1c      11
+       1d      11
+       1e      11
+       1f      11
+       22      12
++      23      12
++      24      12
+       25      12
++      26      12
+       27      12
++      28      12
++      29      12
+       2a      13
+       2b      13
+       2c      15
++      2d      15
++      2e      15
+       2f      15
++      30      15
+       31      15
++      32      15
++      33      15
+       34      16
+       35      16
+    }
+ 
+    method 'test2 (Ljava/lang/String;)V' {
++      0      22
+       1      22
++      2      22
++      3      22
+       10      23
+       11      24
++      12      24
++      13      24
+       15      24
+       23      26
+       24      26
++      25      26
++      26      26
+       27      26
++      28      26
+       2e      29
+    }
+ 
+    method 'run (Ljava/lang/Runnable;)V' {
++      0      32
+       1      32
++      2      32
++      3      32
++      4      32
++      5      32
+       6      33
+    }
+ }
+@@ -99,8 +141,13 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
+ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+    method 'print ()V' {
+       0      37
++      1      37
++      2      37
+       3      37
++      4      37
+       5      37
++      6      37
++      7      37
+       8      38
+    }
+ }
+@@ -108,8 +155,13 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    method 'print ()V' {
+       0      43
++      1      43
++      2      43
+       3      43
++      4      43
+       5      43
++      6      43
++      7      43
+       8      44
+    }
+ }
+diff --git a/testData/results/TestClassSwitch.dec b/testData/results/TestClassSwitch.dec
+index d8cb724..a42bfc8 100644
+--- a/testData/results/TestClassSwitch.dec
++++ b/testData/results/TestClassSwitch.dec
+@@ -15,12 +15,20 @@ public class TestClassSwitch {
+ 
+ class 'pkg/TestClassSwitch' {
+    method 'testCaseOrder (I)V' {
++      0      4
+       1      4
+       1c      10
++      1d      10
++      1e      10
+       1f      10
++      20      10
+       21      10
++      22      10
++      23      10
+       24      12
+       25      6
++      26      6
++      27      6
+       28      6
+       29      6
+       2c      8
+diff --git a/testData/results/TestClassTypes.dec b/testData/results/TestClassTypes.dec
+index 1b76bbb..cc61ae7 100644
+--- a/testData/results/TestClassTypes.dec
++++ b/testData/results/TestClassTypes.dec
+@@ -53,29 +53,41 @@ class 'pkg/TestClassTypes' {
+       0      7
+       1      7
+       2      8
++      3      8
++      4      8
+       5      8
++      6      9
+       7      9
++      8      9
++      9      9
+       a      9
+       b      9
+       c      9
+       d      9
+       10      10
+       11      10
++      15      11
+       16      11
++      17      11
++      18      11
+       19      11
+       1a      11
+       1b      11
+       1c      11
+       1f      12
+       20      12
++      21      15
+       22      15
+       23      15
+       26      16
++      27      16
++      28      16
+       29      16
+       2c      19
+    }
+ 
+    method 'testBit (I)Z' {
++      0      22
+       1      22
+       2      22
+       3      22
+@@ -84,30 +96,59 @@ class 'pkg/TestClassTypes' {
+    }
+ 
+    method 'testSwitchConsts (I)V' {
++      0      26
+       1      26
+       2c      28
++      2d      28
++      2e      28
+       2f      28
++      30      28
+       31      28
++      32      28
++      33      28
+       34      29
+       37      31
++      38      31
++      39      31
+       3a      31
++      3b      31
+       3c      31
++      3d      31
++      3e      31
+       3f      32
+       42      35
++      43      35
++      44      35
+       45      35
++      46      35
+       47      35
+       4a      38
+    }
+ 
+    method 'testAssignmentType (Ljava/util/List;)V' {
++      0      41
+       1      41
+       3      42
+       f      43
+       10      43
++      11      43
+       12      43
++      13      43
++      14      43
++      15      43
++      16      43
+       18      46
++      19      46
++      1a      46
++      1b      46
+       1c      46
++      1d      46
++      1e      46
++      1f      46
++      20      46
+       21      46
++      22      46
++      23      46
+       24      47
+    }
+ }
+diff --git a/testData/results/TestClassVar.dec b/testData/results/TestClassVar.dec
+index fb7cb0f..a6752b3 100644
+--- a/testData/results/TestClassVar.dec
++++ b/testData/results/TestClassVar.dec
+@@ -43,20 +43,32 @@ class 'pkg/TestClassVar' {
+    method 'testFieldSSAU ()V' {
+       0      7
+       1      7
++      2      7
+       3      7
++      4      7
+       5      7
+       8      9
++      9      9
++      a      9
+       b      9
++      1e      11
+       1f      11
+       20      11
++      21      11
++      22      11
+       26      12
++      27      12
++      28      12
+       29      12
+       2e      7
+       34      18
+    }
+ 
+    method 'testFieldSSAU1 ()Ljava/lang/Long;' {
++      4      21
+       6      21
++      7      21
++      8      21
+       b      21
+       f      21
+       13      21
+@@ -65,15 +77,27 @@ class 'pkg/TestClassVar' {
+    method 'testComplexPropagation ()V' {
+       0      25
+       1      25
++      2      27
+       3      27
++      4      27
+       5      27
++      8      29
+       9      29
++      a      29
+       b      29
++      c      29
+       d      29
++      10      29
+       11      29
+       14      29
++      15      29
++      16      29
++      1a      33
++      1b      33
+       1c      33
+       1f      34
++      20      34
++      21      34
+       22      34
+       28      38
+    }
+diff --git a/testData/results/TestCodeConstructs.dec b/testData/results/TestCodeConstructs.dec
+index fefd421..2e422b8 100644
+--- a/testData/results/TestCodeConstructs.dec
++++ b/testData/results/TestCodeConstructs.dec
+@@ -15,11 +15,16 @@ class TestCodeConstructs {
+ class 'pkg/TestCodeConstructs' {
+    method 'expressions ()V' {
+       7      6
++      8      6
++      9      6
+       b      7
+    }
+ 
+    method 'fieldIncrement ()Ljava/lang/Integer;' {
++      4      10
+       6      10
++      7      10
++      8      10
+       b      10
+       12      10
+    }
+diff --git a/testData/results/TestDebugSymbols.dec b/testData/results/TestDebugSymbols.dec
+index e96eb33..1300ffd 100644
+--- a/testData/results/TestDebugSymbols.dec
++++ b/testData/results/TestDebugSymbols.dec
+@@ -13,22 +13,44 @@ class TestDebugSymbols {
+ class 'pkg/TestDebugSymbols' {
+    method 'm ()I' {
+       0      4
++      1      4
+       2      4
+       3      5
++      4      5
++      5      5
+       6      5
++      7      6
+       8      6
+       9      6
++      a      6
+       b      6
+       c      6
++      d      6
+       e      7
++      f      7
++      10      7
+       11      7
+       12      7
+       13      7
++      14      7
++      1c      8
+       20      8
++      21      8
++      25      8
+       29      8
++      2a      8
++      2e      8
++      2f      8
+       33      8
++      34      8
++      38      8
++      39      8
+       3d      8
++      3e      8
++      3f      8
+       40      8
++      41      8
++      42      8
+       43      8
+    }
+ }
+diff --git a/testData/results/TestEnum.dec b/testData/results/TestEnum.dec
+index 6fabfae..069e4ef 100644
+--- a/testData/results/TestEnum.dec
++++ b/testData/results/TestEnum.dec
+@@ -50,13 +50,20 @@ class 'pkg/TestEnum' {
+ 
+    method '<init> (Ljava/lang/String;I)V' {
+       3      20
++      4      20
+       5      20
+       6      20
++      7      20
++      8      20
+       9      21
+    }
+ 
+    method '<init> (Ljava/lang/String;ILjava/lang/String;Lpkg/TestEnum$Type;)V' {
++      6      24
++      7      24
+       8      24
++      9      24
++      a      24
+       b      25
+    }
+ }
+diff --git a/testData/results/TestExtendingSubclass.dec b/testData/results/TestExtendingSubclass.dec
+index 2caf740..20f4057 100644
+--- a/testData/results/TestExtendingSubclass.dec
++++ b/testData/results/TestExtendingSubclass.dec
+@@ -21,7 +21,10 @@ class 'pkg/TestExtendingSubclass$Subclass1' {
+ 
+ class 'pkg/TestExtendingSubclass$Subclass2' {
+    method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
++      7      10
+       8      10
++      9      10
++      a      10
+       b      11
+    }
+ }
+diff --git a/testData/results/TestIffSimplification.dec b/testData/results/TestIffSimplification.dec
+index 595c4cb..f9e97f1 100644
+--- a/testData/results/TestIffSimplification.dec
++++ b/testData/results/TestIffSimplification.dec
+@@ -32,54 +32,91 @@ public class TestIffSimplification {
+ 
+ class 'pkg/TestIffSimplification' {
+    method 'simpleIff (Z[I)I' {
++      0      4
+       1      4
++      4      4
+       5      4
+       6      4
++      a      4
+       b      4
+       c      4
+       d      4
+    }
+ 
+    method 'simpleIf (Z[I)I' {
++      0      8
+       1      8
++      4      8
+       5      8
+       6      8
++      8      8
+       9      8
+       a      8
+    }
+ 
+    method 'nestedIf (ZZ[I)I' {
++      0      12
+       1      12
++      4      13
+       5      13
++      8      13
+       9      13
+       a      13
++      c      13
+       d      13
+       e      13
++      10      15
+       11      15
+       12      15
+       13      15
+    }
+ 
+    method 'compareTo (IIBBDDII)I' {
++      0      20
++      1      20
+       2      20
++      5      21
++      6      21
+       7      21
+       a      21
+       e      21
+       f      21
++      10      22
++      11      22
++      12      22
+       13      22
++      16      23
++      17      23
++      18      23
+       19      23
+       1c      23
+       20      23
+       21      23
++      22      24
++      23      24
++      24      24
++      25      24
+       26      24
+       27      24
++      28      24
++      29      24
+       2a      24
++      2b      24
++      2c      24
+       2d      24
+       2e      24
++      31      25
++      32      25
++      33      25
++      34      25
+       35      25
+       38      25
+       3c      25
+       3d      25
++      3e      27
++      3f      27
++      40      27
++      41      27
+       42      27
+       43      27
+       46      27
+diff --git a/testData/results/TestIllegalVarName.dec b/testData/results/TestIllegalVarName.dec
+index 3eb1ea5..5178d84 100644
+--- a/testData/results/TestIllegalVarName.dec
++++ b/testData/results/TestIllegalVarName.dec
+@@ -21,10 +21,19 @@ public final class TestIllegalVarName {
+ 
+ class 'pkg/TestIllegalVarName' {
+    method 'm (Ljava/lang/String;I)Ljava/lang/String;' {
++      0      16
+       1      16
++      2      16
+       3      16
++      4      16
++      5      16
++      d      17
+       11      17
++      12      17
++      16      17
+       1a      17
++      1b      17
++      1c      17
+       1d      17
+    }
+ }
+diff --git a/testData/results/TestInnerClassConstructor.dec b/testData/results/TestInnerClassConstructor.dec
+index f15701a..8a8d057 100644
+--- a/testData/results/TestInnerClassConstructor.dec
++++ b/testData/results/TestInnerClassConstructor.dec
+@@ -29,6 +29,7 @@ class TestInnerClassConstructor {
+ class 'pkg/TestInnerClassConstructor' {
+    method 'l ()V' {
+       5      4
++      6      4
+       c      5
+    }
+ 
+@@ -40,25 +41,43 @@ class 'pkg/TestInnerClassConstructor' {
+ 
+    method 'n (Ljava/lang/String;)V' {
+       0      12
++      1      12
++      2      12
+       a      12
++      b      12
++      f      12
+       13      12
++      14      12
++      15      12
+       16      12
++      17      12
++      18      12
+       19      13
+    }
+ }
+ 
+ class 'pkg/TestInnerClassConstructor$Another' {
+    method '<init> (Lpkg/TestInnerClassConstructor;II)V' {
++      11      17
+       15      17
++      16      17
++      1a      17
+       1e      17
++      1f      17
++      20      17
+       21      17
++      22      17
++      23      17
+       24      18
+    }
+ }
+ 
+ class 'pkg/TestInnerClassConstructor$Inner' {
+    method '<init> (Lpkg/TestInnerClassConstructor;Ljava/lang/String;)V' {
++      a      23
+       b      23
++      c      23
++      d      23
+       e      24
+    }
+ }
+diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
+index e5aba7d..ce72af8 100644
+--- a/testData/results/TestInnerLocal.dec
++++ b/testData/results/TestInnerLocal.dec
+@@ -55,7 +55,11 @@ public class TestInnerLocal {
+ 
+ class 'TestInnerLocal$1Inner' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      6
++      5      6
+       6      6
++      7      6
++      8      6
+       9      7
+    }
+ }
+@@ -63,44 +67,67 @@ class 'TestInnerLocal$1Inner' {
+ class 'TestInnerLocal' {
+    method 'testStaticMethod ()V' {
+       4      10
++      5      10
+       e      11
++      f      11
+       18      12
++      19      12
+       1e      13
+    }
+ 
+    method 'testMethod ()V' {
+       5      24
++      6      24
+       f      25
++      10      25
+       1a      26
++      1b      26
+       24      27
++      25      27
+       2a      28
+    }
+ }
+ 
+ class 'TestInnerLocal$2Inner' {
+    method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
++      9      20
++      a      20
+       b      20
++      c      20
++      d      20
+       e      21
+    }
+ }
+ 
+ class 'TestInnerLocal$Inner1' {
+    method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
++      9      34
++      a      34
+       b      34
++      c      34
++      d      34
+       e      35
+    }
+ }
+ 
+ class 'TestInnerLocal$Inner1Static' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      42
++      5      42
+       6      42
++      7      42
++      8      42
+       9      43
+    }
+ }
+ 
+ class 'TestInnerLocal$Inner1Static$Inner2Static' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      49
++      5      49
+       6      49
++      7      49
++      8      49
+       9      50
+    }
+ }
+diff --git a/testData/results/TestInnerLocalPkg.dec b/testData/results/TestInnerLocalPkg.dec
+index 7ddb0ce..9892a07 100644
+--- a/testData/results/TestInnerLocalPkg.dec
++++ b/testData/results/TestInnerLocalPkg.dec
+@@ -57,7 +57,11 @@ public class TestInnerLocalPkg {
+ 
+ class 'pkg/TestInnerLocalPkg$1Inner' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      8
++      5      8
+       6      8
++      7      8
++      8      8
+       9      9
+    }
+ }
+@@ -65,44 +69,67 @@ class 'pkg/TestInnerLocalPkg$1Inner' {
+ class 'pkg/TestInnerLocalPkg' {
+    method 'testStaticMethod ()V' {
+       4      12
++      5      12
+       e      13
++      f      13
+       18      14
++      19      14
+       1e      15
+    }
+ 
+    method 'testMethod ()V' {
+       5      26
++      6      26
+       f      27
++      10      27
+       1a      28
++      1b      28
+       24      29
++      25      29
+       2a      30
+    }
+ }
+ 
+ class 'pkg/TestInnerLocalPkg$2Inner' {
+    method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
++      9      22
++      a      22
+       b      22
++      c      22
++      d      22
+       e      23
+    }
+ }
+ 
+ class 'pkg/TestInnerLocalPkg$Inner1' {
+    method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
++      9      36
++      a      36
+       b      36
++      c      36
++      d      36
+       e      37
+    }
+ }
+ 
+ class 'pkg/TestInnerLocalPkg$Inner1Static' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      44
++      5      44
+       6      44
++      7      44
++      8      44
+       9      45
+    }
+ }
+ 
+ class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
+    method '<init> (Ljava/lang/String;)V' {
++      4      51
++      5      51
+       6      51
++      7      51
++      8      51
+       9      52
+    }
+ }
+diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
+index 406e1f4..623193f 100644
+--- a/testData/results/TestInnerSignature.dec
++++ b/testData/results/TestInnerSignature.dec
+@@ -36,27 +36,64 @@ public class TestInnerSignature<A, B, C> {
+ 
+ class 'TestInnerSignature' {
+    method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      4      6
++      5      6
+       6      6
++      7      6
++      8      6
++      9      7
++      a      7
+       b      7
++      c      7
++      d      7
++      e      8
++      f      8
+       10      8
++      11      8
++      12      8
+       13      9
+    }
+ }
+ 
+ class 'TestInnerSignature$Inner' {
+    method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      9      17
++      a      17
+       b      17
++      c      17
++      d      17
++      e      18
++      f      18
+       10      18
++      11      18
++      12      18
++      13      19
++      14      19
++      15      19
+       16      19
++      17      19
++      18      19
+       19      20
+    }
+ }
+ 
+ class 'TestInnerSignature$InnerStatic' {
+    method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      4      29
++      5      29
+       6      29
++      7      29
++      8      29
++      9      30
++      a      30
+       b      30
++      c      30
++      d      30
++      e      31
++      f      31
+       10      31
++      11      31
++      12      31
+       13      32
+    }
+ }
+diff --git a/testData/results/TestJava9StringConcat.dec b/testData/results/TestJava9StringConcat.dec
+index 389bb85..29890ed 100644
+--- a/testData/results/TestJava9StringConcat.dec
++++ b/testData/results/TestJava9StringConcat.dec
+@@ -12,12 +12,25 @@ public class TestJava9StringConcat {
+ 
+ class 'java9/TestJava9StringConcat' {
+    method 'test1 (Ljava/lang/String;I)Ljava/lang/String;' {
++      0      4
++      1      4
+       2      4
++      3      4
++      4      4
++      5      4
++      6      4
+       7      4
+    }
+ 
+    method 'test2 (Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;' {
++      0      8
++      1      8
++      2      8
+       3      8
++      4      8
++      5      8
++      6      8
++      7      8
+       8      8
+    }
+ }
+diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
+index d1e3f7b..b6d4d46 100644
+--- a/testData/results/TestKotlinConstructorKt.dec
++++ b/testData/results/TestKotlinConstructorKt.dec
+@@ -16,12 +16,12 @@ import kotlin.collections.CollectionsKt;
+ public final class TestKotlinConstructorKt {
+    private static final List<Mapping> foo(Collection<String> list) {
+       Iterable $receiver$iv = (Iterable)list;// 2
+-      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));// 10
+-      Iterator var4 = $receiver$iv.iterator();// 11
++      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));
++      Iterator var4 = $receiver$iv.iterator();// 10 11
+ 
+       while(var4.hasNext()) {
+          Object item$iv$iv = var4.next();
+-         String it = (String)item$iv$iv;// 12
++         String it = (String)item$iv$iv;
+          Mapping var10000 = new Mapping;
+          if (it == null) {// 3
+             throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
+@@ -29,7 +29,7 @@ public final class TestKotlinConstructorKt {
+ 
+          var10000.<init>((String)it);
+          Mapping var11 = var10000;
+-         destination$iv$iv.add(var11);
++         destination$iv$iv.add(var11);// 12
+       }
+ 
+       return CollectionsKt.toList((Iterable)((List)destination$iv$iv));// 4 13
+@@ -38,29 +38,87 @@ public final class TestKotlinConstructorKt {
+ 
+ class 'TestKotlinConstructorKt' {
+    method 'foo (Ljava/util/Collection;)Ljava/util/List;' {
++      0      17
+       1      17
++      2      17
++      3      17
+       4      17
++      5      17
++      6      19
++      c      18
+       d      18
++      e      18
+       f      18
++      10      18
++      11      18
+       15      18
++      16      18
++      17      18
+       18      18
++      19      18
+       1b      19
++      1c      19
++      1d      19
++      1e      19
++      1f      19
+       20      19
++      22      21
++      23      21
+       24      21
++      25      21
++      26      21
++      27      21
++      28      21
++      2c      22
++      2d      22
+       2e      22
++      2f      22
++      30      22
++      31      22
++      32      22
+       33      22
++      34      22
++      35      31
++      36      23
++      37      23
+       38      23
++      39      23
++      3a      23
+       3b      23
++      3c      23
++      3d      23
++      3e      23
++      43      25
++      44      25
+       46      25
+       4d      26
++      4e      26
+       52      26
+       53      29
++      54      29
++      55      29
+       56      29
++      57      29
++      58      29
+       59      30
++      5a      30
++      5d      31
++      5e      31
+       5f      31
++      60      31
++      61      31
++      62      31
++      63      31
++      68      34
+       69      34
++      6a      34
++      6b      34
+       6c      34
++      6d      34
++      6e      34
+       6f      34
++      70      34
++      71      34
+       72      34
+    }
+ }
+@@ -69,7 +127,7 @@ Lines mapping:
+ 2 <-> 18
+ 3 <-> 26
+ 4 <-> 35
+-10 <-> 19
++10 <-> 20
+ 11 <-> 20
+-12 <-> 24
++12 <-> 32
+ 13 <-> 35
+diff --git a/testData/results/TestLocalClass.dec b/testData/results/TestLocalClass.dec
+index 27c2958..00e06e1 100644
+--- a/testData/results/TestLocalClass.dec
++++ b/testData/results/TestLocalClass.dec
+@@ -38,7 +38,10 @@ class 'pkg/TestLocalClass' {
+       0      4
+       1      4
+       a      12
++      b      13
+       c      13
++      d      13
++      e      13
+       f      14
+    }
+ 
+diff --git a/testData/results/TestLocalsNames.dec b/testData/results/TestLocalsNames.dec
+index fe6fe79..2ba5f08 100644
+--- a/testData/results/TestLocalsNames.dec
++++ b/testData/results/TestLocalsNames.dec
+@@ -26,40 +26,103 @@ public class TestLocalsNames {
+ 
+ class 'pkg/TestLocalsNames' {
+    method 'rename (Ljava/io/File;Z)V' {
++      0      6
+       1      6
++      2      6
++      3      6
+       4      6
+       7      7
++      8      7
++      9      7
+       a      7
++      b      8
+       c      8
++      d      8
++      e      8
+       f      8
++      10      8
++      11      9
++      12      9
+       13      9
++      14      9
+       17      10
+       18      10
++      19      10
+       1a      12
+       1b      12
++      1d      12
++      1e      12
++      1f      12
++      20      12
+       21      12
++      24      13
++      25      13
++      26      13
++      27      13
+       28      13
+       29      13
++      2a      13
++      36      14
++      37      14
+       38      14
++      39      14
++      3a      14
+       3e      14
++      3f      14
+       43      14
++      44      14
++      45      14
+       49      14
++      4a      14
++      51      16
++      52      16
++      53      16
++      54      16
+       55      16
++      56      16
++      57      16
+       66      16
++      67      16
++      6b      16
++      6c      16
+       70      16
++      71      16
++      75      16
++      76      16
+       7a      16
++      7b      16
++      7c      16
+       81      12
++      82      12
++      83      12
+       87      19
++      88      19
++      89      19
++      8a      19
+       8b      19
+       8c      19
++      8d      19
+       8e      20
++      8f      20
++      90      20
+       98      20
++      99      20
++      9d      20
++      9e      20
+       a2      20
++      a3      20
++      a7      20
++      a8      20
++      a9      20
++      aa      20
+       ab      20
+       ac      20
+       ad      20
+       b1      20
++      b2      20
+       b6      20
++      b7      20
++      b8      20
+       b9      20
+       bc      23
+    }
+diff --git a/testData/results/TestLocalsSignature.dec b/testData/results/TestLocalsSignature.dec
+index 2948bfd..7146344 100644
+--- a/testData/results/TestLocalsSignature.dec
++++ b/testData/results/TestLocalsSignature.dec
+@@ -12,14 +12,20 @@ public class TestLocalsSignature {
+ 
+ class 'pkg/TestLocalsSignature' {
+    method 'main ([Ljava/lang/String;)V' {
+-      7      7
+-      9      8
+-      b      8
+-      11      9
++      7      6
++      8      7
++      9      7
++      a      7
++      b      7
++      c      7
++      d      7
++      e      7
++      f      7
++      11      8
+    }
+ }
+ 
+ Lines mapping:
+-24 <-> 8
+-25 <-> 9
+-26 <-> 10
++24 <-> 7
++25 <-> 8
++26 <-> 9
+diff --git a/testData/results/TestMemberAnnotations.dec b/testData/results/TestMemberAnnotations.dec
+index 1e3a41c..72d29af 100644
+--- a/testData/results/TestMemberAnnotations.dec
++++ b/testData/results/TestMemberAnnotations.dec
+@@ -22,9 +22,14 @@ class TestMemberAnnotations {
+ 
+ class 'pkg/TestMemberAnnotations' {
+    method 'f (I)I' {
++      0      13
++      1      13
+       2      13
++      3      13
++      4      13
+       5      13
+       6      13
++      7      13
+       8      13
+       9      13
+    }
+diff --git a/testData/results/TestMethodReferenceSameName.dec b/testData/results/TestMethodReferenceSameName.dec
+index 3449a8c..0ddb1b5 100644
+--- a/testData/results/TestMethodReferenceSameName.dec
++++ b/testData/results/TestMethodReferenceSameName.dec
+@@ -15,9 +15,18 @@ public class TestMethodReferenceSameName {
+ 
+ class 'TestMethodReferenceSameName' {
+    method 'foo ()V' {
++      0      4
+       1      4
++      2      4
++      3      4
+       5      5
++      6      5
++      7      5
+       e      6
++      f      6
++      10      6
++      11      6
++      12      6
+       13      7
+    }
+ }
+diff --git a/testData/results/TestStaticNameClash.dec b/testData/results/TestStaticNameClash.dec
+index 230983e..6ba0c70 100644
+--- a/testData/results/TestStaticNameClash.dec
++++ b/testData/results/TestStaticNameClash.dec
+@@ -10,7 +10,10 @@ public class TestStaticNameClash {
+ 
+ class 'pkg/TestStaticNameClash' {
+    method 'setProperty (Ljava/lang/String;)V' {
++      0      6
+       1      6
++      2      6
++      3      6
+       4      7
+    }
+ }
+diff --git a/testData/results/TestStringConcat.dec b/testData/results/TestStringConcat.dec
+index b3fc995..951a761 100644
+--- a/testData/results/TestStringConcat.dec
++++ b/testData/results/TestStringConcat.dec
+@@ -12,16 +12,29 @@ public class TestStringConcat {
+ 
+ class 'pkg/TestStringConcat' {
+    method 'test1 (Ljava/lang/String;I)Ljava/lang/String;' {
++      7      4
++      b      4
+       f      4
++      10      4
++      11      4
+       12      4
+    }
+ 
+    method 'test2 (Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;' {
+       7      8
++      8      8
++      c      8
+       10      8
++      11      8
++      15      8
+       19      8
++      1a      8
++      1e      8
+       22      8
++      23      8
+       27      8
++      28      8
++      29      8
+       2a      8
+    }
+ }
+diff --git a/testData/results/TestStringLiterals.dec b/testData/results/TestStringLiterals.dec
+index c5afe18..644701c 100644
+--- a/testData/results/TestStringLiterals.dec
++++ b/testData/results/TestStringLiterals.dec
+@@ -12,20 +12,39 @@ public class TestStringLiterals {
+ class 'pkg/TestStringLiterals' {
+    method 'main ([Ljava/lang/String;)V' {
+       0      4
++      1      4
+       2      4
+       9      5
++      a      5
+       e      5
++      f      5
+       13      5
++      14      5
+       18      5
++      19      5
+       1d      5
++      1e      5
+       22      5
++      23      5
+       28      5
++      29      5
+       2e      5
++      2f      5
+       31      5
+       32      6
++      33      6
++      34      6
++      35      6
+       36      6
++      37      6
++      38      6
+       39      7
++      3a      7
++      3b      7
++      3c      7
+       3d      7
++      3e      7
++      3f      7
+       40      8
+    }
+ }
+diff --git a/testData/results/TestSynchronizedMapping.dec b/testData/results/TestSynchronizedMapping.dec
+index 84ad48a..6778aa1 100644
+--- a/testData/results/TestSynchronizedMapping.dec
++++ b/testData/results/TestSynchronizedMapping.dec
+@@ -16,16 +16,26 @@ public class TestSynchronizedMapping {
+ 
+ class 'pkg/TestSynchronizedMapping' {
+    method 'test (I)I' {
++      0      4
+       3      4
+       4      5
++      5      5
++      6      5
+       8      6
+       12      8
++      13      8
++      14      8
+       15      8
+    }
+ 
+    method 'test2 (Ljava/lang/String;)V' {
+       0      12
++      1      12
++      2      12
++      3      12
+       4      12
++      5      12
++      6      12
+       7      13
+    }
+ }
+diff --git a/testData/results/TestSyntheticAccess.dec b/testData/results/TestSyntheticAccess.dec
+index 9f1c0ee..3fe6b99 100644
+--- a/testData/results/TestSyntheticAccess.dec
++++ b/testData/results/TestSyntheticAccess.dec
+@@ -40,11 +40,16 @@ class TestSyntheticAccess {
+ class 'pkg/TestSyntheticAccess$Assigner' {
+    method 'assignI (I)V' {
+       3      8
++      4      8
++      5      8
+       9      9
+    }
+ 
+    method 'assignS (I)V' {
++      0      12
+       2      12
++      3      12
++      4      12
+       5      13
+    }
+ }
+@@ -52,7 +57,10 @@ class 'pkg/TestSyntheticAccess$Assigner' {
+ class 'pkg/TestSyntheticAccess$Incrementer' {
+    method 'orI ()V' {
+       1      18
++      2      18
+       3      18
++      4      18
++      5      18
+       b      18
+       c      18
+       11      19
+@@ -60,23 +68,31 @@ class 'pkg/TestSyntheticAccess$Incrementer' {
+ 
+    method 'incrementI ()V' {
+       2      22
++      3      22
++      4      22
+       7      22
+       8      23
+    }
+ 
+    method 'decrementI ()V' {
+       2      26
++      3      26
++      4      26
+       6      26
+       8      27
+    }
+ 
+    method 'incrementS ()V' {
+       0      30
++      1      30
++      2      30
+       4      30
+    }
+ 
+    method 'decrementS ()V' {
+       0      34
++      1      34
++      2      34
+       4      35
+       5      34
+    }
+diff --git a/testData/results/TestThrowException.dec b/testData/results/TestThrowException.dec
+index 7c52234..1344ac4 100644
+--- a/testData/results/TestThrowException.dec
++++ b/testData/results/TestThrowException.dec
+@@ -26,10 +26,15 @@ class 'pkg/TestThrowException$1' {
+ 
+ class 'pkg/TestThrowException' {
+    method '<init> (I)V' {
++      4      6
+       5      6
+       c      7
++      d      7
+       11      7
++      12      9
+       1b      9
++      1c      9
++      1d      9
+       1e      15
+    }
+ }
+diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
+index 092564e..b3e3ac2 100644
+--- a/testData/results/TestTryCatchFinally.dec
++++ b/testData/results/TestTryCatchFinally.dec
+@@ -43,41 +43,73 @@ public class TestTryCatchFinally {
+ class 'pkg/TestTryCatchFinally' {
+    method 'test1 (Ljava/lang/String;)V' {
+       0      5
++      1      5
++      2      5
+       3      5
++      4      5
+       5      5
+       14      8
++      15      8
++      16      8
+       17      8
++      18      8
+       19      8
+       1f      9
+       2b      13
++      2c      13
+       2d      13
++      2e      13
++      2f      13
+       30      13
++      31      13
+       38      16
+    }
+ 
+    method 'foo (I)I' {
++      0      19
+       1      19
+       2      19
+       c      20
++      d      21
+       e      21
+       f      21
++      12      22
+       13      22
+       1b      24
+    }
+ 
+    method 'test (Ljava/lang/String;)I' {
++      0      30
+       1      30
++      2      30
++      3      30
+       4      30
++      d      31
+       e      31
+       f      32
+       10      33
++      11      33
++      12      33
+       1a      33
++      1b      33
+       23      33
++      24      33
++      25      33
+       26      33
+       31      38
++      32      38
++      33      38
+       34      35
+       35      35
++      36      35
++      37      35
+       38      35
++      39      35
++      3a      38
++      3b      38
++      3c      38
++      3d      38
++      3e      38
+       3f      38
+    }
+ }
+diff --git a/testData/results/TypeAnnotations.dec b/testData/results/TypeAnnotations.dec
+index 590d894..f743fc8 100644
+--- a/testData/results/TypeAnnotations.dec
++++ b/testData/results/TypeAnnotations.dec
+@@ -31,6 +31,7 @@ class TypeAnnotations {
+ class 'pkg/TypeAnnotations' {
+    method 'm1 ()I' {
+       0      13
++      1      13
+       2      13
+    }
+ 
+-- 
+2.10.0.windows.1
+

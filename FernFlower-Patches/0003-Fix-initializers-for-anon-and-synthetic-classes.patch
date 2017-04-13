@@ -1,0 +1,129 @@
+From 212d3af1f48b38303ff4858852fc2598f1b108b0 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Wed, 12 Apr 2017 13:21:00 -0700
+Subject: [PATCH] Fix initializers for anon and synthetic classes
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 0986a22..815ec14 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -54,6 +54,7 @@ public class ClassWriter {
+     StructClass cl = wrapper.getClassStruct();
+ 
+     InitializerProcessor.extractInitializers(wrapper);
++    InitializerProcessor.hideInitalizers(wrapper);
+ 
+     if (node.type == ClassNode.CLASS_ROOT &&
+         !cl.isVersionGE_1_5() &&
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index 4afeddf..227c987 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -31,6 +31,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -91,6 +92,31 @@ public class ClassesProcessor {
+               rec.type = entry.outerNameIdx != 0 ? ClassNode.CLASS_MEMBER : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
+               rec.accessFlags = entry.accessFlags;
+ 
++              // nested class type
++              if (entry.innerName != null) {
++                if (entry.simpleName == null) {
++                  rec.type = ClassNode.CLASS_ANONYMOUS;
++                }
++                else {
++                  StructClass in = context.getClass(entry.innerName);
++                  if (in == null) { // A referenced library that was not added to the context, make assumptions
++                      rec.type = ClassNode.CLASS_MEMBER;
++                  }
++                  else {
++                    StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttributes().getWithKey("EnclosingMethod");
++                    if (attr != null && attr.getMethodName() != null) {
++                      rec.type = ClassNode.CLASS_LOCAL;
++                    }
++                    else {
++                      rec.type = ClassNode.CLASS_MEMBER;
++                    }
++                  }
++                }
++              }
++              else { // This should never happen as inner_class and outer_class are NOT optional, make assumptions
++                rec.type = ClassNode.CLASS_MEMBER;
++              }
++
+               // enclosing class
+               String enclClassName;
+               if (entry.outerNameIdx != 0) {
+diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+index 18a13d9..575b0a8 100644
+--- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+@@ -27,6 +27,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructField;
++import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
+@@ -112,6 +115,29 @@ public class InitializerProcessor {
+     }
+   }
+ 
++  public static void hideInitalizers(ClassWrapper wrapper) {
++    // hide initializers with anon class arguments
++    for (MethodWrapper method : wrapper.getMethods()) {
++      StructMethod mt = method.methodStruct;
++      String name = mt.getName();
++      String desc = mt.getDescriptor();
++
++      if (mt.isSynthetic() && CodeConstants.INIT_NAME.equals(name)) {
++        MethodDescriptor md = MethodDescriptor.parseDescriptor(desc);
++        if (md.params.length > 0) {
++          VarType type = md.params[md.params.length - 1];
++          if (type.type == CodeConstants.TYPE_OBJECT) {
++            ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
++            if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS) || (node.access & CodeConstants.ACC_SYNTHETIC) != 0) {
++              //TODO: Verify that the body is JUST a this([args]) call?
++              wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));
++            }
++          }
++        }
++      }
++    }
++  }
++
+   private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
+     RootStatement root = method.root;
+     StructClass cl = wrapper.getClassStruct();
+@@ -262,4 +288,4 @@ public class InitializerProcessor {
+ 
+     return true;
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index f31f3a8..fdbb692 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -330,7 +330,7 @@ public class NewExprent extends Exprent {
+ 
+               if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                 ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+-                if (node != null && node.namelessConstructorStub) {
++                if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
+                   break;  // skip last parameter of synthetic constructor call
+                 }
+               }
+-- 
+2.10.0.windows.1
+
