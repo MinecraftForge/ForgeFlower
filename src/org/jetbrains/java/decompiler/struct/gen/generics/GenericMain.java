@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ public class GenericMain {
     "boolean",
   };
 
-  public static GenericClassDescriptor parseClassSignature(String signature) {
+  public static GenericClassDescriptor parseClassSignature(String qualifiedName, String signature) {
     String original = signature;
     try {
       GenericClassDescriptor descriptor = new GenericClassDescriptor();
@@ -43,14 +44,22 @@ public class GenericMain {
       signature = parseFormalParameters(signature, descriptor.fparameters, descriptor.fbounds);
 
       String superCl = GenericType.getNextType(signature);
-      descriptor.superclass = new GenericType(superCl);
+      descriptor.superclass = GenericType.parse(superCl);
 
       signature = signature.substring(superCl.length());
       while (signature.length() > 0) {
         String superIf = GenericType.getNextType(signature);
-        descriptor.superinterfaces.add(new GenericType(superIf));
+        descriptor.superinterfaces.add(GenericType.parse(superIf));
         signature = signature.substring(superIf.length());
       }
+
+      StringBuilder buf = new StringBuilder();
+      buf.append('L').append(qualifiedName).append('<');
+      for (String t : descriptor.fparameters) {
+        buf.append('T').append(t).append(';');
+      }
+      buf.append(">;");
+      descriptor.genericType = (GenericType)GenericType.parse(buf.toString());
 
       return descriptor;
     }
@@ -63,7 +72,7 @@ public class GenericMain {
   public static GenericFieldDescriptor parseFieldSignature(String signature) {
     try {
       GenericFieldDescriptor descriptor = new GenericFieldDescriptor();
-      descriptor.type = new GenericType(signature);
+      descriptor.type = GenericType.parse(signature);
       return descriptor;
     }
     catch (RuntimeException e) {
@@ -85,19 +94,19 @@ public class GenericMain {
 
       while (pars.length() > 0) {
         String par = GenericType.getNextType(pars);
-        descriptor.params.add(new GenericType(par));
+        descriptor.params.add(GenericType.parse(par));
         pars = pars.substring(par.length());
       }
 
       String par = GenericType.getNextType(signature);
-      descriptor.ret = new GenericType(par);
+      descriptor.ret = GenericType.parse(par);
       signature = signature.substring(par.length());
 
       if (signature.length() > 0) {
         String[] exceptions = signature.split("\\^");
 
         for (int i = 1; i < exceptions.length; i++) {
-          descriptor.exceptions.add(new GenericType(exceptions[i]));
+          descriptor.exceptions.add(GenericType.parse(exceptions[i]));
         }
       }
 
@@ -109,7 +118,7 @@ public class GenericMain {
     }
   }
 
-  private static String parseFormalParameters(String signature, List<String> parameters, List<List<GenericType>> bounds) {
+  private static String parseFormalParameters(String signature, List<String> parameters, List<List<VarType>> bounds) {
     if (signature.charAt(0) != '<') {
       return signature;
     }
@@ -142,7 +151,7 @@ public class GenericMain {
       String param = value.substring(0, to);
       value = value.substring(to + 1);
 
-      List<GenericType> lstBounds = new ArrayList<>();
+      List<VarType> lstBounds = new ArrayList<>();
 
       while (true) {
         if (value.charAt(0) == ':') {
@@ -151,7 +160,7 @@ public class GenericMain {
         }
 
         String bound = GenericType.getNextType(value);
-        lstBounds.add(new GenericType(bound));
+        lstBounds.add(GenericType.parse(bound));
         value = value.substring(bound.length());
 
 
@@ -191,69 +200,9 @@ public class GenericMain {
       return type.value;
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
-      StringBuilder buffer = new StringBuilder();
-      appendClassName(type, buffer);
-      return buffer.toString();
+      return type.getCastName();
     }
 
     throw new RuntimeException("Invalid type: " + type);
-  }
-
-  private static void appendClassName(GenericType type, StringBuilder buffer) {
-    List<GenericType> enclosingClasses = type.getEnclosingClasses();
-
-    if (enclosingClasses.isEmpty()) {
-      String name = type.value.replace('/', '.');
-      buffer.append(DecompilerContext.getImportCollector().getShortName(name));
-    }
-    else {
-      for (GenericType tp : enclosingClasses) {
-        if (buffer.length() == 0) {
-          buffer.append(DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')));
-        }
-        else {
-          buffer.append(tp.value);
-        }
-
-        appendTypeArguments(tp, buffer);
-        buffer.append('.');
-      }
-
-      buffer.append(type.value);
-    }
-
-    appendTypeArguments(type, buffer);
-  }
-
-  private static void appendTypeArguments(GenericType type, StringBuilder buffer) {
-    if (!type.getArguments().isEmpty()) {
-      buffer.append('<');
-
-      for (int i = 0; i < type.getArguments().size(); i++) {
-        if (i > 0) {
-          buffer.append(", ");
-        }
-
-        int wildcard = type.getWildcards().get(i);
-        switch (wildcard) {
-          case GenericType.WILDCARD_UNBOUND:
-            buffer.append('?');
-            break;
-          case GenericType.WILDCARD_EXTENDS:
-            buffer.append("? extends ");
-            break;
-          case GenericType.WILDCARD_SUPER:
-            buffer.append("? super ");
-            break;
-        }
-
-        GenericType genPar = type.getArguments().get(i);
-        if (genPar != null) {
-          buffer.append(getGenericCastTypeName(genPar));
-        }
-      }
-
-      buffer.append(">");
-    }
   }
 }

@@ -15,7 +15,9 @@
  */
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
+import org.jetbrains.java.decompiler.struct.gen.VarType;
+
 public class GenericFieldDescriptor {
 
-  public GenericType type;
+  public VarType type;
 }

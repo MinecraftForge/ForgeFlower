@@ -33,6 +33,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -69,6 +70,7 @@ public class InvocationExprent extends Exprent {
   private int invocationTyp = INVOKE_VIRTUAL;
   private List<Exprent> lstParameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
+  private List<VarType> genericArgs = new ArrayList<>();
 
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
@@ -175,6 +177,55 @@ public class InvocationExprent extends Exprent {
   public VarType getExprType() {
     return descriptor.ret;
   }
+
+
+  @Override
+  public VarType getInferredExprType(VarType upperBound) {
+    List<StructMethod> matches = getMatchedDescriptors();
+    StructMethod desc = null;
+    if(matches.size() == 1) {
+      desc = matches.get(0);
+    }
+
+    genericArgs.clear();
+
+    if (desc != null && desc.getSignature() != null) {
+      VarType ret = desc.getSignature().ret;
+
+      if (instance != null) {
+        VarType instType = instance.getInferredExprType(upperBound);
+
+        if (instType.isGeneric()) {
+          StructClass cls = DecompilerContext.getStructContext().getClass(instType.value);
+
+          if (cls != null && cls.getSignature() != null) {
+            Map<VarType, VarType> map = new HashMap<>();
+            GenericType ginstance = (GenericType)instType;
+
+            if (cls.getSignature().fparameters.size() == ginstance.getArguments().size()) {
+              for (int x = 0; x < ginstance.getArguments().size(); x++) {
+                if (ginstance.getArguments().get(x) != null) { //TODO: Wildcards are null arguments.. look into fixing things?
+                  map.put(GenericType.parse("T" + cls.getSignature().fparameters.get(x) + ";"), ginstance.getArguments().get(x));
+                }
+              }
+            }
+
+            if (!map.isEmpty()) {
+              ret = ret.remap(map);
+            }
+          }
+        }
+      }
+
+      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().fparameters, genericArgs);
+      if (desc.getSignature().ret != _new) {
+        return _new;
+      }
+    }
+
+    return getExprType();
+  }
+
 
   @Override
   public CheckTypesResult checkExprTypeBounds() {
@@ -296,6 +347,7 @@ public class InvocationExprent extends Exprent {
 
         if (buf.length() > 0) {
           buf.append(".");
+          this.appendParameters(buf, genericArgs);
         }
 
         buf.append(name);
@@ -342,8 +394,30 @@ public class InvocationExprent extends Exprent {
         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       }
     }
+    List<StructMethod> matches = getMatchedDescriptors();
+    BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
+    StructMethod desc = null;
+    if(matches.size() == 1) {
+      desc = matches.get(0);
+    }
 
-    BitSet setAmbiguousParameters = getAmbiguousParameters();
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    Map<VarType, VarType> genArgs = new HashMap<VarType, VarType>();
+
+    // building generic info from the instance
+    VarType inferred = instance == null ? null : instance.getInferredExprType(null);
+    if (cl != null && cl.getSignature() != null && instance != null && inferred.isGeneric()) {
+      GenericType genType = (GenericType)inferred;
+      if (genType.getArguments().size() == cl.getSignature().fparameters.size()) {
+        for (int i = 0; i < cl.getSignature().fparameters.size(); i++) {
+          VarType from = GenericType.parse("T" + cl.getSignature().fparameters.get(i) + ";");
+          VarType to = genType.getArguments().get(i);
+          if (from != null && to != null) {
+            genArgs.put(from, to);
+          }
+        }
+      }
+    }
 
     // omit 'new Type[] {}' for the last parameter of a vararg method call
     if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
@@ -359,6 +433,34 @@ public class InvocationExprent extends Exprent {
       if (sigFields == null || sigFields.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
+        /*
+        VarType type = descriptor.params[i];
+
+        // using info from the generic signature
+        if (desc != null && desc.getSignature() != null && desc.getSignature().params.size() == lstParameters.size()) {
+          type = desc.getSignature().params.get(i);
+        }
+
+        // applying generic info from the signature
+        VarType remappedType = type.remap(genArgs);
+        if(type != remappedType) {
+          type = remappedType;
+        }
+        else if (desc != null && desc.getSignature() != null && genericArgs.size() != 0) { // and from the inferred generic arguments
+          Map<VarType, VarType> genMap = new HashMap<VarType, VarType>();
+          for (int j = 0; j < genericArgs.size(); j++) {
+            VarType from = GenericType.parse("T" + desc.getSignature().fparameters.get(j) + ";");
+            VarType to = genericArgs.get(j);
+            genMap.put(from, to);
+          }
+        }
+
+        // not passing it along if what we get back is more specific
+        VarType exprType = lstParameters.get(i).getInferredExprType(type);
+        if (exprType != null && type != null && type.type == CodeConstants.TYPE_GENVAR) {
+          //type = exprType;
+        }
+        */
 
         Exprent param = lstParameters.get(i);
         // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
@@ -447,12 +549,11 @@ public class InvocationExprent extends Exprent {
     return null;
   }
 
-  private BitSet getAmbiguousParameters() {
+  private List<StructMethod> getMatchedDescriptors() {
+    List<StructMethod> matches = new ArrayList<StructMethod>();
     StructClass cl = DecompilerContext.getStructContext().getClass(classname);
-    if (cl == null) return EMPTY_BIT_SET;
+    if (cl == null) return matches;
 
-    // check number of matches
-    List<MethodDescriptor> matches = new ArrayList<>();
     nextMethod:
     for (StructMethod mt : cl.getMethods()) {
       if (name.equals(mt.getName())) {
@@ -463,11 +564,19 @@ public class InvocationExprent extends Exprent {
               continue nextMethod;
             }
           }
-          matches.add(md);
+          matches.add(mt);
         }
       }
     }
-    if (matches.size() == 1) return EMPTY_BIT_SET;
+
+    return matches;
+  }
+
+  private BitSet getAmbiguousParameters(List<StructMethod> matches) {
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    if (cl == null || matches.size() == 1) {
+      return EMPTY_BIT_SET;
+    }
 
     // check if a call is unambiguous
     StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
@@ -489,7 +598,13 @@ public class InvocationExprent extends Exprent {
     BitSet ambiguous = new BitSet(descriptor.params.length);
     for (int i = 0; i < descriptor.params.length; i++) {
       VarType paramType = descriptor.params[i];
-      for (MethodDescriptor md : matches) {
+      for (StructMethod mtt : matches) {
+
+        if (mtt.getSignature() != null && mtt.getSignature().params.get(i).isGeneric()) {
+          break;
+        }
+
+        MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
         if (!paramType.equals(md.params[i])) {
           ambiguous.set(i);
           break;

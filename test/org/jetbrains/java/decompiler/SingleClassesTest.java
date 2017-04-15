@@ -25,11 +25,13 @@ public class SingleClassesTest extends SingleClassesTestBase {
   protected String[] getDecompilerOptions() {
     return new String[] {
       IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-      IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1"
+      IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
     };
   }
 
   @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
+  @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }

@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
@@ -80,13 +81,18 @@ public class ExitExprent extends Exprent {
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     tracer.addMapping(bytecode);
+    MethodDescriptor md = (MethodDescriptor)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR);
 
     if (exitType == EXIT_RETURN) {
       TextBuffer buffer = new TextBuffer("return");
 
       if (retType.type != CodeConstants.TYPE_VOID) {
+        VarType ret = retType;
+        if (md.genericInfo != null && md.genericInfo.ret != null) {
+          ret = md.genericInfo.ret;
+        }
         buffer.append(' ');
-        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
+        ExprProcessor.getCastedExprent(value, ret, buffer, indent, false, false, false, tracer);
       }
 
       return buffer;

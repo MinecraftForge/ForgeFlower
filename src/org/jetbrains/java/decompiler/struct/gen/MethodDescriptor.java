@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ public class MethodDescriptor {
 
   public final VarType[] params;
   public final VarType ret;
+  public GenericMethodDescriptor genericInfo;
 
   private MethodDescriptor(VarType[] params, VarType ret) {
     this.params = params;
@@ -76,6 +78,10 @@ public class MethodDescriptor {
     VarType ret = new VarType(descriptor.substring(parenth + 1));
 
     return new MethodDescriptor(params, ret);
+  }
+
+  public void addGenericDescriptor(GenericMethodDescriptor desc) {
+    this.genericInfo = desc;
   }
 
   public String buildNewDescriptor(NewClassNameBuilder builder) {

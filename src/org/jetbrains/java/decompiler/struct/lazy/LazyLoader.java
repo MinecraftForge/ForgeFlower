@@ -133,7 +133,7 @@ public class LazyLoader {
 
   public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
     Link link = mapClassLinks.get(qualifiedClassName);
-    return link == null ? null : getClassStream(link.externalPath, link.internalPath);
+    return link == null ? null : link.type == Link.DATA ? new DataInputFullStream(link.data) : getClassStream(link.externalPath, link.internalPath);
   }
 
   public static void skipAttributes(DataInputFullStream in) throws IOException {
@@ -148,15 +148,22 @@ public class LazyLoader {
   public static class Link {
     public static final int CLASS = 1;
     public static final int ENTRY = 2;
+    public static final int DATA = 3;
 
     public final int type;
     public final String externalPath;
     public final String internalPath;
+    public final byte[] data;
 
     public Link(int type, String externalPath, String internalPath) {
+        this(type, externalPath, internalPath, null);
+    }
+
+    public Link(int type, String externalPath, String internalPath, byte[] data) {
       this.type = type;
       this.externalPath = externalPath;
       this.internalPath = internalPath;
+      this.data = data;
     }
   }
 }

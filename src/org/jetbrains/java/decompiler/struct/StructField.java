@@ -15,7 +15,13 @@
  */
 package org.jetbrains.java.decompiler.struct;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
@@ -33,7 +39,7 @@ public class StructField extends StructMember {
 
   private final String name;
   private final String descriptor;
-
+  private GenericFieldDescriptor signature;
 
   public StructField(DataInputFullStream in, StructClass clStruct) throws IOException {
     accessFlags = in.readUnsignedShort();
@@ -59,5 +65,19 @@ public class StructField extends StructMember {
   @Override
   public String toString() {
     return name;
+  }
+
+  public GenericFieldDescriptor getSignature() {
+    return signature;
+  }
+
+  @Override
+  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
+    StructGeneralAttribute attribute = super.readAttribute(in, pool, name);
+    if ("Signature".equals(name) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute signature = (StructGenericSignatureAttribute)attribute;
+      this.signature = GenericMain.parseFieldSignature(signature.getSignature());
+    }
+    return attribute;
   }
 }

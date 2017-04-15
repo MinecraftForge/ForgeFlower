@@ -908,7 +908,7 @@ public class VarDefinitionHelper {
     String cast;
     private VarInfo(LocalVariable lvt, VarType type) {
       if (lvt != null && lvt.getSignature() != null) {
-        cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()));
+        cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()));
       }
       else if (lvt != null) {
         cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);

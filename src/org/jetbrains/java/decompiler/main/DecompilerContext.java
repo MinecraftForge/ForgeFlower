@@ -33,6 +33,7 @@ public class DecompilerContext {
   public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
+  public static final String CURRENT_METHOD_DESCRIPTOR = "CURRENT_METHOD_DESCRIPTOR";
   public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 
   private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<>();

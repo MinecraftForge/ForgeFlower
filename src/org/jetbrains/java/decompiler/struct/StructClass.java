@@ -16,8 +16,14 @@
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -58,6 +64,7 @@ public class StructClass extends StructMember {
   private final String[] interfaceNames;
   private final VBStyleCollection<StructField, String> fields;
   private final VBStyleCollection<StructMethod, String> methods;
+  private GenericClassDescriptor signature = null;
 
   private ConstantPool pool;
 
@@ -198,5 +205,19 @@ public class StructClass extends StructMember {
   @Override
   public String toString() {
     return qualifiedName;
+  }
+
+  public GenericClassDescriptor getSignature() {
+    return signature;
+  }
+
+  @Override
+  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
+    StructGeneralAttribute attribute = super.readAttribute(in, pool, name);
+    if ("Signature".equals(name) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute signature = (StructGenericSignatureAttribute)attribute;
+      this.signature = GenericMain.parseClassSignature(qualifiedName, signature.getSignature());
+    }
+    return attribute;
   }
 }

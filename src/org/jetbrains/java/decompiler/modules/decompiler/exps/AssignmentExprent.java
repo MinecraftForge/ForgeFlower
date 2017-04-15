@@ -66,6 +66,11 @@ public class AssignmentExprent extends Exprent {
   }
 
   @Override
+  public VarType getInferredExprType(VarType upperBounds) {
+    return getExprType();
+  }
+
+  @Override
   public CheckTypesResult checkExprTypeBounds() {
     CheckTypesResult result = new CheckTypesResult();
 
@@ -105,8 +110,8 @@ public class AssignmentExprent extends Exprent {
 
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-    VarType leftType = left.getExprType();
-    VarType rightType = right.getExprType();
+    VarType leftType = left.getInferredExprType(null);
+    VarType rightType = right.getInferredExprType(leftType);
 
     boolean fieldInClassInit = false, hiddenField = false;
     if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
@@ -144,14 +149,8 @@ public class AssignmentExprent extends Exprent {
 
     TextBuffer res = right.toJava(indent, tracer);
 
-    if (condType == CONDITION_NONE &&
-        !leftType.isSuperset(rightType) &&
-        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
-      if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-        res.enclose("(", ")");
-      }
-
-      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
+    if (condType == CONDITION_NONE) {
+      this.wrapInCast(leftType, rightType, res, right.getPrecedence());
     }
 
     buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
