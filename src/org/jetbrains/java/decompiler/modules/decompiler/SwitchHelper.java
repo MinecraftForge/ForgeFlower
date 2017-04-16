@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
-
+import org.jetbrains.java.decompiler.struct.StructField;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -85,10 +85,45 @@ public class SwitchHelper {
     }
   }
 
+  static final int STATIC_FINAL_SYNTHETIC = CodeConstants.ACC_STATIC | CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNTHETIC;
+  /**
+   * When Java introduced Enums they aded the ability to use them in Switch statements.
+   * This was done in a purely syntax sugar way using the old switch on int methods.
+   * The compiler creates a synthetic class with a static int array field.
+   * To support enums changing post compile, It initializes this field with a length of the current enum length.
+   * And then for every referenced enum value it adds a mapping in the form of:
+   *   try {
+   *     field[Enum.VALUE.ordinal()] = 1;
+   *   } catch (FieldNotFoundException e) {}
+   *
+   * If a class has multiple switches on multiple enums, the compiler adds the init and try list to the BEGINNING of the static initalizer.
+   * But they add the field to the END of the fields list.
+   * 
+   * Note: SOME compilers name the field starting with $SwitchMap, so if we do not have full context this can be a guess.
+   * But Obfuscated/renamed code could cause issues
+   */
   private static boolean isEnumArray(Exprent exprent) {
     if (exprent instanceof ArrayExprent) {
-      Exprent field = ((ArrayExprent)exprent).getArray();
-      return field instanceof FieldExprent && ((FieldExprent)field).getName().startsWith("$SwitchMap");
+      Exprent tmp = ((ArrayExprent)exprent).getArray();
+      if (tmp instanceof FieldExprent) {
+        FieldExprent field = (FieldExprent)tmp;
+        ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(field.getClassname());
+        
+        if (classNode == null || !"[I".equals(field.getDescriptor().descriptorString)) {
+          return field.getName().startsWith("$SwitchMap"); //This is non-standard but we don't have any more information so..
+        }
+        
+        StructField stField = classNode.getWrapper().getClassStruct().getField(field.getName(), field.getDescriptor().descriptorString);
+        if ((stField.getAccessFlags() & STATIC_FINAL_SYNTHETIC) != STATIC_FINAL_SYNTHETIC) {
+          return false;
+        }
+        
+        if ((classNode.getWrapper().getClassStruct().getAccessFlags() & CodeConstants.ACC_SYNTHETIC) == CodeConstants.ACC_SYNTHETIC) {
+          return true; //TODO: Find a way to check the structure of the initalizer?
+          //Exprent init = classNode.getWrapper().getStaticFieldInitializers().getWithKey(InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor().descriptorString));
+          //Above is null because we haven't preocess the class yet?
+        }
+      }
     }
     return false;
   }
