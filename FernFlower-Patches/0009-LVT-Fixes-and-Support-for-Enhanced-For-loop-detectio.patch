@@ -1,46 +1,30 @@
-From 9c71d39bb8bb00cca2930e3e6a08c1bf4678cd9f Mon Sep 17 00:00:00 2001
+From d29101bd5faefad033a762d2e06dc423e0acc60d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
 
 
-diff --git a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-index 55d7462..3b253c5 100644
---- a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-+++ b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-@@ -262,4 +262,19 @@ public class BasicBlock implements IGraphNode {
-   public void setPredExceptions(List<BasicBlock> predExceptions) {
-     this.predExceptions = predExceptions;
-   }
-+
-+  public int getStartInstruction() {
-+      if (seq.isEmpty()) {
-+          return 0;
-+      }
-+      return instrOldOffsets.get(0);
-+  }
-+
-+  public int getEndInstruction() {
-+      if (seq.isEmpty()) {
-+          return 0;
-+      }
-+      int end = seq.getLastInstr().length();
-+      return end + instrOldOffsets.get(size() -1);
-+  }
- }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index d0efaae..f08c609 100644
+index d0efaae..4e22da1 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-@@ -31,6 +31,7 @@ import org.jetbrains.java.decompiler.struct.StructField;
- import org.jetbrains.java.decompiler.struct.StructMethod;
- import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
- import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
-+import org.jetbrains.java.decompiler.util.DebugPrinter;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
- import org.jetbrains.java.decompiler.util.VBStyleCollection;
+@@ -22,7 +22,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+-import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+@@ -36,7 +35,6 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
-@@ -166,8 +167,9 @@ public class ClassWrapper {
+ import java.io.IOException;
+ import java.util.HashSet;
+-import java.util.List;
+ import java.util.Set;
+ 
+ public class ClassWrapper {
+@@ -166,8 +164,9 @@ public class ClassWrapper {
          StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
          if (attr != null) {
            // only param names here
@@ -51,7 +35,7 @@ index d0efaae..f08c609 100644
            // the rest is here
            methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
              List<Exprent> lst = exprent.getAllExprents(true);
-@@ -183,9 +185,12 @@ public class ClassWrapper {
+@@ -183,6 +182,7 @@ public class ClassWrapper {
                });
              return 0;
            });
@@ -59,16 +43,39 @@ index d0efaae..f08c609 100644
          }
        }
  
-+      DebugPrinter.printMethod(root, mt.getClassStruct().qualifiedName + "." + mt.getName() + mt.getDescriptor(), varProc);
-+
-       DecompilerContext.getLogger().endMethod();
-     }
- 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 4b47425..3f18b3b 100644
+index 4b47425..4aa115c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -147,7 +147,7 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -25,7 +25,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+ import org.jetbrains.java.decompiler.modules.decompiler.*;
+ import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+@@ -119,11 +125,11 @@ public class MethodProcessorRunnable implements Runnable {
+       DecompilerContext.getLogger().writeMessage("Heavily obfuscated exception ranges found!", IFernflowerLogger.Severity.WARN);
+     }
+ 
+-    RootStatement root = DomHelper.parseGraph(graph);
++    RootStatement root = DomHelper.parseGraph(graph, mt);
+ 
+     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
+     while (fProc.iterateGraph(mt, root, graph)) {
+-      root = DomHelper.parseGraph(graph);
++      root = DomHelper.parseGraph(graph, mt);
+     }
+ 
+     // remove synchronized exception handler
+@@ -147,7 +153,7 @@ public class MethodProcessorRunnable implements Runnable {
  
        varProc.setVarVersions(root);
  
@@ -77,8 +84,380 @@ index 4b47425..3f18b3b 100644
          break;
        }
      }
+@@ -156,12 +162,16 @@ public class MethodProcessorRunnable implements Runnable {
+       LabelHelper.cleanUpEdges(root);
+ 
+       while (true) {
+-        MergeHelper.enhanceLoops(root);
++        if (EliminateLoopsHelper.eliminateLoops(root, cl)) {
++          continue;
++        }
+ 
+         if (LoopExtractHelper.extractLoops(root)) {
+           continue;
+         }
+ 
++        MergeHelper.enhanceLoops(root);
++
+         if (!IfHelper.mergeAllIfs(root)) {
+           break;
+         }
+@@ -199,6 +209,8 @@ public class MethodProcessorRunnable implements Runnable {
+ 
+     SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
+ 
++    cleanSynchronizedVar(root);
++
+     varProc.setVarDefinitions(root);
+ 
+     // must be the last invocation, because it makes the statement structure inconsistent
+@@ -219,4 +231,30 @@ public class MethodProcessorRunnable implements Runnable {
+   public boolean isFinished() {
+     return finished;
+   }
++
++
++  public static void cleanSynchronizedVar(Statement stat) {
++    for (Statement st : stat.getStats()) {
++      cleanSynchronizedVar(st);
++    }
++
++    if (stat.type == Statement.TYPE_SYNCRONIZED) {
++      SynchronizedStatement sync = (SynchronizedStatement)stat;
++      if (sync.getHeadexprent().type == Exprent.EXPRENT_MONITOR) {
++        MonitorExprent mon = (MonitorExprent)sync.getHeadexprent();
++        for (Exprent e : sync.getFirst().getExprents()) {
++          if (e.type == Exprent.EXPRENT_ASSIGNMENT) {
++            AssignmentExprent ass = (AssignmentExprent)e;
++            if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
++              VarExprent var = (VarExprent)ass.getLeft();
++              if (ass.getRight().equals(mon.getValue()) && !var.isVarReferenced(stat.getParent())) {
++                sync.getFirst().getExprents().remove(e);
++                break;
++              }
++            }
++          }
++        }
++      }
++    }
++  }
+ }
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 04a8e22..b9b08e9 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -38,6 +38,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructField;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.DotExporter;
+@@ -552,6 +553,7 @@ public class NestedClassProcessor {
+       if (method.root != null) { // neither abstract nor native
+         Map<VarVersionPair, String> mapNewNames = new HashMap<>();  // local var names
+         Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
++        Map<VarVersionPair, LocalVariable> mapNewLVTs = new HashMap<>(); // local var table entries
+ 
+         final Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
+         if (method.signatureFields != null) {
+@@ -566,15 +568,17 @@ public class NestedClassProcessor {
+ 
+               String varName = null;
+               VarType varType = null;
++              LocalVariable varLVT = null;
+ 
+               if (child.type != ClassNode.CLASS_MEMBER) {
+                 varName = enclosingMethod.varproc.getVarName(pair);
+                 varType = enclosingMethod.varproc.getVarType(pair);
++                varLVT = enclosingMethod.varproc.getVarLVT(pair);
+ 
+                 enclosingMethod.varproc.setVarFinal(pair, VarTypeProcessor.VAR_EXPLICIT_FINAL);
+               }
+ 
+-              if (pair.var == -1 || "this".equals(varName)) {
++              if (pair.var == -1 || "this".equals(varName) || (varLVT != null && "this".equals(varLVT.getName()))) {
+                 if (parent.simpleName == null) {
+                   // anonymous enclosing class, no access to this
+                   varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
+@@ -582,11 +586,15 @@ public class NestedClassProcessor {
+                 else {
+                   varName = parent.simpleName + ".this";
+                 }
++                if (varLVT != null) {
++                  varLVT = varLVT.rename(varName);
++                }
+                 method.varproc.getThisVars().put(newVar, parent.classStruct.qualifiedName);
+               }
+ 
+               mapNewNames.put(newVar, varName);
+               mapNewTypes.put(newVar, varType);
++              mapNewLVTs.put(newVar, varLVT);
+             }
+ 
+             varIndex += md.params[index++].stackSize;
+@@ -602,17 +610,19 @@ public class NestedClassProcessor {
+ 
+             String varName = null;
+             VarType varType = null;
++            LocalVariable varLVT = null;
+ 
+             if (classNode.type != ClassNode.CLASS_MEMBER) {
+               MethodWrapper enclosing_method = classNode.parent.getWrapper().getMethods().getWithKey(classNode.enclosingMethod);
+ 
+               varName = enclosing_method.varproc.getVarName(entry.getValue());
+               varType = enclosing_method.varproc.getVarType(entry.getValue());
++              varLVT = enclosing_method.varproc.getVarLVT(entry.getValue());
+ 
+               enclosing_method.varproc.setVarFinal(entry.getValue(), VarTypeProcessor.VAR_EXPLICIT_FINAL);
+             }
+ 
+-            if (entry.getValue().var == -1 || "this".equals(varName)) {
++            if (entry.getValue().var == -1 || "this".equals(varName) || (varLVT != null && "this".equals(varLVT.getName()))) {
+               if (classNode.parent.simpleName == null) {
+                 // anonymous enclosing class, no access to this
+                 varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
+@@ -620,11 +630,15 @@ public class NestedClassProcessor {
+               else {
+                 varName = classNode.parent.simpleName + ".this";
+               }
++              if (varLVT != null) {
++                varLVT = varLVT.rename(varName);
++              }
+               method.varproc.getThisVars().put(newVar, classNode.parent.classStruct.qualifiedName);
+             }
+ 
+             mapNewNames.put(newVar, varName);
+             mapNewTypes.put(newVar, varType);
++            mapNewLVTs.put(newVar, varLVT);
+ 
+             // hide synthetic field
+             if (classNode == child) { // fields higher up the chain were already handled with their classes
+@@ -643,16 +657,20 @@ public class NestedClassProcessor {
+         for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
+           VarVersionPair pair = entry.getKey();
+           VarType type = mapNewTypes.get(pair);
++          LocalVariable lvt = mapNewLVTs.get(pair);
+ 
+           method.varproc.setVarName(pair, entry.getValue());
+           if (type != null) {
+             method.varproc.setVarType(pair, type);
+           }
++          if (lvt != null) {
++            method.varproc.setVarLVT(pair, lvt);
++          }
+         }
+ 
+-        method.getOrBuildGraph().iterateExprents(new DirectGraph.ExprentIterator() {
++        iterateExprents(method.getOrBuildGraph(), new ExprentIteratorWithReplace() {
+           @Override
+-          public int processExprent(Exprent exprent) {
++          public Exprent processExprent(Exprent exprent) {
+             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+               AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+               if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
+@@ -660,7 +678,7 @@ public class NestedClassProcessor {
+                 String qName = child.classStruct.qualifiedName;
+                 if (fExpr.getClassname().equals(qName) &&  // process this class only
+                     mapFieldsToNewVars.containsKey(InterpreterUtil.makeUniqueKey(qName, fExpr.getName(), fExpr.getDescriptor().descriptorString))) {
+-                  return 2;
++                  return null;
+                 }
+               }
+             }
+@@ -672,13 +690,13 @@ public class NestedClassProcessor {
+               if (invokeExpr.getFunctype() == InvocationExprent.TYP_INIT) {
+                 // invocation of the super constructor in an anonymous class
+                 child.superInvocation = invokeExpr; // FIXME: save original names of parameters
+-                return 2;
++                return null;
+               }
+             }
+ 
+-            replaceExprent(exprent);
++            Exprent ret = replaceExprent(exprent);
+ 
+-            return 0;
++            return ret == null ? exprent : ret;
+           }
+ 
+           private Exprent replaceExprent(Exprent exprent) {
+@@ -687,7 +705,12 @@ public class NestedClassProcessor {
+               if (mapParamsToNewVars.containsKey(varIndex)) {
+                 VarVersionPair newVar = mapParamsToNewVars.get(varIndex);
+                 method.varproc.getExternalVars().add(newVar);
+-                return new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
++                VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
++                LocalVariable lvt = method.varproc.getVarLVT(newVar);
++                if (lvt != null) {
++                  ret.setLVT(lvt);
++                }
++                return ret;
+               }
+             }
+             else if (exprent.type == Exprent.EXPRENT_FIELD) {
+@@ -698,7 +721,12 @@ public class NestedClassProcessor {
+                 //		mapFieldsToNewVars.containsKey(key)) {
+                 VarVersionPair newVar = mapFieldsToNewVars.get(key);
+                 method.varproc.getExternalVars().add(newVar);
+-                return new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
++                VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
++                LocalVariable lvt = method.varproc.getVarLVT(newVar);
++                if (lvt != null) {
++                  ret.setLVT(lvt);
++                }
++                return ret;
+               }
+             }
+ 
+@@ -1077,4 +1105,41 @@ public class NestedClassProcessor {
+       return fieldKey.hashCode() + varPair.hashCode();
+     }
+   }
++
++  private static interface ExprentIteratorWithReplace {
++    // null - remove exprent
++    // ret != exprent - replace exprent with ret
++    Exprent processExprent(Exprent exprent);
++  }
++
++  private static void iterateExprents(DirectGraph graph, ExprentIteratorWithReplace iter) {
++    LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
++    stack.add(graph.first);
++
++    HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
++
++    while (!stack.isEmpty()) {
++
++      DirectNode node = stack.removeFirst();
++
++      if (setVisited.contains(node)) {
++        continue;
++      }
++      setVisited.add(node);
++
++      for (int i = 0; i < node.exprents.size(); i++) {
++        Exprent res = iter.processExprent(node.exprents.get(i));
++
++        if (res == null) {
++          node.exprents.remove(i);
++          i--;
++        }
++        else if (res != node.exprents.get(i)) {
++          node.exprents.set(i, res);
++        }
++      }
++
++      stack.addAll(node.succs);
++    }
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+index 11c723e..98f1fee 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+@@ -23,6 +23,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+ import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
+ import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
++import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.util.DotExporter;
+ import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
+ import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -203,17 +205,12 @@ public class DomHelper {
+     return ret;
+   }
+ 
+-  public static RootStatement parseGraph(ControlFlowGraph graph) {
++  public static RootStatement parseGraph(ControlFlowGraph graph, StructMethod mt) {
+ 
+     RootStatement root = graphToStatement(graph);
+ 
+     if (!processStatement(root, new LinkedHashMap<>())) {
+-
+-      //			try {
+-      //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
+-      //			} catch (Exception ex) {
+-      //				ex.printStackTrace();
+-      //			}
++      DotExporter.toDotFile(graph, mt, "parseGraphFail", true);
+       throw new RuntimeException("parsing failure!");
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
+index 0b145a6..76770d4 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
+@@ -17,32 +17,34 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+ 
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.struct.StructClass;
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.List;
+ 
+ 
+ public class EliminateLoopsHelper {
+ 
+ 
+-  //	public static boolean eliminateLoops(Statement root) {
+-  //
+-  //		boolean ret = eliminateLoopsRec(root);
+-  //
+-  //		if(ret) {
+-  //			SequenceHelper.condenseSequences(root);
+-  //
+-  //			HashSet<Integer> setReorderedIfs = new HashSet<Integer>();
+-  //
+-  //			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(false);
+-  //			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, null)) {
+-  //				SequenceHelper.condenseSequences(root);
+-  //			}
+-  //		}
+-  //
+-  //		return ret;
+-  //	}
++	public static boolean eliminateLoops(Statement root, StructClass cl) {
++
++		boolean ret = eliminateLoopsRec(root);
++
++		if(ret) {
++			SequenceHelper.condenseSequences(root);
++
++			HashSet<Integer> setReorderedIfs = new HashSet<>();
++
++			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(false);
++			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, null, cl)) {
++				SequenceHelper.condenseSequences(root);
++			}
++		}
++
++		return ret;
++	}
+ 
+   private static boolean eliminateLoopsRec(Statement stat) {
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
+index 26a3b23..17df2d8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
+@@ -186,7 +186,7 @@ public class ExitHelper {
+   private static Statement isExitEdge(StatEdge edge) {
+     Statement dest = edge.getDestination();
+ 
+-    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
++    if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge)) && edge.canInline) {
+       List<Exprent> data = dest.getExprents();
+ 
+       if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index cf81f91..e289ad2 100644
+index 92a118a..5d077a1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -349,7 +349,9 @@ public class ExprProcessor implements CodeConstants {
@@ -92,20 +471,19 @@ index cf81f91..e289ad2 100644
            break;
          case opc_iaload:
          case opc_laload:
-@@ -379,8 +381,10 @@ public class ExprProcessor implements CodeConstants {
-         case opc_astore:
+@@ -380,8 +382,9 @@ public class ExprProcessor implements CodeConstants {
            Exprent top = stack.pop();
            int varindex = instr.getOperand(0);
+           bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length());
 -          AssignmentExprent assign = new AssignmentExprent(
--            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i, bytecode_offsets)), top, bytecode_offsets);
-+          BitSet varRange = nextMeaningfulOffset(block, i, bytecode_offsets);
-+          varExprent = new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, varRange);
+-            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets), top, bytecode_offsets);
++          varExprent = new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets);
 +          varProcessor.findLVT(varExprent, bytecode_offset + instr.length());
 +          AssignmentExprent assign = new AssignmentExprent(varExprent, top, bytecode_offsets);
            exprlist.add(assign);
            break;
          case opc_iastore:
-@@ -443,6 +447,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -444,6 +447,7 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_iinc:
            VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor, bytecode_offsets);
@@ -113,8 +491,117 @@ index cf81f91..e289ad2 100644
            exprlist.add(new AssignmentExprent(vevar, new FunctionExprent(
              instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
              .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
+index 205e25c..60de386 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
+@@ -132,7 +132,10 @@ public class InlineSingleBlockHelper {
+       StatEdge edge = lst.get(0);
+ 
+       if (sameCatchRanges(edge)) {
+-        if (edge.explicit) {
++        if (!edge.canInline) {
++          return false; //Dirty hack, but lets do it!
++        }
++        else if (edge.explicit) {
+           return true;
+         }
+         else {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
+index 1fac826..2c4620b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
+@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.List;
+ import java.util.Set;
+ 
+ 
+@@ -79,21 +80,33 @@ public class LoopExtractHelper {
+       return false;
+     }
+ 
++    List<Statement> stats = new ArrayList<>();
+     for (StatEdge edge : stat.getLabelEdges()) {
+       if (edge.getType() != StatEdge.TYPE_CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
++        if (edge.getType() == StatEdge.TYPE_BREAK && isExternStatement(stat, edge.getSource(), edge.getSource())) {
++          stats.add(edge.getSource());
++        }
++        else {
++          return false;
++        }
++      }
++    }
++
++    if (stats.size() > 0) { // In this case prioritize first to help the Loop enhancer
++      if (stat.getParent().getStats().getLast() != stat) {
+         return false;
+       }
+     }
+ 
+-    if (!extractLastIf(stat)) {
+-      return extractFirstIf(stat);
++    if (!extractFirstIf(stat, stats)) {
++      return extractLastIf(stat, stats);
+     }
+     else {
+       return true;
+     }
+   }
+ 
+-  private static boolean extractLastIf(DoStatement stat) {
++  private static boolean extractLastIf(DoStatement stat, List<Statement> stats) {
+ 
+     // search for an if condition at the end of the loop
+     Statement last = stat.getFirst();
+@@ -114,6 +127,11 @@ public class LoopExtractHelper {
+ 
+           if (set.isEmpty()) { // no direct continues in a do{}while loop
+             if (isExternStatement(stat, ifstat, ifstat)) {
++              for (Statement s : stats) {
++                if (!ifstat.containsStatement(s)) {
++                  return false;
++                }
++              }
+               extractIfBlock(stat, lastif);
+               return true;
+             }
+@@ -124,7 +142,7 @@ public class LoopExtractHelper {
+     return false;
+   }
+ 
+-  private static boolean extractFirstIf(DoStatement stat) {
++  private static boolean extractFirstIf(DoStatement stat, List<Statement> stats) {
+ 
+     // search for an if condition at the entrance of the loop
+     Statement first = stat.getFirst();
+@@ -142,6 +160,11 @@ public class LoopExtractHelper {
+           Statement ifstat = firstif.getIfstat();
+ 
+           if (isExternStatement(stat, ifstat, ifstat)) {
++            for (Statement s : stats) {
++              if (!ifstat.containsStatement(s)) {
++                return false;
++              }
++            }
+             extractIfBlock(stat, firstif);
+             return true;
+           }
+@@ -202,5 +225,10 @@ public class LoopExtractHelper {
+         loop.addPredecessor(edge);
+       }
+     }
++
++    List<StatEdge> link = target.getPredecessorEdges(StatEdge.TYPE_BREAK);
++    if (link.size() == 1) {
++      link.get(0).canInline = false;
++    }
+   }
+ }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 0bc723d..1d72163 100644
+index 6d5f19e..70564e5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -18,8 +18,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -131,80 +618,42 @@ index 0bc723d..1d72163 100644
  import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
  
  import java.util.ArrayList;
-@@ -63,6 +68,8 @@ public class MergeHelper {
+@@ -61,17 +66,20 @@ public class MergeHelper {
+ 
+         // identify a while loop
          if (matchWhile(stat)) {
-           // identify a for loop - subtype of while
-           matchFor(stat);
-+          // identify for each loop,
-+          matchForEach(stat);
+-          // identify a for loop - subtype of while
+-          matchFor(stat);
++          if (!matchForEach(stat)) {
++            matchFor(stat);
++          }
          }
          else {
            // identify a do{}while loop
-@@ -72,6 +79,7 @@ public class MergeHelper {
+-          matchDoWhile(stat);
++          //matchDoWhile(stat);
+         }
+ 
          break;
        case DoStatement.LOOP_WHILE:
-         matchFor(stat);
-+        matchForEach(stat);
+-        matchFor(stat);
++        if (!matchForEach(stat)) {
++          matchFor(stat);
++        }
      }
  
      return (stat.getLooptype() != oldloop);
-@@ -110,6 +118,10 @@ public class MergeHelper {
-           if (ifedge.getType() == StatEdge.TYPE_BREAK) {
-             ifexpr.negateIf();
-           }
-+          if (stat.getConditionExprent() != null) {
-+            ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-+          }
-+          ifexpr.getCondition().addBytecodeOffsets(lastif.getHeadexprent().bytecode);
-           stat.setConditionExprent(ifexpr.getCondition());
-           lastif.getFirst().removeSuccessor(ifedge);
-           lastif.removeSuccessor(elseedge);
-@@ -167,6 +179,10 @@ public class MergeHelper {
-               // negate condition (while header)
-               IfExprent ifexpr = (IfExprent)firstif.getHeadexprent().copy();
-               ifexpr.negateIf();
-+              if (stat.getConditionExprent() != null) {
-+                ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-+              }
-+              ifexpr.getCondition().addBytecodeOffsets(firstif.getHeadexprent().bytecode);
-               stat.setConditionExprent(ifexpr.getCondition());
- 
-               // remove edges
-@@ -205,7 +221,12 @@ public class MergeHelper {
-               stat.setLooptype(DoStatement.LOOP_WHILE);
- 
-               // no need to negate the while condition
--              stat.setConditionExprent(((IfExprent)firstif.getHeadexprent().copy()).getCondition());
-+              IfExprent ifexpr = (IfExprent)firstif.getHeadexprent().copy();
-+              if (stat.getConditionExprent() != null) {
-+                ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-+              }
-+              ifexpr.getCondition().addBytecodeOffsets(firstif.getHeadexprent().bytecode);
-+              stat.setConditionExprent(ifexpr.getCondition());
- 
-               // remove edges
-               StatEdge ifedge = firstif.getIfEdge();
-@@ -358,23 +379,35 @@ public class MergeHelper {
-       if (!set.isEmpty()) {
-         return false;
-       }
--
-+      
-       stat.setLooptype(DoStatement.LOOP_FOR);
-       if (hasinit) {
--        stat.setInitExprent(preData.getExprents().remove(preData.getExprents().size() - 1));
-+        Exprent exp = preData.getExprents().remove(preData.getExprents().size() - 1);
-+        if (stat.getInitExprent() != null) {
-+          exp.addBytecodeOffsets(stat.getInitExprent().bytecode);
-+        }
-+        stat.setInitExprent(exp);
-+      }
-+      Exprent exp = lastData.getExprents().remove(lastData.getExprents().size() - 1);
-+      if (stat.getIncExprent() != null) {
-+        exp.addBytecodeOffsets(stat.getIncExprent().bytecode);
-       }
--      stat.setIncExprent(lastData.getExprents().remove(lastData.getExprents().size() - 1));
-+      stat.setIncExprent(exp);
+@@ -352,6 +360,8 @@ public class MergeHelper {
+         }
+         else {
+           preData = current.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).get(0);
++          // we're not a basic block, so we can't dive inside for exprents
++          if (preData.type != Statement.TYPE_BASICBLOCK) break;
+           preData = getLastDirectData(preData);
+           if (preData != null && !preData.getExprents().isEmpty()) {
+             initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
+@@ -391,15 +401,19 @@ public class MergeHelper {
+       stat.setIncExprent(exp);
      }
  
 -    if (lastData.getExprents().isEmpty()) {
@@ -229,7 +678,7 @@ index 0bc723d..1d72163 100644
    }
  
    private static void removeLastEmptyStatement(DoStatement dostat, Statement stat) {
-@@ -407,15 +440,339 @@ public class MergeHelper {
+@@ -432,15 +446,264 @@ public class MergeHelper {
        return stat;
      }
  
@@ -249,8 +698,10 @@ index 0bc723d..1d72163 100644
 +  }
 +  
 +  private static boolean matchForEach(DoStatement stat) {
-+    AssignmentExprent firstDoExprent = null, initDoExprent = null, initCopyExprent = null;
-+    Statement firstData, preData = null;
++    AssignmentExprent firstDoExprent = null;
++    AssignmentExprent[] initExprents = new AssignmentExprent[3];
++    Statement firstData = null, preData = null, lastData = null;
++    Exprent lastExprent = null;
 +
 +    // search for an initializing exprent
 +    Statement current = stat;
@@ -268,14 +719,13 @@ index 0bc723d..1d72163 100644
 +          preData = current.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).get(0);
 +          preData = getLastDirectData(preData);
 +          if (preData != null && !preData.getExprents().isEmpty()) {
-+            Exprent exprent = preData.getExprents().get(preData.getExprents().size() - 1);
-+            if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-+              initDoExprent = (AssignmentExprent)exprent;
-+              if (preData.getExprents().size() >= 2) {
-+                exprent = preData.getExprents().get(preData.getExprents().size() - 2);
-+                if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-+                  initCopyExprent = (AssignmentExprent)exprent;
-+                }
++            int size = preData.getExprents().size();
++            for (int x = 0; x < initExprents.length; x++) {
++              if (size > x) {
++                 Exprent exprent = preData.getExprents().get(size - 1 - x);
++                 if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
++                   initExprents[x] = (AssignmentExprent)exprent;
++                 }
 +              }
 +            }
            }
@@ -291,10 +741,14 @@ index 0bc723d..1d72163 100644
 +    if (firstData != null && firstData.getExprents().get(0).type == Exprent.EXPRENT_ASSIGNMENT) {
 +      firstDoExprent = (AssignmentExprent)firstData.getExprents().get(0);
 +    }
++    lastData = getLastDirectData(stat.getFirst());
++    if (lastData != null && !lastData.getExprents().isEmpty()) {
++      lastExprent = lastData.getExprents().get(lastData.getExprents().size() - 1);
++    }
 +
-+    if (stat.getLooptype() == DoStatement.LOOP_WHILE && initDoExprent != null && firstDoExprent != null) {
-+      if (initDoExprent.type == Exprent.EXPRENT_ASSIGNMENT &&
-+          isIteratorCall(((AssignmentExprent)initDoExprent).getRight())) {
++    if (stat.getLooptype() == DoStatement.LOOP_WHILE && initExprents[0] != null && firstDoExprent != null) {
++      if (initExprents[0].type == Exprent.EXPRENT_ASSIGNMENT &&
++          isIteratorCall(((AssignmentExprent)initExprents[0]).getRight())) {
 +
 +        if (!isHasNextCall(drillNots(stat.getConditionExprent())) ||
 +            firstDoExprent.type != Exprent.EXPRENT_ASSIGNMENT) {
@@ -310,13 +764,13 @@ index 0bc723d..1d72163 100644
 +        InvocationExprent hnext = (InvocationExprent)getUncast(drillNots(stat.getConditionExprent()));
 +        if (next.getInstance().type != Exprent.EXPRENT_VAR ||
 +            hnext.getInstance().type != Exprent.EXPRENT_VAR ||
-+            isVarReferenced((VarExprent)initDoExprent.getLeft(), stat, (VarExprent)next.getInstance(), (VarExprent)hnext.getInstance())) {
++          ((VarExprent)initExprents[0].getLeft()).isVarReferenced(stat, (VarExprent)next.getInstance(), (VarExprent)hnext.getInstance())) {
 +          return false;
 +        }
 +
-+        InvocationExprent holder = (InvocationExprent)((AssignmentExprent)initDoExprent).getRight();
++        InvocationExprent holder = (InvocationExprent)((AssignmentExprent)initExprents[0]).getRight();
 +
-+        holder.getInstance().addBytecodeOffsets(initDoExprent.bytecode);
++        holder.getInstance().addBytecodeOffsets(initExprents[0].bytecode);
 +        ass.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
 +        if (stat.getIncExprent() != null) {
 +          holder.getInstance().addBytecodeOffsets(stat.getIncExprent().bytecode);
@@ -328,174 +782,94 @@ index 0bc723d..1d72163 100644
 +        stat.setLooptype(DoStatement.LOOP_FOREACH);
 +        stat.setInitExprent(ass.getLeft());
 +        stat.setIncExprent(holder.getInstance());
-+        preData.getExprents().remove(initDoExprent);
++        preData.getExprents().remove(initExprents[0]);
 +        firstData.getExprents().remove(firstDoExprent);
++
++        if (initExprents[1] != null && initExprents[1].getLeft().type == Exprent.EXPRENT_VAR &&
++            holder.getInstance().type == Exprent.EXPRENT_VAR) {
++          VarExprent copy = (VarExprent)initExprents[1].getLeft();
++          VarExprent inc = (VarExprent)holder.getInstance();
++          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() && !inc.isVarReferenced(stat.getTopParent(), copy)) {
++            preData.getExprents().remove(initExprents[1]);
++            initExprents[1].getRight().addBytecodeOffsets(initExprents[1].bytecode);
++            initExprents[1].getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
++            stat.setIncExprent(initExprents[1].getRight());
++          }
++        }
++
++        return true;
 +      }
-+    }
-+    else if (stat.getLooptype() == DoStatement.LOOP_FOR) {
-+      if (isType(stat.getInitExprent(), Exprent.EXPRENT_ASSIGNMENT) &&
-+          isIteratorCall(((AssignmentExprent)stat.getInitExprent()).getRight()) &&
-+          isType(stat.getConditionExprent(), Exprent.EXPRENT_FUNCTION)) {
-+
-+        Exprent exp = drillNots(stat.getConditionExprent());
-+        if (!isHasNextCall(exp) ||
-+            !isType(stat.getIncExprent(), Exprent.EXPRENT_ASSIGNMENT)) {
++      else if (initExprents[0] != null && initExprents[1] != null && firstDoExprent != null) {
++        if (firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
++          return false;
++        }
++  
++        if (lastExprent == null || lastExprent.type != Exprent.EXPRENT_FUNCTION) {
++          return false;
++        }
++  
++        if (initExprents[0].getRight().type != Exprent.EXPRENT_CONST ||
++            initExprents[1].getRight().type != Exprent.EXPRENT_FUNCTION ||
++            stat.getConditionExprent().type != Exprent.EXPRENT_FUNCTION) {
 +          return false;
 +        }
 +
-+        AssignmentExprent itr = (AssignmentExprent)stat.getInitExprent();
-+        InvocationExprent hnext = (InvocationExprent)exp;
-+        if (itr.getLeft().type != Exprent.EXPRENT_VAR || hnext.getInstance().type != Exprent.EXPRENT_VAR) {
-+          return false;
-+        }
-+
-+        AssignmentExprent ass = (AssignmentExprent)stat.getIncExprent();
-+        if (!isNextCall(ass.getRight()) || ass.getLeft().type != Exprent.EXPRENT_VAR) {
-+
-+          if (firstDoExprent == null || !isNextCall(firstDoExprent.getRight()) ||
-+              firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
-+            return false;
-+          }
-+
-+          InvocationExprent next = (InvocationExprent)getUncast(firstDoExprent.getRight());
-+          if (next.getInstance().type != Exprent.EXPRENT_VAR ||
-+              isVarReferenced((VarExprent)itr.getLeft(), stat, (VarExprent)next.getInstance(), (VarExprent)hnext.getInstance())) {
-+            return false;
-+          }
-+
-+          //Move the inc exprent back to the end of the body and remove the .next call
-+          Statement last = getLastDirectData(stat.getFirst());
-+          InvocationExprent holder = (InvocationExprent)getUncast(((AssignmentExprent)stat.getInitExprent()).getRight());
-+
-+          firstData.getExprents().remove(firstDoExprent);
-+          last.getExprents().add(stat.getIncExprent());
-+
-+          firstDoExprent.getLeft().addBytecodeOffsets(stat.getInitExprent().bytecode);
-+          firstDoExprent.getLeft().addBytecodeOffsets(stat.getIncExprent().bytecode);
-+          firstDoExprent.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
-+
-+          stat.setLooptype(DoStatement.LOOP_FOREACH);
-+          stat.setInitExprent(firstDoExprent.getLeft());
-+          stat.setIncExprent(holder.getInstance());
-+        }
-+        else {
-+          InvocationExprent next = (InvocationExprent)getUncast(ass.getRight());
-+          if (next.getInstance().type != Exprent.EXPRENT_VAR ||
-+              isVarReferenced((VarExprent)itr.getLeft(), stat, (VarExprent)next.getInstance(), (VarExprent)hnext.getInstance())) {
-+            return false;
-+          }
-+
-+          InvocationExprent holder = (InvocationExprent)getUncast(((AssignmentExprent)stat.getInitExprent()).getRight());
-+
-+          holder.getInstance().addBytecodeOffsets(stat.getInitExprent().bytecode);
-+          ass.getLeft().addBytecodeOffsets(stat.getIncExprent().bytecode);
-+
-+          stat.setLooptype(DoStatement.LOOP_FOREACH);
-+          stat.setInitExprent(ass.getLeft());
-+          stat.setIncExprent(holder.getInstance());
-+        }
-+      }
-+      else if (initDoExprent != null && initDoExprent.getRight().type == Exprent.EXPRENT_FUNCTION) {
-+        if (firstDoExprent == null ||
-+            firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY ||
-+            firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR ||
-+            !isType(stat.getIncExprent(), Exprent.EXPRENT_FUNCTION) ||
-+            !isType(stat.getInitExprent(), Exprent.EXPRENT_ASSIGNMENT)) {
-+          return false;
-+        }
-+
-+        FunctionExprent funcRight = (FunctionExprent)initDoExprent.getRight();
-+        FunctionExprent funcInc = (FunctionExprent)stat.getIncExprent();
-+        ArrayExprent arr = (ArrayExprent)firstDoExprent.getRight();
-+
++        //FunctionExprent funcCond  = (FunctionExprent)drillNots(stat.getConditionExprent()); //TODO: Verify this is counter < copy.length
++        FunctionExprent funcRight = (FunctionExprent)initExprents[1].getRight();
++        FunctionExprent funcInc   = (FunctionExprent)lastExprent;
++        ArrayExprent    arr       = (ArrayExprent)firstDoExprent.getRight();
++        int incType = funcInc.getFuncType();
++  
 +        if (funcRight.getFuncType() != FunctionExprent.FUNCTION_ARRAY_LENGTH ||
-+            (funcInc.getFuncType() != FunctionExprent.FUNCTION_PPI && funcInc.getFuncType() != FunctionExprent.FUNCTION_IPP) ||
++            (incType != FunctionExprent.FUNCTION_PPI && incType != FunctionExprent.FUNCTION_IPP) ||
 +            arr.getIndex().type != Exprent.EXPRENT_VAR ||
 +            arr.getArray().type != Exprent.EXPRENT_VAR) {
 +            return false;
 +        }
-+
++  
 +        VarExprent index = (VarExprent)arr.getIndex();
 +        VarExprent array = (VarExprent)arr.getArray();
 +        VarExprent counter = (VarExprent)funcInc.getLstOperands().get(0);
-+
++  
 +        if (counter.getIndex() != index.getIndex() ||
 +            counter.getVersion() != index.getVersion()) {
 +          return false;
 +        }
 +
-+        funcRight.getLstOperands().get(0).addBytecodeOffsets(initDoExprent.bytecode);
-+        funcRight.getLstOperands().get(0).addBytecodeOffsets(stat.getIncExprent().bytecode);
++        if (counter.isVarReferenced(stat.getFirst(), index)) {
++          return false;
++        }
++  
++        funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[0].bytecode);
++        funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[1].bytecode);
++        funcRight.getLstOperands().get(0).addBytecodeOffsets(lastExprent.bytecode);
 +        firstDoExprent.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
-+        firstDoExprent.getLeft().addBytecodeOffsets(stat.getInitExprent().bytecode);
-+
++        firstDoExprent.getLeft().addBytecodeOffsets(initExprents[0].bytecode);
++  
 +        stat.setLooptype(DoStatement.LOOP_FOREACH);
 +        stat.setInitExprent(firstDoExprent.getLeft());
 +        stat.setIncExprent(funcRight.getLstOperands().get(0));
-+        preData.getExprents().remove(initDoExprent);
++        preData.getExprents().remove(initExprents[0]);
++        preData.getExprents().remove(initExprents[1]);
 +        firstData.getExprents().remove(firstDoExprent);
-+
-+        if (initCopyExprent != null && initCopyExprent.getLeft().type == Exprent.EXPRENT_VAR) {
-+          VarExprent copy = (VarExprent)initCopyExprent.getLeft();
++        lastData.getExprents().remove(lastExprent);
++  
++        if (initExprents[2] != null && initExprents[2].getLeft().type == Exprent.EXPRENT_VAR) {
++          VarExprent copy = (VarExprent)initExprents[2].getLeft();
 +          if (copy.getIndex() == array.getIndex() && copy.getVersion() == array.getVersion()) {
-+            preData.getExprents().remove(initCopyExprent);
-+            initCopyExprent.getRight().addBytecodeOffsets(initCopyExprent.bytecode);
-+            initCopyExprent.getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
-+            stat.setIncExprent(initCopyExprent.getRight());
++            preData.getExprents().remove(initExprents[2]);
++            initExprents[2].getRight().addBytecodeOffsets(initExprents[2].bytecode);
++            initExprents[2].getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
++            stat.setIncExprent(initExprents[2].getRight());
 +          }
 +        }
++  
++        return true;
 +      }
 +    }
 +
 +    //cleanEmptyStatements(stat, firstData); //TODO: Look into this and see what it does...
 +
-+    return true;
-+  }
-+
-+  private static boolean isVarReferenced(VarExprent var, Statement stat, VarExprent... whitelist) {
-+    if (stat.getExprents() == null) {
-+      for (Object obj : stat.getSequentialObjects()) {
-+        if (obj instanceof Statement) {
-+          if (isVarReferenced(var, (Statement)obj, whitelist)) {
-+            return true;
-+          }
-+        }
-+        else if (obj instanceof Exprent) {
-+          if (isVarReferenced(var, (Exprent)obj, whitelist)) {
-+            return true;
-+          }
-+        }
-+      }
-+    }
-+    else {
-+      for (Exprent exp : stat.getExprents()) {
-+        if (isVarReferenced(var, exp, whitelist)) {
-+          return true;
-+        }
-+      }
-+    }
-+    return false;
-+  }
-+
-+  private static boolean isVarReferenced(VarExprent target, Exprent exp, VarExprent... whitelist) {
-+    List<Exprent> lst = exp.getAllExprents(true);
-+    lst.add(exp);
-+    for (Exprent ex : lst) {
-+      if (ex != target && ex.type == Exprent.EXPRENT_VAR) {
-+        VarExprent var = (VarExprent)ex;
-+        if (var.getIndex() == target.getIndex() && var.getVersion() == target.getVersion()) {
-+          boolean allowed = false;
-+          for (VarExprent white : whitelist) {
-+            if (var == white) {
-+              allowed = true;
-+            }
-+          }
-+          if (!allowed) {
-+            return true;
-+          }
-+        }
-+      }
-+    }
 +    return false;
 +  }
 +
@@ -689,14 +1063,28 @@ index 2371a72..76f5b98 100644
 +    });
 +  }
  }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
+index 8d5e762..70347fe 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
+@@ -52,6 +52,8 @@ public class StatEdge {
+ 
+   public boolean explicit = true;
+ 
++  public boolean canInline = true;
++
+   public StatEdge(int type, Statement source, Statement destination, Statement closure) {
+     this(type, source, destination);
+     this.closure = closure;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index b02493d..89000eb 100644
+index bd7d555..f5d8cbe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -24,12 +24,14 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -24,12 +24,15 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
@@ -708,7 +1096,15 @@ index b02493d..89000eb 100644
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
-@@ -56,6 +58,7 @@ public class VarExprent extends Exprent {
+@@ -43,6 +46,7 @@ import org.jetbrains.java.decompiler.util.TextUtil;
+ import java.util.ArrayList;
+ import java.util.BitSet;
+ import java.util.List;
++import java.util.stream.Collectors;
+ 
+ public class VarExprent extends Exprent {
+ 
+@@ -56,6 +60,7 @@ public class VarExprent extends Exprent {
    private int version = 0;
    private boolean classDef = false;
    private boolean stack = false;
@@ -716,7 +1112,15 @@ index b02493d..89000eb 100644
  
    public VarExprent(int index, VarType varType, VarProcessor processor) {
      this(index, varType, processor, null);
-@@ -107,10 +110,6 @@ public class VarExprent extends Exprent {
+@@ -91,6 +96,7 @@ public class VarExprent extends Exprent {
+     var.setVersion(version);
+     var.setClassDef(classDef);
+     var.setStack(stack);
++    var.setLVT(lvt);
+     return var;
+   }
+ 
+@@ -107,10 +113,6 @@ public class VarExprent extends Exprent {
      }
      else {
        VarVersionPair varVersion = getVarVersionPair();
@@ -727,7 +1131,7 @@ index b02493d..89000eb 100644
  
        if (definition) {
          if (processor != null && processor.getVarFinal(varVersion) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
-@@ -120,7 +119,7 @@ public class VarExprent extends Exprent {
+@@ -120,7 +122,7 @@ public class VarExprent extends Exprent {
          buffer.append(" ");
        }
  
@@ -736,7 +1140,7 @@ index b02493d..89000eb 100644
      }
  
      return buffer;
-@@ -130,6 +129,7 @@ public class VarExprent extends Exprent {
+@@ -130,6 +132,7 @@ public class VarExprent extends Exprent {
      return new VarVersionPair(index, version);
    }
  
@@ -744,7 +1148,7 @@ index b02493d..89000eb 100644
    public String getDebugName(StructMethod method) {
      StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
      if (attr != null && processor != null) {
-@@ -143,9 +143,25 @@ public class VarExprent extends Exprent {
+@@ -143,9 +146,25 @@ public class VarExprent extends Exprent {
      }
      return null;
    }
@@ -770,7 +1174,7 @@ index b02493d..89000eb 100644
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
        if (method != null) {
          Integer originalIndex = null;
-@@ -211,6 +227,10 @@ public class VarExprent extends Exprent {
+@@ -211,6 +230,10 @@ public class VarExprent extends Exprent {
    }
  
    public VarType getVarType() {
@@ -781,7 +1185,7 @@ index b02493d..89000eb 100644
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -266,6 +286,38 @@ public class VarExprent extends Exprent {
+@@ -266,6 +289,86 @@ public class VarExprent extends Exprent {
    public void setStack(boolean stack) {
      this.stack = stack;
    }
@@ -817,6 +1221,54 @@ index b02493d..89000eb 100644
 +    }
 +    return checkExprTypeBounds;
 +  }
++
++
++  public boolean isVarReferenced(Statement stat, VarExprent... whitelist) {
++    if (stat.getExprents() == null) {
++      for (Object obj : stat.getSequentialObjects()) {
++        if (obj instanceof Statement) {
++          if (isVarReferenced((Statement)obj, whitelist)) {
++            return true;
++          }
++        }
++        else if (obj instanceof Exprent) {
++          if (isVarReferenced((Exprent)obj, whitelist)) {
++            return true;
++          }
++        }
++      }
++    }
++    else {
++      for (Exprent exp : stat.getExprents()) {
++        if (isVarReferenced(exp, whitelist)) {
++          return true;
++        }
++      }
++    }
++    return false;
++  }
++
++  public boolean isVarReferenced(Exprent exp, VarExprent... whitelist) {
++    List<Exprent> lst = exp.getAllExprents(true);
++    lst.add(exp);
++    lst = lst.stream().filter(e -> e != this && e.type == Exprent.EXPRENT_VAR && 
++      getVarVersionPair().equals(((VarExprent)e).getVarVersionPair()))
++        .collect(Collectors.toList());
++    
++    for (Exprent var : lst) {
++      boolean allowed = false;
++      for (VarExprent white : whitelist) {
++        if (var == white) {
++          allowed = true;
++          break;
++        }
++      }
++      if (!allowed) {
++        return true;
++      }
++    }
++    return false;
++  }
    
    // *****************************************************************************
    // IMatchable implementation
@@ -843,32 +1295,6 @@ index 43c63f6..6a7b5b1 100644
                  graph.nodes.putWithKey(nodeinc, nodeinc.id);
  
                  mapDestinationNodes.put(stat.id, new String[]{nodeinit.id, nodeinc.id});
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-index 334637c..804daa3 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
- import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
- import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-+import org.jetbrains.java.decompiler.modules.decompiler.vars.StartEndPair;
- 
- public class BasicBlockStatement extends Statement {
- 
-@@ -96,4 +97,13 @@ public class BasicBlockStatement extends Statement {
-   public BasicBlock getBlock() {
-     return block;
-   }
-+
-+  @Override
-+  public StartEndPair getStartEndRange() {
-+    if (block.size() > 0) {
-+      return new StartEndPair(block.getStartInstruction(), block.getEndInstruction());
-+    } else {
-+      return new StartEndPair(0, 0);
-+    }
-+  }
- }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 index c6f90d8..379ece6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
@@ -904,7 +1330,7 @@ index db6b79d..784703d 100644
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 3339218..73da189 100644
+index 3339218..bb55e0f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -31,6 +31,7 @@ public class DoStatement extends Statement {
@@ -929,77 +1355,37 @@ index 3339218..73da189 100644
      }
  
      return buf;
-@@ -151,6 +159,9 @@ public class DoStatement extends Statement {
+@@ -151,6 +159,10 @@ public class DoStatement extends Statement {
          }
        case LOOP_WHILE:
          lst.add(getConditionExprent());
 +        break;
 +      case LOOP_FOREACH:
 +        lst.add(getInitExprent());
++        lst.add(getIncExprent());
      }
  
      lst.add(first);
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-index 9cb7ddb..54cee08 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
- import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.vars.StartEndPair;
- import org.jetbrains.java.decompiler.struct.match.IMatchable;
- import org.jetbrains.java.decompiler.struct.match.MatchEngine;
- import org.jetbrains.java.decompiler.struct.match.MatchNode;
-@@ -424,6 +425,13 @@ public class IfStatement extends Statement {
-   public StatEdge getElseEdge() {
-     return elseedge;
-   }
-+
-+  @Override
-+  public StartEndPair getStartEndRange() {
-+    return StartEndPair.join(super.getStartEndRange(), 
-+      ifstat != null ? ifstat.getStartEndRange() : null, 
-+      elsestat != null ? elsestat.getStartEndRange(): null);
-+  }
-   
-   // *****************************************************************************
-   // IMatchable implementation
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-index 7193f9a..1970d8b 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
- import org.jetbrains.java.decompiler.main.TextBuffer;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
- import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-+import org.jetbrains.java.decompiler.modules.decompiler.vars.StartEndPair;
- 
- 
- public class RootStatement extends Statement {
-@@ -46,4 +47,9 @@ public class RootStatement extends Statement {
-   public void setDummyExit(DummyExitStatement dummyExit) {
-     this.dummyExit = dummyExit;
-   }
-+
-+  @Override
-+  public StartEndPair getStartEndRange() {
-+    return StartEndPair.join(first.getStartEndRange(), dummyExit != null ? dummyExit.getStartEndRange() : null);
-+  }
- }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index a199c28..e0038ce 100644
+index 2370830..98280f6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
- import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
- import org.jetbrains.java.decompiler.modules.decompiler.StrongConnectivityHelper;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.vars.StartEndPair;
- import org.jetbrains.java.decompiler.struct.match.IMatchable;
- import org.jetbrains.java.decompiler.struct.match.MatchEngine;
- import org.jetbrains.java.decompiler.struct.match.MatchNode;
-@@ -857,7 +858,7 @@ public class Statement implements IMatchable {
+@@ -832,6 +832,14 @@ public class Statement implements IMatchable {
+     this.parent = parent;
+   }
+ 
++  public Statement getTopParent() {
++    Statement ret = this;
++    while (ret.getParent() != null) {
++      ret = ret.getParent();
++    }
++    return ret;
++  }
++
+   public HashSet<StatEdge> getLabelEdges() {  // FIXME: why HashSet?
+     return labelEdges;
+   }
+@@ -858,7 +866,7 @@ public class Statement implements IMatchable {
  
    // helper methods
    public String toString() {
@@ -1007,131 +1393,22 @@ index a199c28..e0038ce 100644
 +    return String.format("{%d}:%d", type, id);
    }
    
-   // *****************************************************************************
-@@ -933,4 +934,34 @@ public class Statement implements IMatchable {
+   //TODO: Cleanup/cache?
+@@ -967,5 +975,4 @@ public class Statement implements IMatchable {
+     
      return true;
    }
-   
-+  //TODO: Cleanup/cache?
-+  public void getOffset(BitSet values) {
-+    if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null)
-+      values.or(((DummyExitStatement)this).bytecode);
-+    if (this.getExprents() != null) {
-+      for (Exprent e : this.getExprents()) {
-+        e.getBytecodeRange(values);
-+      }
-+    } else {
-+      for (Object obj : this.getSequentialObjects()) {
-+        if (obj instanceof Statement) {
-+          ((Statement)obj).getOffset(values);
-+        } else if (obj instanceof Exprent) {
-+          ((Exprent)obj).getBytecodeRange(values);
-+        } else {
-+          System.out.println("WTF?" + obj.getClass());
-+        }
-+      }
-+    }
-+  }
-+
-+  private StartEndPair endpoints;
-+  public StartEndPair getStartEndRange() {
-+    if (endpoints == null) {
-+      BitSet set = new BitSet();
-+      getOffset(set);
-+      endpoints = new StartEndPair(set.nextSetBit(0), set.length() - 1);
-+    }
-+    return endpoints;
-+  }
+-  
  }
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index d3cc7f2..2e23a35 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.vars.StartEndPair;
- import org.jetbrains.java.decompiler.struct.gen.VarType;
- 
- import java.util.*;
-@@ -365,4 +366,15 @@ public class SwitchStatement extends Statement {
-   public List<List<ConstExprent>> getCaseValues() {
-     return caseValues;
-   }
-+
-+  @Override
-+  public StartEndPair getStartEndRange() {
-+    StartEndPair[] sepairs = new StartEndPair[caseStatements.size() + 1];
-+    int i = 0;
-+    sepairs[i++] = super.getStartEndRange();
-+    for (Statement st : caseStatements) {
-+      sepairs[i++] = st.getStartEndRange();
-+    }
-+    return StartEndPair.join(sepairs);
-+  }
- }
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
-new file mode 100644
-index 0000000..9a36a0a
---- /dev/null
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
-@@ -0,0 +1,48 @@
-+/*
-+ * Copyright 2000-2017 JetBrains s.r.o.
-+ *
-+ * Licensed under the Apache License, Version 2.0 (the "License");
-+ * you may not use this file except in compliance with the License.
-+ * You may obtain a copy of the License at
-+ *
-+ * http://www.apache.org/licenses/LICENSE-2.0
-+ *
-+ * Unless required by applicable law or agreed to in writing, software
-+ * distributed under the License is distributed on an "AS IS" BASIS,
-+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-+ * See the License for the specific language governing permissions and
-+ * limitations under the License.
-+ */
-+package org.jetbrains.java.decompiler.modules.decompiler.vars;
-+
-+public class StartEndPair {
-+    public final int start;
-+    public final int end;
-+    public StartEndPair(int start, int end) {
-+        this.start = start;
-+        this.end = end;
-+    }
-+    @Override
-+    public boolean equals(Object obj) {
-+        return ((StartEndPair)obj).start == start && ((StartEndPair)obj).end == end;
-+    }
-+    @Override
-+    public int hashCode() {
-+        return start * 31 + end;
-+    }
-+    @Override
-+    public String toString() {
-+        return String.format("%d->%d",start,end);
-+    }
-+
-+    public static StartEndPair join(StartEndPair... pairs) {
-+        int start = Integer.MAX_VALUE;
-+        int end = Integer.MIN_VALUE;
-+        for (StartEndPair pair : pairs) {
-+            if (pair == null) continue;
-+            start = Math.min(start, pair.start);
-+            end = Math.max(end, pair.end);
-+        }
-+        return new StartEndPair(start, end);
-+    }
-+}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index a0a14cb..cdbd7cb 100644
+index a0a14cb..3725e9e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -19,15 +19,19 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
+@@ -18,16 +18,23 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
+ import org.jetbrains.java.decompiler.code.CodeConstants;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
++import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 +import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -1146,10 +1423,12 @@ index a0a14cb..cdbd7cb 100644
 +import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 +import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -43,6 +47,9 @@ public class VarDefinitionHelper {
+@@ -43,6 +50,9 @@ public class VarDefinitionHelper {
  
    private final VarProcessor varproc;
  
@@ -1159,7 +1438,7 @@ index a0a14cb..cdbd7cb 100644
    public VarDefinitionHelper(Statement root, StructMethod mt, VarProcessor varproc) {
  
      mapVarDefStatements = new HashMap<>();
-@@ -50,6 +57,8 @@ public class VarDefinitionHelper {
+@@ -50,6 +60,8 @@ public class VarDefinitionHelper {
      implDefVars = new HashSet<>();
  
      this.varproc = varproc;
@@ -1168,7 +1447,7 @@ index a0a14cb..cdbd7cb 100644
  
      VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
  
-@@ -63,12 +72,12 @@ public class VarDefinitionHelper {
+@@ -63,12 +75,12 @@ public class VarDefinitionHelper {
      }
      paramcount += md.params.length;
  
@@ -1183,7 +1462,7 @@ index a0a14cb..cdbd7cb 100644
  
        if (thisvar) {
          if (i == 0) {
-@@ -91,6 +100,8 @@ public class VarDefinitionHelper {
+@@ -91,6 +103,8 @@ public class VarDefinitionHelper {
        vc.addName("this");
      }
  
@@ -1192,7 +1471,7 @@ index a0a14cb..cdbd7cb 100644
      // catch variables are implicitly defined
      LinkedList<Statement> stack = new LinkedList<>();
      stack.add(root);
-@@ -120,9 +131,7 @@ public class VarDefinitionHelper {
+@@ -120,9 +134,7 @@ public class VarDefinitionHelper {
      initStatement(root);
    }
  
@@ -1202,7 +1481,7 @@ index a0a14cb..cdbd7cb 100644
      VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
  
      for (Entry<Integer, Statement> en : mapVarDefStatements.entrySet()) {
-@@ -154,9 +163,17 @@ public class VarDefinitionHelper {
+@@ -154,9 +166,17 @@ public class VarDefinitionHelper {
              }
            }
          }
@@ -1221,7 +1500,7 @@ index a0a14cb..cdbd7cb 100644
        Statement first = findFirstBlock(stat, index);
  
        List<Exprent> lst;
-@@ -170,7 +187,6 @@ public class VarDefinitionHelper {
+@@ -170,7 +190,6 @@ public class VarDefinitionHelper {
          lst = first.getExprents();
        }
  
@@ -1229,7 +1508,7 @@ index a0a14cb..cdbd7cb 100644
        boolean defset = false;
  
        // search for the first assignement to var [index]
-@@ -199,9 +215,17 @@ public class VarDefinitionHelper {
+@@ -199,9 +218,17 @@ public class VarDefinitionHelper {
          VarExprent var = new VarExprent(index.intValue(), varproc.getVarType(new VarVersionPair(index.intValue(), 0)), varproc);
          var.setDefinition(true);
  
@@ -1247,7 +1526,7 @@ index a0a14cb..cdbd7cb 100644
    }
  
  
-@@ -209,6 +233,54 @@ public class VarDefinitionHelper {
+@@ -209,6 +236,50 @@ public class VarDefinitionHelper {
    // private methods
    // *****************************************************************************
  
@@ -1280,29 +1559,25 @@ index a0a14cb..cdbd7cb 100644
 +  }
 +
 +  private LocalVariable findLVT(int index, Exprent exp) {
-+    VarExprent var = null;
-+
-+    if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
-+      AssignmentExprent ass = (AssignmentExprent)exp;
-+      if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
-+        var = (VarExprent)ass.getLeft();
++    for (Exprent e: exp.getAllExprents(false)) {
++      LocalVariable lvt = findLVT(index, e);
++      if (lvt != null) {
++        return lvt;
 +      }
 +    }
-+    else if (exp.type == Exprent.EXPRENT_VAR) {
-+      var = (VarExprent)exp;
-+    }
 +
-+    if (var == null) {
++    if (exp.type != Exprent.EXPRENT_VAR) {
 +      return null;
 +    }
 +
++    VarExprent var = (VarExprent)exp;
 +    return var.getIndex() == index ? var.getLVT() : null;
 +  }
 +
    private Statement findFirstBlock(Statement stat, Integer varindex) {
  
      LinkedList<Statement> stack = new LinkedList<>();
-@@ -269,6 +341,7 @@ public class VarDefinitionHelper {
+@@ -269,6 +340,7 @@ public class VarDefinitionHelper {
            if (st.type == DoStatement.TYPE_DO) {
              DoStatement dost = (DoStatement)st;
              if (dost.getLooptype() != DoStatement.LOOP_FOR &&
@@ -1310,7 +1585,7 @@ index a0a14cb..cdbd7cb 100644
                  dost.getLooptype() != DoStatement.LOOP_DO) {
                currVars.add(dost.getConditionExprent());
              }
-@@ -339,7 +412,7 @@ public class VarDefinitionHelper {
+@@ -339,7 +411,7 @@ public class VarDefinitionHelper {
      return res;
    }
  
@@ -1319,7 +1594,7 @@ index a0a14cb..cdbd7cb 100644
      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
        Exprent left = ((AssignmentExprent)expr).getLeft();
        if (left.type == Exprent.EXPRENT_VAR) {
-@@ -352,4 +425,420 @@ public class VarDefinitionHelper {
+@@ -352,4 +424,555 @@ public class VarDefinitionHelper {
      }
      return false;
    }
@@ -1341,16 +1616,12 @@ index a0a14cb..cdbd7cb 100644
 +
 +    Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<VarVersionPair, VarVersionPair>();
 +    VPPEntry remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
-+    VPPEntry last = remap;
 +    while (remap != null) {
 +      //System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
 +      if (!remapVar(stat, remap.getKey(), remap.getValue())) {
 +        blacklist.put(remap.getKey(), remap.getValue());
 +      }
 +      remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
-+      if (last.equals(remap)){
-+        System.currentTimeMillis();
-+      }
 +    }
 +    return null;
 +  }
@@ -1387,7 +1658,9 @@ index a0a14cb..cdbd7cb 100644
 +    }
 +
 +    if (stat.getExprents() == null) {
-+      for (Object obj : stat.getSequentialObjects()) {
++      List<Object> objs = stat.getSequentialObjects();
++      for (int i = 0; i < objs.size(); i++) {
++        Object obj = objs.get(i);
 +        if (obj instanceof Statement) {
 +          Statement st = (Statement)obj;
 +
@@ -1423,22 +1696,35 @@ index a0a14cb..cdbd7cb 100644
 +              else if (obj == ifst.getFirst()) {
 +                leaked.putAll(leaked_n); //First is outside the scope so leak!
 +              }
++            } else if (stat.type == Statement.TYPE_SWITCH ||
++                       stat.type == Statement.TYPE_SYNCRONIZED) {
++              if (obj == stat.getFirst()) {
++                leaked.putAll(leaked_n); //First is outside the scope so leak!
++              }
++              else {
++                leaked_n.clear();
++              }
++            }
++            else if (stat.type == Statement.TYPE_TRYCATCH ||
++              stat.type == Statement.TYPE_CATCHALL) {
++              leaked_n.clear(); // Catches can't leak anything mwhahahahah!
 +            }
 +            this_vars.putAll(leaked_n);
 +          }
 +        }
 +        else if (obj instanceof Exprent) {
 +          VPPEntry ret = processExprent((Exprent)obj, this_vars, scoped, blacklist);
-+          if (ret != null) {
++          if (ret != null && isVarReadFirst(ret.getValue(), stat, i + 1)) {
 +            return ret;
 +          }
 +        }
 +      }
 +    }
 +    else {
-+      for (Exprent exp : stat.getExprents()) {
-+        VPPEntry ret = processExprent(exp, this_vars, scoped, blacklist);
-+        if (ret != null) {
++      List<Exprent> exps = stat.getExprents();
++      for (int i = 0; i < exps.size(); i++) {
++        VPPEntry ret = processExprent(exps.get(i), this_vars, scoped, blacklist);
++        if (ret != null && !isVarReadFirst(ret.getValue(), stat, i + 1)) {
 +          return ret;
 +        }
 +      }
@@ -1519,6 +1805,32 @@ index a0a14cb..cdbd7cb 100644
 +      }
 +      success |= remapped;
 +    }
++
++    if (success) {
++      Iterator<Exprent> itr = stat.getVarDefinitions().iterator();
++      while (itr.hasNext()) {
++        Exprent exp = itr.next();
++        if (exp.type == Exprent.EXPRENT_VAR) {
++          VarExprent var = (VarExprent)exp;
++          if (from.equals(var.getVarVersionPair())) {
++            itr.remove();
++          }
++          else if (to.var == var.getIndex() && to.version == var.getVersion()) {
++            Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
++            Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
++            VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
++                                           mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
++
++            if (merged == null) { // Something went wrong.. This SHOULD be non-null
++              continue;
++            }
++
++            var.setVarType(merged);
++          }
++        }
++      }
++    }
++
 +    return success;
 +  }
 +
@@ -1606,29 +1918,48 @@ index a0a14cb..cdbd7cb 100644
 +  }
 +
 +  private void propogateLVTs(Statement stat) {
-+    if (!varproc.hasLVT()) {
-+      return;
-+    }
-+
 +    MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-+    Map<VarVersionPair, LocalVariable> types = new HashMap<>();
++    Map<VarVersionPair, VarInfo> types = new LinkedHashMap<>();
 +
 +    int index = 0;
 +    if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
-+      types.put(new VarVersionPair(index, 0), varproc.getCandidates(index++).get(0));
++      types.put(new VarVersionPair(index++, 0), new VarInfo(null, null));
 +    }
 +
 +    for (VarType var : md.params) {
-+      types.put(new VarVersionPair(index, 0), varproc.getCandidates(index).get(0));
++      List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
++      if (lvt != null && lvt.size() > 0) {
++        types.put(new VarVersionPair(index, 0), new VarInfo(null, null));
++      }
 +      index += var.stackSize;
 +    }
 +
 +    findTypes(stat, types);
 +
-+    applyTypes(stat, types);
++    Map<VarVersionPair,String> typeNames = new LinkedHashMap<VarVersionPair,String>();
++    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
++      typeNames.put(e.getKey(), e.getValue().typeName());
++    }
++    Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
++
++    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
++      VarVersionPair idx = e.getKey();
++      // skip this. we can't rename it
++      if (idx.var == 0 && !mt.hasModifier(CodeConstants.ACC_STATIC)) {
++        continue;
++      }
++      LocalVariable lvt = e.getValue().lvt;
++      if (lvt != null) {
++        varproc.setVarLVT(idx, lvt);
++        lvts.put(idx, lvt);
++      }
++    }
++
++
++    applyTypes(stat, lvts);
 +  }
 +
-+  private void findTypes(Statement stat, Map<VarVersionPair, LocalVariable> types) {
++  private void findTypes(Statement stat, Map<VarVersionPair, VarInfo> types) {
 +    if (stat == null) {
 +      return;
 +    }
@@ -1654,30 +1985,31 @@ index a0a14cb..cdbd7cb 100644
 +    }
 +  }
 +
-+  private void findTypes(Exprent exp, Map<VarVersionPair, LocalVariable> types) {
-+    VarExprent var = null;
++  private void findTypes(Exprent exp, Map<VarVersionPair, VarInfo> types) {
++    List<Exprent> lst = exp.getAllExprents(true);
++    lst.add(exp);
 +
-+    if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
-+      AssignmentExprent ass = (AssignmentExprent)exp;
-+      if (ass.getLeft().type == Exprent.EXPRENT_VAR) {
-+        var = (VarExprent)ass.getLeft();
++    for (Exprent exprent : lst) {
++      if (exprent.type == Exprent.EXPRENT_VAR) {
++        VarExprent var = (VarExprent)exprent;
++        VarVersionPair ver = new VarVersionPair(var);
++        if (var.isDefinition()) {
++          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
++        }
++        else if (!types.containsKey(ver)) {
++          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
++        }
 +      }
 +    }
-+    else if (exp.type == Exprent.EXPRENT_VAR) {
-+      var = (VarExprent)exp;
-+    }
-+
-+    if (var == null || !var.isDefinition()) {
-+      return;
-+    }
-+
-+    types.put(new VarVersionPair(var), var.getLVT());
 +  }
-+
 +
 +  private void applyTypes(Statement stat, Map<VarVersionPair, LocalVariable> types) {
 +    if (stat == null || types.size() == 0) {
 +      return;
++    }
++
++    for (Exprent exp : stat.getVarDefinitions()) {
++      applyTypes(exp, types);
 +    }
 +
 +    if (stat.getExprents() == null) {
@@ -1739,12 +2071,90 @@ index a0a14cb..cdbd7cb 100644
 +        super(new VarVersionPair(key), value);
 +    }
 +  }
++  private static class VarInfo {
++    LocalVariable lvt;
++    String cast;
++    private VarInfo(LocalVariable lvt, VarType type) {
++      if (lvt != null && lvt.getSignature() != null) {
++        cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()));
++      }
++      else if (lvt != null) {
++        cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
++      }
++      else if (type != null) {
++        cast = ExprProcessor.getCastTypeName(type, false);
++      }
++      else {
++        cast = "this";
++      }
++      this.lvt = lvt;
++    }
++
++    public String typeName() {
++      return cast;
++    }
++  }
++
++  private static boolean isVarReadFirst(VarVersionPair var, Statement stat, int index, VarExprent... whitelist) {
++    if (stat.getExprents() == null) {
++      List<Object> objs = stat.getSequentialObjects();
++      for (int x = index; x < objs.size(); x++) {
++        Object obj = objs.get(x);
++        if (obj instanceof Statement) {
++          if (isVarReadFirst(var, (Statement)obj, 0, whitelist)) {
++            return true;
++          }
++        }
++        else if (obj instanceof Exprent) {
++          if (isVarReadFirst(var, (Exprent)obj, whitelist)) {
++            return true;
++          }
++        }
++      }
++    }
++    else {
++      for (int x = index; x < stat.getExprents().size(); x++) {
++        if (isVarReadFirst(var, stat.getExprents().get(x), whitelist)) {
++          return true;
++        }
++      }
++    }
++    return false;
++  }
++
++  private static boolean isVarReadFirst(VarVersionPair target, Exprent exp, VarExprent... whitelist) {
++    AssignmentExprent ass = exp.type == Exprent.EXPRENT_ASSIGNMENT ? (AssignmentExprent)exp : null;
++    List<Exprent> lst = exp.getAllExprents(true);
++    lst.add(exp);
++    for (Exprent ex : lst) {
++      if (ex.type == Exprent.EXPRENT_VAR) {
++        VarExprent var = (VarExprent)ex;
++        if (var.getIndex() == target.var && var.getVersion() == target.version) {
++          boolean allowed = false;
++          if (ass != null) {
++            if (var == ass.getLeft()) {
++              allowed = true;
++            }
++          }
++          for (VarExprent white : whitelist) {
++            if (var == white) {
++              allowed = true;
++            }
++          }
++          if (!allowed) {
++            return true;
++          }
++        }
++      }
++    }
++    return false;
++  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 728addf..dc90493 100644
+index 728addf..06142af 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-@@ -16,15 +16,18 @@
+@@ -16,20 +16,25 @@
  package org.jetbrains.java.decompiler.modules.decompiler.vars;
  
  import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -1755,6 +2165,7 @@ index 728addf..dc90493 100644
 +import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.util.StartEndPair;
  import org.jetbrains.java.decompiler.util.TextUtil;
  
  import java.util.*;
@@ -1763,7 +2174,13 @@ index 728addf..dc90493 100644
  
  public class VarProcessor {
    private final StructMethod method;
-@@ -50,12 +53,12 @@ public class VarProcessor {
+   private final MethodDescriptor methodDescriptor;
+   private Map<VarVersionPair, String> mapVarNames = new HashMap<>();
++  private Map<VarVersionPair, LocalVariable> mapVarLVTs = new HashMap<>();
+   private VarVersionsProcessor varVersions;
+   private final Map<VarVersionPair, String> thisVars = new HashMap<>();
+   private final Set<VarVersionPair> externalVars = new HashSet<>();
+@@ -50,12 +55,12 @@ public class VarProcessor {
      new VarDefinitionHelper(root, method, this).setVarDefinitions();
    }
  
@@ -1778,7 +2195,7 @@ index 728addf..dc90493 100644
  
      List<VarVersionPair> listVars = new ArrayList<>(mapVarNames.keySet());
      Collections.sort(listVars, Comparator.comparingInt(o -> o.var));
-@@ -65,18 +68,20 @@ public class VarProcessor {
+@@ -65,18 +70,20 @@ public class VarProcessor {
      for (VarVersionPair pair : listVars) {
        String name = mapVarNames.get(pair);
  
@@ -1803,7 +2220,7 @@ index 728addf..dc90493 100644
          name += String.valueOf(counter);
        }
  
-@@ -89,7 +94,7 @@ public class VarProcessor {
+@@ -89,7 +96,7 @@ public class VarProcessor {
        return null;
      }
  
@@ -1812,7 +2229,7 @@ index 728addf..dc90493 100644
    }
  
    public void refreshVarNames(VarNamesCollector vc) {
-@@ -104,7 +109,9 @@ public class VarProcessor {
+@@ -104,7 +111,9 @@ public class VarProcessor {
    }
  
    public void setVarType(VarVersionPair pair, VarType type) {
@@ -1823,7 +2240,7 @@ index 728addf..dc90493 100644
    }
  
    public String getVarName(VarVersionPair pair) {
-@@ -130,4 +137,60 @@ public class VarProcessor {
+@@ -130,4 +139,68 @@ public class VarProcessor {
    public Set<VarVersionPair> getExternalVars() {
      return externalVars;
    }
@@ -1882,6 +2299,14 @@ index 728addf..dc90493 100644
 +
 +  public VarVersionsProcessor getVarVersions() {
 +    return varVersions;
++  }
++
++  public void setVarLVT(VarVersionPair var, LocalVariable lvt) {
++    mapVarLVTs.put(var, lvt);
++  }
++
++  public LocalVariable getVarLVT(VarVersionPair var) {
++    return mapVarLVTs.get(var);
 +  }
  }
 \ No newline at end of file
@@ -2012,7 +2437,7 @@ index 86f79b4..1421db4 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 0a06ea0..59f647c 100644
+index 0a06ea0..7a71ff5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -15,12 +15,17 @@
@@ -2097,8 +2522,9 @@ index 0a06ea0..59f647c 100644
 -    return localVariables.stream().filter(v -> v.start_pc == 0).collect(Collectors.toMap(v -> v.index, v -> v.name, (n1, n2) -> n2));
 +  public Map<VarVersionPair, String> getMapNames() {
 +    return localVariables.stream().collect(Collectors.toMap(v -> v.version, v -> v.name, (n1, n2) -> n2));
-+  }
-+
+   }
+ 
+-  private static class LocalVariable {
 +  public Stream<LocalVariable> getVariables() {
 +    return localVariables.stream();
 +  }
@@ -2110,9 +2536,8 @@ index 0a06ea0..59f647c 100644
 +      indexVersion.put(var.index, version);
 +      var.version = new VarVersionPair(var.index, version.intValue());
 +    }
-   }
- 
--  private static class LocalVariable {
++  }
++
 +  public void mergeSignatures(StructLocalVariableTypeTableAttribute lvtt) {
 +      lvtt.backingAttribute.localVariables.stream().forEach(type -> localVariables.stream().filter(t -> t.compareTo(type) == 0).findFirst().ifPresent(lv -> lv.signature = type.descriptor));
 +  }
@@ -2128,7 +2553,7 @@ index 0a06ea0..59f647c 100644
  
      private LocalVariable(int start_pc, int length, String name, String descriptor, int index) {
        this.start_pc = start_pc;
-@@ -101,6 +144,47 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
+@@ -101,6 +144,53 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
        this.name = name;
        this.descriptor = descriptor;
        this.index = index;
@@ -2173,6 +2598,12 @@ index 0a06ea0..59f647c 100644
 +    @Override
 +    public String toString() {
 +      return "\'("+index+","+start_pc+'-'+getEnd()+")"+descriptor+(signature!=null ? "<"+signature+"> ":" ")+name+"\'";
++    }
++
++    public LocalVariable rename(String newName) {
++      LocalVariable ret = new LocalVariable(start_pc, length, newName, descriptor, index);
++      ret.signature = signature;
++      return ret;
      }
    }
  }
@@ -2191,15 +2622,17 @@ index 719b333..5b16749 100644
    public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
 diff --git a/src/org/jetbrains/java/decompiler/util/DebugPrinter.java b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
 new file mode 100644
-index 0000000..91150f9
+index 0000000..71d69ef
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
-@@ -0,0 +1,132 @@
+@@ -0,0 +1,94 @@
 +package org.jetbrains.java.decompiler.util;
 +
 +import java.util.BitSet;
 +import java.util.List;
 +
++import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
++import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 +import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 +import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
@@ -2207,7 +2640,7 @@ index 0000000..91150f9
 +
 +//Debug printer useful for visualizing objects, no real functional value
 +public class DebugPrinter {
-+  public static void printMethod(RootStatement root, String name, VarProcessor varProc) {
++  public static void printMethod(Statement root, String name, VarProcessor varProc) {
 +    System.out.println(name + "{");
 +    if (root == null || root.getSequentialObjects() == null) {
 +      System.out.println("}");
@@ -2217,11 +2650,16 @@ index 0000000..91150f9
 +    for (Object obj : root.getSequentialObjects()) {
 +      if (obj instanceof Statement) {
 +        printStatement((Statement)obj, "  ", varProc);
++      } else if (obj == null) {
++        System.out.println("  null");
 +      } else {
 +        System.out.println("  " + obj.getClass().getSimpleName());
 +      }
 +    }
-+    printStatement(root.getDummyExit(), "  ", varProc);
++
++    if (root.type == Statement.TYPE_ROOT) {
++      printStatement(((RootStatement)root).getDummyExit(), "  ", varProc);
++    }
 +    System.out.println("}");
 +  }
 +
@@ -2231,72 +2669,23 @@ index 0000000..91150f9
 +    int start = values.nextSetBit(0);
 +    int end = values.length()-1;
 +
-+    System.out.println(indent + statement.type + ": (" + start + ", " + end + ") " + statement.getClass().getSimpleName());
++    System.out.println(indent + '{' + statement.getClass().getSimpleName() + "}:" + statement.id + "  (" + start + ", " + end + ")");
++
++    for (StatEdge edge : statement.getAllSuccessorEdges()) {
++      System.out.println(indent + " Dest: " + edge.getDestination());
++    }
 +
 +    if (statement.getExprents() != null) {
 +      for(Exprent exp : statement.getExprents()) {
 +        System.out.println(printExprent(indent + "  ", exp, varProc));
 +      }
 +    }
-+    /*
-+      for (Object obj : stat.getSequentialObjects()) {
-+        if (obj instanceof Statement) {
-+          Statement st = (Statement)obj;
-+          childVars.addAll(initStatement(st));
 +
-+          if (st.type == DoStatement.TYPE_DO) {
-+            DoStatement dost = (DoStatement)st;
-+            if (dost.getLooptype() != DoStatement.LOOP_FOR &&
-+                dost.getLooptype() != DoStatement.LOOP_DO) {
-+              currVars.add(dost.getConditionExprent());
-+            }
-+          }
-+          else if (st.type == DoStatement.TYPE_CATCHALL) {
-+            CatchAllStatement fin = (CatchAllStatement)st;
-+            if (fin.isFinally() && fin.getMonitor() != null) {
-+              currVars.add(fin.getMonitor());
-+            }
-+          }
-+        }
-+        else if (obj instanceof Exprent) {
-+          currVars.add((Exprent)obj);
-+        }
-+      }
-+
-+      // children statements
-+      for (Integer index : childVars) {
-+        Integer count = mapCount.get(index);
-+        if (count == null) {
-+          count = new Integer(0);
-+        }
-+        mapCount.put(index, new Integer(count.intValue() + 1));
-+      }
-+
-+      condlst = getAllVars(currVars);
-+    }
-+    else {
-+      condlst = getAllVars(stat.getExprents());
-+    }
-+
-+    // this statement
-+    for (VarExprent var : condlst) {
-+      mapCount.put(new Integer(var.getIndex()), new Integer(2));
-+    }
-+
-+    HashSet<Integer> set = new HashSet<Integer>(mapCount.keySet());
-+
-+    // put all variables defined in this statement into the set
-+    for (Entry<Integer, Integer> en : mapCount.entrySet()) {
-+      if (en.getValue().intValue() > 1) {
-+        mapVarDefStatements.put(en.getKey(), stat);
-+      }
-+    }
-+
-+    mapStatementVars.put(stat.id, set);
-+    */
 +    indent += "  ";
 +    for (Object obj : statement.getSequentialObjects()) {
-+      if (obj instanceof Statement) {
++      if (obj == null) {
++        System.out.println(indent + " Null");
++      } else if (obj instanceof Statement) {
 +        printStatement((Statement)obj, indent, varProc);
 +      } else if (obj instanceof Exprent) {
 +          System.out.println(printExprent(indent, (Exprent) obj, varProc));
@@ -2317,22 +2706,26 @@ index 0000000..91150f9
 +      if (exp instanceof VarExprent) {
 +        VarExprent varExprent = (VarExprent)exp;
 +        int currindex = varExprent.getIndex();
-+        int origindex = varProc.getVarOriginalIndex(currindex);
-+        List<LocalVariable> candidates = varProc.getCandidates(origindex);
-+        sb.append("[").append(currindex).append(":").append(origindex).append(", ").append(varExprent.isStack()).append("]").append(candidates);
++        int origindex = varProc == null ? -2 : varProc.getVarOriginalIndex(currindex);
++        sb.append("[").append(currindex).append(":").append(origindex).append(", ").append(varExprent.isStack()).append("]");
++        if (varProc != null) {
++          sb.append(varProc.getCandidates(origindex));
++        }
 +      } else if (exp instanceof AssignmentExprent) {
-+          AssignmentExprent assignmentExprent = (AssignmentExprent)exp;
++        AssignmentExprent assignmentExprent = (AssignmentExprent)exp;
 +        sb.append("{").append(printExprent(" ",assignmentExprent.getLeft(),varProc)).append(" =").append(printExprent(" ",assignmentExprent.getRight(),varProc)).append("}");
++      } else if (exp instanceof IfExprent) {
++        sb.append(' ').append(exp.toJava(0, new BytecodeMappingTracer()));
 +      }
 +      return sb.toString();
 +  }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
 new file mode 100644
-index 0000000..d9ec48d
+index 0000000..71d689d
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
-@@ -0,0 +1,47 @@
+@@ -0,0 +1,48 @@
 +/*
 + * Copyright 2000-2014 JetBrains s.r.o.
 + *
@@ -2379,6 +2772,7 @@ index 0000000..d9ec48d
 +  @Test public void testScoping() { doTest("pkg/TestLVTScoping"); }
 +  @Test public void testLVTComplex() { doTest("pkg/TestLVTComplex"); }
 +  @Test public void testVarType() { doTest("pkg/TestVarType"); }
++  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 index 4ba4deb..4fb5ebe 100644
@@ -2552,6 +2946,30 @@ H?8CEPwhyta
 literal 0
 HcmV?d00001
 
+diff --git a/testData/classes/pkg/TestLoopMerging.class b/testData/classes/pkg/TestLoopMerging.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..022bd6098959508759665aea103c6d360ba4fb0a
+GIT binary patch
+literal 1481
+zcmb_cOHUI~6#njXrbEl{DpYwCC{Lk0s({3(ffy4KlA;nSiD5N`p$?R`DT9fL8x3*e
+zS~qG;+`z(^Xh0Jsgv6ac!-Y%N#2E3rV{NOjKx5i_&$;KEd(U^ibJ~yJ-|Yez!LT3Y
+z==8ylF1dB9A4UN6@|N7Bb}0<_a0)$s^dh38Pe;FiFu5kU5(3_fcG`Bv1Ux;xvx3($
+z3zk4t%uZWZ)>aZ$E^a1Lv;<<Ac{4R@=4^S+8&&6~y($olWtWrDxV7rUGMVg@l}p;`
+z<OM$F(B!_%WEC@xIlnw*X7hJ7=^PSp<uJi4a!m>-CSO$MCS9;CdH;xje<rh*o3|!x
+ziKgz4WP?lQEz>|1stp*ZFi?pK9Rmgi5!G?pz!@-A?GZ2qs^#5i%1kGtR})LtJQ0_e
+zW^S)K)(VTrtkDsSxxscOdM#(Cof#)*nJcWc_6W0po|QqVG@0m`=$%CyTU5@zDG(AR
+zH6ejgYSajxdks%fN+GS0w-B$WC<t)(x<(IbsT)57P=_E-0w-{iyS#h{9@jS>*@D95
+zSq!L;o}eajgL*()+=gf4;B(RGefYTGOcb3j`IN^^TS*D%Xhs>%bDE0j$Mfmy>DL$)
+z3Ndp-0m-vGlIckKwhKiG=tR=^8f7y58~7w9#b8!t<KWXVqj;l;t%bNG8C7JlfwG(0
+zS@Jke86)~4*69+gUZ`4F4HInRFR;Q#uwK4(-?QV7^-cBfj(JAapxXQ#f&QR6II68{
+zVqFy*2VaWR{WY)0<KedoBb*tqy(*E`^V3AxM%-i6<`BXX`{GdEMXOtFn03^1HPNQY
+zdh&IvxW~vA)-1c#1n&Xq(sZ=y2=gmAZ~LeVg<M+N3be%YwCo+C<wb#(|3yf=WH879
+zpZ%BFEg7jzw_$OKuQ)P8tQ%-2p&g{6lT>u!90%t*|0WmEgEapsA0UEFp0^qE9s?!B
+lJ}nTtS0Hw$gxF5_4-@+hm4eLHhC*Lq?7Khqc4AP_@dGu?5$FH_
+
+literal 0
+HcmV?d00001
+
 diff --git a/testData/classes/pkg/TestVarType.class b/testData/classes/pkg/TestVarType.class
 new file mode 100644
 index 0000000000000000000000000000000000000000..28473768df1fca50e12184e05997281a94d1519e
@@ -2582,10 +3000,10 @@ index e873e7e..18beb9a 100644
  }
 diff --git a/testData/results/TestEnhancedForLoops.dec b/testData/results/TestEnhancedForLoops.dec
 new file mode 100644
-index 0000000..5caaa5d
+index 0000000..fb9c0da
 --- /dev/null
 +++ b/testData/results/TestEnhancedForLoops.dec
-@@ -0,0 +1,82 @@
+@@ -0,0 +1,83 @@
 +package pkg;
 +
 +import java.util.List;
@@ -2624,6 +3042,7 @@ index 0000000..5caaa5d
 +      1f      6
 +      22      6
 +      24      6
++      25      6
 +      30      6
 +      31      6
 +      32      7
@@ -2669,7 +3088,7 @@ index 0000000..5caaa5d
 +Not mapped:
 +32
 diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
-index b6d4d46..025ce8a 100644
+index 0e94145..025ce8a 100644
 --- a/testData/results/TestKotlinConstructorKt.dec
 +++ b/testData/results/TestKotlinConstructorKt.dec
 @@ -1,6 +1,5 @@
@@ -2691,7 +3110,7 @@ index b6d4d46..025ce8a 100644
           String it = (String)item$iv$iv;
           Mapping var10000 = new Mapping;
           if (it == null) {// 3
-@@ -31,103 +28,84 @@ public final class TestKotlinConstructorKt {
+@@ -31,100 +28,84 @@ public final class TestKotlinConstructorKt {
           Mapping var11 = var10000;
           destination$iv$iv.add(var11);// 12
        }
@@ -2709,7 +3128,6 @@ index b6d4d46..025ce8a 100644
 -      2      17
 -      3      17
 -      4      17
--      5      17
 +      0      16
 +      1      16
 +      2      16
@@ -2727,7 +3145,6 @@ index b6d4d46..025ce8a 100644
 -      16      18
 -      17      18
 -      18      18
--      19      18
 -      1b      19
 -      1c      19
 -      1d      19
@@ -2745,6 +3162,7 @@ index b6d4d46..025ce8a 100644
 +      18      17
 +      19      17
        20      19
+-      21      19
 -      22      21
 -      23      21
 -      24      21
@@ -2769,8 +3187,6 @@ index b6d4d46..025ce8a 100644
 -      3a      23
 -      3b      23
 -      3c      23
--      3d      23
--      3e      23
 -      43      25
 -      44      25
 -      46      25
@@ -2910,7 +3326,7 @@ index 0000000..a78cf6e
 +}
 diff --git a/testData/results/TestLVTComplex.dec b/testData/results/TestLVTComplex.dec
 new file mode 100644
-index 0000000..1008424
+index 0000000..7d492ca
 --- /dev/null
 +++ b/testData/results/TestLVTComplex.dec
 @@ -0,0 +1,84 @@
@@ -2930,7 +3346,7 @@ index 0000000..1008424
 +         System.out.println("asdf");
 +      }
 +
-+      ArrayList<Object> x1 = new ArrayList<Object>();
++      ArrayList<Object> x1 = new ArrayList();
 +
 +      for(Object y : x1) {
 +         ;
@@ -2968,9 +3384,9 @@ index 0000000..1008424
 +
 +      String a2;
 +      if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
-+        a2 = "a";
++         a2 = "a";
 +      } else {
-+        a2 = "b";
++         a2 = "b";
 +      }
 +
 +      if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
@@ -3040,7 +3456,7 @@ index 0000000..74941fb
 +   }
 +}
 diff --git a/testData/results/TestLocalsNames.dec b/testData/results/TestLocalsNames.dec
-index 2ba5f08..3067456 100644
+index 59563dd..1041a54 100644
 --- a/testData/results/TestLocalsNames.dec
 +++ b/testData/results/TestLocalsNames.dec
 @@ -7,21 +7,18 @@ public class TestLocalsNames {
@@ -3071,7 +3487,7 @@ index 2ba5f08..3067456 100644
  }
  
  class 'pkg/TestLocalsNames' {
-@@ -41,90 +38,78 @@ class 'pkg/TestLocalsNames' {
+@@ -41,91 +38,79 @@ class 'pkg/TestLocalsNames' {
        e      8
        f      8
        10      8
@@ -3088,6 +3504,7 @@ index 2ba5f08..3067456 100644
        19      10
 -      1a      12
 -      1b      12
+-      1c      12
 -      1d      12
 -      1e      12
 -      1f      12
@@ -3164,6 +3581,7 @@ index 2ba5f08..3067456 100644
 -      b9      20
 -      bc      23
 +      1b      10
++      1c      10
 +      29      10
 +      2a      10
 +      36      11
@@ -3232,7 +3650,7 @@ index 2ba5f08..3067456 100644
     }
  }
  
-@@ -132,9 +117,9 @@ Lines mapping:
+@@ -133,9 +118,9 @@ Lines mapping:
  22 <-> 7
  23 <-> 8
  25 <-> 9
@@ -3248,6 +3666,94 @@ index 2ba5f08..3067456 100644
 +31 <-> 16
 +32 <-> 17
 +34 <-> 20
+diff --git a/testData/results/TestLoopMerging.dec b/testData/results/TestLoopMerging.dec
+new file mode 100644
+index 0000000..703203a
+--- /dev/null
++++ b/testData/results/TestLoopMerging.dec
+@@ -0,0 +1,82 @@
++package pkg;
++
++public class TestLoopMerging {
++   public float a;
++   public float b;
++
++   public float test() {
++      while(this.a - this.b < -180.0F) {
++         this.b -= 360.0F;
++      }
++
++      while(this.a - this.b >= 180.0F) {
++         this.b += 360.0F;
++      }
++
++      return this.a;
++   }
++
++   public float test2() {
++      for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
++         System.out.println(this.a);
++      }
++
++      for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
++         System.out.println(this.a);
++      }
++
++      return this.a;
++   }
++
++   public float test3() {
++      int[] as = new int[0];
++
++      for(int f : as) {
++         ++f;
++      }
++
++      while(this.a - this.b < -180.0F) {
++         this.b -= 360.0F;
++      }
++
++      while(this.a - this.b >= 180.0F) {
++         this.b += 360.0F;
++      }
++
++      for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
++         System.out.println(this.a);
++      }
++
++      return this.a;
++   }
++
++   public float test4() {
++      int[] as = new int[0];
++
++      for(int f : as) {
++         ++f;
++
++         while(this.a - this.b < -180.0F) {
++            this.b -= 360.0F;
++         }
++
++         while(this.a - this.b >= 180.0F) {
++            this.b += 360.0F;
++         }
++
++         for(this.a = 0.0F; this.a < 10.0F; ++this.a) {
++            System.out.println(this.a);
++
++            while(this.a - this.b < -180.0F) {
++               this.b -= 360.0F;
++            }
++
++            while(this.a - this.b >= 180.0F) {
++               this.b += 360.0F;
++            }
++         }
++      }
++
++      return this.a;
++   }
++}
 diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
 index b3e3ac2..33da522 100644
 --- a/testData/results/TestTryCatchFinally.dec
@@ -3472,6 +3978,59 @@ index 0000000..ab57832
 +            System.out.println(a);
 +        }
 +    }
++}
+diff --git a/testData/src/pkg/TestLoopMerging.java b/testData/src/pkg/TestLoopMerging.java
+new file mode 100644
+index 0000000..1643c81
+--- /dev/null
++++ b/testData/src/pkg/TestLoopMerging.java
+@@ -0,0 +1,47 @@
++package pkg;
++
++public class TestLoopMerging {
++  public float a;
++  public float b;
++  public float test() {
++    while(a - b < -180) b -= 360;
++    while(a - b >= 180) b += 360;
++    return a;
++  }
++  public float test2() {
++     for (a = 0; a < 10; a++) {
++      System.out.println(a);
++    }
++    for (a = 0; a < 10; a++) {
++      System.out.println(a);
++    }
++    return a;
++  }
++
++  public float test3() {
++    int[] as = new int[0];
++    for (int f: as) {
++      f++;
++    }
++    while(this.a - this.b < -180) this.b -= 360;
++    while(this.a - this.b >= 180) this.b += 360;
++    for (a = 0; a < 10; a++) {
++      System.out.println(a);
++    }
++    return this.a;
++  }
++  public float test4() {
++    int[] as = new int[0];
++    for (int f: as) {
++      f++;
++      while(this.a - this.b < -180) this.b -= 360;
++      while(this.a - this.b >= 180) this.b += 360;
++      for (a = 0; a < 10; a++) {
++        System.out.println(a);
++        while(this.a - this.b < -180) this.b -= 360;
++        while(this.a - this.b >= 180) this.b += 360;
++      }
++    }
++    return this.a;
++  }
 +}
 diff --git a/testData/src/pkg/TestVarType.java b/testData/src/pkg/TestVarType.java
 new file mode 100644

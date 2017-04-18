@@ -1,9 +1,22 @@
-From 8764d28451d8504512457d81ed24f7dbd8efa253 Mon Sep 17 00:00:00 2001
+From 48ab1679e13cd17707b6fad6d3119124cc270b4b Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 10:13:01 -0700
 Subject: [PATCH] Improvements to var++ and var--
 
 
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index b9b08e9..1594ba5 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -1061,7 +1061,7 @@ public class NestedClassProcessor {
+           res = classname.equals(((InvocationExprent)expr).getClassname());
+           break;
+         case Exprent.EXPRENT_NEW:
+-          VarType newType = expr.getExprType();
++          VarType newType = ((NewExprent)expr).getNewType();
+           res = newType.type == CodeConstants.TYPE_OBJECT && classname.equals(newType.value);
+           break;
+         case Exprent.EXPRENT_VAR:
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 index 76f5b98..96dd849 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
@@ -98,7 +111,7 @@ index 76f5b98..96dd849 100644
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 2bf8659..e572191 100644
+index 335c318..b200b5e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -388,7 +388,12 @@ public class ConstExprent extends Exprent {
@@ -116,13 +129,13 @@ index 2bf8659..e572191 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index d9ec48d..8655a0e 100644
+index 71d689d..76e4064 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
-@@ -44,4 +44,5 @@ public class LVTTest extends SingleClassesTestBase {
-   @Test public void testScoping() { doTest("pkg/TestLVTScoping"); }
+@@ -45,4 +45,5 @@ public class LVTTest extends SingleClassesTestBase {
    @Test public void testLVTComplex() { doTest("pkg/TestLVTComplex"); }
    @Test public void testVarType() { doTest("pkg/TestVarType"); }
+   @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +  @Test public void testPPMM() { doTest("pkg/TestPPMM"); }
  }
 diff --git a/testData/classes/pkg/TestPPMM.class b/testData/classes/pkg/TestPPMM.class

@@ -1,14 +1,14 @@
-From c9b25a56b1bc949131a6103a189fb5d6ee79f74e Mon Sep 17 00:00:00 2001
+From 40eef6bd7ffc4b34a3205035d26854797f7dba7f Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 18:37:18 -0700
 Subject: [PATCH] Reintroduce DotExporter for debugging purposes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 1ac9669..ab2851e 100644
+index 61aa549..04a8e22 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -36,6 +36,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
+@@ -40,6 +40,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -16,7 +16,7 @@ index 1ac9669..ab2851e 100644
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.*;
-@@ -281,6 +282,7 @@ public class NestedClassProcessor {
+@@ -407,6 +408,7 @@ public class NestedClassProcessor {
        // iterate enclosing class
        for (final MethodWrapper method : node.getWrapper().getMethods()) {
          if (method.root != null) { // neither abstract, nor native
