@@ -1,0 +1,111 @@
+package org.jetbrains.java.decompiler;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.junit.Test;
+
+public class MinecraftTest  extends SingleClassesTestBase {
+  private static final String MC_PATH = "Z:\\Projects\\MCP\\BlueMining\\mcp_update\\new";//\\temp\\minecraft_ff_in.jar";
+  private static final Map<String, String> RESULTS = new HashMap<>();
+
+  @Override
+  protected String[] getDecompilerOptions() {
+    return new String[] {
+      IFernflowerPreferences.DECOMPILE_INNER,"1",
+      IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1",
+      IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1",
+      IFernflowerPreferences.LOG_LEVEL, "TRACE",
+      IFernflowerPreferences.REMOVE_SYNTHETIC, "1",
+      IFernflowerPreferences.REMOVE_BRIDGE, "1",
+      IFernflowerPreferences.USE_DEBUG_VAR_NAMES, "1",
+      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
+    };
+  }
+
+  @Override
+  public void setUp() throws IOException {
+    fixture = new DecompilerTestFixture() {
+      private ConsoleDecompiler decompiler;
+
+      @Override
+      public void setUp(String... optionPairs) throws IOException {
+        assertThat(optionPairs.length % 2).isEqualTo(0);
+        File tempDir = File.createTempFile("decompiler_test_", "_dir");
+        assertThat(tempDir.delete()).isTrue();
+
+        File targetDir = new File(tempDir, "decompiled");
+        assertThat(targetDir.mkdirs()).isTrue();
+
+        Map<String, Object> options = new HashMap<>();
+        options.put(IFernflowerPreferences.LOG_LEVEL, "warn");
+        options.put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
+        options.put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
+        options.put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
+        options.put(IFernflowerPreferences.LITERALS_AS_IS, "1");
+        options.put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
+        for (int i = 0; i < optionPairs.length; i += 2) {
+          options.put(optionPairs[i], optionPairs[i + 1]);
+        }
+        decompiler = new ConsoleDecompiler(targetDir, options) {
+          @Override
+          public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
+            RESULTS.put(path, content);
+          }
+
+          @Override
+          public void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content) {
+            RESULTS.put(qualifiedName, content);
+          }
+        };
+      }
+
+      @Override
+      public ConsoleDecompiler getDecompiler() {
+        return decompiler;
+      }
+    };
+    fixture.setUp(getDecompilerOptions());
+    fixture.setCleanup(false);
+  }
+
+  @Override
+  protected void doTest(String testFile, String... companionFiles) {
+    File MC_JAR = new File(MC_PATH);
+    if (!MC_JAR.exists()) {
+      return;
+    }
+
+    RESULTS.clear();
+
+    ConsoleDecompiler decompiler = fixture.getDecompiler();
+    if (MC_JAR.isDirectory()) {
+      //decompiler.addSpace(new File(MC_JAR, "jars\\libraries"), false);
+      decompiler.addSpace(new File(MC_JAR, "temp\\minecraft_ff_in.jar"), true);
+    }
+    else {
+      decompiler.addSpace(MC_JAR, true);
+    }
+    decompiler.decompileContext();
+
+    for (Entry<String, String> entry : RESULTS.entrySet()) {
+      if (!entry.getKey().startsWith(testFile)) {
+        continue;
+      }
+      System.out.println(entry.getKey());
+      System.out.println(entry.getValue());
+    }
+  }
+
+  @Test public void testWoodlandMansionPieces() { doTest("net/minecraft/world/gen/structure/WoodlandMansionPieces"); }
+  @Test public void testEntityPlayer() { doTest("net/minecraft/entity/player/EntityPlayerMP"); }
+
+}
