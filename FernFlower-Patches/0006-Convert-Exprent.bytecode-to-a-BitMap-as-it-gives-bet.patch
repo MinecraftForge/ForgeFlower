@@ -1,4 +1,4 @@
-From 98e44b152adf8c0d4f43c573fcddbf93a872dba0 Mon Sep 17 00:00:00 2001
+From 1b3b606c5f65000c2985777cc474d4020539557f Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 15:18:38 -0700
 Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
@@ -96,7 +96,7 @@ index aea5afa..c68bb9a 100644
      Exprent func = lstOperands.get(0);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 61edb37..92a118a 100644
+index 61edb37..5287de2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -301,7 +301,15 @@ public class ExprProcessor implements CodeConstants {
@@ -125,18 +125,20 @@ index 61edb37..92a118a 100644
            break;
          case opc_iaload:
          case opc_laload:
-@@ -371,8 +379,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -371,8 +379,11 @@ public class ExprProcessor implements CodeConstants {
          case opc_astore:
            Exprent top = stack.pop();
            int varindex = instr.getOperand(0);
-+          bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length());
++          if (bytecode_offsets != null) { //TODO: Figure out why this nulls in some cases
++            bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length()); 
++          }
            AssignmentExprent assign = new AssignmentExprent(
 -            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), top, bytecode_offsets);
 +            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets), top, bytecode_offsets);
            exprlist.add(assign);
            break;
          case opc_iastore:
-@@ -434,7 +443,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -434,7 +445,7 @@ public class ExprProcessor implements CodeConstants {
            pushEx(stack, exprlist, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, bytecode_offsets));
            break;
          case opc_iinc:
@@ -145,7 +147,7 @@ index 61edb37..92a118a 100644
            exprlist.add(new AssignmentExprent(vevar, new FunctionExprent(
              instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
              .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),
-@@ -624,23 +633,6 @@ public class ExprProcessor implements CodeConstants {
+@@ -624,23 +635,6 @@ public class ExprProcessor implements CodeConstants {
      }
    }
  

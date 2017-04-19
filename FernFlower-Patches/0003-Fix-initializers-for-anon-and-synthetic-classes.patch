@@ -1,4 +1,4 @@
-From 212d3af1f48b38303ff4858852fc2598f1b108b0 Mon Sep 17 00:00:00 2001
+From 77387e42f35ad6c3b15594392dc2521bd04ee02d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 13:21:00 -0700
 Subject: [PATCH] Fix initializers for anon and synthetic classes
@@ -61,7 +61,7 @@ index 4afeddf..227c987 100644
                String enclClassName;
                if (entry.outerNameIdx != 0) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 18a13d9..575b0a8 100644
+index 18a13d9..41e6934 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -27,6 +27,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -74,10 +74,35 @@ index 18a13d9..575b0a8 100644
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
-@@ -112,6 +115,29 @@ public class InitializerProcessor {
-     }
-   }
- 
+@@ -104,8 +107,46 @@ public class InitializerProcessor {
+         Exprent exprent = firstData.getExprents().get(0);
+         if (exprent.type == Exprent.EXPRENT_INVOCATION) {
+           InvocationExprent invExpr = (InvocationExprent)exprent;
+-          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getLstParameters().isEmpty()) {
+-            firstData.getExprents().remove(0);
++          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false)) {
++            boolean invalidArguments = invExpr.getLstParameters().isEmpty();
++
++            for (VarType type : invExpr.getDescriptor().params) {
++              if (type.type == CodeConstants.TYPE_OBJECT) {
++                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
++                //TODO? Instead of nuking entire thing, just nuke the one parameter?
++                if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
++                  invalidArguments = true;
++                  break;
++                }
++              }
++            }
++
++            if (invalidArguments) {
++              firstData.getExprents().remove(0);
++            }
++          }
++        }
++      }
++    }
++  }
++
 +  public static void hideInitalizers(ClassWrapper wrapper) {
 +    // hide initializers with anon class arguments
 +    for (MethodWrapper method : wrapper.getMethods()) {
@@ -95,16 +120,10 @@ index 18a13d9..575b0a8 100644
 +              //TODO: Verify that the body is JUST a this([args]) call?
 +              wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));
 +            }
-+          }
-+        }
-+      }
-+    }
-+  }
-+
-   private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
-     RootStatement root = method.root;
-     StructClass cl = wrapper.getClassStruct();
-@@ -262,4 +288,4 @@ public class InitializerProcessor {
+           }
+         }
+       }
+@@ -262,4 +303,4 @@ public class InitializerProcessor {
  
      return true;
    }

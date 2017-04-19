@@ -1,4 +1,4 @@
-From d29101bd5faefad033a762d2e06dc423e0acc60d Mon Sep 17 00:00:00 2001
+From a14e9614ce87d7fc5b9b21be330b40581b6eacce Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -457,7 +457,7 @@ index 26a3b23..17df2d8 100644
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 92a118a..5d077a1 100644
+index 5287de2..290c730 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -349,7 +349,9 @@ public class ExprProcessor implements CodeConstants {
@@ -471,10 +471,10 @@ index 92a118a..5d077a1 100644
            break;
          case opc_iaload:
          case opc_laload:
-@@ -380,8 +382,9 @@ public class ExprProcessor implements CodeConstants {
-           Exprent top = stack.pop();
-           int varindex = instr.getOperand(0);
-           bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length());
+@@ -382,8 +384,9 @@ public class ExprProcessor implements CodeConstants {
+           if (bytecode_offsets != null) { //TODO: Figure out why this nulls in some cases
+             bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length()); 
+           }
 -          AssignmentExprent assign = new AssignmentExprent(
 -            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets), top, bytecode_offsets);
 +          varExprent = new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets);
@@ -483,7 +483,7 @@ index 92a118a..5d077a1 100644
            exprlist.add(assign);
            break;
          case opc_iastore:
-@@ -444,6 +447,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -446,6 +449,7 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_iinc:
            VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor, bytecode_offsets);
@@ -601,7 +601,7 @@ index 1fac826..2c4620b 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 6d5f19e..70564e5 100644
+index 6d5f19e..2e4bbf4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -18,8 +18,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -678,7 +678,7 @@ index 6d5f19e..70564e5 100644
    }
  
    private static void removeLastEmptyStatement(DoStatement dostat, Statement stat) {
-@@ -432,15 +446,264 @@ public class MergeHelper {
+@@ -432,15 +446,271 @@ public class MergeHelper {
        return stat;
      }
  
@@ -749,6 +749,13 @@ index 6d5f19e..70564e5 100644
 +    if (stat.getLooptype() == DoStatement.LOOP_WHILE && initExprents[0] != null && firstDoExprent != null) {
 +      if (initExprents[0].type == Exprent.EXPRENT_ASSIGNMENT &&
 +          isIteratorCall(((AssignmentExprent)initExprents[0]).getRight())) {
++
++        //Streams mimic Iterable but arnt.. so explicitly disallow their enhancements
++        //TODO: Check inheritance for Iterable instead of just names?
++        InvocationExprent invc = (InvocationExprent)getUncast(((AssignmentExprent)initExprents[0]).getRight());
++        if (invc.getClassname().contains("java/util/stream")) {
++          return false;
++        }
 +
 +        if (!isHasNextCall(drillNots(stat.getConditionExprent())) ||
 +            firstDoExprent.type != Exprent.EXPRENT_ASSIGNMENT) {
@@ -2802,23 +2809,24 @@ index cdb1db5..5e4c220 100644
     }
 diff --git a/testData/classes/pkg/TestEnhancedForLoops.class b/testData/classes/pkg/TestEnhancedForLoops.class
 new file mode 100644
-index 0000000000000000000000000000000000000000..4085e14d7c86a07565b69ff439284c62d21dc611
+index 0000000000000000000000000000000000000000..9350e5cb8e306aed006ed7644bd78e0c7cdab41d
 GIT binary patch
-literal 1179
-zcmZ`&T~8B16g|^!JEfElg_aKiK|xw5R1r}DE7eHSq)-zGN%d(dD=d`VX1g`=?w>He
-z`NE4Y`hdY0;<G=*#D8E+6who+1=LM<X6Mei_ndoX`sLThBLLHQ5JngyO}K{9Fycrw
-zV+`ZXNMb?_lM*QvzAkY?VoD%5Z(63C7VyUtYXaIsd&3ZD%bAw3T-{waoK=0j#K^^*
-zUDQi!x?`$!J*c@`W<{VkSKir7tr`{gk+r2;MPp;pc5=2|uFMI9p4m>uar8ZMSzbi}
-zkrj}&1=D>`xolZ+_2SNwUiM0R>S6*BCTCsOaCFypSfJuMrnRZmZ0pbUR7tlsQ!8GK
-zOtQAiitV-Ss%w@~IkVz&Gj>-0UiqYl;d9veze}g*ByLJf3xrqfs#7!;O=U^XzdD{&
-z!Xju!MB-KiGq^2rCxW|}WsL~tFwa5}+(SBo`&gjX^PMPgMxgtDo}Nj`uWuVgSD@9a
-z(rB0t{Rw0n{+;I9tGLE4kKL{^Jz8tpv{R31uuDq~eV49vcva4ZX>?hEN*1q6JgaU^
-z$ZSx=;)zp+o=~gP+0rY^#tV}1rafV*<t;i-@ZMS0+95g`|N9scYZyWkZ?}5<5XxkZ
-zEnKBI3(kSD4-oJ8;X^COpcm{!8^0Bl0JP%*XByN<ehZCAAk!ZF6fXF+d_fE33xQz1
-z5S00X4CM=<_Fz6YzLY#l`)9PM*8c`w$*49t6L=3_G;jd_OHJ$_e^bPMk2ppmAcg^S
-zVG7-t<-CAiPskuKQwX60ogOMvmo$K@h%!eI3%<T%{)Yn+-4Z?g3CjPD9&YzGl)q-5
-z8o{F?H+~3BU@3WsfWRy2J48_6GvqQgP8=Y#fBaSH(@yE@XZis8aGA`5BpYhz>x0B4
-p?)X*lx;`I9&`-P|zGi1FGFVsK3g1sONeoF``N3Sls_Gzye*+Pd_b~tf
+literal 1215
+zcmZ`&T~8B16g|`K?v%2W3KR+m@+GuTs3M{QRw_c$q)-zG$?DTmR#+&z&30?#-9O=@
+zzVPCUK0r`IeD;T!_z#SU;+<V6U)nS?bMM@H&$(yre*5$32*3p9!%#6)hXj&g3}b{N
+z6^4YNdW>SM9%<YX%WaNvaeaqlg5xfOGGkh%n_&nhlB*2ToV{)^H0DjqSgP)<8P1Bn
+zRw7SR-Y)8;RoyX#ed3hdO|!z#kuPs=q*siJJ8y03R?%2ru${bZmn+i@p%=E3bsT+{
+zuq>}41IsaR-=Orsb21y2UA?%ysF%Ic9=kY$O369bH5}cw9V$?99n;znY_{~5db*@r
+z8|h`wM@ZbirHWDiy6T#xbl$AEblG~5|8DuThk;A6GgnJzra2}#?lFXy?W$8W7EB>Y
+z`@cFK6U0<BAi{B9#RE)nOskl|LxyILw8zR*L{Ov3Dl&LP<yFigtKu={sDsP>i4sp3
+z;{Q|nLP}w6%P6`GkuyMnMY^3iay3=YW9?R4V~2*pu2OW&m%_BuPf2!{gf{dY($eqa
+zqMPI|i=dK4LzKvgSqhmoh}J~%oXn@t;>|Yo%98Plz-a!SQL5z`EvNC`3;XR*bS!c8
+zagwX(MLo^F_ys|egb1yTWTk0mw9CT>U?1oZK$KR+bH;Fu&Z-}PCNz`9&{9i&Pals$
+zzHC(a64ruJL6hWyCMyL^;RTI{3R)<t6!IgBsiRDAQi@4k@6eWtNn?}pM+9Q>K7y|$
+zws-tP00%wbR>*X2LpS0WM?0oypGBufq=#b05kd@pRQ7~YH~J|fPSo1H+`usgA#-$a
+zbkd(ue?RGp;d+hvTk2Dy;L*>Jv;)ZbkwYj9i>X6!hBw6W5Fv)Is9PeYqx%T&9e)=r
+zrE@I1iOUW2p$AFQH$^8QmtffkjxOpUC?HN)hH#Ujdx%Cad4;IHr;kp8cLagoXyoYU
+O82Ck08O4j|82k&~`2qs~
 
 literal 0
 HcmV?d00001
@@ -3000,93 +3008,87 @@ index e873e7e..18beb9a 100644
  }
 diff --git a/testData/results/TestEnhancedForLoops.dec b/testData/results/TestEnhancedForLoops.dec
 new file mode 100644
-index 0000000..fb9c0da
+index 0000000..16c634c
 --- /dev/null
 +++ b/testData/results/TestEnhancedForLoops.dec
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,77 @@
 +package pkg;
 +
-+import java.util.List;
++import java.util.ArrayList;
 +
 +public class TestEnhancedForLoops {
 +   public void forArray() {
-+      int[] numbers = new int[]{1, 2, 3, 4, 5, 6};// 22
++      int[] numbers = new int[]{1, 2, 3, 4, 5, 6};// 23
 +
-+      for(int number : numbers) {// 23
-+         System.out.println(number);// 24
++      for(int number : numbers) {// 24
++         System.out.println(number);// 25
 +      }
-+// 26
++// 27
 +   }
 +
-+   public void forItterator() {// 29
-+      List<String> strings = null;
-+// 30
-+      for(String string : strings) {// 31
++   public void forItterator() {// 31
++      for(String string : new ArrayList()) {// 32
 +         System.out.println(string);
-+      }// 33
++      }// 34
 +
 +   }
 +}
 +
 +class 'pkg/TestEnhancedForLoops' {
 +   method 'forArray ()V' {
-+      6      4
-+      a      4
-+      e      4
-+      12      4
-+      16      4
-+      1a      4
-+      1b      4
-+      1d      4
-+      1e      6
-+      1f      6
-+      22      6
-+      24      6
-+      25      6
-+      30      6
-+      31      6
-+      32      7
-+      33      7
-+      34      7
-+      35      7
-+      36      7
-+      37      7
-+      38      7
-+      39      7
-+      3a      6
-+      3b      6
-+      3c      6
-+      40      9
++      6      6
++      a      6
++      e      6
++      12      6
++      16      6
++      1a      6
++      1b      6
++      1d      6
++      1e      8
++      1f      8
++      22      8
++      24      8
++      25      8
++      30      8
++      31      8
++      32      9
++      33      9
++      34      9
++      35      9
++      36      9
++      37      9
++      38      9
++      39      9
++      3a      8
++      3b      8
++      3c      8
++      40      11
 +   }
 +
 +   method 'forItterator ()V' {
-+      0      12
-+      1      12
-+      2      14
-+      8      14
-+      1b      14
-+      1c      15
-+      1d      15
-+      1e      15
-+      1f      15
-+      20      15
-+      21      15
++      21      14
 +      22      15
-+      26      17
++      23      15
++      24      15
++      25      15
++      26      15
++      27      15
++      28      15
++      2c      17
 +   }
 +}
 +
 +Lines mapping:
-+22 <-> 5
 +23 <-> 7
-+24 <-> 8
-+26 <-> 10
-+29 <-> 13
-+30 <-> 15
-+31 <-> 16
-+33 <-> 18
++24 <-> 9
++25 <-> 10
++27 <-> 12
++31 <-> 15
++32 <-> 16
++34 <-> 18
 +Not mapped:
-+32
++30
++33
 diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
 index 0e94145..025ce8a 100644
 --- a/testData/results/TestKotlinConstructorKt.dec
@@ -3788,10 +3790,10 @@ index 0000000..56fb422
 +}
 diff --git a/testData/src/pkg/TestEnhancedForLoops.java b/testData/src/pkg/TestEnhancedForLoops.java
 new file mode 100644
-index 0000000..e8104fe
+index 0000000..40ea47e
 --- /dev/null
 +++ b/testData/src/pkg/TestEnhancedForLoops.java
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,35 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -3810,6 +3812,7 @@ index 0000000..e8104fe
 +package pkg;
 +
 +import java.util.List;
++import java.util.ArrayList;
 +
 +public class TestEnhancedForLoops {
 +  public void forArray() {
@@ -3820,7 +3823,7 @@ index 0000000..e8104fe
 +  }
 +  
 +  public void forItterator() {
-+    List<String> strings = null;
++    List<String> strings = new ArrayList<>();
 +    for (String string : strings) {
 +      System.out.println(string);
 +    }

@@ -1,4 +1,4 @@
-From 71fba1b974143102f3d51a3693ae19b11d1ffe70 Mon Sep 17 00:00:00 2001
+From 88ac0bb6e55fa8207a937c1b9c6fa6087e1b2b67 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -359,7 +359,7 @@ index c1ceecd..53a68e1 100644
      defaults.put(MAX_PROCESSING_METHOD, "0");
      defaults.put(RENAME_ENTITIES, "0");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 5d077a1..d529632 100644
+index 290c730..e1e29cc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -38,6 +38,8 @@ import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -371,7 +371,7 @@ index 5d077a1..d529632 100644
  
  import java.util.*;
  
-@@ -694,7 +696,13 @@ public class ExprProcessor implements CodeConstants {
+@@ -696,7 +698,13 @@ public class ExprProcessor implements CodeConstants {
      else if (tp == CodeConstants.TYPE_VOID) {
        return "void";
      }
@@ -385,7 +385,7 @@ index 5d077a1..d529632 100644
        String ret = buildJavaClassName(type.value);
        if (getShort) {
          ret = DecompilerContext.getImportCollector().getShortName(ret);
-@@ -811,6 +819,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -813,6 +821,7 @@ public class ExprProcessor implements CodeConstants {
      lst = Exprent.sortIndexed(lst);
  
      for (Exprent expr : lst) {
@@ -393,7 +393,7 @@ index 5d077a1..d529632 100644
        TextBuffer content = expr.toJava(indent, tracer);
        if (content.length() > 0) {
          if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassDef()) {
-@@ -867,7 +876,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -869,7 +878,7 @@ public class ExprProcessor implements CodeConstants {
                                           boolean castNull,
                                           boolean castAlways,
                                           BytecodeMappingTracer tracer) {

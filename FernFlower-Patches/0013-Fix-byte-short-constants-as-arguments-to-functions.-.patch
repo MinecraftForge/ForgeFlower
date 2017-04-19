@@ -1,4 +1,4 @@
-From 2f8d53e634502996a16f73ab3838d29808f9844b Mon Sep 17 00:00:00 2001
+From 93fe6d783bf751193442045f63dfc28263b93194 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 18 Apr 2017 19:20:27 -0700
 Subject: [PATCH] Fix byte/short constants as arguments to functions. We need
@@ -6,10 +6,10 @@ Subject: [PATCH] Fix byte/short constants as arguments to functions. We need
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index d529632..1e9521d 100644
+index e1e29cc..dde47ab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -876,13 +876,24 @@ public class ExprProcessor implements CodeConstants {
+@@ -878,13 +878,24 @@ public class ExprProcessor implements CodeConstants {
                                           boolean castNull,
                                           boolean castAlways,
                                           BytecodeMappingTracer tracer) {
