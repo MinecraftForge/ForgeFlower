@@ -1,4 +1,4 @@
-From 3eb2deb1636e8d672da69cb4c72af1cdc63f4c54 Mon Sep 17 00:00:00 2001
+From 71fba1b974143102f3d51a3693ae19b11d1ffe70 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -514,7 +514,7 @@ index 959fdf6..f0f5b6f 100644
      return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a38c2ee..67badc1 100644
+index a38c2ee..17c9d1d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -561,10 +561,10 @@ index a38c2ee..67badc1 100644
 +        List<String> fparams = desc.getSignature().fparameters;
 +        if (leftArgs.size() == rightArgs.size() && rightArgs.size() == fparams.size()) {
 +          for (int i = 0; i < leftArgs.size(); i++) {
-+            VarType left = leftArgs.get(0);
-+            VarType right = rightArgs.get(0);
-+            if (left != null && right.value.equals(fparams.get(0))) {
-+              genericArgs.add(leftArgs.get(0));
++            VarType left = leftArgs.get(i);
++            VarType right = rightArgs.get(i);
++            if (left != null && right.value.equals(fparams.get(i))) {
++              genericArgs.add(left);
 +              map.put(right, left);
 +            } else {
 +              genericArgs.clear();
@@ -1622,6 +1622,51 @@ index ee71f5b..e1af5f2 100644
 +    return this;
    }
  }
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+index 4fb5ebe..966dcb8 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+@@ -85,4 +85,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
+   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+   @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
++  @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
+ }
+\ No newline at end of file
+diff --git a/testData/classes/pkg/TestGenerics$Maps.class b/testData/classes/pkg/TestGenerics$Maps.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..1003b76b029d053d9ebe13b3aea073d4803f64a4
+GIT binary patch
+literal 544
+zcmZutO;5r=5Pe$;g^Kc_h)PU2cmNOf;>i*&B%-0}fu@Pa1vj`@3+adcEj^KF;t%jg
+z8D|RzqHNQBGjHF_yxs4gk1qh{Xqd>NW?<ihrtrYPAw#Ys0~vQ2GOf19p!a4Ef}!Nd
+zK-?zJBN4iM<P%eMW@GMqJd`S5k$U_nBPzP#bAsY^5Qwnn^C%LO)}8s&#BxOx_XY8C
+z9Gxhg&0q%N^@>N2lrq#>ZD-0~xRu1xw^lTX3PU*wc$|bZyx$pIEJZ#KCf40(D#o$x
+zZQ#0_x^>)v?Rs`sjULXDa4asRx>IG{+?g^_L=FZW{4-?Wh^%hB5JNeYuURANuM|z_
+z^!{pT^wAhF<SDZV8DaKx0rs9A7iiC=WCJF}#iamS*rBX|63Wy<6*mdh%6~$;Um){F
+dF+Cma%lczfDArJ=e>aWxuuW)^N=KbKo4>|Cd0_wm
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/classes/pkg/TestGenerics.class b/testData/classes/pkg/TestGenerics.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..187f5173369d001e7a90f9e92d752e45302ac393
+GIT binary patch
+literal 761
+zcmb7C%Tn7w5bU*O%T~n8U>-?;ybh2<bm0`cID~@WibD>jxUa<`mMANiB!}X&QaO;y
+zAs>*BN~Kq_DIO;d-rZ^U^z_W=@4w%F0PNtkhZ>%FsN;DP4%S_4xY%^@LcsYfN11@%
+zGe)I*vCJ~Xuy&?Zd@8WmzmVT$FwS)x9LnsR<c>gdpd%ymajFE~KV)=ED3&G)26?JY
+z)VYOxNRn7d)7hm^y{nDRcLl0j+b8t0mz+{^uCI+c8h;zA^jHpKBCUQB%J@X4+Qt*m
+z$<H;dw)&&5QE;rX{G(zEI?O0MAC>Q(Ia8@JAvK(w6oKWtQdgs?+@l-mnOsFGEgETb
+z!+6q)H%P{5s1CF>zHr;uJ3C7sGnn=960dwT;nC`S`-F<27xVivyig%+x9_vwlza1x
+zx|}SAq^<3T+vu>C!}S9K4O^1;6Gj#IsPauaJm-i6yan&t+iQp)1!bORy#SZ6z_(u#
+z(8404CYElJ_ovCfQ2At&tFXx)>j0~Cuy!NhklN-yz%qYUvP4!GHOQU%*({0yE+v1W
+bYDGC4o~5HUrPml$@RVt`6hA0Rx$yo2+-IZn
+
+literal 0
+HcmV?d00001
+
 diff --git a/testData/results/TestExtendsList.dec b/testData/results/TestExtendsList.dec
 index 6f116db..3f3dbea 100644
 --- a/testData/results/TestExtendsList.dec
@@ -1640,6 +1685,88 @@ index 6f116db..3f3dbea 100644
     }
  }
  
+diff --git a/testData/results/TestGenerics.dec b/testData/results/TestGenerics.dec
+new file mode 100644
+index 0000000..1fd0ad3
+--- /dev/null
++++ b/testData/results/TestGenerics.dec
+@@ -0,0 +1,38 @@
++package pkg;
++
++import java.util.HashMap;
++
++public class TestGenerics {
++   static HashMap<String, Boolean> field = Maps.<String, Boolean>newHashMap();
++
++   public static void genericInference() {
++      HashMap<String, Integer> test = Maps.<String, Integer>newHashMap();// 24
++   }// 25
++
++   private static class Maps {
++      public static <K, V> HashMap<K, V> newHashMap() {
++         return new HashMap();// 29
++      }
++   }
++}
++
++class 'pkg/TestGenerics' {
++   method 'genericInference ()V' {
++      0      8
++      1      8
++      2      8
++      3      8
++      4      9
++   }
++}
++
++class 'pkg/TestGenerics$Maps' {
++   method 'newHashMap ()Ljava/util/HashMap;' {
++      7      13
++   }
++}
++
++Lines mapping:
++24 <-> 9
++25 <-> 10
++29 <-> 14
+diff --git a/testData/src/pkg/TestGenerics.java b/testData/src/pkg/TestGenerics.java
+new file mode 100644
+index 0000000..bbd6f1c
+--- /dev/null
++++ b/testData/src/pkg/TestGenerics.java
+@@ -0,0 +1,32 @@
++/*
++ * Copyright 2000-2017 JetBrains s.r.o.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package pkg;
++
++import java.util.HashMap;
++
++public class TestGenerics {
++  static HashMap<String, Boolean> field = Maps.newHashMap();
++  
++  public static void genericInference() {
++    HashMap<String, Integer> test = Maps.newHashMap();
++  }
++  
++  private static class Maps {
++    public static <K, V> HashMap<K, V> newHashMap() {
++      return new HashMap<K, V>();
++    }
++  }
++}
 -- 
 2.10.0.windows.1
 
