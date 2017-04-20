@@ -1,11 +1,11 @@
-From 88ac0bb6e55fa8207a937c1b9c6fa6087e1b2b67 Mon Sep 17 00:00:00 2001
+From 376eb67854e8d2eb23baf68ab675b521ed6f2d0e Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 815ec14..10d47a4 100644
+index 815ec14..3fba799 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -334,7 +334,7 @@ public class ClassWriter {
@@ -157,7 +157,8 @@ index 815ec14..10d47a4 100644
  
 -            if (descriptor != null) {
 -              GenericType parameterType = descriptor.params.get(i);
--
++            VarType parameterType = descriptor == null ? md.params[i] : descriptor.params.get(i);
+ 
 -              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
 -              if (isVarArg) {
 -                parameterType = parameterType.decreaseArrayDim();
@@ -170,8 +171,7 @@ index 815ec14..10d47a4 100644
 -              }
 -
 -              buffer.append(typeName);
-+            VarType parameterType = descriptor == null ? md.params[i] : descriptor.params.get(i);
- 
+-
 -              if (isVarArg) {
 -                buffer.append("...");
 -              }
@@ -236,16 +236,26 @@ index 815ec14..10d47a4 100644
            }
          }
        }
-@@ -1050,7 +1002,7 @@ public class ClassWriter {
-     return null;
+@@ -1040,17 +992,7 @@ public class ClassWriter {
+     }
    }
  
+-  public static GenericClassDescriptor getGenericClassDescriptor(StructClass cl) {
+-    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+-      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttributes().getWithKey("Signature");
+-      if (attr != null) {
+-        return GenericMain.parseClassSignature(attr.getSignature());
+-      }
+-    }
+-    return null;
+-  }
+-
 -  public static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<List<GenericType>> bounds) {
 +  public static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<List<VarType>> bounds) {
      buffer.append('<');
  
      for (int i = 0; i < parameters.size(); i++) {
-@@ -1060,13 +1012,13 @@ public class ClassWriter {
+@@ -1060,13 +1002,13 @@ public class ClassWriter {
  
        buffer.append(parameters.get(i));
  
@@ -460,10 +470,25 @@ index 0c3a1f9..722e306 100644
  
        return buffer;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 63ff8b2..71cae3e 100644
+index 63ff8b2..13c6bb2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-@@ -67,6 +67,11 @@ public abstract class Exprent implements IMatchable {
+@@ -19,9 +19,14 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
++import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
++import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ import org.jetbrains.java.decompiler.struct.match.IMatchable;
+ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+@@ -67,6 +72,11 @@ public abstract class Exprent implements IMatchable {
      return VarType.VARTYPE_VOID;
    }
  
@@ -475,6 +500,81 @@ index 63ff8b2..71cae3e 100644
    public int getExprentUse() {
      return 0;
    }
+@@ -184,7 +194,73 @@ public abstract class Exprent implements IMatchable {
+       }
+       return ret;
+     }
+-  
++
++  protected VarType gatherGenerics(VarType upperBound, VarType ret, List<String> fparams, List<VarType> genericArgs) {
++    Map<VarType, VarType> map = new HashMap<>();
++
++    // List<T> -> List<String>
++    if (upperBound != null && upperBound.isGeneric() && ret.isGeneric()) {
++      List<VarType> leftArgs = ((GenericType)upperBound).getArguments();
++      List<VarType> rightArgs = ((GenericType)ret).getArguments();
++      if (leftArgs.size() == rightArgs.size() && rightArgs.size() == fparams.size()) {
++        for (int i = 0; i < leftArgs.size(); i++) {
++          VarType left = leftArgs.get(i);
++          VarType right = rightArgs.get(i);
++          if (left != null && right.value.equals(fparams.get(i))) {
++            genericArgs.add(left);
++            map.put(right, left);
++          } else {
++            genericArgs.clear();
++            map.clear();
++            break;
++          }
++        }
++      }
++    }
++
++    return map.isEmpty() ? ret : ret.remap(map);
++  }
++
++  protected void appendParameters(TextBuffer buf, List<VarType> genericArgs) {
++    if (genericArgs.isEmpty()) {
++      return;
++    }
++    buf.append("<");
++    //TODO: Check target output level and use <> operator?
++    for (int i = 0; i < genericArgs.size(); i++) {
++      buf.append(ExprProcessor.getCastTypeName(genericArgs.get(i)));
++      if(i + 1 < genericArgs.size()) {
++        buf.append(", ");
++      }
++    }
++    buf.append(">");
++  }
++
++  protected Map<VarType, List<VarType>> getNamedGenerics() {
++    Map<VarType, List<VarType>> ret = new HashMap<>();
++    MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
++
++    if (method == null) {
++      return ret;
++    }
++
++    GenericClassDescriptor cls = method.methodStruct.getClassStruct().getSignature();
++    if (cls != null) {
++      for (int x = 0; x < cls.fparameters.size(); x++) {
++        ret.put(GenericType.parse("T" + cls.fparameters.get(x) + ";"), cls.fbounds.get(x));
++      }
++    }
++
++    GenericMethodDescriptor mtd = method.methodStruct.getSignature();
++    if (mtd != null) {
++      for (int x = 0; x < mtd.fparameters.size(); x++) {
++        ret.put(GenericType.parse("T" + mtd.fparameters.get(x) + ";"), mtd.fbounds.get(x));
++      }
++    }
++
++    return ret;
++  }
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 index 959fdf6..f0f5b6f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
@@ -513,8 +613,74 @@ index 959fdf6..f0f5b6f 100644
    public int getExprentUse() {
      return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
    }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index cbc78b5..38fe98f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -16,6 +16,8 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.code.interpreter.Util;
++import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+@@ -197,6 +199,7 @@ public class FunctionExprent extends Exprent {
+   private int funcType;
+   private VarType implicitType;
+   private final List<Exprent> lstOperands;
++  private boolean needsCast = true;
+ 
+   public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
+     this(funcType, new ArrayList<>(), bytecodeOffsets);
+@@ -308,6 +311,34 @@ public class FunctionExprent extends Exprent {
+   }
+ 
+   @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    if (funcType == FUNCTION_CAST) {
++      this.needsCast = true;
++      VarType right = lstOperands.get(0).getInferredExprType(upperBound);
++
++      if (upperBound != null && upperBound.isGeneric()) {
++        Map<VarType, List<VarType>> names = this.getNamedGenerics();
++
++        List<VarType> types = names.get(right);
++        if (types != null) {
++          boolean anyMatch = false; //TODO: allMatch instead of anyMatch?
++          for (VarType type : types) {
++            anyMatch |= Util.instanceOf(DecompilerContext.getStructContext(), type.value, lstOperands.get(1).getExprType().value);
++          }
++          if (anyMatch) {
++            this.needsCast = false;
++          }
++        }
++      }
++      else { //TODO: Capture generics to make cast better?
++        this.needsCast = right.type == CodeConstants.TYPE_NULL || !Util.instanceOf(DecompilerContext.getStructContext(), right.value, lstOperands.get(1).getExprType().value);
++      }
++    }
++    return getExprType();
++  }
++
++
++  @Override
+   public int getExprentUse() {
+     if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
+       return 0;
+@@ -473,6 +504,9 @@ public class FunctionExprent extends Exprent {
+       case FUNCTION_NEG:
+         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
+       case FUNCTION_CAST:
++        if (!needsCast) {
++          return lstOperands.get(0).toJava(indent, tracer);
++        }
+         return lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
+       case FUNCTION_ARRAY_LENGTH:
+         Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a38c2ee..17c9d1d 100644
+index a38c2ee..2a7f94c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -533,7 +699,7 @@ index a38c2ee..17c9d1d 100644
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -174,6 +176,58 @@ public class InvocationExprent extends Exprent {
+@@ -174,6 +176,55 @@ public class InvocationExprent extends Exprent {
      return descriptor.ret;
    }
  
@@ -546,71 +712,58 @@ index a38c2ee..17c9d1d 100644
 +      desc = matches.get(0);
 +    }
 +
-+    VarType type = getExprType();
-+
 +    genericArgs.clear();
 +
 +    if (desc != null && desc.getSignature() != null) {
 +      VarType ret = desc.getSignature().ret;
-+      Map<VarType, VarType> map = new HashMap<>();
 +
-+      // List<T> -> List<String>
-+      if (upperBound != null && upperBound.isGeneric() && ret.isGeneric()) {
-+        List<VarType> leftArgs = ((GenericType)upperBound).getArguments();
-+        List<VarType> rightArgs = ((GenericType)ret).getArguments();
-+        List<String> fparams = desc.getSignature().fparameters;
-+        if (leftArgs.size() == rightArgs.size() && rightArgs.size() == fparams.size()) {
-+          for (int i = 0; i < leftArgs.size(); i++) {
-+            VarType left = leftArgs.get(i);
-+            VarType right = rightArgs.get(i);
-+            if (left != null && right.value.equals(fparams.get(i))) {
-+              genericArgs.add(left);
-+              map.put(right, left);
-+            } else {
-+              genericArgs.clear();
-+              map.clear();
-+              break;
++      if (instance != null) {
++        VarType instType = instance.getInferredExprType(upperBound);
++
++        if (instType.isGeneric()) {
++          StructClass cls = DecompilerContext.getStructContext().getClass(instType.value);
++
++          if (cls != null && cls.getSignature() != null) {
++            Map<VarType, VarType> map = new HashMap<>();
++            GenericType ginstance = (GenericType)instType;
++
++            if (cls.getSignature().fparameters.size() == ginstance.getArguments().size()) {
++              for (int x = 0; x < ginstance.getArguments().size(); x++) {
++                if (ginstance.getArguments().get(x) != null) { //TODO: Wildcards are null arguments.. look into fixing things?
++                  map.put(GenericType.parse("T" + cls.getSignature().fparameters.get(x) + ";"), ginstance.getArguments().get(x));
++                }
++              }
++            }
++
++            if (!map.isEmpty()) {
++              ret = ret.remap(map);
 +            }
 +          }
 +        }
 +      }
 +
-+      if (!map.isEmpty()) {
-+        VarType _new = ret.remap(map);
-+        if (ret != _new) {
-+          return _new;
-+        }
++      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().fparameters, genericArgs);
++      if (desc.getSignature().ret != _new) {
++        return _new;
 +      }
-+
-+      return ret;
 +    }
 +
-+    return type;
++    return getExprType();
 +  }
 +
 +
    @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
-@@ -287,6 +341,17 @@ public class InvocationExprent extends Exprent {
+@@ -287,6 +338,7 @@ public class InvocationExprent extends Exprent {
  
          if (buf.length() > 0) {
            buf.append(".");
-+
-+          if (genericArgs.size() != 0) {
-+            buf.append("<");
-+            for (int i = 0; i < genericArgs.size(); i++) {
-+              buf.append(ExprProcessor.getCastTypeName(genericArgs.get(i)));
-+              if(i + 1 < genericArgs.size()) {
-+                buf.append(", ");
-+              }
-+            }
-+            buf.append(">");
-+          }
++          this.appendParameters(buf, genericArgs);
          }
  
          buf.append(name);
-@@ -333,8 +398,29 @@ public class InvocationExprent extends Exprent {
+@@ -333,8 +385,30 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -626,8 +779,9 @@ index a38c2ee..17c9d1d 100644
 +    Map<VarType, VarType> genArgs = new HashMap<VarType, VarType>();
 +
 +    // building generic info from the instance
-+    if (cl != null && cl.getSignature() != null && instance != null && instance.getInferredExprType(null).isGeneric()) {
-+      GenericType genType = (GenericType)instance.getInferredExprType(null);
++    VarType inferred = instance == null ? null : instance.getInferredExprType(null);
++    if (cl != null && cl.getSignature() != null && instance != null && inferred.isGeneric()) {
++      GenericType genType = (GenericType)inferred;
 +      if (genType.getArguments().size() == cl.getSignature().fparameters.size()) {
 +        for (int i = 0; i < cl.getSignature().fparameters.size(); i++) {
 +          VarType from = GenericType.parse("T" + cl.getSignature().fparameters.get(i) + ";");
@@ -641,10 +795,11 @@ index a38c2ee..17c9d1d 100644
  
      boolean firstParameter = true;
      int start = isEnum ? 2 : 0;
-@@ -346,6 +432,33 @@ public class InvocationExprent extends Exprent {
+@@ -346,7 +420,34 @@ public class InvocationExprent extends Exprent {
  
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
+-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
 +        VarType type = descriptor.params[i];
 +
 +        // using info from the generic signature
@@ -669,13 +824,14 @@ index a38c2ee..17c9d1d 100644
 +        // not passing it along if what we get back is more specific
 +        VarType exprType = lstParameters.get(i).getInferredExprType(type);
 +        if (exprType != null && type != null && type.type == CodeConstants.TYPE_GENVAR) {
-+          type = exprType;
++          //type = exprType;
 +        }
 +
-         ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
++        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, true, ambiguous, tracer);
          buf.append(buff);
  
-@@ -358,12 +471,11 @@ public class InvocationExprent extends Exprent {
+         firstParameter = false;
+@@ -358,12 +459,11 @@ public class InvocationExprent extends Exprent {
      return buf;
    }
  
@@ -691,7 +847,7 @@ index a38c2ee..17c9d1d 100644
      nextMethod:
      for (StructMethod mt : cl.getMethods()) {
        if (name.equals(mt.getName())) {
-@@ -374,11 +486,19 @@ public class InvocationExprent extends Exprent {
+@@ -374,11 +474,19 @@ public class InvocationExprent extends Exprent {
                continue nextMethod;
              }
            }
@@ -713,7 +869,7 @@ index a38c2ee..17c9d1d 100644
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -392,7 +512,9 @@ public class InvocationExprent extends Exprent {
+@@ -392,7 +500,9 @@ public class InvocationExprent extends Exprent {
              break;
            }
          }
@@ -724,7 +880,7 @@ index a38c2ee..17c9d1d 100644
        }
      }
  
-@@ -400,7 +522,13 @@ public class InvocationExprent extends Exprent {
+@@ -400,7 +510,13 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];
@@ -740,10 +896,51 @@ index a38c2ee..17c9d1d 100644
            ambiguous.set(i);
            break;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index da3f3aa..0740397 100644
+index da3f3aa..324e016 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -185,17 +185,17 @@ public class NewExprent extends Exprent {
+@@ -29,7 +29,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
+-import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.ListStack;
+ 
+@@ -47,6 +46,7 @@ public class NewExprent extends Exprent {
+   private boolean anonymous;
+   private boolean lambda;
+   private boolean enumConst;
++  private List<VarType> genericArgs = new ArrayList<>();
+ 
+   public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
+     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
+@@ -86,6 +86,24 @@ public class NewExprent extends Exprent {
+   }
+ 
+   @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    genericArgs.clear();
++    if (newType.type == CodeConstants.TYPE_OBJECT && newType.arrayDim == 0) {
++      StructClass node = DecompilerContext.getStructContext().getClass(newType.value);
++
++      if (node != null && node.getSignature() != null) {
++        GenericClassDescriptor sig = node.getSignature();
++        VarType _new = this.gatherGenerics(upperBound, sig.genericType, sig.fparameters, genericArgs);
++        if (sig.genericType != _new) {
++          return _new;
++        }
++      }
++    }
++    
++    return getExprType();
++  }
++
++  @Override
+   public CheckTypesResult checkExprTypeBounds() {
+     CheckTypesResult result = new CheckTypesResult();
+ 
+@@ -185,17 +203,17 @@ public class NewExprent extends Exprent {
            }
          }
  
@@ -764,6 +961,22 @@ index da3f3aa..0740397 100644
            }
          }
          else {
+@@ -203,6 +221,7 @@ public class NewExprent extends Exprent {
+         }
+       }
+ 
++      appendParameters(buf, genericArgs);
+       buf.append('(');
+ 
+       if (!lambda && constructor != null) {
+@@ -320,6 +339,7 @@ public class NewExprent extends Exprent {
+ 
+         int start = enumConst ? 2 : 0;
+         if (!enumConst || start < lstParameters.size()) {
++          appendParameters(buf, genericArgs);
+           buf.append('(');
+ 
+           boolean firstParam = true;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 index f5d8cbe..ef50fe3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
@@ -817,6 +1030,18 @@ index f5d8cbe..ef50fe3 100644
                    return;
                  }
                }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
+index bb55e0f..55bbc2c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
+@@ -139,6 +139,7 @@ public class DoStatement extends Statement {
+         break;
+       case LOOP_FOREACH:
+         buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
++        incExprent.get(0).getInferredExprType(null); //TODO: Find a better then null? For now just calls it to clear casts if needed
+         buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
+         tracer.incrementCurrentSourceLine();
+         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 index 3725e9e..99f1994 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
@@ -831,7 +1056,7 @@ index 3725e9e..99f1994 100644
        else if (lvt != null) {
          cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 1c1a930..5ef7aaf 100644
+index 1c1a930..c68d329 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -16,8 +16,14 @@
@@ -871,7 +1096,7 @@ index 1c1a930..5ef7aaf 100644
 +    StructGeneralAttribute attribute = super.readAttribute(in, pool, name);
 +    if ("Signature".equals(name) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
 +      StructGenericSignatureAttribute signature = (StructGenericSignatureAttribute)attribute;
-+      this.signature = GenericMain.parseClassSignature(signature.getSignature());
++      this.signature = GenericMain.parseClassSignature(qualifiedName, signature.getSignature());
 +    }
 +    return attribute;
 +  }
@@ -1080,10 +1305,10 @@ index 1eb177f..d19bc7f 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java
-index 077814c..479c3a0 100644
+index 077814c..c6452c7 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java
-@@ -18,13 +18,15 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
+@@ -18,13 +18,17 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
  import java.util.ArrayList;
  import java.util.List;
  
@@ -1093,6 +1318,8 @@ index 077814c..479c3a0 100644
  
 -  public GenericType superclass;
 +  public VarType superclass;
++
++  public GenericType genericType;
  
 -  public final List<GenericType> superinterfaces = new ArrayList<>();
 +  public final List<VarType> superinterfaces = new ArrayList<>();
@@ -1118,7 +1345,7 @@ index 598d17b..9857f60 100644
 +  public VarType type;
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
-index a5760a3..1e747ff 100644
+index a5760a3..e915d62 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 @@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
@@ -1129,7 +1356,16 @@ index a5760a3..1e747ff 100644
  
  import java.util.ArrayList;
  import java.util.List;
-@@ -43,12 +44,12 @@ public class GenericMain {
+@@ -35,7 +36,7 @@ public class GenericMain {
+     "boolean",
+   };
+ 
+-  public static GenericClassDescriptor parseClassSignature(String signature) {
++  public static GenericClassDescriptor parseClassSignature(String qualifiedName, String signature) {
+     String original = signature;
+     try {
+       GenericClassDescriptor descriptor = new GenericClassDescriptor();
+@@ -43,15 +44,23 @@ public class GenericMain {
        signature = parseFormalParameters(signature, descriptor.fparameters, descriptor.fbounds);
  
        String superCl = GenericType.getNextType(signature);
@@ -1144,7 +1380,18 @@ index a5760a3..1e747ff 100644
          signature = signature.substring(superIf.length());
        }
  
-@@ -63,7 +64,7 @@ public class GenericMain {
++      StringBuilder buf = new StringBuilder();
++      buf.append('L').append(qualifiedName).append('<');
++      for (String t : descriptor.fparameters) {
++        buf.append('T').append(t).append(';');
++      }
++      buf.append(">;");
++      descriptor.genericType = (GenericType)GenericType.parse(buf.toString());
++
+       return descriptor;
+     }
+     catch (RuntimeException e) {
+@@ -63,7 +72,7 @@ public class GenericMain {
    public static GenericFieldDescriptor parseFieldSignature(String signature) {
      try {
        GenericFieldDescriptor descriptor = new GenericFieldDescriptor();
@@ -1153,7 +1400,7 @@ index a5760a3..1e747ff 100644
        return descriptor;
      }
      catch (RuntimeException e) {
-@@ -85,19 +86,19 @@ public class GenericMain {
+@@ -85,19 +94,19 @@ public class GenericMain {
  
        while (pars.length() > 0) {
          String par = GenericType.getNextType(pars);
@@ -1176,7 +1423,7 @@ index a5760a3..1e747ff 100644
          }
        }
  
-@@ -109,7 +110,7 @@ public class GenericMain {
+@@ -109,7 +118,7 @@ public class GenericMain {
      }
    }
  
@@ -1185,7 +1432,7 @@ index a5760a3..1e747ff 100644
      if (signature.charAt(0) != '<') {
        return signature;
      }
-@@ -142,7 +143,7 @@ public class GenericMain {
+@@ -142,7 +151,7 @@ public class GenericMain {
        String param = value.substring(0, to);
        value = value.substring(to + 1);
  
@@ -1194,7 +1441,7 @@ index a5760a3..1e747ff 100644
  
        while (true) {
          if (value.charAt(0) == ':') {
-@@ -151,7 +152,7 @@ public class GenericMain {
+@@ -151,7 +160,7 @@ public class GenericMain {
          }
  
          String bound = GenericType.getNextType(value);
@@ -1203,7 +1450,7 @@ index a5760a3..1e747ff 100644
          value = value.substring(bound.length());
  
  
-@@ -191,69 +192,9 @@ public class GenericMain {
+@@ -191,69 +200,9 @@ public class GenericMain {
        return type.value;
      }
      else if (tp == CodeConstants.TYPE_OBJECT) {
@@ -1623,10 +1870,20 @@ index ee71f5b..e1af5f2 100644
    }
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 4fb5ebe..966dcb8 100644
+index 4fb5ebe..32185c5 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -85,4 +85,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -25,7 +25,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   protected String[] getDecompilerOptions() {
+     return new String[] {
+       IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+-      IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1"
++      IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
++      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
+     };
+   }
+ 
+@@ -85,4 +86,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
    @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
    @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
    @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
@@ -1635,34 +1892,53 @@ index 4fb5ebe..966dcb8 100644
 \ No newline at end of file
 diff --git a/testData/classes/pkg/TestGenerics$Maps.class b/testData/classes/pkg/TestGenerics$Maps.class
 new file mode 100644
-index 0000000000000000000000000000000000000000..1003b76b029d053d9ebe13b3aea073d4803f64a4
+index 0000000000000000000000000000000000000000..e62634c0f2f291b9efa6f9cebdb99afcfb4fff54
 GIT binary patch
 literal 544
-zcmZutO;5r=5Pe$;g^Kc_h)PU2cmNOf;>i*&B%-0}fu@Pa1vj`@3+adcEj^KF;t%jg
-z8D|RzqHNQBGjHF_yxs4gk1qh{Xqd>NW?<ihrtrYPAw#Ys0~vQ2GOf19p!a4Ef}!Nd
-zK-?zJBN4iM<P%eMW@GMqJd`S5k$U_nBPzP#bAsY^5Qwnn^C%LO)}8s&#BxOx_XY8C
-z9Gxhg&0q%N^@>N2lrq#>ZD-0~xRu1xw^lTX3PU*wc$|bZyx$pIEJZ#KCf40(D#o$x
-zZQ#0_x^>)v?Rs`sjULXDa4asRx>IG{+?g^_L=FZW{4-?Wh^%hB5JNeYuURANuM|z_
-z^!{pT^wAhF<SDZV8DaKx0rs9A7iiC=WCJF}#iamS*rBX|63Wy<6*mdh%6~$;Um){F
-dF+Cma%lczfDArJ=e>aWxuuW)^N=KbKo4>|Cd0_wm
+zcmZutO;5r=5Pb`U(u(q-h#wbCJb(v#@njJXB%-0}friB6Qa7+z3+adcEj^KF;t%jg
+z8E1<JqHMDBX5PG+ot>}m_fG()*f)_wO~<y0jKUoqyA1i33}oD9$Tpe-2CXxF5DX<p
+z2I4k(8j8^6L!X$cGxfMX;GtCUFR8_28Bx&<pAi(VgFu8GpGT3Pu<pzrN0uw1xGRX4
+zUUZ~%HiH?6mn$BPDP*WMn$Cnjb1R9ZZ~f9FGWv29@Hh$S@ouYkwh;L|7+H72iSS~3
+zu!3u^>eh05wmY!f>goP82|aNs)t@TM!=0!hipWE!#J_=b?9r$zKg3W@<x8Ux^;e2R
+zXtaNIGN83XCtIM%B4mWQ<2l${nl{MhQ}P@p`Nf3*YuKR3KnZ1PqKXd))hT=+b3aG+
+em3&$q*+u;YD&%KSrMsDWTUaMFNu{AqosA#Z7I~xq
 
 literal 0
 HcmV?d00001
 
 diff --git a/testData/classes/pkg/TestGenerics.class b/testData/classes/pkg/TestGenerics.class
 new file mode 100644
-index 0000000000000000000000000000000000000000..187f5173369d001e7a90f9e92d752e45302ac393
+index 0000000000000000000000000000000000000000..c330ce1de228508746d45209da4e5e0e32cb8072
 GIT binary patch
-literal 761
-zcmb7C%Tn7w5bU*O%T~n8U>-?;ybh2<bm0`cID~@WibD>jxUa<`mMANiB!}X&QaO;y
-zAs>*BN~Kq_DIO;d-rZ^U^z_W=@4w%F0PNtkhZ>%FsN;DP4%S_4xY%^@LcsYfN11@%
-zGe)I*vCJ~Xuy&?Zd@8WmzmVT$FwS)x9LnsR<c>gdpd%ymajFE~KV)=ED3&G)26?JY
-z)VYOxNRn7d)7hm^y{nDRcLl0j+b8t0mz+{^uCI+c8h;zA^jHpKBCUQB%J@X4+Qt*m
-z$<H;dw)&&5QE;rX{G(zEI?O0MAC>Q(Ia8@JAvK(w6oKWtQdgs?+@l-mnOsFGEgETb
-z!+6q)H%P{5s1CF>zHr;uJ3C7sGnn=960dwT;nC`S`-F<27xVivyig%+x9_vwlza1x
-zx|}SAq^<3T+vu>C!}S9K4O^1;6Gj#IsPauaJm-i6yan&t+iQp)1!bORy#SZ6z_(u#
-z(8404CYElJ_ovCfQ2At&tFXx)>j0~Cuy!NhklN-yz%qYUvP4!GHOQU%*({0yE+v1W
-bYDGC4o~5HUrPml$@RVt`6hA0Rx$yo2+-IZn
+literal 3039
+zcmb7GT~iZh6n@?$upz7<ARt<;wpvkw;76+xN=qmzH6S&p)!L6GtYIZ=(#=Mt-`}4X
+zz35dhdhK0jiZfX1Ovmf~kM>7&+S=!RceA^Jwlgxr?w<3W_nhZE=XrPY>)${B0^m5l
+zPGJ{jQ)tFZ8ZM*|$80Nlk=HQSf{VDM;c^N|%qH=&ykC)*tMc+n3fJ&z3m(I38eVV3
+z8!%cik3uUJV9LvN4Mn-UsKJsc3(~luVM!V#4a*vAfyA^?sS4;*wrx5SC8Jt3X*ONA
+z%+i8Dd+vsD(-^9`R%wWV8G)9(RkRJa=9mJ{G_H<%X34ONLwVP+>|!S3$(G9{)37sR
+zOp+{>swzNWYa~a`s=8c_rj;%~uL2RVqjknq+NSvxSE7GnL(V9$EJIXq^QdK8?wCNl
+z|KKI^Fi~D$OYJ$!HfL(f^QJRr%$Mlt%#{m9>5}1C()OJRchO>@&Rk`wI5cNg-7_ZX
+zvkFzh?`hnyQmJp+u_=0VZag!WRdBWzy$n<Kb<;8J0xKujj4RL;>E^6aUG(NKve_GL
+zb2I-_wrdtmM-^-Ji%B*)4Oz!~6!QYTn_%vf8ewPMk(z1{KK3~80`;U5hD_RAs}$73
+zBLj^JrOgL=y6j9Eg+&3OSXZKq&R<|l-ZctK1ga*aq0B)vZoX`}iypRm)_kpEIu|Ph
+zYpaRNfrhC)6|k{HNzt^q`#F-y!zIu+I_I~kK>0hzl(3Scg_5td3!~%Fu=Ddb%z~TA
+zj{FDVQRXDwnXw2uf3rX;U#>X?^Ry+!+7Z>_VcCn0gE*w4f;Xw8@Gy@%j<F(>>Tp0#
+zyEh71&0GW5Yq&{KguHmt%GRvXg6RmvvLiZf;kLZ2=y(fnYj{V;yLeB>9_%Hiu&OU#
+z4e#st03T}jNXN(cgwxXTDL&KjIlka4VPh>F`><c2EllJgKOnu4XpeUtU*aqJH+Iwz
+z>e0u6hdHNQ(=psKTT0pHEgveG=|32eeRu%lMUyh`?w|6P)#QVzL{Q~ds;;@r_e{Aa
+zH+adc^3W{bkS@tIjb)0g*{D=Zo3Gr#{>YU5V;n8fKtDG&#QXLCFFxs(y%Yl5>a8^%
+zB~K=e2nDo?#9QJgqx;_w@)f!z<dWx*EiIWVc}Y@7y^eZ?(?!^kU=@?J0{VLz!s}z<
+z9&OR6&X~8Ek?-uQJeamJ8ruj)5H}V`X9L(eJy)@p-@;w|0LS?yrAon%2CW#Lq)o8}
+z_EWSev%v1BE##5nb$~m@c^AAl9l8hcqe__OwOKiPG011#3&3Fv(Hd^>9HG^Mqd~gK
+zdb*zwI~S%)5gCX#f!#sM1VfMU2Sk|C^E^!tzo9|O@7ZIVzQOy5U%7`wZXmvnrWhWe
+zd3qJveI)5^=}fJmHN6IX4O`aG7MAX0QIMb{3F;y}Y0@LR+T$hlyGoLx6N;uT?7&H!
+zB4F8R7$rOPqDBbMi^?!cU^IYwjh1XQxr+7&{ACcL@CY~n4gIQmj~C}x*SPOlQXy2$
+za81_q*2cId@LW*o8}65+q*-Yl9Rlm<6vz#%qf6jB^zvbwAVuAhBGS@!=i%=XO@jRc
+z9w!52C9Uub5QpSMR^H2s&r=q%kMyRQOOHgA<$o(;f1*vp#2?h6zzYGmZ+&pXtLUlE
+zs&^gR9~Iyc4&*379Ha1#2LSg+01j^gC_N1TI|G1|1Q=7I|ABX@is8DXR?(;MO{aYV
+zxAQ>}xMOBua2-2ixP0f~Zy|#{XyX18RK!W@=@dbZ5M(A$);_MB#u+uEI>;osKC3h)
+zmE}#j4%b_oB8`&SHpKoyhlUpw_FewbKF6H7fMlsX`L~lN?JnB=PVS;7c<PgI1)<4=
+hQY_nftoyK)0+0JCr!hl+4CnDU?<qz%bC$c&@(;cmq@Dl(
 
 literal 0
 HcmV?d00001
@@ -1687,54 +1963,182 @@ index 6f116db..3f3dbea 100644
  
 diff --git a/testData/results/TestGenerics.dec b/testData/results/TestGenerics.dec
 new file mode 100644
-index 0000000..1fd0ad3
+index 0000000..533d1de
 --- /dev/null
 +++ b/testData/results/TestGenerics.dec
-@@ -0,0 +1,38 @@
+@@ -0,0 +1,166 @@
 +package pkg;
 +
++import java.util.ArrayList;
 +import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
 +
-+public class TestGenerics {
-+   static HashMap<String, Boolean> field = Maps.<String, Boolean>newHashMap();
++public class TestGenerics<A, B extends TestGenerics.Maps & List> {
++   static Map<String, Boolean> field = TestGenerics.Maps.<String, Boolean>newHashMap();
++   static List<List<String>> llstring = new ArrayList<List<String>>();
 +
 +   public static void genericInference() {
-+      HashMap<String, Integer> test = Maps.<String, Integer>newHashMap();// 24
-+   }// 25
++      HashMap<String, Integer> test = TestGenerics.Maps.<String, Integer>newHashMap();// 28
++   }// 29
 +
-+   private static class Maps {
++   public void genericList() {
++      List<B> testList = new ArrayList<B>();// 32
++      B b = testList.get(0);// 33
++      System.out.println("B:" + b);// 34
++   }// 35
++
++   public void genericCast() {
++      HashMap<String, Boolean> upcast = (HashMap)field;// 38
++   }// 39
++
++   public void genericForEach() {
++      for(String s : field.keySet()) {// 42
++         System.out.println(s);// 43
++      }
++// 45
++   }
++
++   public void genericForEachWithCast() {// 48
++      for(String s : llstring.get(0)) {// 49
++         System.out.println(s);
++      }// 51
++
++   }
++
++   public static class Maps {// 55
 +      public static <K, V> HashMap<K, V> newHashMap() {
-+         return new HashMap();// 29
++         return new HashMap<K, V>();
 +      }
 +   }
 +}
 +
 +class 'pkg/TestGenerics' {
 +   method 'genericInference ()V' {
-+      0      8
-+      1      8
-+      2      8
-+      3      8
-+      4      9
++      0      12
++      1      12
++      2      12
++      3      12
++      4      13
++   }
++
++   method 'genericList ()V' {
++      7      16
++      8      17
++      9      17
++      a      17
++      b      17
++      c      17
++      d      17
++      e      17
++      f      17
++      10      17
++      11      17
++      12      17
++      13      18
++      14      18
++      15      18
++      1d      18
++      1e      18
++      22      18
++      26      18
++      27      18
++      28      18
++      29      18
++      2a      18
++      2b      18
++      2c      19
++   }
++
++   method 'genericCast ()V' {
++      0      22
++      1      22
++      2      22
++      3      22
++      4      22
++      5      22
++      6      22
++      7      23
++   }
++
++   method 'genericForEach ()V' {
++      0      26
++      1      26
++      2      26
++      3      26
++      4      26
++      5      26
++      6      26
++      7      26
++      d      26
++      20      26
++      21      27
++      22      27
++      23      27
++      24      27
++      25      27
++      26      27
++      27      27
++      2b      29
++   }
++
++   method 'genericForEachWithCast ()V' {
++      0      32
++      1      32
++      2      32
++      3      32
++      4      32
++      5      32
++      6      32
++      7      32
++      8      32
++      9      32
++      a      32
++      b      32
++      11      32
++      24      32
++      25      33
++      26      33
++      27      33
++      28      33
++      29      33
++      2a      33
++      2b      33
++      2f      35
 +   }
 +}
 +
 +class 'pkg/TestGenerics$Maps' {
 +   method 'newHashMap ()Ljava/util/HashMap;' {
-+      7      13
++      7      39
 +   }
 +}
 +
 +Lines mapping:
-+24 <-> 9
-+25 <-> 10
++28 <-> 13
 +29 <-> 14
++32 <-> 17
++33 <-> 18
++34 <-> 19
++35 <-> 20
++38 <-> 23
++39 <-> 24
++42 <-> 27
++43 <-> 28
++45 <-> 30
++48 <-> 33
++49 <-> 34
++51 <-> 36
++55 <-> 40
++Not mapped:
++44
++50
 diff --git a/testData/src/pkg/TestGenerics.java b/testData/src/pkg/TestGenerics.java
 new file mode 100644
-index 0000000..bbd6f1c
+index 0000000..c571428
 --- /dev/null
 +++ b/testData/src/pkg/TestGenerics.java
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,66 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -1752,16 +2156,50 @@ index 0000000..bbd6f1c
 + */
 +package pkg;
 +
++import java.util.ArrayList;
 +import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
 +
-+public class TestGenerics {
-+  static HashMap<String, Boolean> field = Maps.newHashMap();
++public class TestGenerics<A, B extends TestGenerics.Maps & List>  {
++  static Map<String, Boolean> field = Maps.newHashMap();
++  static List<List<String>> llstring = new ArrayList<>();
++  static List<Byte> bytes = new ArrayList<>();
 +  
 +  public static void genericInference() {
 +    HashMap<String, Integer> test = Maps.newHashMap();
 +  }
-+  
-+  private static class Maps {
++
++  public void genericList() {
++    List<B> testList = new ArrayList<B>();
++    B b = testList.get(0);
++    System.out.println("B:" + b);
++  }
++
++  public void genericCast() {
++    HashMap<String, Boolean> upcast = (HashMap<String, Boolean>)field;
++  }
++
++  public void genericForEach() { 
++    for (String s : field.keySet()) {
++      System.out.println(s);
++    }
++  }
++
++  public void genericForEachWithCast() { 
++    for (String s : llstring.get(0)) {
++      System.out.println(s);
++    }
++  }
++
++  public <T extends Number> void genericSuperUp() {
++    List<T> list = new ArrayList<>();
++    for (Number number : bytes) {
++      list.add((T)number);
++    }
++   }
++
++  public static class Maps {
 +    public static <K, V> HashMap<K, V> newHashMap() {
 +      return new HashMap<K, V>();
 +    }

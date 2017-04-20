@@ -1,11 +1,11 @@
-From 96f187708285b639db5280c738c96d9839078774 Mon Sep 17 00:00:00 2001
+From 8d435a68c32b0274bc20f90bf1a67dd14901383a Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 10d47a4..b345808 100644
+index 3fba799..22dc8df 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -716,6 +716,11 @@ public class ClassWriter {
@@ -777,7 +777,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestJADNaming.dec b/testData/results/TestJADNaming.dec
 new file mode 100644
-index 0000000..05ad201
+index 0000000..b5d7ed5
 --- /dev/null
 +++ b/testData/results/TestJADNaming.dec
 @@ -0,0 +1,81 @@
@@ -785,19 +785,19 @@ index 0000000..05ad201
 +
 +public class TestJADNaming {
 +   public void Func() {
-+      short var1 = 1000;// 7
-+      short var2 = 2000;
-+      short var3 = 3000;
-+      short var4 = 4000;
-+      if (var1 != var2 && var3 == var4) {// 8
++      short short1 = 1000;// 7
++      short short2 = 2000;
++      short short3 = 3000;
++      short short4 = 4000;
++      if (short1 != short2 && short3 == short4) {// 8
 +         ;
 +      }
 +
-+      boolean var5 = true;// 9
-+      boolean var6 = false;
-+      boolean var7 = true;
-+      boolean var8 = false;
-+      if (var5 != var6 && var7 == var8) {// 10
++      boolean flag = true;// 9
++      boolean flag1 = false;
++      boolean flag2 = true;
++      boolean flag3 = false;
++      if (flag != flag1 && flag2 == flag3) {// 10
 +         ;
 +      }
 +

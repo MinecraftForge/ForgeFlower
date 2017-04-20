@@ -1,4 +1,4 @@
-From 93fe6d783bf751193442045f63dfc28263b93194 Mon Sep 17 00:00:00 2001
+From f5ba331d165c60e22d2a76eee7fc25533842b963 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 18 Apr 2017 19:20:27 -0700
 Subject: [PATCH] Fix byte/short constants as arguments to functions. We need
@@ -36,23 +36,23 @@ index e1e29cc..dde47ab 100644
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 17c9d1d..2720529 100644
+index 2a7f94c..502c058 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -459,7 +459,7 @@ public class InvocationExprent extends Exprent {
-           type = exprType;
+@@ -447,7 +447,7 @@ public class InvocationExprent extends Exprent {
+           //type = exprType;
          }
  
--        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
-+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
+-        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, true, ambiguous, tracer);
++        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, true, ambiguous, true, tracer);
          buf.append(buff);
  
          firstParameter = false;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 0740397..90ee2f8 100644
+index 324e016..a71fd18 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -339,7 +339,7 @@ public class NewExprent extends Exprent {
+@@ -359,7 +359,7 @@ public class NewExprent extends Exprent {
                  buf.append(", ");
                }
  
