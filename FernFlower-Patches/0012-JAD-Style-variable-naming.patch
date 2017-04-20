@@ -1,4 +1,4 @@
-From 8d435a68c32b0274bc20f90bf1a67dd14901383a Mon Sep 17 00:00:00 2001
+From 6788bfbfd55c1dd02ca9a25ec8d3b3679741a6a4 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -304,7 +304,7 @@ index 1594ba5..d94650d 100644
                  method.varproc.getExternalVars().add(newVar);
                  VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 99f1994..47efc9c 100644
+index e46116f..0d974bc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -16,13 +16,16 @@
@@ -332,22 +332,7 @@ index 99f1994..47efc9c 100644
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -753,9 +757,11 @@ public class VarDefinitionHelper {
-     }
- 
-     for (VarType var : md.params) {
--      List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
--      if (lvt != null && lvt.size() > 0) {
--        types.put(new VarVersionPair(index, 0), new VarInfo(null, null));
-+      if (varproc.hasLVT()) {
-+        List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
-+        if (lvt != null && lvt.size() > 0) {
-+          types.put(new VarVersionPair(index, 0), new VarInfo(null, null));
-+        }
-       }
-       index += var.stackSize;
-     }
-@@ -766,6 +772,36 @@ public class VarDefinitionHelper {
+@@ -772,6 +776,36 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().typeName());
      }
@@ -384,7 +369,7 @@ index 99f1994..47efc9c 100644
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -775,7 +811,15 @@ public class VarDefinitionHelper {
+@@ -781,7 +815,15 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().lvt;
@@ -400,7 +385,7 @@ index 99f1994..47efc9c 100644
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -902,7 +946,7 @@ public class VarDefinitionHelper {
+@@ -908,7 +950,7 @@ public class VarDefinitionHelper {
      String cast;
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null) {

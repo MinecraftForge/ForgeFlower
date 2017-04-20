@@ -1,4 +1,4 @@
-From a14e9614ce87d7fc5b9b21be330b40581b6eacce Mon Sep 17 00:00:00 2001
+From 74990e4e404c50973e2ea6d9739ae180643966b4 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -1408,7 +1408,7 @@ index 2370830..98280f6 100644
 -  
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index a0a14cb..3725e9e 100644
+index a0a14cb..16cbc34 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -18,16 +18,23 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -1601,7 +1601,7 @@ index a0a14cb..3725e9e 100644
      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
        Exprent left = ((AssignmentExprent)expr).getLeft();
        if (left.type == Exprent.EXPRENT_VAR) {
-@@ -352,4 +424,555 @@ public class VarDefinitionHelper {
+@@ -352,4 +424,561 @@ public class VarDefinitionHelper {
      }
      return false;
    }
@@ -1928,17 +1928,23 @@ index a0a14cb..3725e9e 100644
 +    MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 +    Map<VarVersionPair, VarInfo> types = new LinkedHashMap<>();
 +
-+    int index = 0;
-+    if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
-+      types.put(new VarVersionPair(index++, 0), new VarInfo(null, null));
-+    }
-+
-+    for (VarType var : md.params) {
-+      List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
-+      if (lvt != null && lvt.size() > 0) {
-+        types.put(new VarVersionPair(index, 0), new VarInfo(null, null));
++    if (varproc.hasLVT()) {
++      int index = 0;
++      if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
++        List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
++        if (lvt != null && lvt.size() > 0) {
++          types.put(new VarVersionPair(index, 0), new VarInfo(lvt.get(0), null));
++        }
++        index++;
 +      }
-+      index += var.stackSize;
++
++      for (VarType var : md.params) {
++        List<LocalVariable> lvt = varproc.getCandidates(index); // Some enums give incomplete lvts?
++        if (lvt != null && lvt.size() > 0) {
++          types.put(new VarVersionPair(index, 0), new VarInfo(lvt.get(0), null));
++        }
++        index += var.stackSize;
++      }
 +    }
 +
 +    findTypes(stat, types);

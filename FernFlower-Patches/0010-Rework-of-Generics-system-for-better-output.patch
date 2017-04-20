@@ -1,4 +1,4 @@
-From a338eac4a1ba60b60a7ec3d73f3840bccb5e62b6 Mon Sep 17 00:00:00 2001
+From 3ad08bb0b2550520d76bbe57e612c003b0872f2d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -1041,10 +1041,10 @@ index bb55e0f..55bbc2c 100644
          tracer.incrementCurrentSourceLine();
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 3725e9e..99f1994 100644
+index 16cbc34..e46116f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -902,7 +902,7 @@ public class VarDefinitionHelper {
+@@ -908,7 +908,7 @@ public class VarDefinitionHelper {
      String cast;
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null) {
