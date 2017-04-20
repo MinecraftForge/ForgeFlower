@@ -1,4 +1,4 @@
-From f5ba331d165c60e22d2a76eee7fc25533842b963 Mon Sep 17 00:00:00 2001
+From f3bb12d0b8f601ea15ea8e3a6992502bcb07acdc Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 18 Apr 2017 19:20:27 -0700
 Subject: [PATCH] Fix byte/short constants as arguments to functions. We need
@@ -36,15 +36,15 @@ index e1e29cc..dde47ab 100644
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 2a7f94c..502c058 100644
+index 6460138..1917cf8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -447,7 +447,7 @@ public class InvocationExprent extends Exprent {
            //type = exprType;
          }
  
--        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, true, ambiguous, tracer);
-+        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, true, ambiguous, true, tracer);
+-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
++        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
          buf.append(buff);
  
          firstParameter = false;

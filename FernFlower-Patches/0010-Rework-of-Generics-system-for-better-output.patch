@@ -1,4 +1,4 @@
-From 376eb67854e8d2eb23baf68ab675b521ed6f2d0e Mon Sep 17 00:00:00 2001
+From a338eac4a1ba60b60a7ec3d73f3840bccb5e62b6 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -680,7 +680,7 @@ index cbc78b5..38fe98f 100644
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a38c2ee..2a7f94c 100644
+index a38c2ee..6460138 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -795,11 +795,10 @@ index a38c2ee..2a7f94c 100644
  
      boolean firstParameter = true;
      int start = isEnum ? 2 : 0;
-@@ -346,7 +420,34 @@ public class InvocationExprent extends Exprent {
+@@ -346,6 +420,33 @@ public class InvocationExprent extends Exprent {
  
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
--        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
 +        VarType type = descriptor.params[i];
 +
 +        // using info from the generic signature
@@ -827,10 +826,9 @@ index a38c2ee..2a7f94c 100644
 +          //type = exprType;
 +        }
 +
-+        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, true, ambiguous, tracer);
+         ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
          buf.append(buff);
  
-         firstParameter = false;
 @@ -358,12 +459,11 @@ public class InvocationExprent extends Exprent {
      return buf;
    }
