@@ -1,4 +1,4 @@
-From 6788bfbfd55c1dd02ca9a25ec8d3b3679741a6a4 Mon Sep 17 00:00:00 2001
+From cbf24f8827c65ecfced114bd2915d784aebd529a Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -304,7 +304,7 @@ index 1594ba5..d94650d 100644
                  method.varproc.getExternalVars().add(newVar);
                  VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index e46116f..0d974bc 100644
+index e46116f..1f31b4e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -16,13 +16,16 @@
@@ -369,23 +369,24 @@ index e46116f..0d974bc 100644
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -781,7 +815,15 @@ public class VarDefinitionHelper {
+@@ -781,7 +815,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().lvt;
++      String rename = renames == null ? null : renames.get(idx);
 +
-+      if (renames != null) {
-+        varproc.setVarName(idx, renames.get(idx));
++      if (rename != null) {
++        varproc.setVarName(idx, rename);
 +      }
 +
        if (lvt != null) {
-+        if (renames!=null) {
-+          lvt = lvt.rename(renames.get(idx));
++        if (rename != null) {
++          lvt = lvt.rename(rename);
 +        }
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -908,7 +950,7 @@ public class VarDefinitionHelper {
+@@ -908,7 +951,7 @@ public class VarDefinitionHelper {
      String cast;
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null) {
@@ -441,10 +442,10 @@ index 1067c62..3759504 100644
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000..92c27e6
+index 0000000..a994b81
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
-@@ -0,0 +1,196 @@
+@@ -0,0 +1,215 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -473,14 +474,19 @@ index 0000000..92c27e6
 +import java.util.Map.Entry;
 +import java.util.regex.Pattern;
 +
++import org.jetbrains.java.decompiler.code.CodeConstants;
 +import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
 +import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 +import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
 +
 +public class JADNameProvider implements IVariableNameProvider {
 +  private HashMap<String, Holder> last = null;
 +  private HashMap<String, String> remap = null;
++  private StructMethod method = null;
++  private boolean renameParameters = false;
 +  private static final Pattern CAPS_START = Pattern.compile("^[A-Z]");
 +  private static final Pattern ARRAY = Pattern.compile("(\\[|\\.\\.\\.)");
 +
@@ -505,6 +511,8 @@ index 0000000..92c27e6
 +
 +    remap = new HashMap<String, String>();
 +    remap.put("long", "int");
++
++    this.method = wrapper;
 +  }
 +
 +  @Override
@@ -542,6 +550,16 @@ index 0000000..92c27e6
 +
 +  @Override
 +  public Map<VarVersionPair,String> rename(Map<VarVersionPair, String> entries) {
++    int params = 0;
++    if ((this.method.getAccessFlags() & CodeConstants.ACC_STATIC) != CodeConstants.ACC_STATIC) {
++      params++;
++    }
++
++    MethodDescriptor md = MethodDescriptor.parseDescriptor(this.method.getDescriptor());
++    for (VarType param : md.params) {
++      params += param.stackSize;
++    }
++
 +    List<VarVersionPair> keys = new ArrayList<VarVersionPair>(entries.keySet());
 +    Collections.sort(keys, new Comparator<VarVersionPair>(){
 +      @Override
@@ -551,7 +569,7 @@ index 0000000..92c27e6
 +      }
 +    });
 +
-+    Map<VarVersionPair,String> result = new LinkedHashMap<VarVersionPair,String>();
++    Map<VarVersionPair, String> result = new LinkedHashMap<VarVersionPair, String>();
 +    for (VarVersionPair ver : keys) {
 +      String type = entries.get(ver);
 +      if ("this".equals(type)) {
@@ -563,7 +581,9 @@ index 0000000..92c27e6
 +      if (type.indexOf('.') != -1) {
 +        type = type.substring(type.lastIndexOf('.') + 1);
 +      }
-+      result.put(ver, getNewName(type));
++      if (renameParameters || ver.var >= params) {
++        result.put(ver, getNewName(type));
++      }
 +    }
 +    return result;
 +  }
