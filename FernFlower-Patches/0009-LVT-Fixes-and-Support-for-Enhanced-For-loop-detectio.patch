@@ -1,4 +1,4 @@
-From 74990e4e404c50973e2ea6d9739ae180643966b4 Mon Sep 17 00:00:00 2001
+From 8ed58fc64bbd4deb485f6dc87fbddfeaf752bdfb Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -1280,7 +1280,7 @@ index bd7d555..f5d8cbe 100644
    // *****************************************************************************
    // IMatchable implementation
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index 43c63f6..6a7b5b1 100644
+index 43c63f6..051dc0a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -215,6 +215,7 @@ public class FlattenStatementsHelper {
@@ -1291,17 +1291,17 @@ index 43c63f6..6a7b5b1 100644
                  DirectNode nodeinit = new DirectNode(DirectNode.NODE_INIT, stat, stat.id + "_init");
                  if (dostat.getInitExprent() != null) {
                    nodeinit.exprents = dostat.getInitExprentList();
-@@ -226,7 +227,9 @@ public class FlattenStatementsHelper {
-                 graph.nodes.putWithKey(nodecond, nodecond.id);
+@@ -222,7 +223,9 @@ public class FlattenStatementsHelper {
+                 graph.nodes.putWithKey(nodeinit, nodeinit.id);
  
-                 DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
--                nodeinc.exprents = dostat.getIncExprentList();
+                 DirectNode nodecond = new DirectNode(DirectNode.NODE_CONDITION, stat, stat.id + "_cond");
+-                nodecond.exprents = dostat.getConditionExprentList();
 +                if (looptype != DoStatement.LOOP_FOREACH) {
 +                  nodecond.exprents = dostat.getConditionExprentList();
 +                }
-                 graph.nodes.putWithKey(nodeinc, nodeinc.id);
+                 graph.nodes.putWithKey(nodecond, nodecond.id);
  
-                 mapDestinationNodes.put(stat.id, new String[]{nodeinit.id, nodeinc.id});
+                 DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 index c6f90d8..379ece6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
