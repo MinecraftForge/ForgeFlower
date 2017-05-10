@@ -1,11 +1,11 @@
-From 3ad08bb0b2550520d76bbe57e612c003b0872f2d Mon Sep 17 00:00:00 2001
+From 9779c905d681401c6fd91724f0d63064c3170ffb Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 815ec14..3fba799 100644
+index 815ec14..c454ac9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -334,7 +334,7 @@ public class ClassWriter {
@@ -69,15 +69,16 @@ index 815ec14..3fba799 100644
        buffer.append(' ');
      }
  
-@@ -444,6 +423,7 @@ public class ClassWriter {
+@@ -444,7 +423,7 @@ public class ClassWriter {
        else {
          buffer.append(" = ");
          // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
-+        VarType rightType = initializer.getInferredExprType(descriptor == null ? fieldType : descriptor.type);
-         buffer.append(initializer.toJava(indent, tracer));
+-        buffer.append(initializer.toJava(indent, tracer));
++        ExprProcessor.getCastedExprent(initializer, descriptor == null ? fieldType : descriptor.type, buffer, indent, false, tracer);
        }
      }
-@@ -592,6 +572,7 @@ public class ClassWriter {
+     else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
+@@ -592,6 +571,7 @@ public class ClassWriter {
        boolean clinit = false, init = false, dinit = false;
  
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
@@ -85,7 +86,7 @@ index 815ec14..3fba799 100644
  
        int flags = mt.getAccessFlags();
        if ((flags & CodeConstants.ACC_NATIVE) != 0) {
-@@ -646,25 +627,20 @@ public class ClassWriter {
+@@ -646,25 +626,20 @@ public class ClassWriter {
          clinit = true;
        }
  
@@ -124,7 +125,7 @@ index 815ec14..3fba799 100644
        }
  
        boolean throwsExceptions = false;
-@@ -679,12 +655,7 @@ public class ClassWriter {
+@@ -679,12 +654,7 @@ public class ClassWriter {
          }
  
          if (!init) {
@@ -138,7 +139,7 @@ index 815ec14..3fba799 100644
            buffer.append(' ');
          }
  
-@@ -705,6 +676,12 @@ public class ClassWriter {
+@@ -705,6 +675,12 @@ public class ClassWriter {
          int index = isEnum && init ? 3 : thisVar ? 1 : 0;
          boolean hasDescriptor = descriptor != null;
          int start = isEnum && init && !hasDescriptor ? 2 : 0;
@@ -151,7 +152,7 @@ index 815ec14..3fba799 100644
          int params = hasDescriptor ? descriptor.params.size() : md.params.length;
          for (int i = start; i < params; i++) {
            if (hasDescriptor || (signFields == null || signFields.get(i) == null)) {
-@@ -718,45 +695,23 @@ public class ClassWriter {
+@@ -718,45 +694,23 @@ public class ClassWriter {
                buffer.append("final ");
              }
  
@@ -209,7 +210,7 @@ index 815ec14..3fba799 100644
              }
  
              buffer.append(' ');
-@@ -767,7 +722,7 @@ public class ClassWriter {
+@@ -767,7 +721,7 @@ public class ClassWriter {
              paramCount++;
            }
  
@@ -218,7 +219,7 @@ index 815ec14..3fba799 100644
          }
  
          buffer.append(')');
-@@ -781,14 +736,11 @@ public class ClassWriter {
+@@ -781,14 +735,11 @@ public class ClassWriter {
              if (i > 0) {
                buffer.append(", ");
              }
@@ -236,7 +237,7 @@ index 815ec14..3fba799 100644
            }
          }
        }
-@@ -1040,17 +992,7 @@ public class ClassWriter {
+@@ -1040,17 +991,7 @@ public class ClassWriter {
      }
    }
  
@@ -255,7 +256,7 @@ index 815ec14..3fba799 100644
      buffer.append('<');
  
      for (int i = 0; i < parameters.size(); i++) {
-@@ -1060,13 +1002,13 @@ public class ClassWriter {
+@@ -1060,13 +1001,13 @@ public class ClassWriter {
  
        buffer.append(parameters.get(i));
  
@@ -413,7 +414,7 @@ index 290c730..e1e29cc 100644
      boolean cast =
        castAlways ||
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 58017ef..66ddb10 100644
+index 58017ef..72b649f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -66,6 +66,11 @@ public class AssignmentExprent extends Exprent {
@@ -428,15 +429,34 @@ index 58017ef..66ddb10 100644
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
  
-@@ -106,7 +111,7 @@ public class AssignmentExprent extends Exprent {
+@@ -105,8 +110,8 @@ public class AssignmentExprent extends Exprent {
+ 
    @Override
    public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-     VarType leftType = left.getExprType();
+-    VarType leftType = left.getExprType();
 -    VarType rightType = right.getExprType();
-+    VarType rightType = right.getInferredExprType(left.getInferredExprType(null));
++    VarType leftType = left.getInferredExprType(null);
++    VarType rightType = right.getInferredExprType(leftType);
  
      boolean fieldInClassInit = false, hiddenField = false;
      if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
+@@ -140,14 +145,8 @@ public class AssignmentExprent extends Exprent {
+ 
+     TextBuffer res = right.toJava(indent, tracer);
+ 
+-    if (condType == CONDITION_NONE &&
+-        !leftType.isSuperset(rightType) &&
+-        (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) {
+-      if (right.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
+-        res.enclose("(", ")");
+-      }
+-
+-      res.prepend("(" + ExprProcessor.getCastTypeName(leftType) + ")");
++    if (condType == CONDITION_NONE) {
++      this.wrapInCast(leftType, rightType, res, right.getPrecedence());
+     }
+ 
+     buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 index 0c3a1f9..722e306 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
@@ -470,13 +490,21 @@ index 0c3a1f9..722e306 100644
  
        return buffer;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 63ff8b2..13c6bb2 100644
+index 63ff8b2..87ffe21 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-@@ -19,9 +19,14 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+@@ -15,13 +15,22 @@
+  */
+ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ 
++import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
++import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.code.interpreter.Util;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
++import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 +import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 +import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -488,7 +516,7 @@ index 63ff8b2..13c6bb2 100644
  import org.jetbrains.java.decompiler.struct.match.IMatchable;
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
-@@ -67,6 +72,11 @@ public abstract class Exprent implements IMatchable {
+@@ -67,6 +76,11 @@ public abstract class Exprent implements IMatchable {
      return VarType.VARTYPE_VOID;
    }
  
@@ -500,7 +528,7 @@ index 63ff8b2..13c6bb2 100644
    public int getExprentUse() {
      return 0;
    }
-@@ -184,7 +194,73 @@ public abstract class Exprent implements IMatchable {
+@@ -184,7 +198,120 @@ public abstract class Exprent implements IMatchable {
        }
        return ret;
      }
@@ -549,20 +577,19 @@ index 63ff8b2..13c6bb2 100644
 +
 +  protected Map<VarType, List<VarType>> getNamedGenerics() {
 +    Map<VarType, List<VarType>> ret = new HashMap<>();
++    ClassNode class_ = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
 +    MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
 +
-+    if (method == null) {
-+      return ret;
-+    }
-+
-+    GenericClassDescriptor cls = method.methodStruct.getClassStruct().getSignature();
++    //TODO: Loop enclosing classes?
++    GenericClassDescriptor cls = class_ == null ? null : class_.classStruct.getSignature();
 +    if (cls != null) {
 +      for (int x = 0; x < cls.fparameters.size(); x++) {
 +        ret.put(GenericType.parse("T" + cls.fparameters.get(x) + ";"), cls.fbounds.get(x));
 +      }
 +    }
 +
-+    GenericMethodDescriptor mtd = method.methodStruct.getSignature();
++    //TODO: Loop enclosing method?
++    GenericMethodDescriptor mtd = method == null ? null : method.methodStruct.getSignature();
 +    if (mtd != null) {
 +      for (int x = 0; x < mtd.fparameters.size(); x++) {
 +        ret.put(GenericType.parse("T" + mtd.fparameters.get(x) + ";"), mtd.fbounds.get(x));
@@ -570,6 +597,54 @@ index 63ff8b2..13c6bb2 100644
 +    }
 +
 +    return ret;
++  }
++
++  protected void wrapInCast(VarType left, VarType right, TextBuffer buf, int precedence) {
++    boolean needsCast = !left.isSuperset(right) && (right.equals(VarType.VARTYPE_OBJECT) || left.type != CodeConstants.TYPE_OBJECT);
++
++    if (left != null && left.isGeneric()) {
++      Map<VarType, List<VarType>> names = this.getNamedGenerics();
++      int arrayDim = 0;
++
++      if (left.arrayDim == right.arrayDim) {
++        arrayDim = left.arrayDim;
++        left = left.resizeArrayDim(0);
++        right = right.resizeArrayDim(0);
++      }
++
++      List<VarType> types = names.get(right);
++      if (types == null) {
++        types = names.get(left);
++      }
++
++      if (types != null) {
++        boolean anyMatch = false; //TODO: allMatch instead of anyMatch?
++        for (VarType type : types) {
++          if (type.equals(VarType.VARTYPE_OBJECT) && right.equals(VarType.VARTYPE_OBJECT)) {
++            continue;
++          }
++          anyMatch |= right.value == null /*null const doesn't need cast*/ || Util.instanceOf(DecompilerContext.getStructContext(), right.value, type.value);
++        }
++
++        if (anyMatch) {
++          needsCast = false;
++        }
++      }
++
++      if (arrayDim != 0) {
++        left = left.resizeArrayDim(arrayDim);
++      }
++    }
++
++    if (!needsCast) {
++      return;
++    }
++
++    if (precedence >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
++      buf.enclose("(", ")");
++    }
++
++    buf.prepend("(" + ExprProcessor.getCastTypeName(left) + ")");
 +  }
 +
    // *****************************************************************************
@@ -614,7 +689,7 @@ index 959fdf6..f0f5b6f 100644
      return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index cbc78b5..38fe98f 100644
+index cbc78b5..5a0950c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -16,6 +16,8 @@
@@ -634,7 +709,7 @@ index cbc78b5..38fe98f 100644
  
    public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
      this(funcType, new ArrayList<>(), bytecodeOffsets);
-@@ -308,6 +311,34 @@ public class FunctionExprent extends Exprent {
+@@ -308,6 +311,46 @@ public class FunctionExprent extends Exprent {
    }
  
    @Override
@@ -642,15 +717,27 @@ index cbc78b5..38fe98f 100644
 +    if (funcType == FUNCTION_CAST) {
 +      this.needsCast = true;
 +      VarType right = lstOperands.get(0).getInferredExprType(upperBound);
++      VarType cast = lstOperands.get(1).getExprType();
 +
 +      if (upperBound != null && upperBound.isGeneric()) {
 +        Map<VarType, List<VarType>> names = this.getNamedGenerics();
++        int arrayDim = 0;
++
++        if (upperBound.arrayDim == right.arrayDim) {
++          arrayDim = upperBound.arrayDim;
++          upperBound = upperBound.resizeArrayDim(0);
++          right = right.resizeArrayDim(0);
++        }
 +
 +        List<VarType> types = names.get(right);
++        if (types == null) {
++          types = names.get(upperBound);
++        }
++
 +        if (types != null) {
 +          boolean anyMatch = false; //TODO: allMatch instead of anyMatch?
 +          for (VarType type : types) {
-+            anyMatch |= Util.instanceOf(DecompilerContext.getStructContext(), type.value, lstOperands.get(1).getExprType().value);
++            anyMatch |= Util.instanceOf(DecompilerContext.getStructContext(), type.value, cast.value);
 +          }
 +          if (anyMatch) {
 +            this.needsCast = false;
@@ -658,7 +745,7 @@ index cbc78b5..38fe98f 100644
 +        }
 +      }
 +      else { //TODO: Capture generics to make cast better?
-+        this.needsCast = right.type == CodeConstants.TYPE_NULL || !Util.instanceOf(DecompilerContext.getStructContext(), right.value, lstOperands.get(1).getExprType().value);
++        this.needsCast = right.type == CodeConstants.TYPE_NULL || !Util.instanceOf(DecompilerContext.getStructContext(), right.value, cast.value);
 +      }
 +    }
 +    return getExprType();
@@ -669,7 +756,7 @@ index cbc78b5..38fe98f 100644
    public int getExprentUse() {
      if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
        return 0;
-@@ -473,6 +504,9 @@ public class FunctionExprent extends Exprent {
+@@ -473,6 +516,9 @@ public class FunctionExprent extends Exprent {
        case FUNCTION_NEG:
          return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
        case FUNCTION_CAST:
@@ -680,7 +767,7 @@ index cbc78b5..38fe98f 100644
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a38c2ee..6460138 100644
+index a38c2ee..4b8f2e9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -867,18 +954,7 @@ index a38c2ee..6460138 100644
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -392,7 +500,9 @@ public class InvocationExprent extends Exprent {
-             break;
-           }
-         }
--        if (exact) return EMPTY_BIT_SET;
-+        if (exact) {
-+          return EMPTY_BIT_SET;
-+        }
-       }
-     }
- 
-@@ -400,7 +510,13 @@ public class InvocationExprent extends Exprent {
+@@ -400,7 +508,13 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];
@@ -1229,7 +1305,7 @@ index 3b5abb4..7d55d7e 100644
      boolean updated = false;
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index 1eb177f..d19bc7f 100644
+index 1eb177f..10d4595 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -15,7 +15,10 @@
@@ -1278,7 +1354,7 @@ index 1eb177f..d19bc7f 100644
 +    int result = 1;
 +    result = 37 * result + type;
 +    result = 37 * result + arrayDim;
-+    result = 37 * result + value == null ? 0 : value.hashCode();
++    result = 37 * result + (value == null ? 0 : value.hashCode());
 +    return result;
 +  }
 +
@@ -1546,7 +1622,7 @@ index 2d38084..51b6b37 100644
 +  public final List<VarType> exceptions = new ArrayList<>();
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index ee71f5b..e1af5f2 100644
+index ee71f5b..725a011 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -16,36 +16,43 @@
@@ -1740,7 +1816,7 @@ index ee71f5b..e1af5f2 100644
    }
  
    public static String getNextType(String value) {
-@@ -211,18 +253,120 @@ public class GenericType {
+@@ -211,18 +253,124 @@ public class GenericType {
  
    public GenericType decreaseArrayDim() {
      assert arrayDim > 0 : this;
@@ -1749,6 +1825,10 @@ index ee71f5b..e1af5f2 100644
    }
  
 -  public List<GenericType> getArguments() {
++  public VarType resizeArrayDim(int newArrayDim) {
++    return new GenericType(type, newArrayDim, value, parent, arguments, wildcard);
++  }
++
 +  public VarType getParent() {
 +    return parent;
 +  }
@@ -1890,57 +1970,90 @@ index 4fb5ebe..32185c5 100644
 \ No newline at end of file
 diff --git a/testData/classes/pkg/TestGenerics$Maps.class b/testData/classes/pkg/TestGenerics$Maps.class
 new file mode 100644
-index 0000000000000000000000000000000000000000..e62634c0f2f291b9efa6f9cebdb99afcfb4fff54
+index 0000000000000000000000000000000000000000..a4c3dcc2e336bb973e3eac43506e0b949eca8ea9
 GIT binary patch
 literal 544
-zcmZutO;5r=5Pb`U(u(q-h#wbCJb(v#@njJXB%-0}friB6Qa7+z3+adcEj^KF;t%jg
+zcmZutO;5r=5Pb`U(u(q-h#wbCJb(v#@ni`HF`}XBfriB6Qa7+z3+adcEj^KF;t%jg
 z8E1<JqHMDBX5PG+ot>}m_fG()*f)_wO~<y0jKUoqyA1i33}oD9$Tpe-2CXxF5DX<p
 z2I4k(8j8^6L!X$cGxfMX;GtCUFR8_28Bx&<pAi(VgFu8GpGT3Pu<pzrN0uw1xGRX4
 zUUZ~%HiH?6mn$BPDP*WMn$Cnjb1R9ZZ~f9FGWv29@Hh$S@ouYkwh;L|7+H72iSS~3
 zu!3u^>eh05wmY!f>goP82|aNs)t@TM!=0!hipWE!#J_=b?9r$zKg3W@<x8Ux^;e2R
 zXtaNIGN83XCtIM%B4mWQ<2l${nl{MhQ}P@p`Nf3*YuKR3KnZ1PqKXd))hT=+b3aG+
-em3&$q*+u;YD&%KSrMsDWTUaMFNu{AqosA#Z7I~xq
+em3&$q*+u;YD&%KSrMsDWTUaMFNu{AqosA#bw0W)o
 
 literal 0
 HcmV?d00001
 
 diff --git a/testData/classes/pkg/TestGenerics.class b/testData/classes/pkg/TestGenerics.class
 new file mode 100644
-index 0000000000000000000000000000000000000000..c330ce1de228508746d45209da4e5e0e32cb8072
+index 0000000000000000000000000000000000000000..bc719a03fc9f56c96a38ca60f2d503491de044a5
 GIT binary patch
-literal 3039
-zcmb7GT~iZh6n@?$upz7<ARt<;wpvkw;76+xN=qmzH6S&p)!L6GtYIZ=(#=Mt-`}4X
-zz35dhdhK0jiZfX1Ovmf~kM>7&+S=!RceA^Jwlgxr?w<3W_nhZE=XrPY>)${B0^m5l
-zPGJ{jQ)tFZ8ZM*|$80Nlk=HQSf{VDM;c^N|%qH=&ykC)*tMc+n3fJ&z3m(I38eVV3
-z8!%cik3uUJV9LvN4Mn-UsKJsc3(~luVM!V#4a*vAfyA^?sS4;*wrx5SC8Jt3X*ONA
-z%+i8Dd+vsD(-^9`R%wWV8G)9(RkRJa=9mJ{G_H<%X34ONLwVP+>|!S3$(G9{)37sR
-zOp+{>swzNWYa~a`s=8c_rj;%~uL2RVqjknq+NSvxSE7GnL(V9$EJIXq^QdK8?wCNl
-z|KKI^Fi~D$OYJ$!HfL(f^QJRr%$Mlt%#{m9>5}1C()OJRchO>@&Rk`wI5cNg-7_ZX
-zvkFzh?`hnyQmJp+u_=0VZag!WRdBWzy$n<Kb<;8J0xKujj4RL;>E^6aUG(NKve_GL
-zb2I-_wrdtmM-^-Ji%B*)4Oz!~6!QYTn_%vf8ewPMk(z1{KK3~80`;U5hD_RAs}$73
-zBLj^JrOgL=y6j9Eg+&3OSXZKq&R<|l-ZctK1ga*aq0B)vZoX`}iypRm)_kpEIu|Ph
-zYpaRNfrhC)6|k{HNzt^q`#F-y!zIu+I_I~kK>0hzl(3Scg_5td3!~%Fu=Ddb%z~TA
-zj{FDVQRXDwnXw2uf3rX;U#>X?^Ry+!+7Z>_VcCn0gE*w4f;Xw8@Gy@%j<F(>>Tp0#
-zyEh71&0GW5Yq&{KguHmt%GRvXg6RmvvLiZf;kLZ2=y(fnYj{V;yLeB>9_%Hiu&OU#
-z4e#st03T}jNXN(cgwxXTDL&KjIlka4VPh>F`><c2EllJgKOnu4XpeUtU*aqJH+Iwz
-z>e0u6hdHNQ(=psKTT0pHEgveG=|32eeRu%lMUyh`?w|6P)#QVzL{Q~ds;;@r_e{Aa
-zH+adc^3W{bkS@tIjb)0g*{D=Zo3Gr#{>YU5V;n8fKtDG&#QXLCFFxs(y%Yl5>a8^%
-zB~K=e2nDo?#9QJgqx;_w@)f!z<dWx*EiIWVc}Y@7y^eZ?(?!^kU=@?J0{VLz!s}z<
-z9&OR6&X~8Ek?-uQJeamJ8ruj)5H}V`X9L(eJy)@p-@;w|0LS?yrAon%2CW#Lq)o8}
-z_EWSev%v1BE##5nb$~m@c^AAl9l8hcqe__OwOKiPG011#3&3Fv(Hd^>9HG^Mqd~gK
-zdb*zwI~S%)5gCX#f!#sM1VfMU2Sk|C^E^!tzo9|O@7ZIVzQOy5U%7`wZXmvnrWhWe
-zd3qJveI)5^=}fJmHN6IX4O`aG7MAX0QIMb{3F;y}Y0@LR+T$hlyGoLx6N;uT?7&H!
-zB4F8R7$rOPqDBbMi^?!cU^IYwjh1XQxr+7&{ACcL@CY~n4gIQmj~C}x*SPOlQXy2$
-za81_q*2cId@LW*o8}65+q*-Yl9Rlm<6vz#%qf6jB^zvbwAVuAhBGS@!=i%=XO@jRc
-z9w!52C9Uub5QpSMR^H2s&r=q%kMyRQOOHgA<$o(;f1*vp#2?h6zzYGmZ+&pXtLUlE
-zs&^gR9~Iyc4&*379Ha1#2LSg+01j^gC_N1TI|G1|1Q=7I|ABX@is8DXR?(;MO{aYV
-zxAQ>}xMOBua2-2ixP0f~Zy|#{XyX18RK!W@=@dbZ5M(A$);_MB#u+uEI>;osKC3h)
-zmE}#j4%b_oB8`&SHpKoyhlUpw_FewbKF6H7fMlsX`L~lN?JnB=PVS;7c<PgI1)<4=
-hQY_nftoyK)0+0JCr!hl+4CnDU?<qz%bC$c&@(;cmq@Dl(
+literal 3233
+zcmb7HSyvQC7`-(!(8ElFfCAzY_k>kY6OA&WKwO9eE`u1CEX~kDOVcx%=~2nP?}=HS
+z@{niWa!&9BLp;gxIsYU15jjcBt?Hhh9*8-|2fDkezPjK2?suzu`0byce+BR)zD^*5
+zNeve?^wePso=cz(7d2c;pca!!Y`|p=SL*OQUeNGj0!d89@shk7@-iha*#xFx%H3Br
+z%p@@jD~W5EOTxyyyf_+iayhTzWeGVa2L%m9IdC<U1Y%=Gz9^uNI*wTwv5jKU<gn(d
+zW!lpMYtq+@>qcM6wd_6y4hYm`tQp5}O9fM4fAwn08`_35)0c4zmNPRDni<aJY}0TC
+z1_=_k?V<`0XbfSbt)k1-Fsz*NaTSTsIGkrt!PZPIxRU+$6_{aS!wgZuwZ>4PU@Qo%
+zy&PhBdg_{)l_X-9Cx&>dO<9iR4hlp&Iwv_hlAC7XYtoiuj+f@A%)*2*Wpk!Eoy!{b
+zq*1Ws*q@BKvli(zr}J|&eG_KUJz-L0D_bORYxRbOe0kG`RnaLjnHW~2n`S(OA=_p?
+z*UC9m(4QN1u9^kY$&yWsGPtZPq{B(0IO}!r(CXQ+K&v}9>bT~NSx^L$elpny_EF~X
+z9>tVE+bZfirMp;dODLymp<hpwcY!kKh#^61OZlvNcx0ksi#7N}kLL=<jO?s{P@PbA
+z4m(GnKI0nMITBS}({P>5sos3Sa%VkmWz<Y5Zx+tyN!C#=kWH>Yd(L2CF<Z&By7~!<
+z$ulX?o|^E>RHXc!gUW32RMz(0cP=#)4)a|)eCQ#9hn16Z4-AIb1r|?aa-~AnJZ?z?
+zH--JVTh^juH~MI=N?qPg9o^{BaRWE$Ftw;oraDbBnT`d#!j`Wzz4C&FS9QFG*J+jt
+zu4lR7l4Vbu1%b%$AsuhvO?i1s$J=;E!@D}(!}~h6V+Xlbvii2x@PUpG@sWm)b$o(P
+z*+m_n;d32d;8s-)UM?Mv;|YO=3XsRVQ_hAe_WGgYOMJ!ol@+n;6@XFKEEsN%{1c9O
+z!{<dAIyyt%ubjf@j7hJzbd37Ts{KK0LKHF!Mc16?3n*8T8$2*8*LQ|5SeMn9#yp)?
+zYvl8$!#8$sN2t~QSq`VD(wZBq;{E*p7aw<X9)!TUa%t7)$@4@tLjf%>`PzJ6wfq-D
+zzFX@nTJkWmq&agTBSmT|=TSc66lsToRZQFp<ZrDCFSmtzv{|D#Zr&s!U*?y1Ivq8r
+zE+c3`)R?B6Rb<QZT*5YfM<e`>#}Jp6guqUYBG|<-ofV8bIHsq9aTlX_dV+B;Kl(zR
+zGhX|-c9s}|_olA95M7OlUl6&E=#Pl~z{x1~@G5^d0BuaY5qtThdmFHiKPrHys%G|c
+zByb>rAM@esyBgO$6#6kjZV5rxuY#5{61omg2hhiuNHVYa2{oryvfWO$I|9fU0}tX5
+zgUf8anE}N%6+nK+ildzCy@%S1ccG=bqsxd#a36JJi%8r<lCyeq{Sq2_mat|CjZ0{%
+zq;6(Xup4pezZM--y;D)x>Vf)I#o4pNszYn}n`jV6D3PR9iISCiQAbJKiyBfw4hK}P
+za7DHyzKG`g{O(p*c<t(ehF+Du)r<49Yuq<NDTK;dS(7=vwP&~{a4g7li~FT0J<PO>
+zbpp$15lDA0qgCKrwDF-$P@?rxBFfTq`@tWQO-z}`)1;sN-9tt8(u?~7R@<2II8G>j
+zJwCs3gP4yqlGRE6B@y`x4H`!O#3qt^HX!$nPp*Fv?d4u=SjNUjCAgnWIlz?CUIzn$
+zyFvu}R}qvmRRo&@f~N=*QRnM>-lZ%0%a&TiCdF^8#}{xtAC!Qb$Gdx%@mK^GZa?_F
+zqF^g(xIaZl9OjuHB*`O0KdMMd&+Oz%8e^(QWs-4fJ+3?^_4K-2rt7Vpri@bA21Ncw
+zlZG>j`)2>Ga+a9q0+9z)hk%VdX?M`<S8@mK!P6#5SEz<JC?f0mKSetlX>dtUzNj*o
+TQ1|n+f_$g&hdmGdR@D6qBizOe
 
 literal 0
 HcmV?d00001
 
+diff --git a/testData/results/TestAmbiguousCall.dec b/testData/results/TestAmbiguousCall.dec
+index dec7ba0..acf1120 100644
+--- a/testData/results/TestAmbiguousCall.dec
++++ b/testData/results/TestAmbiguousCall.dec
+@@ -13,7 +13,7 @@ class TestAmbiguousCall {
+       this.m1(var1, "IAE");// 10
+       IllegalArgumentException var2 = new IllegalArgumentException();// 12
+       this.m1((RuntimeException)var2, "RE");// 13
+-      this.m1((IllegalArgumentException)var2, "IAE");// 14
++      this.m1(var2, "IAE");// 14
+    }// 15
+ }
+ 
+diff --git a/testData/results/TestClassSwitch.dec b/testData/results/TestClassSwitch.dec
+index a42bfc8..8d59b04 100644
+--- a/testData/results/TestClassSwitch.dec
++++ b/testData/results/TestClassSwitch.dec
+@@ -4,11 +4,11 @@ public class TestClassSwitch {
+    public void testCaseOrder(int var1) {
+       switch(var1) {// 22
+       case 5:
+-         System.out.println(5);// 27
++         System.out.println((int)5);// 27
+       default:
+          return;// 29
+       case 13:
+-         System.out.println(13);// 24
++         System.out.println((int)13);// 24
+       }
+    }// 25
+ }
 diff --git a/testData/results/TestExtendsList.dec b/testData/results/TestExtendsList.dec
 index 6f116db..3f3dbea 100644
 --- a/testData/results/TestExtendsList.dec
@@ -1961,10 +2074,10 @@ index 6f116db..3f3dbea 100644
  
 diff --git a/testData/results/TestGenerics.dec b/testData/results/TestGenerics.dec
 new file mode 100644
-index 0000000..533d1de
+index 0000000..da090b3
 --- /dev/null
 +++ b/testData/results/TestGenerics.dec
-@@ -0,0 +1,166 @@
+@@ -0,0 +1,218 @@
 +package pkg;
 +
 +import java.util.ArrayList;
@@ -1975,36 +2088,51 @@ index 0000000..533d1de
 +public class TestGenerics<A, B extends TestGenerics.Maps & List> {
 +   static Map<String, Boolean> field = TestGenerics.Maps.<String, Boolean>newHashMap();
 +   static List<List<String>> llstring = new ArrayList<List<String>>();
++   static List<Byte> bytes = new ArrayList<Byte>();
++   A[] aArray = (A[])(new Object[10]);
++
++   public void genericAllocation() {
++      this.aArray = (A[])(new Object[20]);// 30
++   }// 31
 +
 +   public static void genericInference() {
-+      HashMap<String, Integer> test = TestGenerics.Maps.<String, Integer>newHashMap();// 28
-+   }// 29
-+
-+   public void genericList() {
-+      List<B> testList = new ArrayList<B>();// 32
-+      B b = testList.get(0);// 33
-+      System.out.println("B:" + b);// 34
++      HashMap<String, Integer> test = TestGenerics.Maps.<String, Integer>newHashMap();// 34
 +   }// 35
 +
++   public void genericList() {
++      List<B> testList = new ArrayList<B>();// 38
++      B b = testList.get(0);// 39
++      System.out.println("B:" + b);// 40
++   }// 41
++
 +   public void genericCast() {
-+      HashMap<String, Boolean> upcast = (HashMap)field;// 38
-+   }// 39
++      HashMap<String, Boolean> upcast = (HashMap)field;// 44
++   }// 45
 +
 +   public void genericForEach() {
-+      for(String s : field.keySet()) {// 42
-+         System.out.println(s);// 43
++      for(String s : field.keySet()) {// 48
++         System.out.println(s);// 49
 +      }
-+// 45
++// 51
 +   }
 +
-+   public void genericForEachWithCast() {// 48
-+      for(String s : llstring.get(0)) {// 49
++   public void genericForEachWithCast() {// 54
++      for(String s : llstring.get(0)) {// 55
 +         System.out.println(s);
-+      }// 51
++      }// 57
 +
 +   }
++// 60
++   public <T extends Number> void genericSuperUp() {
++      List<T> list = new ArrayList<T>();// 61
++// 62
++      for(Number number : bytes) {
++         list.add(number);// 64
++      }
 +
-+   public static class Maps {// 55
++   }
++// 68
++   public static class Maps {
 +      public static <K, V> HashMap<K, V> newHashMap() {
 +         return new HashMap<K, V>();
 +      }
@@ -2012,75 +2140,67 @@ index 0000000..533d1de
 +}
 +
 +class 'pkg/TestGenerics' {
++   method 'genericAllocation ()V' {
++      0      14
++      1      14
++      2      14
++      6      14
++      7      14
++      8      14
++      9      14
++      a      14
++      b      14
++      c      15
++   }
++
 +   method 'genericInference ()V' {
-+      0      12
-+      1      12
-+      2      12
-+      3      12
-+      4      13
++      0      18
++      1      18
++      2      18
++      3      18
++      4      19
 +   }
 +
 +   method 'genericList ()V' {
-+      7      16
-+      8      17
-+      9      17
-+      a      17
-+      b      17
-+      c      17
-+      d      17
-+      e      17
-+      f      17
-+      10      17
-+      11      17
-+      12      17
-+      13      18
-+      14      18
-+      15      18
-+      1d      18
-+      1e      18
-+      22      18
-+      26      18
-+      27      18
-+      28      18
-+      29      18
-+      2a      18
-+      2b      18
-+      2c      19
++      7      22
++      8      23
++      9      23
++      a      23
++      b      23
++      c      23
++      d      23
++      e      23
++      f      23
++      10      23
++      11      23
++      12      23
++      13      24
++      14      24
++      15      24
++      1d      24
++      1e      24
++      22      24
++      26      24
++      27      24
++      28      24
++      29      24
++      2a      24
++      2b      24
++      2c      25
 +   }
 +
 +   method 'genericCast ()V' {
-+      0      22
-+      1      22
-+      2      22
-+      3      22
-+      4      22
-+      5      22
-+      6      22
-+      7      23
++      0      28
++      1      28
++      2      28
++      3      28
++      4      28
++      5      28
++      6      28
++      7      29
 +   }
 +
 +   method 'genericForEach ()V' {
-+      0      26
-+      1      26
-+      2      26
-+      3      26
-+      4      26
-+      5      26
-+      6      26
-+      7      26
-+      d      26
-+      20      26
-+      21      27
-+      22      27
-+      23      27
-+      24      27
-+      25      27
-+      26      27
-+      27      27
-+      2b      29
-+   }
-+
-+   method 'genericForEachWithCast ()V' {
 +      0      32
 +      1      32
 +      2      32
@@ -2089,54 +2209,142 @@ index 0000000..533d1de
 +      5      32
 +      6      32
 +      7      32
-+      8      32
-+      9      32
-+      a      32
-+      b      32
-+      11      32
-+      24      32
++      d      32
++      20      32
++      21      33
++      22      33
++      23      33
++      24      33
 +      25      33
 +      26      33
 +      27      33
-+      28      33
-+      29      33
-+      2a      33
-+      2b      33
-+      2f      35
++      2b      35
++   }
++
++   method 'genericForEachWithCast ()V' {
++      0      38
++      1      38
++      2      38
++      3      38
++      4      38
++      5      38
++      6      38
++      7      38
++      8      38
++      9      38
++      a      38
++      b      38
++      11      38
++      24      38
++      25      39
++      26      39
++      27      39
++      28      39
++      29      39
++      2a      39
++      2b      39
++      2f      41
++   }
++
++   method 'genericSuperUp ()V' {
++      7      44
++      8      46
++      9      46
++      a      46
++      10      46
++      23      46
++      24      47
++      25      47
++      26      47
++      27      47
++      28      47
++      29      47
++      2a      47
++      2f      49
 +   }
 +}
 +
 +class 'pkg/TestGenerics$Maps' {
 +   method 'newHashMap ()Ljava/util/HashMap;' {
-+      7      39
++      7      53
 +   }
 +}
 +
 +Lines mapping:
-+28 <-> 13
-+29 <-> 14
-+32 <-> 17
-+33 <-> 18
++30 <-> 15
++31 <-> 16
 +34 <-> 19
 +35 <-> 20
 +38 <-> 23
 +39 <-> 24
-+42 <-> 27
-+43 <-> 28
++40 <-> 25
++41 <-> 26
++44 <-> 29
 +45 <-> 30
 +48 <-> 33
 +49 <-> 34
 +51 <-> 36
++54 <-> 39
 +55 <-> 40
++57 <-> 42
++60 <-> 45
++61 <-> 47
++62 <-> 48
++64 <-> 50
++68 <-> 54
 +Not mapped:
-+44
 +50
++56
++63
+diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
+index e57e91a..624026a 100644
+--- a/testData/results/TestKotlinConstructorKt.dec
++++ b/testData/results/TestKotlinConstructorKt.dec
+@@ -14,8 +14,8 @@ import kotlin.collections.CollectionsKt;
+ )
+ public final class TestKotlinConstructorKt {
+    private static final List<Mapping> foo(Collection<String> list) {
+-      Iterable $receiver$iv = (Iterable)list;// 2
+-      Collection destination$iv$iv = (Collection)(new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10)));
++      Iterable $receiver$iv = list;// 2
++      Collection destination$iv$iv = new ArrayList(CollectionsKt.collectionSizeOrDefault($receiver$iv, 10));
+ 
+       for(Object item$iv$iv : $receiver$iv) {// 10 11
+          String it = (String)item$iv$iv;
+@@ -24,12 +24,12 @@ public final class TestKotlinConstructorKt {
+             throw new TypeCastException("null cannot be cast to non-null type kotlin.String");
+          }
+ 
+-         var10000.<init>((String)it);
++         var10000.<init>(it);
+          Mapping var11 = var10000;
+          destination$iv$iv.add(var11);// 12
+       }
+ // 4 13
+-      return CollectionsKt.toList((Iterable)((List)destination$iv$iv));
++      return CollectionsKt.toList((List)destination$iv$iv);
+    }
+ }
+ 
+diff --git a/testData/results/TestLocalsSignature.dec b/testData/results/TestLocalsSignature.dec
+index 3da716b..3bd9c84 100644
+--- a/testData/results/TestLocalsSignature.dec
++++ b/testData/results/TestLocalsSignature.dec
+@@ -5,7 +5,7 @@ import java.util.List;
+ 
+ public class TestLocalsSignature {
+    public static void main(String[] args) {
+-      List<String> s = new ArrayList();// 24
++      List<String> s = new ArrayList<String>();// 24
+       s.add("xxx");// 25
+    }// 26
+ }
 diff --git a/testData/src/pkg/TestGenerics.java b/testData/src/pkg/TestGenerics.java
 new file mode 100644
-index 0000000..c571428
+index 0000000..c45ac50
 --- /dev/null
 +++ b/testData/src/pkg/TestGenerics.java
-@@ -0,0 +1,66 @@
+@@ -0,0 +1,71 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -2163,6 +2371,11 @@ index 0000000..c571428
 +  static Map<String, Boolean> field = Maps.newHashMap();
 +  static List<List<String>> llstring = new ArrayList<>();
 +  static List<Byte> bytes = new ArrayList<>();
++  A[] aArray = (A[])(new Object[10]);
++
++  public void genericAllocation() {
++    aArray = (A[])(new Object[20]);
++  }
 +  
 +  public static void genericInference() {
 +    HashMap<String, Integer> test = Maps.newHashMap();

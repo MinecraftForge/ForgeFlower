@@ -1,4 +1,4 @@
-From 8ed58fc64bbd4deb485f6dc87fbddfeaf752bdfb Mon Sep 17 00:00:00 2001
+From 490938a7c67784b4c42fde74d8ec670c5fee29ae Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -3096,7 +3096,7 @@ index 0000000..16c634c
 +30
 +33
 diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
-index 0e94145..025ce8a 100644
+index 0e94145..e57e91a 100644
 --- a/testData/results/TestKotlinConstructorKt.dec
 +++ b/testData/results/TestKotlinConstructorKt.dec
 @@ -1,6 +1,5 @@
@@ -3118,7 +3118,7 @@ index 0e94145..025ce8a 100644
           String it = (String)item$iv$iv;
           Mapping var10000 = new Mapping;
           if (it == null) {// 3
-@@ -31,100 +28,84 @@ public final class TestKotlinConstructorKt {
+@@ -31,100 +28,81 @@ public final class TestKotlinConstructorKt {
           Mapping var11 = var10000;
           destination$iv$iv.add(var11);// 12
        }
@@ -3141,7 +3141,6 @@ index 0e94145..025ce8a 100644
 +      2      16
 +      3      16
 +      4      16
-+      5      16
        6      19
 -      c      18
 -      d      18
@@ -3168,9 +3167,8 @@ index 0e94145..025ce8a 100644
 +      16      17
 +      17      17
 +      18      17
-+      19      17
        20      19
--      21      19
+       21      19
 -      22      21
 -      23      21
 -      24      21
@@ -3237,8 +3235,6 @@ index 0e94145..025ce8a 100644
 +      3a      20
 +      3b      20
 +      3c      20
-+      3d      20
-+      3e      20
 +      43      22
 +      44      22
 +      46      22

@@ -1,14 +1,14 @@
-From cbf24f8827c65ecfced114bd2915d784aebd529a Mon Sep 17 00:00:00 2001
+From 0ea81032a5506451eb2b38486e1cf4c301bc2475 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 3fba799..22dc8df 100644
+index c454ac9..17188a8 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -716,6 +716,11 @@ public class ClassWriter {
+@@ -715,6 +715,11 @@ public class ClassWriter {
  
              buffer.append(' ');
              String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
