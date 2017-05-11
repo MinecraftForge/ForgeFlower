@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
 
-version = '1.0.342-SNAPSHOT' // OurVersion.FernFlowerCommitNumber-SNAPSHOT
+version = '1.1.342-SNAPSHOT' // OurVersion.FernFlowerCommitNumber-SNAPSHOT
 group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
 archivesBaseName = 'forgeflower'
  
