@@ -1,11 +1,11 @@
-From 9779c905d681401c6fd91724f0d63064c3170ffb Mon Sep 17 00:00:00 2001
+From 51941341132e43da7e46c71b33ea6e2b724d8af7 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 815ec14..c454ac9 100644
+index 0627e8c..0e846cc 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -334,7 +334,7 @@ public class ClassWriter {
@@ -51,7 +51,7 @@ index 815ec14..c454ac9 100644
  
 -    GenericFieldDescriptor descriptor = null;
 -    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
--      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)fd.getAttributes().getWithKey("Signature");
+-      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)fd.getAttribute("Signature");
 -      if (attr != null) {
 -        descriptor = GenericMain.parseFieldSignature(attr.getSignature());
 -      }
@@ -69,16 +69,16 @@ index 815ec14..c454ac9 100644
        buffer.append(' ');
      }
  
-@@ -444,7 +423,7 @@ public class ClassWriter {
-       else {
-         buffer.append(" = ");
+@@ -449,7 +428,7 @@ public class ClassWriter {
+         }
+ 
          // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
 -        buffer.append(initializer.toJava(indent, tracer));
 +        ExprProcessor.getCastedExprent(initializer, descriptor == null ? fieldType : descriptor.type, buffer, indent, false, tracer);
        }
      }
      else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
-@@ -592,6 +571,7 @@ public class ClassWriter {
+@@ -599,6 +578,7 @@ public class ClassWriter {
        boolean clinit = false, init = false, dinit = false;
  
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
@@ -86,13 +86,13 @@ index 815ec14..c454ac9 100644
  
        int flags = mt.getAccessFlags();
        if ((flags & CodeConstants.ACC_NATIVE) != 0) {
-@@ -646,25 +626,20 @@ public class ClassWriter {
+@@ -653,25 +633,20 @@ public class ClassWriter {
          clinit = true;
        }
  
 -      GenericMethodDescriptor descriptor = null;
 -      if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
--        StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)mt.getAttributes().getWithKey("Signature");
+-        StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)mt.getAttribute("Signature");
 -        if (attr != null) {
 -          descriptor = GenericMain.parseMethodSignature(attr.getSignature());
 -          if (descriptor != null) {
@@ -125,7 +125,7 @@ index 815ec14..c454ac9 100644
        }
  
        boolean throwsExceptions = false;
-@@ -679,12 +654,7 @@ public class ClassWriter {
+@@ -686,12 +661,7 @@ public class ClassWriter {
          }
  
          if (!init) {
@@ -139,7 +139,7 @@ index 815ec14..c454ac9 100644
            buffer.append(' ');
          }
  
-@@ -705,6 +675,12 @@ public class ClassWriter {
+@@ -712,6 +682,12 @@ public class ClassWriter {
          int index = isEnum && init ? 3 : thisVar ? 1 : 0;
          boolean hasDescriptor = descriptor != null;
          int start = isEnum && init && !hasDescriptor ? 2 : 0;
@@ -152,7 +152,7 @@ index 815ec14..c454ac9 100644
          int params = hasDescriptor ? descriptor.params.size() : md.params.length;
          for (int i = start; i < params; i++) {
            if (hasDescriptor || (signFields == null || signFields.get(i) == null)) {
-@@ -718,45 +694,23 @@ public class ClassWriter {
+@@ -725,45 +701,23 @@ public class ClassWriter {
                buffer.append("final ");
              }
  
@@ -210,7 +210,7 @@ index 815ec14..c454ac9 100644
              }
  
              buffer.append(' ');
-@@ -767,7 +721,7 @@ public class ClassWriter {
+@@ -774,7 +728,7 @@ public class ClassWriter {
              paramCount++;
            }
  
@@ -219,7 +219,7 @@ index 815ec14..c454ac9 100644
          }
  
          buffer.append(')');
-@@ -781,14 +735,11 @@ public class ClassWriter {
+@@ -788,14 +742,11 @@ public class ClassWriter {
              if (i > 0) {
                buffer.append(", ");
              }
@@ -237,13 +237,13 @@ index 815ec14..c454ac9 100644
            }
          }
        }
-@@ -1040,17 +991,7 @@ public class ClassWriter {
+@@ -1050,17 +1001,7 @@ public class ClassWriter {
      }
    }
  
 -  public static GenericClassDescriptor getGenericClassDescriptor(StructClass cl) {
 -    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
--      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttributes().getWithKey("Signature");
+-      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttribute("Signature");
 -      if (attr != null) {
 -        return GenericMain.parseClassSignature(attr.getSignature());
 -      }
@@ -256,7 +256,7 @@ index 815ec14..c454ac9 100644
      buffer.append('<');
  
      for (int i = 0; i < parameters.size(); i++) {
-@@ -1060,13 +1001,13 @@ public class ClassWriter {
+@@ -1070,13 +1011,13 @@ public class ClassWriter {
  
        buffer.append(parameters.get(i));
  
@@ -370,7 +370,7 @@ index c1ceecd..53a68e1 100644
      defaults.put(MAX_PROCESSING_METHOD, "0");
      defaults.put(RENAME_ENTITIES, "0");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 290c730..e1e29cc 100644
+index c68d84f..004acf8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -38,6 +38,8 @@ import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -404,9 +404,9 @@ index 290c730..e1e29cc 100644
        TextBuffer content = expr.toJava(indent, tracer);
        if (content.length() > 0) {
          if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassDef()) {
-@@ -869,7 +878,7 @@ public class ExprProcessor implements CodeConstants {
-                                          boolean castNull,
+@@ -870,7 +879,7 @@ public class ExprProcessor implements CodeConstants {
                                           boolean castAlways,
+                                          boolean castNarrowing,
                                           BytecodeMappingTracer tracer) {
 -    VarType rightType = exprent.getExprType();
 +    VarType rightType = exprent.getInferredExprType(leftType);
@@ -414,7 +414,7 @@ index 290c730..e1e29cc 100644
      boolean cast =
        castAlways ||
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 58017ef..72b649f 100644
+index f0801e2..d854ab5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -66,6 +66,11 @@ public class AssignmentExprent extends Exprent {
@@ -440,7 +440,7 @@ index 58017ef..72b649f 100644
  
      boolean fieldInClassInit = false, hiddenField = false;
      if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
-@@ -140,14 +145,8 @@ public class AssignmentExprent extends Exprent {
+@@ -144,14 +149,8 @@ public class AssignmentExprent extends Exprent {
  
      TextBuffer res = right.toJava(indent, tracer);
  
@@ -458,7 +458,7 @@ index 58017ef..72b649f 100644
  
      buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index 0c3a1f9..722e306 100644
+index 8550569..f13b4e5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -485,12 +485,12 @@ index 0c3a1f9..722e306 100644
 +        }
          buffer.append(' ');
 -        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
-+        ExprProcessor.getCastedExprent(value, ret, buffer, indent, false, false, tracer);
++        ExprProcessor.getCastedExprent(value, ret, buffer, indent, false, false, false, tracer);
        }
  
        return buffer;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 63ff8b2..87ffe21 100644
+index 6284f3c..5e49b1f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -15,13 +15,22 @@
@@ -516,7 +516,18 @@ index 63ff8b2..87ffe21 100644
  import org.jetbrains.java.decompiler.struct.match.IMatchable;
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
-@@ -67,6 +76,11 @@ public abstract class Exprent implements IMatchable {
+@@ -31,8 +40,10 @@ import java.util.ArrayList;
+ import java.util.BitSet;
+ import java.util.Collections;
+ import java.util.Comparator;
++import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Map.Entry;
+ import java.util.Set;
+ 
+@@ -73,6 +84,11 @@ public abstract class Exprent implements IMatchable {
      return VarType.VARTYPE_VOID;
    }
  
@@ -528,7 +539,7 @@ index 63ff8b2..87ffe21 100644
    public int getExprentUse() {
      return 0;
    }
-@@ -184,7 +198,120 @@ public abstract class Exprent implements IMatchable {
+@@ -190,7 +206,120 @@ public abstract class Exprent implements IMatchable {
        }
        return ret;
      }
@@ -651,7 +662,7 @@ index 63ff8b2..87ffe21 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 959fdf6..f0f5b6f 100644
+index 6ae5ac6..8e6fb39 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -23,6 +23,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -689,7 +700,7 @@ index 959fdf6..f0f5b6f 100644
      return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index cbc78b5..5a0950c 100644
+index 354b620..30e7576 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -16,6 +16,8 @@
@@ -756,7 +767,7 @@ index cbc78b5..5a0950c 100644
    public int getExprentUse() {
      if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
        return 0;
-@@ -473,6 +516,9 @@ public class FunctionExprent extends Exprent {
+@@ -486,6 +529,9 @@ public class FunctionExprent extends Exprent {
        case FUNCTION_NEG:
          return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
        case FUNCTION_CAST:
@@ -767,10 +778,10 @@ index cbc78b5..5a0950c 100644
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a38c2ee..4b8f2e9 100644
+index 277d72a..b76d223 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+@@ -33,6 +33,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
  import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -778,7 +789,7 @@ index a38c2ee..4b8f2e9 100644
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-@@ -67,6 +68,7 @@ public class InvocationExprent extends Exprent {
+@@ -69,6 +70,7 @@ public class InvocationExprent extends Exprent {
    private int invocationTyp = INVOKE_VIRTUAL;
    private List<Exprent> lstParameters = new ArrayList<>();
    private List<PooledConstant> bootstrapArguments;
@@ -786,7 +797,7 @@ index a38c2ee..4b8f2e9 100644
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -174,6 +176,55 @@ public class InvocationExprent extends Exprent {
+@@ -176,6 +178,55 @@ public class InvocationExprent extends Exprent {
      return descriptor.ret;
    }
  
@@ -842,7 +853,7 @@ index a38c2ee..4b8f2e9 100644
    @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
-@@ -287,6 +338,7 @@ public class InvocationExprent extends Exprent {
+@@ -296,6 +347,7 @@ public class InvocationExprent extends Exprent {
  
          if (buf.length() > 0) {
            buf.append(".");
@@ -850,7 +861,7 @@ index a38c2ee..4b8f2e9 100644
          }
  
          buf.append(name);
-@@ -333,8 +385,30 @@ public class InvocationExprent extends Exprent {
+@@ -342,8 +394,30 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -880,12 +891,13 @@ index a38c2ee..4b8f2e9 100644
 +      }
 +    }
  
-     boolean firstParameter = true;
-     int start = isEnum ? 2 : 0;
-@@ -346,6 +420,33 @@ public class InvocationExprent extends Exprent {
- 
+     // omit 'new Type[] {}' for the last parameter of a vararg method call
+     if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
+@@ -359,6 +433,34 @@ public class InvocationExprent extends Exprent {
+       if (sigFields == null || sigFields.get(i) == null) {
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
++        /*
 +        VarType type = descriptor.params[i];
 +
 +        // using info from the generic signature
@@ -912,12 +924,12 @@ index a38c2ee..4b8f2e9 100644
 +        if (exprType != null && type != null && type.type == CodeConstants.TYPE_GENVAR) {
 +          //type = exprType;
 +        }
-+
-         ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
-         buf.append(buff);
++        */
  
-@@ -358,12 +459,11 @@ public class InvocationExprent extends Exprent {
-     return buf;
+         Exprent param = lstParameters.get(i);
+         // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+@@ -447,12 +549,11 @@ public class InvocationExprent extends Exprent {
+     return null;
    }
  
 -  private BitSet getAmbiguousParameters() {
@@ -932,7 +944,7 @@ index a38c2ee..4b8f2e9 100644
      nextMethod:
      for (StructMethod mt : cl.getMethods()) {
        if (name.equals(mt.getName())) {
-@@ -374,11 +474,19 @@ public class InvocationExprent extends Exprent {
+@@ -463,11 +564,19 @@ public class InvocationExprent extends Exprent {
                continue nextMethod;
              }
            }
@@ -954,7 +966,7 @@ index a38c2ee..4b8f2e9 100644
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -400,7 +508,13 @@ public class InvocationExprent extends Exprent {
+@@ -489,7 +598,13 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];
@@ -969,8 +981,15 @@ index a38c2ee..4b8f2e9 100644
          if (!paramType.equals(md.params[i])) {
            ambiguous.set(i);
            break;
+@@ -644,4 +759,4 @@ public class InvocationExprent extends Exprent {
+ 
+     return true;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index da3f3aa..324e016 100644
+index 34875cc..b1f7f5a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -29,7 +29,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -981,7 +1000,7 @@ index da3f3aa..324e016 100644
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  import org.jetbrains.java.decompiler.util.ListStack;
  
-@@ -47,6 +46,7 @@ public class NewExprent extends Exprent {
+@@ -48,6 +47,7 @@ public class NewExprent extends Exprent {
    private boolean anonymous;
    private boolean lambda;
    private boolean enumConst;
@@ -989,7 +1008,7 @@ index da3f3aa..324e016 100644
  
    public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
      this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
-@@ -86,6 +86,24 @@ public class NewExprent extends Exprent {
+@@ -87,6 +87,24 @@ public class NewExprent extends Exprent {
    }
  
    @Override
@@ -1014,7 +1033,7 @@ index da3f3aa..324e016 100644
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
  
-@@ -185,17 +203,17 @@ public class NewExprent extends Exprent {
+@@ -186,17 +204,17 @@ public class NewExprent extends Exprent {
            }
          }
  
@@ -1035,7 +1054,7 @@ index da3f3aa..324e016 100644
            }
          }
          else {
-@@ -203,6 +221,7 @@ public class NewExprent extends Exprent {
+@@ -204,6 +222,7 @@ public class NewExprent extends Exprent {
          }
        }
  
@@ -1043,7 +1062,7 @@ index da3f3aa..324e016 100644
        buf.append('(');
  
        if (!lambda && constructor != null) {
-@@ -320,6 +339,7 @@ public class NewExprent extends Exprent {
+@@ -321,6 +340,7 @@ public class NewExprent extends Exprent {
  
          int start = enumConst ? 2 : 0;
          if (!enumConst || start < lstParameters.size()) {
@@ -1052,7 +1071,7 @@ index da3f3aa..324e016 100644
  
            boolean firstParam = true;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index f5d8cbe..ef50fe3 100644
+index 48ffcc0..8f38f36 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -37,6 +37,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAtt
@@ -1117,7 +1136,7 @@ index bb55e0f..55bbc2c 100644
          tracer.incrementCurrentSourceLine();
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 16cbc34..e46116f 100644
+index e41481c..f89819b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -908,7 +908,7 @@ public class VarDefinitionHelper {
@@ -1130,7 +1149,7 @@ index 16cbc34..e46116f 100644
        else if (lvt != null) {
          cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 1c1a930..c68d329 100644
+index fafd5f8..2f3707a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -16,8 +16,14 @@
@@ -1148,15 +1167,15 @@ index 1c1a930..c68d329 100644
  import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -61,6 +67,7 @@ public class StructClass extends StructMember {
+@@ -58,6 +64,7 @@ public class StructClass extends StructMember {
+   private final String[] interfaceNames;
    private final VBStyleCollection<StructField, String> fields;
    private final VBStyleCollection<StructMethod, String> methods;
-   private final Map<String, Map<Integer, String>> enumSwitchMap = new HashMap<>();
 +  private GenericClassDescriptor signature = null;
  
    private ConstantPool pool;
  
-@@ -206,4 +213,18 @@ public class StructClass extends StructMember {
+@@ -199,4 +206,18 @@ public class StructClass extends StructMember {
    public String toString() {
      return qualifiedName;
    }
@@ -1222,7 +1241,7 @@ index 87ba1d8..438746b 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index d398c5e..1067c62 100644
+index c86ea02..48dcad0 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -16,9 +16,14 @@
@@ -1240,7 +1259,7 @@ index d398c5e..1067c62 100644
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
-@@ -46,6 +51,7 @@ public class StructMethod extends StructMember {
+@@ -47,6 +52,7 @@ public class StructMethod extends StructMember {
    private final StructClass classStruct;
    private final String name;
    private final String descriptor;
@@ -1248,7 +1267,7 @@ index d398c5e..1067c62 100644
  
    private boolean containsCode = false;
    private int localVariables = 0;
-@@ -99,7 +105,13 @@ public class StructMethod extends StructMember {
+@@ -100,7 +106,13 @@ public class StructMethod extends StructMember {
        return null;
      }
  
@@ -1263,7 +1282,7 @@ index d398c5e..1067c62 100644
    }
  
    public void expandData() throws IOException {
-@@ -398,4 +410,8 @@ public class StructMethod extends StructMember {
+@@ -402,4 +414,8 @@ public class StructMethod extends StructMember {
    public String toString() {
      return name;
    }
@@ -1948,10 +1967,10 @@ index ee71f5b..725a011 100644
    }
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 4fb5ebe..32185c5 100644
+index 9b76b29..faeaa34 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -25,7 +25,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -25,11 +25,13 @@ public class SingleClassesTest extends SingleClassesTestBase {
    protected String[] getDecompilerOptions() {
      return new String[] {
        IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
@@ -1961,13 +1980,11 @@ index 4fb5ebe..32185c5 100644
      };
    }
  
-@@ -85,4 +86,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
-   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
    @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
 +  @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
- }
-\ No newline at end of file
+   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
+   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
 diff --git a/testData/classes/pkg/TestGenerics$Maps.class b/testData/classes/pkg/TestGenerics$Maps.class
 new file mode 100644
 index 0000000000000000000000000000000000000000..a4c3dcc2e336bb973e3eac43506e0b949eca8ea9
@@ -2339,6 +2356,29 @@ index 3da716b..3bd9c84 100644
        s.add("xxx");// 25
     }// 26
  }
+diff --git a/testData/results/TestVarArgCalls.dec b/testData/results/TestVarArgCalls.dec
+index 5313dae..ea8156f 100644
+--- a/testData/results/TestVarArgCalls.dec
++++ b/testData/results/TestVarArgCalls.dec
+@@ -13,15 +13,15 @@ public class TestVarArgCalls {
+       String.format("Test: %d - %s", Integer.valueOf(123), "DEF");// 15
+       Object[] data = new Object[]{"Hello"};// 17
+       String.format("Test: %s", (Object)data);// 18
+-      String.format("Test: %s", (Object[])data);// 19
++      String.format("Test: %s", data);// 19
+    }// 20
+ 
+    public void printAll(String fmt, String... params) {
+-      System.out.println(String.format(fmt, (Object[])params));// 23
++      System.out.println(String.format(fmt, params));// 23
+    }// 24
+ 
+    public void printComplex(String fmt, String[]... params) {
+-      System.out.println(String.format(fmt, (Object[])params));// 27
++      System.out.println(String.format(fmt, params));// 27
+    }// 28
+ }
+ 
 diff --git a/testData/src/pkg/TestGenerics.java b/testData/src/pkg/TestGenerics.java
 new file mode 100644
 index 0000000..c45ac50

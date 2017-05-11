@@ -1,11 +1,11 @@
-From e0475e7cb493a392c74971a68546a21e522e6949 Mon Sep 17 00:00:00 2001
+From 5b6aae55c84fea45e1eb5e2c1776da962d02746c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 15 Apr 2017 17:32:28 -0700
 Subject: [PATCH] Enhance switch on enum output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index f1bb7bb..61aa549 100644
+index 24c1947..ba77e1e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -16,6 +16,7 @@
@@ -28,18 +28,7 @@ index f1bb7bb..61aa549 100644
  import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
-@@ -56,6 +60,10 @@ public class NestedClassProcessor {
-       return;
-     }
- 
-+    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM)) {
-+      gatherEnumSwitchMaps(node);
-+    }
-+
-     if (node.type != ClassNode.CLASS_LAMBDA) {
-       computeLocalVarsAndDefinitions(node);
- 
-@@ -100,6 +108,124 @@ public class NestedClassProcessor {
+@@ -100,6 +104,125 @@ public class NestedClassProcessor {
        processClass(root, child);
      }
    }
@@ -56,6 +45,7 @@ index f1bb7bb..61aa549 100644
 +   * If a class has multiple switches on multiple enums, the compiler adds the init and try list to the BEGINNING of the static initalizer.
 +   * But they add the field to the END of the fields list.
 +   */
++  /*
 +  private void gatherEnumSwitchMaps(ClassNode node) {
 +    for (ClassNode child : node.nested) {
 +      gatherEnumSwitchMaps(child);
@@ -153,7 +143,7 @@ index f1bb7bb..61aa549 100644
 +      }
 +      x = y;
 +    }
-+  }
++  }*/
 +
 +  private Statement getNewEmptyStatement() {
 +    BasicBlockStatement bstat = new BasicBlockStatement(new BasicBlock(
@@ -164,137 +154,66 @@ index f1bb7bb..61aa549 100644
  
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 40691a2..9b8fd5c 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -24,9 +24,13 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
- import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
- import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
- import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
-+import org.jetbrains.java.decompiler.struct.StructClass;
- import org.jetbrains.java.decompiler.struct.gen.VarType;
- import org.jetbrains.java.decompiler.util.StartEndPair;
- 
-@@ -126,7 +130,13 @@ public class SwitchStatement extends Statement {
-       tracer.incrementCurrentSourceLine();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
+index cf935f4..3513ffc 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
+@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
+-
++import org.jetbrains.java.decompiler.struct.StructField;
+ import java.util.ArrayList;
+ import java.util.HashMap;
+ import java.util.List;
+@@ -85,10 +85,45 @@ public class SwitchHelper {
      }
- 
--    buf.appendIndent(indent).append(headexprent.get(0).toJava(indent, tracer)).append(" {").appendLineSeparator();
-+    //Doesn't seem to be a better place to put it so enhance things here
-+    Map<Integer, String> remaps = enhanceHead(headexprent.get(0), buf, indent, tracer);
-+
-+    if (remaps == null) {
-+      buf.appendIndent(indent).append(headexprent.get(0).toJava(indent, tracer)).append(" {").appendLineSeparator();
-+    }
-+
-     tracer.incrementCurrentSourceLine();
- 
-     VarType switch_type = headexprent.get(0).getExprType();
-@@ -146,7 +156,14 @@ public class SwitchStatement extends Statement {
-           ConstExprent value = (ConstExprent)values.get(j).copy();
-           value.setConstType(switch_type);
- 
--          buf.appendIndent(indent).append("case ").append(value.toJava(indent, tracer)).append(":").appendLineSeparator();
-+          buf.appendIndent(indent).append("case ");
-+          if (remaps == null) {
-+            buf.append(value.toJava(indent, tracer));
-+          }
-+          else {
-+            buf.append(remaps.get(value.getValue()));
-+          }
-+          buf.append(":").appendLineSeparator();
-           tracer.incrementCurrentSourceLine();
-         }
-       }
-@@ -160,6 +177,50 @@ public class SwitchStatement extends Statement {
-     return buf;
    }
  
-+  private Map<Integer, String> enhanceHead(Exprent exprent, TextBuffer buf, int indent, BytecodeMappingTracer tracer) {
-+    if (exprent.type != Exprent.EXPRENT_SWITCH) {
-+      return null;
-+    }
-+
-+    SwitchExprent swtch = (SwitchExprent)exprent;
-+    if (swtch.getValue().type != Exprent.EXPRENT_ARRAY) {
-+      return null;
-+    }
-+
-+    ArrayExprent array = (ArrayExprent)swtch.getValue();
-+    if (array.getArray().type != Exprent.EXPRENT_FIELD || array.getIndex().type != Exprent.EXPRENT_INVOCATION) {
-+      return null;
-+    }
-+
-+    FieldExprent field = (FieldExprent)array.getArray();
-+    InvocationExprent invoc = (InvocationExprent)array.getIndex();
-+    StructClass cls = DecompilerContext.getStructContext().getClass(field.getClassname());
-+    if (cls == null || !field.isStatic() || !"ordinal".equals(invoc.getName()) || !"()I".equals(invoc.getStringDescriptor())) {
-+      return null;
-+    }
-+
-+    Map<Integer, String> ret = cls.getEnumSwitchMap().get(field.getName());
-+    if (ret == null) {
-+      return null;
-+    }
-+
-+    for (List<ConstExprent> lst : getCaseValues()) {
-+      if (lst != null) {
-+        for (ConstExprent cst : lst) {
-+          if (cst != null && (!(cst.getValue() instanceof Integer) || !ret.containsKey(cst.getValue()))) {
-+            return null;
-+          }
++  static final int STATIC_FINAL_SYNTHETIC = CodeConstants.ACC_STATIC | CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNTHETIC;
++  /**
++   * When Java introduced Enums they aded the ability to use them in Switch statements.
++   * This was done in a purely syntax sugar way using the old switch on int methods.
++   * The compiler creates a synthetic class with a static int array field.
++   * To support enums changing post compile, It initializes this field with a length of the current enum length.
++   * And then for every referenced enum value it adds a mapping in the form of:
++   *   try {
++   *     field[Enum.VALUE.ordinal()] = 1;
++   *   } catch (FieldNotFoundException e) {}
++   *
++   * If a class has multiple switches on multiple enums, the compiler adds the init and try list to the BEGINNING of the static initalizer.
++   * But they add the field to the END of the fields list.
++   * 
++   * Note: SOME compilers name the field starting with $SwitchMap, so if we do not have full context this can be a guess.
++   * But Obfuscated/renamed code could cause issues
++   */
+   private static boolean isEnumArray(Exprent exprent) {
+     if (exprent instanceof ArrayExprent) {
+-      Exprent field = ((ArrayExprent)exprent).getArray();
+-      return field instanceof FieldExprent && ((FieldExprent)field).getName().startsWith("$SwitchMap");
++      Exprent tmp = ((ArrayExprent)exprent).getArray();
++      if (tmp instanceof FieldExprent) {
++        FieldExprent field = (FieldExprent)tmp;
++        ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(field.getClassname());
++        
++        if (classNode == null || !"[I".equals(field.getDescriptor().descriptorString)) {
++          return field.getName().startsWith("$SwitchMap"); //This is non-standard but we don't have any more information so..
++        }
++        
++        StructField stField = classNode.getWrapper().getClassStruct().getField(field.getName(), field.getDescriptor().descriptorString);
++        if ((stField.getAccessFlags() & STATIC_FINAL_SYNTHETIC) != STATIC_FINAL_SYNTHETIC) {
++          return false;
++        }
++        
++        if ((classNode.getWrapper().getClassStruct().getAccessFlags() & CodeConstants.ACC_SYNTHETIC) == CodeConstants.ACC_SYNTHETIC) {
++          return true; //TODO: Find a way to check the structure of the initalizer?
++          //Exprent init = classNode.getWrapper().getStaticFieldInitializers().getWithKey(InterpreterUtil.makeUniqueKey(field.getName(), field.getDescriptor().descriptorString));
++          //Above is null because we haven't preocess the class yet?
 +        }
 +      }
-+    }
-+
-+    tracer.addMapping(swtch.bytecode);
-+    tracer.addMapping(field.bytecode);
-+    tracer.addMapping(invoc.bytecode);
-+    buf.appendIndent(indent).append((invoc.getInstance().toJava(indent, tracer).enclose("switch(", ")"))).append(" {").appendLineSeparator();
-+    return ret;
-+  }
-+
-   public void initExprents() {
-     SwitchExprent swexpr = (SwitchExprent)first.getExprents().remove(first.getExprents().size() - 1);
-     swexpr.setCaseValues(caseValues);
-diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 33dc178..1c1a930 100644
---- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
-+++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-@@ -24,6 +24,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
- import org.jetbrains.java.decompiler.util.VBStyleCollection;
- 
- import java.io.IOException;
-+import java.util.Map;
-+import java.util.HashMap;
- 
- /*
-   class_file {
-@@ -58,6 +60,7 @@ public class StructClass extends StructMember {
-   private final String[] interfaceNames;
-   private final VBStyleCollection<StructField, String> fields;
-   private final VBStyleCollection<StructMethod, String> methods;
-+  private final Map<String, Map<Integer, String>> enumSwitchMap = new HashMap<>();
- 
-   private ConstantPool pool;
- 
-@@ -170,6 +173,10 @@ public class StructClass extends StructMember {
-     return loader;
-   }
- 
-+  public Map<String, Map<Integer, String>> getEnumSwitchMap() {
-+    return enumSwitchMap;
-+  }
-+
-   public boolean isVersionGE_1_5() {
-     return (majorVersion > 48 || (majorVersion == 48 && minorVersion > 0)); // FIXME: check second condition
+     }
+     return false;
    }
 diff --git a/testData/classes/pkg/TestEnum$1.class b/testData/classes/pkg/TestEnum$1.class
 index fb5c29f40e2fe3fd9b19075f906072fc4b546339..cfff174c14e68acae8ae05607147141d86ade3ef 100644

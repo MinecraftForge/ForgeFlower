@@ -1,4 +1,4 @@
-From 1b3b606c5f65000c2985777cc474d4020539557f Mon Sep 17 00:00:00 2001
+From fd10f6712eac2c29ce6fc49b9a860aa3dc6f60da Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 15:18:38 -0700
 Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
@@ -51,10 +51,10 @@ index 18e1b78..50ff12f 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 1ac9669..f1bb7bb 100644
+index 2aaa54e..24c1947 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -559,7 +559,7 @@ public class NestedClassProcessor {
+@@ -565,7 +565,7 @@ public class NestedClassProcessor {
                if (mapParamsToNewVars.containsKey(varIndex)) {
                  VarVersionPair newVar = mapParamsToNewVars.get(varIndex);
                  method.varproc.getExternalVars().add(newVar);
@@ -63,7 +63,7 @@ index 1ac9669..f1bb7bb 100644
                }
              }
              else if (exprent.type == Exprent.EXPRENT_FIELD) {
-@@ -570,7 +570,7 @@ public class NestedClassProcessor {
+@@ -576,7 +576,7 @@ public class NestedClassProcessor {
                  //		mapFieldsToNewVars.containsKey(key)) {
                  VarVersionPair newVar = mapFieldsToNewVars.get(key);
                  method.varproc.getExternalVars().add(newVar);
@@ -96,7 +96,7 @@ index aea5afa..c68bb9a 100644
      Exprent func = lstOperands.get(0);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 61edb37..5287de2 100644
+index 81c822a..aeb987d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -301,7 +301,15 @@ public class ExprProcessor implements CodeConstants {
@@ -339,7 +339,7 @@ index af95d15..82305f3 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 957f3f5..58017ef 100644
+index 4374ff8..f0801e2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -27,8 +27,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -361,7 +361,7 @@ index 957f3f5..58017ef 100644
      super(EXPRENT_ASSIGNMENT);
      this.left = left;
      this.right = right;
-@@ -178,6 +178,13 @@ public class AssignmentExprent extends Exprent {
+@@ -182,6 +182,13 @@ public class AssignmentExprent extends Exprent {
             condType == as.getCondType();
    }
  
@@ -376,7 +376,7 @@ index 957f3f5..58017ef 100644
    // getter and setter methods
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index b2a9cdd..335c318 100644
+index 85f7d00..d07efe7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -50,15 +50,15 @@ public class ConstExprent extends Exprent {
@@ -385,7 +385,7 @@ index b2a9cdd..335c318 100644
  
 -  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
 +  public ConstExprent(int val, boolean boolPermitted, BitSet bytecodeOffsets) {
-     this(guessType(val, boolPermitted), new Integer(val), boolPermitted, bytecodeOffsets);
+     this(guessType(val, boolPermitted), Integer.valueOf(val), boolPermitted, bytecodeOffsets);
    }
  
 -  public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
@@ -398,7 +398,7 @@ index b2a9cdd..335c318 100644
      super(EXPRENT_CONST);
      this.constType = constType;
      this.value = value;
-@@ -383,6 +383,11 @@ public class ConstExprent extends Exprent {
+@@ -411,6 +411,11 @@ public class ConstExprent extends Exprent {
    public boolean isBoolPermitted() {
      return boolPermitted;
    }
@@ -411,7 +411,7 @@ index b2a9cdd..335c318 100644
    // *****************************************************************************
    // IMatchable implementation
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index abfc4ab..0c3a1f9 100644
+index 0f16b66..8550569 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -30,8 +30,8 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
@@ -448,19 +448,28 @@ index abfc4ab..0c3a1f9 100644
    // *****************************************************************************
    // IMatchable implementation
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 21b4317..63ff8b2 100644
+index c3d3807..6284f3c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-@@ -30,7 +30,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
- import java.util.*;
+@@ -28,7 +28,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+ 
+ import java.util.ArrayList;
+-import java.util.Collection;
++import java.util.BitSet;
+ import java.util.Collections;
+ import java.util.Comparator;
+ import java.util.HashSet;
+@@ -36,7 +36,7 @@ import java.util.List;
  import java.util.Map.Entry;
+ import java.util.Set;
  
 -public class Exprent implements IMatchable {
 +public abstract class Exprent implements IMatchable {
    public static final int MULTIPLE_USES = 1;
    public static final int SIDE_EFFECTS_FREE = 2;
    public static final int BOTH_FLAGS = 3;
-@@ -52,7 +52,7 @@ public class Exprent implements IMatchable {
+@@ -58,7 +58,7 @@ public class Exprent implements IMatchable {
  
    public final int type;
    public final int id;
@@ -469,7 +478,7 @@ index 21b4317..63ff8b2 100644
  
    public Exprent(int type) {
      this.type = type;
-@@ -125,14 +125,31 @@ public class Exprent implements IMatchable {
+@@ -131,14 +131,31 @@ public class Exprent implements IMatchable {
  
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
  
@@ -508,7 +517,7 @@ index 21b4317..63ff8b2 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 472823f..959fdf6 100644
+index 6d549b1..6ae5ac6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -34,8 +34,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -549,7 +558,7 @@ index 472823f..959fdf6 100644
    // *****************************************************************************
    // IMatchable implementation
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 6662965..cbc78b5 100644
+index 0cc0025..354b620 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -198,7 +198,7 @@ public class FunctionExprent extends Exprent {
@@ -579,7 +588,7 @@ index 6662965..cbc78b5 100644
      this(funcType, new ArrayList<>(1), bytecodeOffsets);
      lstOperands.add(operand);
    }
-@@ -606,6 +606,12 @@ public class FunctionExprent extends Exprent {
+@@ -619,6 +619,12 @@ public class FunctionExprent extends Exprent {
    public void setImplicitType(VarType implicitType) {
      this.implicitType = implicitType;
    }
@@ -626,10 +635,10 @@ index d1537bd..e4dfd21 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 5b2ffbd..a38c2ee 100644
+index 8d53711..277d72a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -76,7 +76,7 @@ public class InvocationExprent extends Exprent {
+@@ -78,7 +78,7 @@ public class InvocationExprent extends Exprent {
                             LinkConstant cn,
                             List<PooledConstant> bootstrapArguments,
                             ListStack<Exprent> stack,
@@ -638,7 +647,7 @@ index 5b2ffbd..a38c2ee 100644
      this();
  
      name = cn.elementname;
-@@ -514,6 +514,13 @@ public class InvocationExprent extends Exprent {
+@@ -603,6 +603,13 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  
@@ -687,7 +696,7 @@ index 1546064..0cc24ac 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index fdbb692..da3f3aa 100644
+index 8510a8b..34875cc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -34,9 +34,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -701,7 +710,7 @@ index fdbb692..da3f3aa 100644
  
  public class NewExprent extends Exprent {
    private InvocationExprent constructor;
-@@ -48,11 +48,11 @@ public class NewExprent extends Exprent {
+@@ -49,11 +49,11 @@ public class NewExprent extends Exprent {
    private boolean lambda;
    private boolean enumConst;
  
@@ -715,7 +724,7 @@ index fdbb692..da3f3aa 100644
      super(EXPRENT_NEW);
      this.newType = newType;
      this.lstDims = lstDims;
-@@ -450,6 +450,14 @@ public class NewExprent extends Exprent {
+@@ -475,6 +475,14 @@ public class NewExprent extends Exprent {
             InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
    }
  
@@ -731,34 +740,35 @@ index fdbb692..da3f3aa 100644
      return constructor;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
-index 27730a9..c358d6d 100644
+index cadf94f..655cd2d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
-@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -22,15 +22,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
 +import java.util.BitSet;
  import java.util.List;
- import java.util.Set;
+-import java.util.Set;
  
-@@ -30,7 +31,7 @@ public class SwitchExprent extends Exprent {
+ public class SwitchExprent extends Exprent {
+ 
    private Exprent value;
-   private List<List<ConstExprent>> caseValues = new ArrayList<>();
+   private List<List<Exprent>> caseValues = new ArrayList<>();
  
 -  public SwitchExprent(Exprent value, Set<Integer> bytecodeOffsets) {
 +  public SwitchExprent(Exprent value, BitSet bytecodeOffsets) {
      super(EXPRENT_SWITCH);
      this.value = value;
  
-@@ -112,6 +113,22 @@ public class SwitchExprent extends Exprent {
+@@ -112,6 +112,22 @@ public class SwitchExprent extends Exprent {
      return InterpreterUtil.equalObjects(value, sw.getValue());
    }
  
 +  @Override
 +  public void getBytecodeRange(BitSet values) {
 +    if (caseValues != null && !caseValues.isEmpty()) {
-+      for (List<ConstExprent> l : caseValues) {
++      for (List<Exprent> l : caseValues) {
 +        if (l != null && !l.isEmpty()) {
 +          for (Exprent e : l) {
 +            if (e != null)
@@ -775,7 +785,7 @@ index 27730a9..c358d6d 100644
      return value;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 0cb7fd1..bd7d555 100644
+index d31f809..3972328 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -41,6 +41,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -914,7 +924,7 @@ index f74e745..2add759 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-index 9cb7ddb..1328806 100644
+index 9639e18..7fc3b97 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
@@ -1017,18 +1027,18 @@ index a199c28..2370830 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 9a9a146..40691a2 100644
+index 1a3b59d..575660a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+@@ -30,6 +30,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
 +import org.jetbrains.java.decompiler.util.StartEndPair;
  
  import java.util.*;
  
-@@ -202,6 +203,17 @@ public class SwitchStatement extends Statement {
+@@ -216,6 +217,17 @@ public class SwitchStatement extends Statement {
      sortEdgesAndNodes();
    }
  
@@ -1104,7 +1114,7 @@ index 0000000..ded36aa
 +  }
 +}
 diff --git a/testData/results/InvalidMethodSignature.dec b/testData/results/InvalidMethodSignature.dec
-index e2a15b3..485c46e 100644
+index e4b567c..ce8afab 100644
 --- a/testData/results/InvalidMethodSignature.dec
 +++ b/testData/results/InvalidMethodSignature.dec
 @@ -26,19 +26,51 @@ class i implements bg {
@@ -1685,6 +1695,48 @@ index f260d9e..c9e51a5 100644
        21      8
        22      8
        2d      10
+diff --git a/testData/results/TestClashName.dec b/testData/results/TestClashName.dec
+index 43348ea..1424265 100644
+--- a/testData/results/TestClashName.dec
++++ b/testData/results/TestClashName.dec
+@@ -32,17 +32,37 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
+ 
+ class 'pkg/TestClashName' {
+    method 'm ()I' {
++      0      20
+       1      20
++      2      20
++      3      20
+       4      20
++      5      21
+       6      21
++      7      21
++      8      21
+       9      21
++      a      21
++      b      21
+       c      22
++      d      22
++      e      22
+       f      22
++      10      23
+       11      23
++      12      23
++      13      23
+       14      23
++      15      23
++      16      23
+       17      24
++      18      24
++      19      24
+       1a      24
++      1b      25
++      1c      25
+       1d      25
++      1e      25
+       1f      25
+       20      25
+    }
 diff --git a/testData/results/TestClassCast.dec b/testData/results/TestClassCast.dec
 index e807294..f602eea 100644
 --- a/testData/results/TestClassCast.dec
@@ -1737,7 +1789,7 @@ index 852ae47..1547551 100644
     }
  }
 diff --git a/testData/results/TestClassLambda.dec b/testData/results/TestClassLambda.dec
-index 751537c..2e5601a 100644
+index 609928c..fa9109d 100644
 --- a/testData/results/TestClassLambda.dec
 +++ b/testData/results/TestClassLambda.dec
 @@ -25,12 +25,12 @@ public class TestClassLambda {
@@ -2075,7 +2127,7 @@ index 751537c..2e5601a 100644
  89 <-> 87
  90 <-> 88
 diff --git a/testData/results/TestClassLoop.dec b/testData/results/TestClassLoop.dec
-index ba29595..6c6e7e7 100644
+index 55e369b..82e549f 100644
 --- a/testData/results/TestClassLoop.dec
 +++ b/testData/results/TestClassLoop.dec
 @@ -78,41 +78,68 @@ public class TestClassLoop {
@@ -3444,6 +3496,301 @@ index 3449a8c..0ddb1b5 100644
        13      7
     }
  }
+diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
+index eae376a..52f2cdf 100644
+--- a/testData/results/TestPrimitives.dec
++++ b/testData/results/TestPrimitives.dec
+@@ -90,106 +90,247 @@ public class TestPrimitives {
+ 
+ class 'pkg/TestPrimitives' {
+    method 'printAll ()V' {
++      0      4
+       1      4
+       2      4
++      3      4
++      4      4
++      5      5
+       6      5
++      7      5
+       8      5
++      9      5
++      a      5
++      b      6
+       c      6
++      d      6
++      e      6
+       f      6
++      10      6
++      11      6
++      12      7
+       13      7
++      14      7
+       15      7
++      16      7
++      17      7
++      18      8
+       19      8
++      1a      8
++      1b      8
+       1c      8
++      1d      8
++      1e      8
++      1f      9
+       20      9
++      21      9
+       22      9
++      23      9
++      24      9
++      25      10
+       26      10
++      27      10
++      28      10
+       29      10
++      2a      10
++      2b      10
++      2c      11
+       2d      11
++      2e      11
+       2f      11
++      30      11
++      31      11
+       32      12
++      33      12
++      34      12
+       35      12
++      36      12
++      3d      12
+       3e      12
++      3f      12
++      40      12
+       41      12
++      42      12
++      43      12
++      47      12
+       48      12
++      49      12
++      4a      12
+       4b      12
++      4c      12
++      4d      12
++      51      12
+       52      12
++      53      12
++      54      12
+       55      12
++      56      12
++      57      12
++      5b      12
+       5c      12
++      5d      12
++      5e      12
+       5f      12
++      60      12
++      61      12
+       63      12
++      64      12
++      65      12
+       66      12
++      67      12
++      68      12
+       69      13
+    }
+ 
+    method 'printBoolean (Z)V' {
+       0      16
++      1      16
++      2      16
+       3      16
++      4      16
++      b      16
+       c      16
++      d      16
++      e      16
+       10      16
++      11      16
++      12      16
+       13      16
++      14      16
++      15      16
+       16      17
+    }
+ 
+    method 'printByte (B)V' {
+       0      20
++      1      20
++      2      20
+       3      20
++      4      20
++      b      20
+       c      20
++      d      20
++      e      20
+       10      20
++      11      20
++      12      20
+       13      20
++      14      20
++      15      20
+       16      21
+    }
+ 
+    method 'printShort (S)V' {
+       0      24
++      1      24
++      2      24
+       3      24
++      4      24
++      b      24
+       c      24
++      d      24
++      e      24
+       10      24
++      11      24
++      12      24
+       13      24
++      14      24
++      15      24
+       16      25
+    }
+ 
+    method 'printInt (I)V' {
+       0      28
++      1      28
++      2      28
+       3      28
++      4      28
++      b      28
+       c      28
++      d      28
++      e      28
+       10      28
++      11      28
++      12      28
+       13      28
++      14      28
++      15      28
+       16      29
+    }
+ 
+    method 'printLong (J)V' {
+       0      32
++      1      32
++      2      32
+       3      32
++      4      32
++      b      32
+       c      32
++      d      32
++      e      32
+       10      32
++      11      32
++      12      32
+       13      32
++      14      32
++      15      32
+       16      33
+    }
+ 
+    method 'printFloat (F)V' {
+       0      36
++      1      36
++      2      36
+       3      36
++      4      36
++      b      36
+       c      36
++      d      36
++      e      36
+       10      36
++      11      36
++      12      36
+       13      36
++      14      36
++      15      36
+       16      37
+    }
+ 
+    method 'printDouble (D)V' {
+       0      40
++      1      40
++      2      40
+       3      40
++      4      40
++      b      40
+       c      40
++      d      40
++      e      40
+       10      40
++      11      40
++      12      40
+       13      40
++      14      40
++      15      40
+       16      41
+    }
+ 
+    method 'printChar (C)V' {
+       0      44
++      1      44
++      2      44
+       3      44
++      4      44
++      b      44
+       c      44
++      d      44
++      e      44
+       10      44
++      11      44
++      12      44
+       13      44
++      14      44
++      15      44
+       16      45
+    }
+ 
+@@ -200,26 +341,42 @@ class 'pkg/TestPrimitives' {
+ 
+    method 'getByte ()B' {
+       0      52
++      1      52
+       2      52
+    }
+ 
+    method 'getShort ()S' {
+       0      56
++      1      56
++      2      56
+       3      56
+    }
+ 
+    method 'getInt ()I' {
+       0      60
++      1      60
+       2      60
+    }
+ 
+    method 'printNarrowed ()V' {
++      0      64
++      1      64
+       2      64
++      3      64
++      4      64
+       5      64
+       6      64
++      7      64
++      8      64
++      9      65
++      a      65
+       b      65
++      c      65
++      d      65
+       e      65
+       f      65
++      10      65
++      11      65
+       12      66
+    }
+ 
 diff --git a/testData/results/TestStaticNameClash.dec b/testData/results/TestStaticNameClash.dec
 index 230983e..6ba0c70 100644
 --- a/testData/results/TestStaticNameClash.dec
@@ -3537,6 +3884,18 @@ index c5afe18..644701c 100644
        40      8
     }
  }
+diff --git a/testData/results/TestSwitchOnEnum.dec b/testData/results/TestSwitchOnEnum.dec
+index 3406481..5afdee0 100644
+--- a/testData/results/TestSwitchOnEnum.dec
++++ b/testData/results/TestSwitchOnEnum.dec
+@@ -50,6 +50,7 @@ public class TestSwitchOnEnum {
+ 
+ class 'pkg/TestSwitchOnEnum' {
+    method 'testSOE (Ljava/util/concurrent/TimeUnit;)I' {
++      3      8
+       8      8
+       24      10
+       25      10
 diff --git a/testData/results/TestSynchronizedMapping.dec b/testData/results/TestSynchronizedMapping.dec
 index 84ad48a..6778aa1 100644
 --- a/testData/results/TestSynchronizedMapping.dec
@@ -3735,6 +4094,146 @@ index 092564e..b3e3ac2 100644
 +      3d      38
 +      3e      38
        3f      38
+    }
+ }
+diff --git a/testData/results/TestVarArgCalls.dec b/testData/results/TestVarArgCalls.dec
+index 1ccd16a..5313dae 100644
+--- a/testData/results/TestVarArgCalls.dec
++++ b/testData/results/TestVarArgCalls.dec
+@@ -27,58 +27,135 @@ public class TestVarArgCalls {
+ 
+ class 'pkg/TestVarArgCalls' {
+    method 'doSmth ()V' {
++      0      4
+       1      4
++      2      4
+       7      4
++      8      4
++      9      4
++      a      5
+       b      5
++      c      5
+       13      5
++      14      5
+       16      5
++      17      5
++      18      5
++      19      6
+       1a      6
++      1b      6
+       22      6
++      23      6
+       27      6
++      28      6
+       2a      6
++      2b      6
++      2c      6
++      2d      7
+       2e      7
++      2f      7
+       34      7
++      35      7
++      36      7
++      37      8
+       38      8
++      39      8
+       46      8
++      47      8
+       4a      8
++      4b      8
++      4c      8
++      4d      9
+       4e      9
++      4f      9
+       5c      9
++      5d      9
+       68      9
++      69      9
+       6c      9
++      6d      9
++      6e      9
+       6f      10
++      70      10
+       75      10
++      76      10
++      77      10
+       79      11
++      7a      11
+       81      11
++      82      11
+       83      11
++      84      11
++      85      11
+       87      11
++      88      11
++      89      11
+       8b      12
++      8c      12
+       93      12
++      94      12
+       95      12
++      96      12
++      97      12
+       9b      12
++      9c      12
+       9e      12
++      9f      12
++      a0      12
+       a8      13
++      a9      13
+       ab      13
+       ac      14
++      ad      14
++      b4      14
+       b6      14
++      b7      14
++      b8      14
+       ba      15
++      bb      15
++      bc      15
+       bd      15
++      be      15
++      bf      15
+       c0      15
++      c1      15
++      c2      15
+       c4      16
+    }
+ 
+    method 'printAll (Ljava/lang/String;[Ljava/lang/String;)V' {
+       0      19
++      1      19
++      2      19
++      3      19
++      4      19
+       5      19
++      6      19
++      7      19
+       8      19
++      9      19
++      a      19
+       b      19
++      c      19
++      d      19
+       e      20
+    }
+ 
+    method 'printComplex (Ljava/lang/String;[[Ljava/lang/String;)V' {
+       0      23
++      1      23
++      2      23
++      3      23
++      4      23
+       5      23
++      6      23
++      7      23
+       8      23
++      9      23
++      a      23
+       b      23
++      c      23
++      d      23
+       e      24
     }
  }
 diff --git a/testData/results/TypeAnnotations.dec b/testData/results/TypeAnnotations.dec

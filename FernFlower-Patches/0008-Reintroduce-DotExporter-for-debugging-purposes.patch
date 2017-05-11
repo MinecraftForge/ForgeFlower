@@ -1,11 +1,11 @@
-From 40eef6bd7ffc4b34a3205035d26854797f7dba7f Mon Sep 17 00:00:00 2001
+From 7be525ac7d736bac0e87a6be0343edc474801d8c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 18:37:18 -0700
 Subject: [PATCH] Reintroduce DotExporter for debugging purposes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 61aa549..04a8e22 100644
+index ba77e1e..7367df0 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -40,6 +40,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -16,7 +16,7 @@ index 61aa549..04a8e22 100644
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.*;
-@@ -407,6 +408,7 @@ public class NestedClassProcessor {
+@@ -410,6 +411,7 @@ public class NestedClassProcessor {
        // iterate enclosing class
        for (final MethodWrapper method : node.getWrapper().getMethods()) {
          if (method.root != null) { // neither abstract, nor native
@@ -25,7 +25,7 @@ index 61aa549..04a8e22 100644
              @Override
              public int processExprent(Exprent exprent) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index ea9dd6b..cb3dca8 100644
+index b6a2245..df3c1b5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -73,7 +73,7 @@ index ea9dd6b..cb3dca8 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 452c7a3..1f88b95 100644
+index 01d21d5..6f3ab79 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -126,7 +126,7 @@ index 452c7a3..1f88b95 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index fa95f4b..c2a84e2 100644
+index cce407c..4c18dd7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;

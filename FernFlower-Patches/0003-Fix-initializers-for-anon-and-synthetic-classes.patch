@@ -1,11 +1,11 @@
-From 77387e42f35ad6c3b15594392dc2521bd04ee02d Mon Sep 17 00:00:00 2001
+From 7362c8cee557eb45bd59a7c42a3eb066ec1edfc5 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 13:21:00 -0700
 Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 0986a22..815ec14 100644
+index 764b4d4..0627e8c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -54,6 +54,7 @@ public class ClassWriter {
@@ -17,7 +17,7 @@ index 0986a22..815ec14 100644
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersionGE_1_5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 4afeddf..227c987 100644
+index a743f98..1e9478b 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -31,6 +31,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -43,7 +43,7 @@ index 4afeddf..227c987 100644
 +                      rec.type = ClassNode.CLASS_MEMBER;
 +                  }
 +                  else {
-+                    StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttributes().getWithKey("EnclosingMethod");
++                    StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttribute("EnclosingMethod");
 +                    if (attr != null && attr.getMethodName() != null) {
 +                      rec.type = ClassNode.CLASS_LOCAL;
 +                    }
@@ -131,10 +131,10 @@ index 18a13d9..41e6934 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index f31f3a8..fdbb692 100644
+index d43388c..8510a8b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -330,7 +330,7 @@ public class NewExprent extends Exprent {
+@@ -331,7 +331,7 @@ public class NewExprent extends Exprent {
  
                if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
                  ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);

@@ -1,11 +1,11 @@
-From 490938a7c67784b4c42fde74d8ec670c5fee29ae Mon Sep 17 00:00:00 2001
+From 7e95b861b13d368219dc2f9f8550675e61719053 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index d0efaae..4e22da1 100644
+index 3a3346e..60e461e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -22,7 +22,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -16,7 +16,7 @@ index d0efaae..4e22da1 100644
  import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
-@@ -36,7 +35,6 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
+@@ -35,7 +34,6 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
  import java.io.IOException;
  import java.util.HashSet;
@@ -24,25 +24,25 @@ index d0efaae..4e22da1 100644
  import java.util.Set;
  
  public class ClassWrapper {
-@@ -166,8 +164,9 @@ public class ClassWrapper {
-         StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
-         if (attr != null) {
-           // only param names here
--          varProc.setDebugVarNames(attr.getMapParamNames());
-+          varProc.setDebugVarNames(attr.getMapNames());
+@@ -164,8 +162,9 @@ public class ClassWrapper {
+           StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
+           if (attr != null) {
+             // only param names here
+-            varProc.setDebugVarNames(attr.getMapParamNames());
++            varProc.setDebugVarNames(attr.getMapNames());
  
-+          /*
-           // the rest is here
-           methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
-             List<Exprent> lst = exprent.getAllExprents(true);
-@@ -183,6 +182,7 @@ public class ClassWrapper {
-               });
-             return 0;
-           });
-+          */
++            /*
+             // the rest is here
+             methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
+               List<Exprent> lst = exprent.getAllExprents(true);
+@@ -181,6 +180,7 @@ public class ClassWrapper {
+                 });
+               return 0;
+             });
++            */
+           }
          }
        }
- 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 index 4b47425..4aa115c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
@@ -144,7 +144,7 @@ index 4b47425..4aa115c 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 04a8e22..b9b08e9 100644
+index 7367df0..facfe5f 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -38,6 +38,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
@@ -155,7 +155,7 @@ index 04a8e22..b9b08e9 100644
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.util.DotExporter;
-@@ -552,6 +553,7 @@ public class NestedClassProcessor {
+@@ -555,6 +556,7 @@ public class NestedClassProcessor {
        if (method.root != null) { // neither abstract nor native
          Map<VarVersionPair, String> mapNewNames = new HashMap<>();  // local var names
          Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
@@ -163,7 +163,7 @@ index 04a8e22..b9b08e9 100644
  
          final Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
          if (method.signatureFields != null) {
-@@ -566,15 +568,17 @@ public class NestedClassProcessor {
+@@ -569,15 +571,17 @@ public class NestedClassProcessor {
  
                String varName = null;
                VarType varType = null;
@@ -182,7 +182,7 @@ index 04a8e22..b9b08e9 100644
                  if (parent.simpleName == null) {
                    // anonymous enclosing class, no access to this
                    varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
-@@ -582,11 +586,15 @@ public class NestedClassProcessor {
+@@ -585,11 +589,15 @@ public class NestedClassProcessor {
                  else {
                    varName = parent.simpleName + ".this";
                  }
@@ -198,7 +198,7 @@ index 04a8e22..b9b08e9 100644
              }
  
              varIndex += md.params[index++].stackSize;
-@@ -602,17 +610,19 @@ public class NestedClassProcessor {
+@@ -605,17 +613,19 @@ public class NestedClassProcessor {
  
              String varName = null;
              VarType varType = null;
@@ -219,7 +219,7 @@ index 04a8e22..b9b08e9 100644
                if (classNode.parent.simpleName == null) {
                  // anonymous enclosing class, no access to this
                  varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
-@@ -620,11 +630,15 @@ public class NestedClassProcessor {
+@@ -623,11 +633,15 @@ public class NestedClassProcessor {
                else {
                  varName = classNode.parent.simpleName + ".this";
                }
@@ -235,7 +235,7 @@ index 04a8e22..b9b08e9 100644
  
              // hide synthetic field
              if (classNode == child) { // fields higher up the chain were already handled with their classes
-@@ -643,16 +657,20 @@ public class NestedClassProcessor {
+@@ -646,16 +660,20 @@ public class NestedClassProcessor {
          for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
            VarVersionPair pair = entry.getKey();
            VarType type = mapNewTypes.get(pair);
@@ -258,7 +258,7 @@ index 04a8e22..b9b08e9 100644
              if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
                AssignmentExprent assignExpr = (AssignmentExprent)exprent;
                if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-@@ -660,7 +678,7 @@ public class NestedClassProcessor {
+@@ -663,7 +681,7 @@ public class NestedClassProcessor {
                  String qName = child.classStruct.qualifiedName;
                  if (fExpr.getClassname().equals(qName) &&  // process this class only
                      mapFieldsToNewVars.containsKey(InterpreterUtil.makeUniqueKey(qName, fExpr.getName(), fExpr.getDescriptor().descriptorString))) {
@@ -267,7 +267,7 @@ index 04a8e22..b9b08e9 100644
                  }
                }
              }
-@@ -672,13 +690,13 @@ public class NestedClassProcessor {
+@@ -675,13 +693,13 @@ public class NestedClassProcessor {
                if (invokeExpr.getFunctype() == InvocationExprent.TYP_INIT) {
                  // invocation of the super constructor in an anonymous class
                  child.superInvocation = invokeExpr; // FIXME: save original names of parameters
@@ -284,7 +284,7 @@ index 04a8e22..b9b08e9 100644
            }
  
            private Exprent replaceExprent(Exprent exprent) {
-@@ -687,7 +705,12 @@ public class NestedClassProcessor {
+@@ -690,7 +708,12 @@ public class NestedClassProcessor {
                if (mapParamsToNewVars.containsKey(varIndex)) {
                  VarVersionPair newVar = mapParamsToNewVars.get(varIndex);
                  method.varproc.getExternalVars().add(newVar);
@@ -298,7 +298,7 @@ index 04a8e22..b9b08e9 100644
                }
              }
              else if (exprent.type == Exprent.EXPRENT_FIELD) {
-@@ -698,7 +721,12 @@ public class NestedClassProcessor {
+@@ -701,7 +724,12 @@ public class NestedClassProcessor {
                  //		mapFieldsToNewVars.containsKey(key)) {
                  VarVersionPair newVar = mapFieldsToNewVars.get(key);
                  method.varproc.getExternalVars().add(newVar);
@@ -312,7 +312,7 @@ index 04a8e22..b9b08e9 100644
                }
              }
  
-@@ -1077,4 +1105,41 @@ public class NestedClassProcessor {
+@@ -1080,4 +1108,41 @@ public class NestedClassProcessor {
        return fieldKey.hashCode() + varPair.hashCode();
      }
    }
@@ -457,7 +457,7 @@ index 26a3b23..17df2d8 100644
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 5287de2..290c730 100644
+index aeb987d..c68d84f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -349,7 +349,9 @@ public class ExprProcessor implements CodeConstants {
@@ -1084,7 +1084,7 @@ index 8d5e762..70347fe 100644
      this(type, source, destination);
      this.closure = closure;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index bd7d555..f5d8cbe 100644
+index 3972328..48ffcc0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -24,12 +24,15 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1163,7 +1163,7 @@ index bd7d555..f5d8cbe 100644
  
    private void appendDefinitionType(TextBuffer buffer) {
      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
-+      
++
 +      if (lvt != null) {
 +        if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
 +          if (lvt.getSignature() != null) {
@@ -1177,7 +1177,7 @@ index bd7d555..f5d8cbe 100644
 +        buffer.append(ExprProcessor.getCastTypeName(getVarType()));
 +        return;
 +      }
-+      
++
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
        if (method != null) {
          Integer originalIndex = null;
@@ -1188,14 +1188,15 @@ index bd7d555..f5d8cbe 100644
 +    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && lvt != null) {
 +      return new VarType(lvt.getDescriptor());
 +    }
-+    
++
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -266,6 +289,86 @@ public class VarExprent extends Exprent {
+@@ -266,31 +289,111 @@ public class VarExprent extends Exprent {
    public void setStack(boolean stack) {
      this.stack = stack;
    }
+-  
 +
 +  public void setLVT(LocalVariable var) {
 +    this.lvt = var;
@@ -1212,23 +1213,23 @@ index bd7d555..f5d8cbe 100644
 +    VarVersionPair pair = getVarVersionPair();
 +    if (lvt != null)
 +      return lvt.getName();
-+    
++
 +    if (processor != null) {
 +      return processor.getVarName(pair);
 +    }
-+    
++
 +    return pair.version == 0 ? "var" + pair.var : "var" + pair.var + "_" + version;
 +  }
 +
 +  @Override
 +  public CheckTypesResult checkExprTypeBounds() {
-+    CheckTypesResult checkExprTypeBounds = super.checkExprTypeBounds();
 +    if (lvt != null) {
-+      checkExprTypeBounds.addMinTypeExprent(this, lvt.getVarType());
++      CheckTypesResult ret = new CheckTypesResult();
++      ret.addMinTypeExprent(this, lvt.getVarType());
++      return ret;
 +    }
-+    return checkExprTypeBounds;
++    return null;
 +  }
-+
 +
 +  public boolean isVarReferenced(Statement stat, VarExprent... whitelist) {
 +    if (stat.getExprents() == null) {
@@ -1258,10 +1259,10 @@ index bd7d555..f5d8cbe 100644
 +  public boolean isVarReferenced(Exprent exp, VarExprent... whitelist) {
 +    List<Exprent> lst = exp.getAllExprents(true);
 +    lst.add(exp);
-+    lst = lst.stream().filter(e -> e != this && e.type == Exprent.EXPRENT_VAR && 
++    lst = lst.stream().filter(e -> e != this && e.type == Exprent.EXPRENT_VAR &&
 +      getVarVersionPair().equals(((VarExprent)e).getVarVersionPair()))
 +        .collect(Collectors.toList());
-+    
++
 +    for (Exprent var : lst) {
 +      boolean allowed = false;
 +      for (VarExprent white : whitelist) {
@@ -1276,9 +1277,39 @@ index bd7d555..f5d8cbe 100644
 +    }
 +    return false;
 +  }
-   
++
    // *****************************************************************************
    // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+ 
+     if(!super.match(matchNode, engine)) {
+       return false;
+     }
+-    
++
+     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_VAR_INDEX);
+     if(rule != null) {
+       if(rule.isVariable()) {
+         if(!engine.checkAndSetVariableValue((String)rule.value, this.index)) {
+           return false;
+         }
+-      } else { 
++      } else {
+         if(this.index != Integer.valueOf((String)rule.value).intValue()) {
+           return false;
+         }
+       }
+     }
+-    
++
+     return true;
+   }
+-  
++
+ }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 index 43c63f6..051dc0a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
@@ -1408,7 +1439,7 @@ index 2370830..98280f6 100644
 -  
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index a0a14cb..16cbc34 100644
+index 0cad643..e41481c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -18,16 +18,23 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -2164,7 +2195,7 @@ index a0a14cb..16cbc34 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 728addf..06142af 100644
+index 5f21ff2..c31a6e2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -16,20 +16,25 @@
@@ -2226,7 +2257,7 @@ index 728addf..06142af 100644
        }
  
        Integer counter = mapNames.get(name);
-       mapNames.put(name, counter == null ? counter = new Integer(0) : ++counter);
+       mapNames.put(name, counter == null ? counter = 0 : ++counter);
  
 -      if (counter > 0) {
 +      if (counter > 0 && !lvtName) {
@@ -2253,7 +2284,7 @@ index 728addf..06142af 100644
    }
  
    public String getVarName(VarVersionPair pair) {
-@@ -130,4 +139,68 @@ public class VarProcessor {
+@@ -134,4 +143,68 @@ public class VarProcessor {
    public Set<VarVersionPair> getExternalVars() {
      return externalVars;
    }
@@ -2324,7 +2355,7 @@ index 728addf..06142af 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
-index a142eee..b8a56c8 100644
+index a96fc1b..89b80c5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 @@ -112,7 +112,12 @@ public class VarTypeProcessor {
@@ -2342,7 +2373,7 @@ index a142eee..b8a56c8 100644
            else if (expr.type == Exprent.EXPRENT_CONST) {
              ConstExprent constExpr = (ConstExprent)expr;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index c2a84e2..ce0beb2 100644
+index 4c18dd7..5d74cd2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -36,7 +36,7 @@ import java.util.Map.Entry;
@@ -2363,7 +2394,7 @@ index c2a84e2..ce0beb2 100644
  
      // FIXME: advanced merging
  
-@@ -238,7 +238,8 @@ public class VarVersionsProcessor {
+@@ -237,7 +237,8 @@ public class VarVersionsProcessor {
      CounterContainer counters = DecompilerContext.getCounterContainer();
  
      final Map<VarVersionPair, Integer> mapVarPaar = new HashMap<>();
@@ -2372,8 +2403,8 @@ index c2a84e2..ce0beb2 100644
 +    mapOriginalVarIndices.putAll(this.mapOriginalVarIndices);
  
      // map var-version pairs on new var indexes
-     List<VarVersionPair> lst = new ArrayList<VarVersionPair>(mapExprentMinTypes.keySet());
-@@ -264,7 +265,7 @@ public class VarVersionsProcessor {
+     List<VarVersionPair> lst = new ArrayList<>(mapExprentMinTypes.keySet());
+@@ -263,7 +264,7 @@ public class VarVersionsProcessor {
          }
  
          mapVarPaar.put(pair, newIndex);
@@ -2382,7 +2413,7 @@ index c2a84e2..ce0beb2 100644
        }
      }
  
-@@ -297,11 +298,11 @@ public class VarVersionsProcessor {
+@@ -296,11 +297,11 @@ public class VarVersionsProcessor {
      });
  
      if (previousVersionsProcessor != null) {
@@ -2398,7 +2429,7 @@ index c2a84e2..ce0beb2 100644
          value = oldValue != null ? oldValue : value;
          this.mapOriginalVarIndices.put(entry.getKey(), value);
        }
-@@ -333,7 +334,11 @@ public class VarVersionsProcessor {
+@@ -332,7 +333,11 @@ public class VarVersionsProcessor {
      typeProcessor.getMapFinalVars().put(pair, finalType);
    }
  
@@ -2413,42 +2444,49 @@ index c2a84e2..ce0beb2 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-index 86f79b4..1421db4 100644
+index 585fcb2..e083583 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-@@ -25,6 +25,8 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
- 
- import java.io.IOException;
+@@ -26,6 +26,8 @@ import java.io.IOException;
+ import java.util.HashMap;
+ import java.util.Map;
  
 +import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.*;
 +
  public class StructMember {
  
    protected int accessFlags;
-@@ -58,12 +60,12 @@ public class StructMember {
+@@ -63,12 +65,12 @@ public class StructMember {
        StructGeneralAttribute attribute = readAttribute(in, pool, name);
  
        if (attribute != null) {
 -        if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
 +        if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
            // merge all variable tables
-           StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.getWithKey(name);
+           StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.get(name);
            table.add((StructLocalVariableTableAttribute)attribute);
          }
 -        else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
 +        else if (ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(name)) {
            // merge all variable tables
-           StructLocalVariableTypeTableAttribute table = (StructLocalVariableTypeTableAttribute)attributes.getWithKey(name);
+           StructLocalVariableTypeTableAttribute table = (StructLocalVariableTypeTableAttribute)attributes.get(name);
            table.add((StructLocalVariableTypeTableAttribute)attribute);
-@@ -74,6 +76,8 @@ public class StructMember {
+@@ -79,6 +81,8 @@ public class StructMember {
        }
      }
  
 +    if (attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE) && attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE))
-+      ((StructLocalVariableTableAttribute)attributes.getWithKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE)).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.getWithKey(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE));
++      ((StructLocalVariableTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TABLE)).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE));
      return attributes;
    }
  
+@@ -93,4 +97,4 @@ public class StructMember {
+     }
+     return attribute;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 index 0a06ea0..7a71ff5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
@@ -2788,16 +2826,17 @@ index 0000000..71d689d
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 4ba4deb..4fb5ebe 100644
+index 30efdbe..9b76b29 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -84,4 +84,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
-   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
-   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+@@ -29,6 +29,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
+     };
+   }
+ 
 +  @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
- }
-\ No newline at end of file
+   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
+   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
 diff --git a/testData/bulk/pkg/res/Loader.java b/testData/bulk/pkg/res/Loader.java
 index cdb1db5..5e4c220 100644
 --- a/testData/bulk/pkg/res/Loader.java

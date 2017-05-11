@@ -1,14 +1,14 @@
-From 48ab1679e13cd17707b6fad6d3119124cc270b4b Mon Sep 17 00:00:00 2001
+From 6655a7b9a9fa3b6749f8ba22c22e4d1f04f43982 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 10:13:01 -0700
 Subject: [PATCH] Improvements to var++ and var--
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index b9b08e9..1594ba5 100644
+index facfe5f..5e3fcd2 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -1061,7 +1061,7 @@ public class NestedClassProcessor {
+@@ -1064,7 +1064,7 @@ public class NestedClassProcessor {
            res = classname.equals(((InvocationExprent)expr).getClassname());
            break;
          case Exprent.EXPRENT_NEW:
@@ -111,10 +111,10 @@ index 76f5b98..96dd849 100644
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 335c318..b200b5e 100644
+index d07efe7..d7364f1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -388,7 +388,12 @@ public class ConstExprent extends Exprent {
+@@ -416,7 +416,12 @@ public class ConstExprent extends Exprent {
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values);
    }

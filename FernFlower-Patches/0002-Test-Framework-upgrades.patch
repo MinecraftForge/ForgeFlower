@@ -1,17 +1,17 @@
-From a002854125af7d998f431bc70a5bd3b2452857cf Mon Sep 17 00:00:00 2001
+From e686cb3e938893d7f11715e5ae3223a41e662a26 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 23:18:58 -0700
 Subject: [PATCH] Test Framework upgrades
 
 
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index df27781..86a0315 100644
+index 2dbcce6..d1d7f88 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 @@ -33,6 +33,7 @@ public class DecompilerTestFixture {
    private File tempDir;
    private File targetDir;
-   private ConsoleDecompiler decompiler;
+   private TestConsoleDecompiler decompiler;
 +  private boolean cleanup = true;
  
    public void setUp(String... optionPairs) throws IOException {
@@ -24,8 +24,8 @@ index df27781..86a0315 100644
 +    if (tempDir != null && cleanup) {
        delete(tempDir);
      }
-   }
-@@ -86,6 +87,14 @@ public class DecompilerTestFixture {
+     decompiler.close();
+@@ -87,6 +88,14 @@ public class DecompilerTestFixture {
    public ConsoleDecompiler getDecompiler() {
      return decompiler;
    }
@@ -41,7 +41,7 @@ index df27781..86a0315 100644
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 1c2779c..4ba4deb 100644
+index fd48f0d..30efdbe 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -15,35 +15,18 @@
@@ -89,10 +89,10 @@ index 1c2779c..4ba4deb 100644
    }
  
    @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
-@@ -101,45 +84,4 @@ public class SingleClassesTest {
-   @Test public void testAnonymousParams() { doTest("pkg/TestAnonymousParams"); }
-   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
-   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
+@@ -119,45 +102,4 @@ public class SingleClassesTest {
+   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+   //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 -
 -  private void doTest(String testFile, String... companionFiles) {
 -    ConsoleDecompiler decompiler = fixture.getDecompiler();
