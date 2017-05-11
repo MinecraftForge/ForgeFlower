@@ -1,6 +1,15 @@
 package pkg;
 
+import java.util.List;
+
 public class TestPrimitives {
+  private void testInvalidUnboxing() {
+    List<Integer> lst = null;
+    lst.remove(Integer.valueOf(0));
+    this.<Short>genericBoxing((short)0);
+  }
+
+  private <T> void genericBoxing(T value) {}
 
   public void printAll() {
     printBoolean(true);

@@ -71,6 +71,7 @@ public class InvocationExprent extends Exprent {
   private List<Exprent> lstParameters = new ArrayList<>();
   private List<PooledConstant> bootstrapArguments;
   private List<VarType> genericArgs = new ArrayList<>();
+  private boolean forceBoxing = false;
 
   public InvocationExprent() {
     super(EXPRENT_INVOCATION);
@@ -269,7 +270,7 @@ public class InvocationExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (isStatic) {
-      if (isBoxingCall()) {
+      if (isBoxingCall() && !forceBoxing) {
         // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
         // here 'byte' and 'short' values do not need an explicit narrowing type cast
         ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
@@ -427,9 +428,66 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
-    for (int i = start; i < lstParameters.size(); i++) {
+    List<Exprent> parameters = new ArrayList<>(lstParameters);
+    VarType[] types = Arrays.copyOf(descriptor.params, descriptor.params.length);
+    for (int i = start; i < parameters.size(); i++) {
+      Exprent par = parameters.get(i);
+
+      // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
+      //However, we must make sure we don't accidentally make the call ambiguous.
+      //An example being List<Integer>, remove(Integer.valueOf(1)) and remove(1) are different functions
+      if (par.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)par).isBoxingCall()) {
+        InvocationExprent inv = (InvocationExprent)par;
+        if (!setAmbiguousParameters.get(i)) {
+          inv.forceBoxing = true;
+          continue;
+        }
+
+        Exprent value = inv.lstParameters.get(0);
+        types[i] = value.getExprType(); //Infer?
+        //Unboxing in this case is lossy, so we need to explicitly set the type
+        if (types[i] == VarType.VARTYPE_BYTECHAR || types[i] == VarType.VARTYPE_SHORTCHAR) {
+          types[i] = "java/lang/Short".equals(inv.classname) ? VarType.VARTYPE_SHORT :
+                     "java/lang/Byte".equals(inv.classname) ? VarType.VARTYPE_BYTE :
+                     VarType.VARTYPE_CHAR;
+        }
+
+        int count = 0;
+        StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
+        if (stClass != null) {
+          nextMethod:
+          for (StructMethod mt : stClass.getMethods()) {
+            if (name.equals(mt.getName())) {
+              MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+              if (md.params.length == descriptor.params.length) {
+                for (int x = 0; x < md.params.length; x++) {
+                  if (md.params[x].typeFamily != descriptor.params[x].typeFamily &&
+                      md.params[x].typeFamily != types[x].typeFamily) {
+                    continue nextMethod;
+                  }
+                }
+                count++;
+              }
+            }
+          }
+        }
+
+        if (count != matches.size()) { //We become more ambiguous? Lets keep the explicit boxing
+          types[i] = descriptor.params[i];
+          inv.forceBoxing = true;
+        }
+        else {
+          value.addBytecodeOffsets(inv.bytecode); //Keep the bytecode for matching/debug
+          parameters.set(i, value);
+        }
+      }
+
+    }
+
+
+    boolean firstParameter = true;
+    for (int i = start; i < parameters.size(); i++) {
       if (sigFields == null || sigFields.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
@@ -462,13 +520,9 @@ public class InvocationExprent extends Exprent {
         }
         */
 
-        Exprent param = lstParameters.get(i);
-        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
-        if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
-          param = ((InvocationExprent)param).lstParameters.get(0);
-        }
+        Exprent param = parameters.get(i);
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
-        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
+        ExprProcessor.getCastedExprent(param, types[i], buff, indent, true, ambiguous, true, tracer);
 
         // the last "new Object[0]" in the vararg call is not printed
         if (buff.length() > 0) {
@@ -512,7 +566,7 @@ public class InvocationExprent extends Exprent {
       // special handling for ambiguous types
       if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
         if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
-          if (classname.equals("java/lang/Character")) {
+          if (classname.equals("java/lang/Character") || classname.equals("java/lang/Short")) {
             return true;
           }
         }
