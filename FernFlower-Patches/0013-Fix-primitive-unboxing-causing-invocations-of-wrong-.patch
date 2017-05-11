@@ -1,4 +1,4 @@
-From 5f9295e6611694c8ef80b719849f00d981227502 Mon Sep 17 00:00:00 2001
+From 3af6b8d4405b4815e3a74178e38a7fd4405ab498 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b76d223..d0a4492 100644
+index b76d223..c7b7ea7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -71,6 +71,7 @@ public class InvocationExprent extends Exprent {
@@ -26,15 +26,17 @@ index b76d223..d0a4492 100644
          // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
          // here 'byte' and 'short' values do not need an explicit narrowing type cast
          ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
-@@ -427,8 +428,50 @@ public class InvocationExprent extends Exprent {
+@@ -427,9 +428,61 @@ public class InvocationExprent extends Exprent {
        }
      }
  
 -    boolean firstParameter = true;
      int start = isEnum ? 2 : 0;
+-    for (int i = start; i < lstParameters.size(); i++) {
++    List<Exprent> parameters = new ArrayList<>(lstParameters);
 +    VarType[] types = Arrays.copyOf(descriptor.params, descriptor.params.length);
-+    for (int i = start; i < lstParameters.size(); i++) {
-+      Exprent par = lstParameters.get(i);
++    for (int i = start; i < parameters.size(); i++) {
++      Exprent par = parameters.get(i);
 +
 +      // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
 +      //However, we must make sure we don't accidentally make the call ambiguous.
@@ -43,20 +45,29 @@ index b76d223..d0a4492 100644
 +        InvocationExprent inv = (InvocationExprent)par;
 +        Exprent value = inv.lstParameters.get(0);
 +        types[i] = value.getExprType(); //Infer?
++        //Unboxing in this case is lossy, so we need to explicitly set the type
++        if (types[i] == VarType.VARTYPE_BYTECHAR || types[i] == VarType.VARTYPE_SHORTCHAR) {
++          types[i] = "java/lang/Short".equals(inv.classname) ? VarType.VARTYPE_SHORT :
++                     "java/lang/Byte".equals(inv.classname) ? VarType.VARTYPE_BYTE :
++                     VarType.VARTYPE_CHAR;
++        }
 +
 +        int count = 0;
-+        nextMethod:
-+        for (StructMethod mt : cl.getMethods()) {
-+          if (name.equals(mt.getName())) {
-+            MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-+            if (md.params.length == descriptor.params.length) {
-+              for (int x = 0; x < md.params.length; x++) {
-+                if (md.params[x].typeFamily != descriptor.params[x].typeFamily &&
-+                    md.params[x].typeFamily != types[x].typeFamily) {
-+                  continue nextMethod;
++        StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
++        if (stClass != null) {
++          nextMethod:
++          for (StructMethod mt : stClass.getMethods()) {
++            if (name.equals(mt.getName())) {
++              MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
++              if (md.params.length == descriptor.params.length) {
++                for (int x = 0; x < md.params.length; x++) {
++                  if (md.params[x].typeFamily != descriptor.params[x].typeFamily &&
++                      md.params[x].typeFamily != types[x].typeFamily) {
++                    continue nextMethod;
++                  }
 +                }
++                count++;
 +              }
-+              count++;
 +            }
 +          }
 +        }
@@ -66,68 +77,82 @@ index b76d223..d0a4492 100644
 +          inv.forceBoxing = true;
 +        }
 +        else {
-+          par = value;
++          value.addBytecodeOffsets(inv.bytecode); //Keep the bytecode for matching/debug
++          parameters.set(i, value);
 +        }
 +      }
 +
-+      lstParameters.set(i, par);
 +    }
 +
 +
 +    boolean firstParameter = true;
-     for (int i = start; i < lstParameters.size(); i++) {
++    for (int i = start; i < parameters.size(); i++) {
        if (sigFields == null || sigFields.get(i) == null) {
          TextBuffer buff = new TextBuffer();
-@@ -463,12 +506,8 @@ public class InvocationExprent extends Exprent {
+         boolean ambiguous = setAmbiguousParameters.get(i);
+@@ -462,13 +515,9 @@ public class InvocationExprent extends Exprent {
+         }
          */
  
-         Exprent param = lstParameters.get(i);
+-        Exprent param = lstParameters.get(i);
 -        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
 -        if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
 -          param = ((InvocationExprent)param).lstParameters.get(0);
 -        }
++        Exprent param = parameters.get(i);
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
 -        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
 +        ExprProcessor.getCastedExprent(param, types[i], buff, indent, true, ambiguous, true, tracer);
  
          // the last "new Object[0]" in the vararg call is not printed
          if (buff.length() > 0) {
+@@ -512,7 +561,7 @@ public class InvocationExprent extends Exprent {
+       // special handling for ambiguous types
+       if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+         if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
+-          if (classname.equals("java/lang/Character")) {
++          if (classname.equals("java/lang/Character") || classname.equals("java/lang/Short")) {
+             return true;
+           }
+         }
 diff --git a/testData/classes/pkg/TestPrimitives.class b/testData/classes/pkg/TestPrimitives.class
-index be15ee5f11867ff023c89f26814bcbc4985d2194..67ffaea5965687f47c5e95c289248af7ecc1b28a 100644
+index be15ee5f11867ff023c89f26814bcbc4985d2194..e4b847e54ace05749e45433aa31fd64ff27b65cf 100644
 GIT binary patch
-literal 3478
-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
+literal 3711
+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
 
 literal 3197
 zcmaKu`%@cL6vw}tENoa7NFY2cRj4gCP1B}UR9f0Xfl@&VXet$2A4^zZX_CcdLv5=T
@@ -161,10 +186,10 @@ zC;1rNsN-m+KI)_&Itl8E9{QOxL|Z&bzi>{`b}eFxevO~N8YOy>QoV{9UWQILRj&+`
 pG~BMN#U+}tmr8Mx_z7&P>6iXNNa~kJP%Hn}_Or|N6!`@3-2apXB8mV2
 
 diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
-index 52f2cdf..3a9e491 100644
+index 52f2cdf..c85c4e7 100644
 --- a/testData/results/TestPrimitives.dec
 +++ b/testData/results/TestPrimitives.dec
-@@ -1,480 +1,531 @@
+@@ -1,480 +1,549 @@
  package pkg;
  
 +import java.util.List;
@@ -173,7 +198,11 @@ index 52f2cdf..3a9e491 100644
 +   private void testInvalidUnboxing() {
 +      List<Integer> lst = null;// 7
 +      lst.remove(Integer.valueOf(0));// 8
-+   }// 9
++      this.genericBoxing((short)0);// 9
++   }// 10
++
++   private <T> void genericBoxing(T value) {
++   }// 12
 +
     public void printAll() {
 -      this.printBoolean(true);// 6
@@ -186,98 +215,98 @@ index 52f2cdf..3a9e491 100644
 -      this.printChar('Z');// 13
 -      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 15
 -   }// 16
-+      this.printBoolean(true);// 12
-+      this.printByte((byte)123);// 13
-+      this.printShort((short)257);// 14
-+      this.printInt(123);// 15
-+      this.printLong(123L);// 16
-+      this.printFloat(1.23F);// 17
-+      this.printDouble(1.23D);// 18
-+      this.printChar('Z');// 19
-+      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 21
-+   }// 22
++      this.printBoolean(true);// 15
++      this.printByte((byte)123);// 16
++      this.printShort((short)257);// 17
++      this.printInt(123);// 18
++      this.printLong(123L);// 19
++      this.printFloat(1.23F);// 20
++      this.printDouble(1.23D);// 21
++      this.printChar('Z');// 22
++      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 24
++   }// 25
  
     public void printBoolean(boolean b) {
 -      System.out.println(String.format("%b", b));// 19
 -   }// 20
-+      System.out.println(String.format("%b", b));// 25
-+   }// 26
++      System.out.println(String.format("%b", b));// 28
++   }// 29
  
     public void printByte(byte b) {
 -      System.out.println(String.format("%d", b));// 23
 -   }// 24
-+      System.out.println(String.format("%d", b));// 29
-+   }// 30
++      System.out.println(String.format("%d", b));// 32
++   }// 33
  
     public void printShort(short s) {
 -      System.out.println(String.format("%d", s));// 27
 -   }// 28
-+      System.out.println(String.format("%d", s));// 33
-+   }// 34
++      System.out.println(String.format("%d", s));// 36
++   }// 37
  
     public void printInt(int i) {
 -      System.out.println(String.format("%d", i));// 31
 -   }// 32
-+      System.out.println(String.format("%d", i));// 37
-+   }// 38
++      System.out.println(String.format("%d", i));// 40
++   }// 41
  
     public void printLong(long l) {
 -      System.out.println(String.format("%d", l));// 35
 -   }// 36
-+      System.out.println(String.format("%d", l));// 41
-+   }// 42
++      System.out.println(String.format("%d", l));// 44
++   }// 45
  
     public void printFloat(float f) {
 -      System.out.println(String.format("%f", f));// 39
 -   }// 40
-+      System.out.println(String.format("%f", f));// 45
-+   }// 46
++      System.out.println(String.format("%f", f));// 48
++   }// 49
  
     public void printDouble(double d) {
 -      System.out.println(String.format("%f", d));// 43
 -   }// 44
-+      System.out.println(String.format("%f", d));// 49
-+   }// 50
++      System.out.println(String.format("%f", d));// 52
++   }// 53
  
     public void printChar(char c) {
 -      System.out.println(String.format("%c", c));// 47
 -   }// 48
-+      System.out.println(String.format("%c", c));// 53
-+   }// 54
++      System.out.println(String.format("%c", c));// 56
++   }// 57
  
     public boolean getBoolean() {
 -      return false;// 52
-+      return false;// 58
++      return false;// 61
     }
  
     public byte getByte() {
 -      return -128;// 56
-+      return -128;// 62
++      return -128;// 65
     }
  
     public short getShort() {
 -      return -32768;// 60
-+      return -32768;// 66
++      return -32768;// 69
     }
  
     public int getInt() {
 -      return 42;// 64
-+      return 42;// 70
++      return 42;// 73
     }
  
     public void printNarrowed() {
 -      this.printByte((byte)this.getInt());// 68
 -      this.printShort((short)this.getInt());// 69
 -   }// 70
-+      this.printByte((byte)this.getInt());// 74
-+      this.printShort((short)this.getInt());// 75
-+   }// 76
++      this.printByte((byte)this.getInt());// 77
++      this.printShort((short)this.getInt());// 78
++   }// 79
  
     public void constructor() {
 -      new Byte((byte)1);// 73
 -   }// 74
-+      new Byte((byte)1);// 79
-+   }// 80
++      new Byte((byte)1);// 82
++   }// 83
  
     private boolean compare(char c) {
 -      boolean res = c > -1;// 77
@@ -294,20 +323,20 @@ index 52f2cdf..3a9e491 100644
 -      res = c > 127;// 88
 -      res = c > 255;// 89
 -      return res;// 90
-+      boolean res = c > -1;// 83
-+      res = c > 0;// 84
-+      res = c > 1;// 85
-+      res = c > '\b';// 86
-+      res = c > '\t';// 87
-+      res = c > '\n';// 88
-+      res = c > '\f';// 89
-+      res = c > '\r';// 90
-+      res = c > ' ';// 91
-+      res = c > 'a';// 92
-+      res = c > 'Z';// 93
-+      res = c > 127;// 94
-+      res = c > 255;// 95
-+      return res;// 96
++      boolean res = c > -1;// 86
++      res = c > 0;// 87
++      res = c > 1;// 88
++      res = c > '\b';// 89
++      res = c > '\t';// 90
++      res = c > '\n';// 91
++      res = c > '\f';// 92
++      res = c > '\r';// 93
++      res = c > ' ';// 94
++      res = c > 'a';// 95
++      res = c > 'Z';// 96
++      res = c > 127;// 97
++      res = c > 255;// 98
++      return res;// 99
     }
  }
  
@@ -326,6 +355,18 @@ index 52f2cdf..3a9e491 100644
 +      a      7
 +      b      7
 +      d      8
++      e      8
++      f      8
++      10      8
++      11      8
++      12      8
++      13      8
++      14      8
++      15      9
++   }
++
++   method 'genericBoxing (Ljava/lang/Object;)V' {
++      0      12
 +   }
 +
     method 'printAll ()V' {
@@ -419,96 +460,96 @@ index 52f2cdf..3a9e491 100644
 -      67      12
 -      68      12
 -      69      13
-+      0      11
-+      1      11
-+      2      11
-+      3      11
-+      4      11
-+      5      12
-+      6      12
-+      7      12
-+      8      12
-+      9      12
-+      a      12
-+      b      13
-+      c      13
-+      d      13
-+      e      13
-+      f      13
-+      10      13
-+      11      13
-+      12      14
-+      13      14
-+      14      14
-+      15      14
-+      16      14
-+      17      14
-+      18      15
-+      19      15
-+      1a      15
-+      1b      15
-+      1c      15
-+      1d      15
-+      1e      15
-+      1f      16
-+      20      16
-+      21      16
-+      22      16
-+      23      16
-+      24      16
-+      25      17
-+      26      17
-+      27      17
-+      28      17
-+      29      17
-+      2a      17
-+      2b      17
-+      2c      18
-+      2d      18
-+      2e      18
-+      2f      18
-+      30      18
-+      31      18
-+      32      19
-+      33      19
-+      34      19
-+      35      19
-+      36      19
-+      3d      19
-+      3e      19
-+      3f      19
-+      40      19
-+      41      19
-+      42      19
-+      43      19
-+      47      19
-+      48      19
-+      49      19
-+      4a      19
-+      4b      19
-+      4c      19
-+      4d      19
-+      51      19
-+      52      19
-+      53      19
-+      54      19
-+      55      19
-+      56      19
-+      57      19
-+      5b      19
-+      5c      19
-+      5d      19
-+      5e      19
-+      5f      19
-+      60      19
-+      61      19
-+      63      19
-+      64      19
-+      65      19
-+      66      19
-+      67      19
-+      68      19
-+      69      20
++      0      15
++      1      15
++      2      15
++      3      15
++      4      15
++      5      16
++      6      16
++      7      16
++      8      16
++      9      16
++      a      16
++      b      17
++      c      17
++      d      17
++      e      17
++      f      17
++      10      17
++      11      17
++      12      18
++      13      18
++      14      18
++      15      18
++      16      18
++      17      18
++      18      19
++      19      19
++      1a      19
++      1b      19
++      1c      19
++      1d      19
++      1e      19
++      1f      20
++      20      20
++      21      20
++      22      20
++      23      20
++      24      20
++      25      21
++      26      21
++      27      21
++      28      21
++      29      21
++      2a      21
++      2b      21
++      2c      22
++      2d      22
++      2e      22
++      2f      22
++      30      22
++      31      22
++      32      23
++      33      23
++      34      23
++      35      23
++      36      23
++      3d      23
++      3e      23
++      3f      23
++      40      23
++      41      23
++      42      23
++      43      23
++      47      23
++      48      23
++      49      23
++      4a      23
++      4b      23
++      4c      23
++      4d      23
++      51      23
++      52      23
++      53      23
++      54      23
++      55      23
++      56      23
++      57      23
++      5b      23
++      5c      23
++      5d      23
++      5e      23
++      5f      23
++      60      23
++      61      23
++      63      23
++      64      23
++      65      23
++      66      23
++      67      23
++      68      23
++      69      24
     }
  
     method 'printBoolean (Z)V' {
@@ -528,22 +569,22 @@ index 52f2cdf..3a9e491 100644
 -      14      16
 -      15      16
 -      16      17
-+      0      23
-+      1      23
-+      2      23
-+      3      23
-+      4      23
-+      b      23
-+      c      23
-+      d      23
-+      e      23
-+      10      23
-+      11      23
-+      12      23
-+      13      23
-+      14      23
-+      15      23
-+      16      24
++      0      27
++      1      27
++      2      27
++      3      27
++      4      27
++      b      27
++      c      27
++      d      27
++      e      27
++      10      27
++      11      27
++      12      27
++      13      27
++      14      27
++      15      27
++      16      28
     }
  
     method 'printByte (B)V' {
@@ -563,22 +604,22 @@ index 52f2cdf..3a9e491 100644
 -      14      20
 -      15      20
 -      16      21
-+      0      27
-+      1      27
-+      2      27
-+      3      27
-+      4      27
-+      b      27
-+      c      27
-+      d      27
-+      e      27
-+      10      27
-+      11      27
-+      12      27
-+      13      27
-+      14      27
-+      15      27
-+      16      28
++      0      31
++      1      31
++      2      31
++      3      31
++      4      31
++      b      31
++      c      31
++      d      31
++      e      31
++      10      31
++      11      31
++      12      31
++      13      31
++      14      31
++      15      31
++      16      32
     }
  
     method 'printShort (S)V' {
@@ -598,22 +639,22 @@ index 52f2cdf..3a9e491 100644
 -      14      24
 -      15      24
 -      16      25
-+      0      31
-+      1      31
-+      2      31
-+      3      31
-+      4      31
-+      b      31
-+      c      31
-+      d      31
-+      e      31
-+      10      31
-+      11      31
-+      12      31
-+      13      31
-+      14      31
-+      15      31
-+      16      32
++      0      35
++      1      35
++      2      35
++      3      35
++      4      35
++      b      35
++      c      35
++      d      35
++      e      35
++      10      35
++      11      35
++      12      35
++      13      35
++      14      35
++      15      35
++      16      36
     }
  
     method 'printInt (I)V' {
@@ -633,22 +674,22 @@ index 52f2cdf..3a9e491 100644
 -      14      28
 -      15      28
 -      16      29
-+      0      35
-+      1      35
-+      2      35
-+      3      35
-+      4      35
-+      b      35
-+      c      35
-+      d      35
-+      e      35
-+      10      35
-+      11      35
-+      12      35
-+      13      35
-+      14      35
-+      15      35
-+      16      36
++      0      39
++      1      39
++      2      39
++      3      39
++      4      39
++      b      39
++      c      39
++      d      39
++      e      39
++      10      39
++      11      39
++      12      39
++      13      39
++      14      39
++      15      39
++      16      40
     }
  
     method 'printLong (J)V' {
@@ -668,22 +709,22 @@ index 52f2cdf..3a9e491 100644
 -      14      32
 -      15      32
 -      16      33
-+      0      39
-+      1      39
-+      2      39
-+      3      39
-+      4      39
-+      b      39
-+      c      39
-+      d      39
-+      e      39
-+      10      39
-+      11      39
-+      12      39
-+      13      39
-+      14      39
-+      15      39
-+      16      40
++      0      43
++      1      43
++      2      43
++      3      43
++      4      43
++      b      43
++      c      43
++      d      43
++      e      43
++      10      43
++      11      43
++      12      43
++      13      43
++      14      43
++      15      43
++      16      44
     }
  
     method 'printFloat (F)V' {
@@ -703,22 +744,22 @@ index 52f2cdf..3a9e491 100644
 -      14      36
 -      15      36
 -      16      37
-+      0      43
-+      1      43
-+      2      43
-+      3      43
-+      4      43
-+      b      43
-+      c      43
-+      d      43
-+      e      43
-+      10      43
-+      11      43
-+      12      43
-+      13      43
-+      14      43
-+      15      43
-+      16      44
++      0      47
++      1      47
++      2      47
++      3      47
++      4      47
++      b      47
++      c      47
++      d      47
++      e      47
++      10      47
++      11      47
++      12      47
++      13      47
++      14      47
++      15      47
++      16      48
     }
  
     method 'printDouble (D)V' {
@@ -738,22 +779,22 @@ index 52f2cdf..3a9e491 100644
 -      14      40
 -      15      40
 -      16      41
-+      0      47
-+      1      47
-+      2      47
-+      3      47
-+      4      47
-+      b      47
-+      c      47
-+      d      47
-+      e      47
-+      10      47
-+      11      47
-+      12      47
-+      13      47
-+      14      47
-+      15      47
-+      16      48
++      0      51
++      1      51
++      2      51
++      3      51
++      4      51
++      b      51
++      c      51
++      d      51
++      e      51
++      10      51
++      11      51
++      12      51
++      13      51
++      14      51
++      15      51
++      16      52
     }
  
     method 'printChar (C)V' {
@@ -773,38 +814,38 @@ index 52f2cdf..3a9e491 100644
 -      14      44
 -      15      44
 -      16      45
-+      0      51
-+      1      51
-+      2      51
-+      3      51
-+      4      51
-+      b      51
-+      c      51
-+      d      51
-+      e      51
-+      10      51
-+      11      51
-+      12      51
-+      13      51
-+      14      51
-+      15      51
-+      16      52
++      0      55
++      1      55
++      2      55
++      3      55
++      4      55
++      b      55
++      c      55
++      d      55
++      e      55
++      10      55
++      11      55
++      12      55
++      13      55
++      14      55
++      15      55
++      16      56
     }
  
     method 'getBoolean ()Z' {
 -      0      48
 -      1      48
-+      0      55
-+      1      55
++      0      59
++      1      59
     }
  
     method 'getByte ()B' {
 -      0      52
 -      1      52
 -      2      52
-+      0      59
-+      1      59
-+      2      59
++      0      63
++      1      63
++      2      63
     }
  
     method 'getShort ()S' {
@@ -812,19 +853,19 @@ index 52f2cdf..3a9e491 100644
 -      1      56
 -      2      56
 -      3      56
-+      0      63
-+      1      63
-+      2      63
-+      3      63
++      0      67
++      1      67
++      2      67
++      3      67
     }
  
     method 'getInt ()I' {
 -      0      60
 -      1      60
 -      2      60
-+      0      67
-+      1      67
-+      2      67
++      0      71
++      1      71
++      2      71
     }
  
     method 'printNarrowed ()V' {
@@ -847,32 +888,32 @@ index 52f2cdf..3a9e491 100644
 -      10      65
 -      11      65
 -      12      66
-+      0      71
-+      1      71
-+      2      71
-+      3      71
-+      4      71
-+      5      71
-+      6      71
-+      7      71
-+      8      71
-+      9      72
-+      a      72
-+      b      72
-+      c      72
-+      d      72
-+      e      72
-+      f      72
-+      10      72
-+      11      72
-+      12      73
++      0      75
++      1      75
++      2      75
++      3      75
++      4      75
++      5      75
++      6      75
++      7      75
++      8      75
++      9      76
++      a      76
++      b      76
++      c      76
++      d      76
++      e      76
++      f      76
++      10      76
++      11      76
++      12      77
     }
  
     method 'constructor ()V' {
 -      4      69
 -      9      70
-+      4      76
-+      9      77
++      4      80
++      9      81
     }
  
     method 'compare (C)Z' {
@@ -915,70 +956,70 @@ index 52f2cdf..3a9e491 100644
 -      90      85
 -      98      85
 -      9a      86
-+      0      80
-+      1      80
-+      2      80
-+      a      80
-+      b      81
-+      c      81
-+      14      81
-+      15      82
-+      16      82
-+      17      82
-+      1f      82
-+      20      83
-+      21      83
-+      22      83
-+      23      83
-+      2b      83
-+      2c      84
-+      2d      84
-+      2e      84
-+      2f      84
-+      37      84
-+      38      85
-+      39      85
-+      3a      85
-+      3b      85
-+      43      85
-+      44      86
-+      45      86
-+      46      86
-+      47      86
-+      4f      86
-+      50      87
-+      51      87
-+      52      87
-+      53      87
-+      5b      87
-+      5c      88
-+      5d      88
-+      5e      88
-+      5f      88
-+      67      88
-+      68      89
-+      69      89
-+      6a      89
-+      6b      89
-+      73      89
-+      74      90
-+      75      90
-+      76      90
-+      77      90
-+      7f      90
-+      80      91
-+      81      91
-+      82      91
-+      83      91
-+      8b      91
-+      8c      92
-+      8d      92
-+      8e      92
-+      8f      92
-+      90      92
-+      98      92
-+      99      93
-+      9a      93
++      0      84
++      1      84
++      2      84
++      a      84
++      b      85
++      c      85
++      14      85
++      15      86
++      16      86
++      17      86
++      1f      86
++      20      87
++      21      87
++      22      87
++      23      87
++      2b      87
++      2c      88
++      2d      88
++      2e      88
++      2f      88
++      37      88
++      38      89
++      39      89
++      3a      89
++      3b      89
++      43      89
++      44      90
++      45      90
++      46      90
++      47      90
++      4f      90
++      50      91
++      51      91
++      52      91
++      53      91
++      5b      91
++      5c      92
++      5d      92
++      5e      92
++      5f      92
++      67      92
++      68      93
++      69      93
++      6a      93
++      6b      93
++      73      93
++      74      94
++      75      94
++      76      94
++      77      94
++      7f      94
++      80      95
++      81      95
++      82      95
++      83      95
++      8b      95
++      8c      96
++      8d      96
++      8e      96
++      8f      96
++      90      96
++      98      96
++      99      97
++      9a      97
     }
  }
  
@@ -1035,60 +1076,62 @@ index 52f2cdf..3a9e491 100644
 +7 <-> 7
 +8 <-> 8
 +9 <-> 9
-+12 <-> 12
-+13 <-> 13
-+14 <-> 14
-+15 <-> 15
-+16 <-> 16
-+17 <-> 17
-+18 <-> 18
-+19 <-> 19
-+21 <-> 20
-+22 <-> 21
-+25 <-> 24
-+26 <-> 25
-+29 <-> 28
-+30 <-> 29
-+33 <-> 32
-+34 <-> 33
-+37 <-> 36
-+38 <-> 37
-+41 <-> 40
-+42 <-> 41
-+45 <-> 44
-+46 <-> 45
-+49 <-> 48
-+50 <-> 49
-+53 <-> 52
-+54 <-> 53
-+58 <-> 56
-+62 <-> 60
-+66 <-> 64
-+70 <-> 68
-+74 <-> 72
-+75 <-> 73
-+76 <-> 74
-+79 <-> 77
-+80 <-> 78
-+83 <-> 81
-+84 <-> 82
-+85 <-> 83
-+86 <-> 84
-+87 <-> 85
-+88 <-> 86
-+89 <-> 87
-+90 <-> 88
-+91 <-> 89
-+92 <-> 90
-+93 <-> 91
-+94 <-> 92
-+95 <-> 93
-+96 <-> 94
++10 <-> 10
++12 <-> 13
++15 <-> 16
++16 <-> 17
++17 <-> 18
++18 <-> 19
++19 <-> 20
++20 <-> 21
++21 <-> 22
++22 <-> 23
++24 <-> 24
++25 <-> 25
++28 <-> 28
++29 <-> 29
++32 <-> 32
++33 <-> 33
++36 <-> 36
++37 <-> 37
++40 <-> 40
++41 <-> 41
++44 <-> 44
++45 <-> 45
++48 <-> 48
++49 <-> 49
++52 <-> 52
++53 <-> 53
++56 <-> 56
++57 <-> 57
++61 <-> 60
++65 <-> 64
++69 <-> 68
++73 <-> 72
++77 <-> 76
++78 <-> 77
++79 <-> 78
++82 <-> 81
++83 <-> 82
++86 <-> 85
++87 <-> 86
++88 <-> 87
++89 <-> 88
++90 <-> 89
++91 <-> 90
++92 <-> 91
++93 <-> 92
++94 <-> 93
++95 <-> 94
++96 <-> 95
++97 <-> 96
++98 <-> 97
++99 <-> 98
 diff --git a/testData/src/pkg/TestPrimitives.java b/testData/src/pkg/TestPrimitives.java
-index 39041ef..9cf9a32 100644
+index 39041ef..fd850be 100644
 --- a/testData/src/pkg/TestPrimitives.java
 +++ b/testData/src/pkg/TestPrimitives.java
-@@ -1,6 +1,12 @@
+@@ -1,6 +1,15 @@
  package pkg;
  
 +import java.util.List;
@@ -1097,7 +1140,10 @@ index 39041ef..9cf9a32 100644
 +  private void testInvalidUnboxing() {
 +    List<Integer> lst = null;
 +    lst.remove(Integer.valueOf(0));
++    this.<Short>genericBoxing((short)0);
 +  }
++
++  private <T> void genericBoxing(T value) {}
  
    public void printAll() {
      printBoolean(true);
