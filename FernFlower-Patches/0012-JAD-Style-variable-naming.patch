@@ -1,4 +1,4 @@
-From 209096983988f01e4650d52320f29671bd0bae45 Mon Sep 17 00:00:00 2001
+From 7181476d6bcd3fb7aa2d9dbe678d7e04b6c6434d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -304,7 +304,7 @@ index 5e3fcd2..d7852e3 100644
                  method.varproc.getExternalVars().add(newVar);
                  VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index f89819b..8f549d7 100644
+index f89819b..69b1351 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -16,13 +16,16 @@
@@ -332,7 +332,16 @@ index f89819b..8f549d7 100644
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -772,6 +776,36 @@ public class VarDefinitionHelper {
+@@ -219,7 +223,7 @@ public class VarDefinitionHelper {
+         var.setDefinition(true);
+ 
+         LocalVariable lvt = findLVT(index.intValue(), stat);
+-        if (lvt != null) { 
++        if (lvt != null) {
+           var.setLVT(lvt);
+         }
+ 
+@@ -772,6 +776,39 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().typeName());
      }
@@ -354,6 +363,9 @@ index f89819b..8f549d7 100644
 +          NewExprent _new = (NewExprent)exprent;
 +          if (_new.isAnonymous()) { //TODO: Check for Lambda here?
 +            child = DecompilerContext.getClassProcessor().getMapRootClasses().get(_new.getNewType().value);
++            if (child != null && _new.isLambda() && child.lambdaInformation.is_method_reference) {
++               child = null; // Lambda method reference has no methods, causes var leak to other methods in this class...
++            }
 +          }
 +        }
 +
@@ -369,7 +381,7 @@ index f89819b..8f549d7 100644
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -781,7 +815,16 @@ public class VarDefinitionHelper {
+@@ -781,7 +818,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().lvt;
@@ -386,7 +398,16 @@ index f89819b..8f549d7 100644
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -908,7 +951,7 @@ public class VarDefinitionHelper {
+@@ -880,7 +926,7 @@ public class VarDefinitionHelper {
+       }
+     }
+   }
+-  
++
+   //Helper classes because Java is dumb and doesn't have a Pair<K,V> class
+   private static class SimpleEntry<K, V> implements Entry<K, V> {
+     private K key;
+@@ -908,7 +954,7 @@ public class VarDefinitionHelper {
      String cast;
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null) {
@@ -435,10 +456,10 @@ index 48dcad0..41f4e36 100644
    }
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000..a994b81
+index 0000000..b29e693
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,212 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -509,18 +530,15 @@ index 0000000..a994b81
 +  }
 +
 +  @Override
-+  public void addParentContext(IVariableNameProvider iparent) {
++  public synchronized void addParentContext(IVariableNameProvider iparent) {
 +    JADNameProvider parent = (JADNameProvider) iparent;
-+    last = new HashMap<String, Holder>();
++    HashMap<String, Holder> temp = new HashMap<String, Holder>();
 +    for (Entry<String, Holder> e : parent.last.entrySet()) {
 +      Holder v = e.getValue();
-+      last.put(e.getKey(), new Holder(v.id, v.skip_zero, v.names));
++      temp.put(e.getKey(), new Holder(v.id, v.skip_zero, v.names));
 +    }
-+
-+    remap = new HashMap<String, String>();
-+    for (Entry<String, String> e : parent.remap.entrySet()) {
-+      remap.put(e.getKey(), e.getValue());
-+    }
++    this.last = temp;
++    this.remap = new HashMap<>(parent.remap);
 +  }
 +
 +  private static class Holder {
@@ -581,7 +599,7 @@ index 0000000..a994b81
 +    return result;
 +  }
 +
-+  protected String getNewName(String type) {
++  protected synchronized String getNewName(String type) {
 +    String index = null;
 +    String findtype = type;
 +
