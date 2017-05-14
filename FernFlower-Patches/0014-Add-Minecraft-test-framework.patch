@@ -1,4 +1,4 @@
-From d4bf2c8b83fd8a07313c833b057ea06cf756f788 Mon Sep 17 00:00:00 2001
+From e9ec9eb48924137aa8511711df24f10fc2653595 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 19 Apr 2017 01:59:28 -0700
 Subject: [PATCH] Add Minecraft test framework
@@ -6,7 +6,7 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000..9553ea0
+index 0000000..981ceff
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 @@ -0,0 +1,111 @@
@@ -100,7 +100,7 @@ index 0000000..9553ea0
 +
 +    ConsoleDecompiler decompiler = fixture.getDecompiler();
 +    if (MC_JAR.isDirectory()) {
-+      decompiler.addSpace(new File(MC_JAR, "jars\\libraries"), false);
++      //decompiler.addSpace(new File(MC_JAR, "jars\\libraries"), false);
 +      decompiler.addSpace(new File(MC_JAR, "temp\\minecraft_ff_in.jar"), true);
 +    }
 +    else {
