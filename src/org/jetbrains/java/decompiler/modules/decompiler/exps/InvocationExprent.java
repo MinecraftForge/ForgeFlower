@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.interpreter.Util;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -632,6 +633,8 @@ public class InvocationExprent extends Exprent {
       return EMPTY_BIT_SET;
     }
 
+    BitSet missed = new BitSet(lstParameters.size());
+
     // check if a call is unambiguous
     StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
     if (mt != null) {
@@ -640,19 +643,51 @@ public class InvocationExprent extends Exprent {
         boolean exact = true;
         for (int i = 0; i < md.params.length; i++) {
           if (!md.params[i].equals(lstParameters.get(i).getExprType())) {
+            missed.set(i);
             exact = false;
-            break;
           }
         }
         if (exact) return EMPTY_BIT_SET;
       }
     }
 
+    List<StructMethod> mtds = new ArrayList<>();
+    for (StructMethod mtt : matches) {
+      boolean failed = false;
+      MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
+      for (int i = 0; i < lstParameters.size(); i++) {
+        VarType ptype = lstParameters.get(i).getExprType();
+        if (!missed.get(i)) {
+          if (!md.params[i].equals(ptype)) {
+            failed = true;
+            break;
+          }
+        }
+        else {
+          if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
+            if (ptype.type != CodeConstants.TYPE_NULL) {
+              if (!Util.instanceOf(DecompilerContext.getStructContext(), ptype.value, md.params[i].value)) {
+                failed = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+      if (!failed) {
+        mtds.add(mtt);
+      }
+    }
+    //TODO: This still causes issues in the case of:
+    //add(Object)
+    //add(Object...)
+    //Try and detect varargs/array?
+
     // mark parameters
     BitSet ambiguous = new BitSet(descriptor.params.length);
     for (int i = 0; i < descriptor.params.length; i++) {
       VarType paramType = descriptor.params[i];
-      for (StructMethod mtt : matches) {
+      for (StructMethod mtt : mtds) {
 
         if (mtt.getSignature() != null && mtt.getSignature().params.get(i).isGeneric()) {
           break;
