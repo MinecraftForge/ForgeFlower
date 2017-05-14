@@ -1,4 +1,4 @@
-From 3af6b8d4405b4815e3a74178e38a7fd4405ab498 Mon Sep 17 00:00:00 2001
+From 2b4bb7b965e82467a688869b0d6f5405f03e72df Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b76d223..c7b7ea7 100644
+index b76d223..b423fb4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -71,6 +71,7 @@ public class InvocationExprent extends Exprent {
@@ -26,7 +26,7 @@ index b76d223..c7b7ea7 100644
          // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
          // here 'byte' and 'short' values do not need an explicit narrowing type cast
          ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
-@@ -427,9 +428,61 @@ public class InvocationExprent extends Exprent {
+@@ -427,9 +428,66 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -41,8 +41,13 @@ index b76d223..c7b7ea7 100644
 +      // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
 +      //However, we must make sure we don't accidentally make the call ambiguous.
 +      //An example being List<Integer>, remove(Integer.valueOf(1)) and remove(1) are different functions
-+      if (par.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)par).isBoxingCall() && !setAmbiguousParameters.get(i)) {
++      if (par.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)par).isBoxingCall()) {
 +        InvocationExprent inv = (InvocationExprent)par;
++        if (!setAmbiguousParameters.get(i)) {
++          inv.forceBoxing = true;
++          continue;
++        }
++
 +        Exprent value = inv.lstParameters.get(0);
 +        types[i] = value.getExprType(); //Infer?
 +        //Unboxing in this case is lossy, so we need to explicitly set the type
@@ -90,7 +95,7 @@ index b76d223..c7b7ea7 100644
        if (sigFields == null || sigFields.get(i) == null) {
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
-@@ -462,13 +515,9 @@ public class InvocationExprent extends Exprent {
+@@ -462,13 +520,9 @@ public class InvocationExprent extends Exprent {
          }
          */
  
@@ -106,7 +111,7 @@ index b76d223..c7b7ea7 100644
  
          // the last "new Object[0]" in the vararg call is not printed
          if (buff.length() > 0) {
-@@ -512,7 +561,7 @@ public class InvocationExprent extends Exprent {
+@@ -512,7 +566,7 @@ public class InvocationExprent extends Exprent {
        // special handling for ambiguous types
        if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
          if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
