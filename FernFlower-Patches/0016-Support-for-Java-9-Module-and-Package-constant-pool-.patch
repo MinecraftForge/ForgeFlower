@@ -1,0 +1,109 @@
+From 72e2657a419b98e8c17064a7c433b13b99702f8b Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Mon, 25 Sep 2017 13:46:14 -0700
+Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
+ Added better debug logging.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/code/CodeConstants.java b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
+index 7718ac3..fff0840 100644
+--- a/src/org/jetbrains/java/decompiler/code/CodeConstants.java
++++ b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
+@@ -98,6 +98,7 @@ public interface CodeConstants {
+   int ACC_SYNTHETIC = 0x1000;
+   int ACC_ANNOTATION = 0x2000;
+   int ACC_ENUM = 0x4000;
++  int ACC_MODULE = 0x8000; // class v53/J9
+ 
+   // ----------------------------------------------------------------------
+   // CLASS FLAGS
+@@ -146,6 +147,8 @@ public interface CodeConstants {
+   int CONSTANT_MethodHandle = 15;
+   int CONSTANT_MethodType = 16;
+   int CONSTANT_InvokeDynamic = 18;
++  int CONSTANT_Module = 19; // class v53/J9 - Only valid if access_flags has ACC_MODULE
++  int CONSTANT_Package = 20; // class v53/J9 - Only valid if access_flags has ACC_MODULE
+ 
+   // ----------------------------------------------------------------------
+   // MethodHandle reference_kind values
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index f11e4a4..43fddd3 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct;
+ 
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -138,6 +139,7 @@ public class StructContext {
+ 
+   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
+     //noinspection IOResourceOpenedButNotSafelyClosed
++    DecompilerContext.getLogger().writeMessage("Adding Archive: " + file.getAbsolutePath(), Severity.INFO);
+     try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
+       Enumeration<? extends ZipEntry> entries = archive.entries();
+       while (entries.hasMoreElements()) {
+@@ -156,6 +158,7 @@ public class StructContext {
+         if (!entry.isDirectory()) {
+           if (name.endsWith(".class")) {
+             byte[] bytes = InterpreterUtil.getBytes(archive, entry);
++            DecompilerContext.getLogger().writeMessage("  Loading Class: " + name, Severity.INFO);
+             StructClass cl = new StructClass(bytes, isOwn, loader);
+             classes.put(cl.qualifiedName, cl);
+             unit.addClass(cl, name);
+diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
+index 68dffc6..32b7102 100644
+--- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
++++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
+@@ -78,6 +78,8 @@ public class ConstantPool implements NewClassNameBuilder {
+         case CodeConstants.CONSTANT_Class:
+         case CodeConstants.CONSTANT_String:
+         case CodeConstants.CONSTANT_MethodType:
++        case CodeConstants.CONSTANT_Module:
++        case CodeConstants.CONSTANT_Package:
+           pool.add(new PrimitiveConstant(tag, in.readUnsignedShort()));
+           nextPass[0].set(i);
+           break;
+@@ -99,6 +101,9 @@ public class ConstantPool implements NewClassNameBuilder {
+           pool.add(new LinkConstant(tag, in.readUnsignedByte(), in.readUnsignedShort()));
+           nextPass[2].set(i);
+           break;
++
++        default:
++          throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
+       }
+     }
+ 
+@@ -118,7 +123,8 @@ public class ConstantPool implements NewClassNameBuilder {
+     int size = in.readUnsignedShort();
+ 
+     for (int i = 1; i < size; i++) {
+-      switch (in.readUnsignedByte()) {
++      byte tag = (byte)in.readUnsignedByte();
++      switch (tag) {
+         case CodeConstants.CONSTANT_Utf8:
+           in.readUTF();
+           break;
+@@ -142,11 +148,16 @@ public class ConstantPool implements NewClassNameBuilder {
+         case CodeConstants.CONSTANT_Class:
+         case CodeConstants.CONSTANT_String:
+         case CodeConstants.CONSTANT_MethodType:
++        case CodeConstants.CONSTANT_Module:
++        case CodeConstants.CONSTANT_Package:
+           in.discard(2);
+           break;
+ 
+         case CodeConstants.CONSTANT_MethodHandle:
+           in.discard(3);
++
++        default:
++            throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
+       }
+     }
+   }
+-- 
+2.10.0.windows.1
+
