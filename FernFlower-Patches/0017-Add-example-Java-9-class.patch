@@ -1,0 +1,22 @@
+From 4eed5d17b3f819201f386576e3e5792cd5f8262a Mon Sep 17 00:00:00 2001
+From: Kyle Wood <demonwav@gmail.com>
+Date: Tue, 28 Nov 2017 19:31:37 -0600
+Subject: [PATCH] Add example Java 9 class
+
+
+diff --git a/java9/org/jetbrains/java/decompiler/java9/Example.java b/java9/org/jetbrains/java/decompiler/java9/Example.java
+new file mode 100644
+index 0000000..b9ee41d
+--- /dev/null
++++ b/java9/org/jetbrains/java/decompiler/java9/Example.java
+@@ -0,0 +1,7 @@
++package org.jetbrains.java.decompiler.java9;
++
++public interface Example {
++    private void doThing() {
++        System.out.println("hi");
++    }
++}
+-- 
+2.13.6 (Apple Git-96)
+
