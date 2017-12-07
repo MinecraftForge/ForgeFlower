@@ -1,4 +1,4 @@
-From 956650edb30b010f8891ee4dfc78a8e3634df8f7 Mon Sep 17 00:00:00 2001
+From b53dadec5e5c310c6ca8d7465ef726104f30b010 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -6,10 +6,10 @@ Subject: [PATCH] Rework of Generics system for better output
 
 diff --git a/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
 new file mode 100644
-index 0000000..731556c
+index 0000000..e8dd840
 --- /dev/null
 +++ b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,103 @@
 +/*
 + * Copyright 2000-2015 JetBrains s.r.o.
 + *
@@ -28,6 +28,8 @@ index 0000000..731556c
 +package org.jetbrains.java.decompiler.util;
 +
 +import java.lang.module.*;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
 +import java.nio.ByteBuffer;
 +import java.io.File;
 +import java.io.IOException;
@@ -35,6 +37,7 @@ index 0000000..731556c
 +import java.util.HashSet;
 +import java.util.Optional;
 +import java.util.Set;
++import java.util.stream.Stream;
 +
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
@@ -65,41 +68,50 @@ index 0000000..731556c
 +      addAllModulePath(ctx);
 +    }
 +
++    @SuppressWarnings("unchecked")
 +    private static void addAllModulePath(StructContext ctx) {
 +        Set<String> found = new HashSet<String>();
-+        for (ModuleReference module : ModuleFinder.ofSystem().findAll()) {
-+            String name = module.descriptor().name();
-+            try {
-+                ModuleReader reader = module.open();
-+                DecompilerContext.getLogger().writeMessage("Reading Module: " + name, Severity.INFO);
-+                reader.list().forEach(cls -> {
-+                    if (!cls.endsWith(".class") || cls.contains("module-info.class"))
-+                        return;
 +
-+                    DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
-+                    try {
-+                        Optional<ByteBuffer> bb = reader.read(cls);
-+                        if (!bb.isPresent()) {
-+                            DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
++        try {
++            Method list = ModuleReader.class.getMethod("list");  // This is a DIRTY DIRTY hack because our JDK on jenkins isn't updated to the full J9 release so it doesnt have the full API. -.-
++
++            for (ModuleReference module : ModuleFinder.ofSystem().findAll()) {
++                String name = module.descriptor().name();
++                try {
++                    ModuleReader reader = module.open();
++                    DecompilerContext.getLogger().writeMessage("Reading Module: " + name, Severity.INFO);
++                    ((Stream<String>)list.invoke(reader)).forEach(cls -> {
++                        if (!cls.endsWith(".class") || cls.contains("module-info.class"))
 +                            return;
++
++                        DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
++                        try {
++                            Optional<ByteBuffer> bb = reader.read(cls);
++                            if (!bb.isPresent()) {
++                                DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
++                                return;
++                            }
++                            byte[] data;
++                            if (bb.get().hasArray()) {
++                                data = bb.get().array();
++                            } else {
++                                data = new byte[bb.get().remaining()];
++                                bb.get().get(data);
++                            }
++                            ctx.addData(name, cls, data, false);
++                        } catch (IOException e) {
++                            DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, e);
 +                        }
-+                        byte[] data;
-+                        if (bb.get().hasArray()) {
-+                            data = bb.get().array();
-+                        } else {
-+                            data = new byte[bb.get().remaining()];
-+                            bb.get().get(data);
-+                        }
-+                        ctx.addData(name, cls, data, false);
-+                    } catch (IOException e) {
-+                        DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, e);
-+                    }
-+                });
-+            } catch (IOException e) {
-+                DecompilerContext.getLogger().writeMessage("Error loading module " + name, e);
++                    });
++                } catch (IOException e) {
++                    DecompilerContext.getLogger().writeMessage("Error loading module " + name, e);
++                }
 +            }
++        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
++          DecompilerContext.getLogger().writeMessage("Java9 Module Path scanning requires a release version of Java9 to run! Could not find list() method.", e);
++          throw new RuntimeException(e);
 +        }
-+      }
++  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 index 0627e8c..0e846cc 100644
