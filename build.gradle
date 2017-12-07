@@ -17,3 +17,8 @@ project(':ForgeFlower') {
 task wrapper(type: Wrapper) {
     gradleVersion = '2.14.1'
 }
+
+if (!JavaVersion.current().java9Compatible) {
+    println("You must build this with JDK 9")
+    System.exit(1)
+}
