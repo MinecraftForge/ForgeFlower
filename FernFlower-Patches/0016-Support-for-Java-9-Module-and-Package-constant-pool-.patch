@@ -1,4 +1,4 @@
-From 292a76bd761bb19a494b50dabe45ef38811b2788 Mon Sep 17 00:00:00 2001
+From ff048b04fcb54e4b378dfe3fbe621fdf9b719cea Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 25 Sep 2017 13:46:14 -0700
 Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
@@ -27,7 +27,7 @@ index 7718ac3..fff0840 100644
    // ----------------------------------------------------------------------
    // MethodHandle reference_kind values
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index f11e4a4..43fddd3 100644
+index 9b731eb..1814517 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -106,5 +106,5 @@ index 68dffc6..99203dd 100644
      }
    }
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

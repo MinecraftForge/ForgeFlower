@@ -1,9 +1,106 @@
-From 51941341132e43da7e46c71b33ea6e2b724d8af7 Mon Sep 17 00:00:00 2001
+From 956650edb30b010f8891ee4dfc78a8e3634df8f7 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
 
 
+diff --git a/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+new file mode 100644
+index 0000000..731556c
+--- /dev/null
++++ b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+@@ -0,0 +1,91 @@
++/*
++ * Copyright 2000-2015 JetBrains s.r.o.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.jetbrains.java.decompiler.util;
++
++import java.lang.module.*;
++import java.nio.ByteBuffer;
++import java.io.File;
++import java.io.IOException;
++import java.io.InputStream;
++import java.util.HashSet;
++import java.util.Optional;
++import java.util.Set;
++
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
++import org.jetbrains.java.decompiler.struct.StructContext;
++
++public class ClasspathScanner {
++
++    public static void addAllClasspath(StructContext ctx) {
++      Set<String> found = new HashSet<String>();
++      String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
++      for (String prop : props) {
++        if (prop == null)
++          continue;
++
++        for (final String path : prop.split(File.pathSeparator)) {
++          File file = new File(path);
++          if (found.contains(file.getAbsolutePath()))
++            continue;
++
++          if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
++            DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
++            ctx.addSpace(file, false);
++            found.add(file.getAbsolutePath());
++          }
++        }
++      }
++
++      addAllModulePath(ctx);
++    }
++
++    private static void addAllModulePath(StructContext ctx) {
++        Set<String> found = new HashSet<String>();
++        for (ModuleReference module : ModuleFinder.ofSystem().findAll()) {
++            String name = module.descriptor().name();
++            try {
++                ModuleReader reader = module.open();
++                DecompilerContext.getLogger().writeMessage("Reading Module: " + name, Severity.INFO);
++                reader.list().forEach(cls -> {
++                    if (!cls.endsWith(".class") || cls.contains("module-info.class"))
++                        return;
++
++                    DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
++                    try {
++                        Optional<ByteBuffer> bb = reader.read(cls);
++                        if (!bb.isPresent()) {
++                            DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
++                            return;
++                        }
++                        byte[] data;
++                        if (bb.get().hasArray()) {
++                            data = bb.get().array();
++                        } else {
++                            data = new byte[bb.get().remaining()];
++                            bb.get().get(data);
++                        }
++                        ctx.addData(name, cls, data, false);
++                    } catch (IOException e) {
++                        DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, e);
++                    }
++                });
++            } catch (IOException e) {
++                DecompilerContext.getLogger().writeMessage("Error loading module " + name, e);
++            }
++        }
++      }
++}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 index 0627e8c..0e846cc 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
@@ -286,7 +383,7 @@ index 39619ce..f0dff09 100644
  
    private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<>();
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index e355ee9..aec95c1 100644
+index e355ee9..4f8f8f0 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -297,9 +394,11 @@ index e355ee9..aec95c1 100644
  import org.jetbrains.java.decompiler.main.extern.IResultSaver;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
-@@ -27,7 +28,10 @@ import org.jetbrains.java.decompiler.struct.StructClass;
+@@ -26,8 +27,12 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
+ import org.jetbrains.java.decompiler.struct.StructClass;
  import org.jetbrains.java.decompiler.struct.StructContext;
  import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
++import org.jetbrains.java.decompiler.util.ClasspathScanner;
  
 +import java.io.File;
 +import java.util.HashSet;
@@ -308,45 +407,17 @@ index e355ee9..aec95c1 100644
  
  public class Fernflower implements IDecompiledData {
  
-@@ -39,6 +43,10 @@ public class Fernflower implements IDecompiledData {
+@@ -39,6 +44,10 @@ public class Fernflower implements IDecompiledData {
      DecompilerContext.initContext(options);
      DecompilerContext.setCounterContainer(new CounterContainer());
      DecompilerContext.setLogger(logger);
 +
 +    if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
-+      addAllClasspath();
++      ClasspathScanner.addAllClasspath(structContext);
 +    }
    }
  
    public void decompileContext() {
-@@ -92,4 +100,27 @@ public class Fernflower implements IDecompiledData {
-       return null;
-     }
-   }
-+
-+  //TODO: Look into caching the metadata grabbed from the context info?
-+  //Also test on J9 JRE to see if gathering of the classpath is the same.
-+  private void addAllClasspath() {
-+    Set<String> found = new HashSet<String>();
-+    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
-+    for (String prop : props) {
-+      if (prop == null)
-+        continue;
-+
-+      for (final String path : prop.split(File.pathSeparator)) {
-+        File file = new File(path);
-+        if (found.contains(file.getAbsolutePath()))
-+          continue;
-+
-+        if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
-+          DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
-+          structContext.addSpace(file, false);
-+          found.add(file.getAbsolutePath());
-+        }
-+      }
-+    }
-+  }
- }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 index c1ceecd..53a68e1 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
@@ -417,18 +488,18 @@ diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Assignmen
 index f0801e2..d854ab5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-@@ -66,6 +66,11 @@ public class AssignmentExprent extends Exprent {
+@@ -65,6 +65,11 @@ public class AssignmentExprent extends Exprent {
+     return left.getExprType();
    }
  
-   @Override
++  @Override
 +  public VarType getInferredExprType(VarType upperBounds) {
 +    return getExprType();
 +  }
 +
-+  @Override
+   @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
- 
 @@ -105,8 +110,8 @@ public class AssignmentExprent extends Exprent {
  
    @Override
@@ -674,10 +745,11 @@ index 6ae5ac6..8e6fb39 100644
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
  import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
  import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
-@@ -65,6 +67,24 @@ public class FieldExprent extends Exprent {
+@@ -64,6 +66,24 @@ public class FieldExprent extends Exprent {
+     return descriptor.type;
    }
  
-   @Override
++  @Override
 +  public VarType getInferredExprType(VarType upperBound) {
 +    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
 +    while(cl != null) {
@@ -695,10 +767,9 @@ index 6ae5ac6..8e6fb39 100644
 +    return getExprType();
 +  }
 +
-+  @Override
+   @Override
    public int getExprentUse() {
      return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
-   }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 index 354b620..30e7576 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
@@ -720,10 +791,11 @@ index 354b620..30e7576 100644
  
    public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
      this(funcType, new ArrayList<>(), bytecodeOffsets);
-@@ -308,6 +311,46 @@ public class FunctionExprent extends Exprent {
+@@ -307,6 +310,46 @@ public class FunctionExprent extends Exprent {
+     return exprType;
    }
  
-   @Override
++  @Override
 +  public VarType getInferredExprType(VarType upperBound) {
 +    if (funcType == FUNCTION_CAST) {
 +      this.needsCast = true;
@@ -763,10 +835,9 @@ index 354b620..30e7576 100644
 +  }
 +
 +
-+  @Override
+   @Override
    public int getExprentUse() {
      if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
-       return 0;
 @@ -486,6 +529,9 @@ public class FunctionExprent extends Exprent {
        case FUNCTION_NEG:
          return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
@@ -1008,10 +1079,11 @@ index 34875cc..b1f7f5a 100644
  
    public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
      this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
-@@ -87,6 +87,24 @@ public class NewExprent extends Exprent {
+@@ -86,6 +86,24 @@ public class NewExprent extends Exprent {
+     return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value).anonymousClassType : newType;
    }
  
-   @Override
++  @Override
 +  public VarType getInferredExprType(VarType upperBound) {
 +    genericArgs.clear();
 +    if (newType.type == CodeConstants.TYPE_OBJECT && newType.arrayDim == 0) {
@@ -1029,10 +1101,9 @@ index 34875cc..b1f7f5a 100644
 +    return getExprType();
 +  }
 +
-+  @Override
+   @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
- 
 @@ -186,17 +204,17 @@ public class NewExprent extends Exprent {
            }
          }
@@ -1082,10 +1153,11 @@ index 48ffcc0..8f38f36 100644
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-@@ -80,6 +81,22 @@ public class VarExprent extends Exprent {
+@@ -79,6 +80,22 @@ public class VarExprent extends Exprent {
+     return getVarType();
    }
  
-   @Override
++  @Override
 +  public VarType getInferredExprType(VarType upperBound) {
 +    if (lvt != null && lvt.getSignature() != null) {
 +      // TODO; figure out why it's crashing, ugly fix for now
@@ -1101,10 +1173,9 @@ index 48ffcc0..8f38f36 100644
 +    return getVarType();
 +  }
 +
-+  @Override
+   @Override
    public int getExprentUse() {
      return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
-   }
 @@ -156,7 +173,7 @@ public class VarExprent extends Exprent {
            if (lvt.getSignature() != null) {
              GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
@@ -1194,6 +1265,30 @@ index fafd5f8..2f3707a 100644
 +    return attribute;
 +  }
  }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index f11e4a4..9b731eb 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -172,6 +172,19 @@ public class StructContext {
+     }
+   }
+ 
++  public void addData(String path, String cls, byte[] data, boolean isOwn) throws IOException {
++        ContextUnit unit = units.get(path);
++        if (unit == null) {
++          unit = new ContextUnit(ContextUnit.TYPE_FOLDER, path, cls, isOwn, saver, decompiledData);
++          units.put(path, unit);
++        }
++
++        StructClass cl = new StructClass(data, isOwn, loader);
++        classes.put(cl.qualifiedName, cl);
++        unit.addClass(cl, cls);
++        loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(LazyLoader.Link.DATA, path, cls, data));
++  }
++
+   public Map<String, StructClass> getClasses() {
+     return classes;
+   }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructField.java b/src/org/jetbrains/java/decompiler/struct/StructField.java
 index 87ba1d8..438746b 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructField.java
@@ -1365,10 +1460,11 @@ index 1eb177f..10d4595 100644
      if (arrayDim > 0) {
        return CodeConstants.TYPE_FAMILY_OBJECT;
      }
-@@ -270,6 +273,15 @@ public class VarType {  // TODO: optimize switch
+@@ -269,6 +272,15 @@ public class VarType {  // TODO: optimize switch
+     return res;
    }
  
-   @Override
++  @Override
 +  public int hashCode() {
 +    int result = 1;
 +    result = 37 * result + type;
@@ -1377,10 +1473,9 @@ index 1eb177f..10d4595 100644
 +    return result;
 +  }
 +
-+  @Override
+   @Override
    public boolean equals(Object o) {
      if (o == this) {
-       return true;
 @@ -415,4 +427,15 @@ public class VarType {  // TODO: optimize switch
          throw new IllegalArgumentException("Invalid type: " + c);
      }
@@ -1966,6 +2061,98 @@ index ee71f5b..725a011 100644
 +    return this;
    }
  }
+diff --git a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
+index e0bf3cb..845a174 100644
+--- a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
++++ b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
+@@ -133,7 +133,7 @@ public class LazyLoader {
+ 
+   public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
+     Link link = mapClassLinks.get(qualifiedClassName);
+-    return link == null ? null : getClassStream(link.externalPath, link.internalPath);
++    return link == null ? null : link.type == Link.DATA ? new DataInputFullStream(link.data) : getClassStream(link.externalPath, link.internalPath);
+   }
+ 
+   public static void skipAttributes(DataInputFullStream in) throws IOException {
+@@ -148,15 +148,22 @@ public class LazyLoader {
+   public static class Link {
+     public static final int CLASS = 1;
+     public static final int ENTRY = 2;
++    public static final int DATA = 3;
+ 
+     public final int type;
+     public final String externalPath;
+     public final String internalPath;
++    public final byte[] data;
+ 
+     public Link(int type, String externalPath, String internalPath) {
++        this(type, externalPath, internalPath, null);
++    }
++
++    public Link(int type, String externalPath, String internalPath, byte[] data) {
+       this.type = type;
+       this.externalPath = externalPath;
+       this.internalPath = internalPath;
++      this.data = data;
+     }
+   }
+ }
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+new file mode 100644
+index 0000000..cdcea11
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+@@ -0,0 +1,49 @@
++/*
++ * Copyright 2000-2015 JetBrains s.r.o.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.jetbrains.java.decompiler.util;
++
++import java.io.File;
++import java.util.HashSet;
++import java.util.Set;
++
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
++import org.jetbrains.java.decompiler.struct.StructContext;
++
++public class ClasspathScanner {
++    //TODO: Look into caching the metadata grabbed from the context info?
++    //J9 destroies the classpath so we need to scan this differently. We take advantage of MultiRelease jars to do this.
++    public static void addAllClasspath(StructContext ctx) {
++      Set<String> found = new HashSet<String>();
++      String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
++      for (String prop : props) {
++        if (prop == null)
++          continue;
++
++        for (final String path : prop.split(File.pathSeparator)) {
++          File file = new File(path);
++          if (found.contains(file.getAbsolutePath()))
++            continue;
++
++          if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
++            DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
++            ctx.addSpace(file, false);
++            found.add(file.getAbsolutePath());
++          }
++        }
++      }
++    }
++}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 index 9b76b29..faeaa34 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
@@ -2457,5 +2644,5 @@ index 0000000..c45ac50
 +  }
 +}
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

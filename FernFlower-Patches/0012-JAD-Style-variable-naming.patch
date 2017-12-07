@@ -1,4 +1,4 @@
-From 7181476d6bcd3fb7aa2d9dbe678d7e04b6c6434d Mon Sep 17 00:00:00 2001
+From 49590a365ac1d6dfdb669aa315862e7a40c26965 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -118,10 +118,10 @@ index f0dff09..9e2683e 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index aec95c1..04c5384 100644
+index 4f8f8f0..3003c67 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-@@ -40,9 +40,8 @@ public class Fernflower implements IDecompiledData {
+@@ -41,9 +41,8 @@ public class Fernflower implements IDecompiledData {
  
    public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
      structContext = new StructContext(saver, this, new LazyLoader(provider));
@@ -131,7 +131,7 @@ index aec95c1..04c5384 100644
 -    DecompilerContext.setLogger(logger);
  
      if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
-       addAllClasspath();
+       ClasspathScanner.addAllClasspath(structContext);
 diff --git a/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 new file mode 100644
 index 0000000..4b62af8
@@ -898,5 +898,5 @@ index 0000000..87e1c03
 +}
 \ No newline at end of file
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

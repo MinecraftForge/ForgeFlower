@@ -14,6 +14,28 @@ project(':ForgeFlower') {
     compileJava.dependsOn rootProject.tasks.applyPatches
 }
 
+project(':ForgeFlower9') {
+    apply plugin: 'java'
+    apply plugin: 'eclipse'
+    sourceCompatibility = targetCompatibility = 9
+    group = 'net.minecraftforge'
+    
+    sourceSets {
+        java9.java.srcDirs = ['../ForgeFlower/java9']
+    }
+    dependencies {
+        compile project(':ForgeFlower')
+    }
+    tasks.withType(JavaCompile) {
+        options.encoding = 'utf-8'
+        sourceCompatibility = 9
+        targetCompatibility = 9
+        if (!project.hasProperty('forgeMavenPass')) { //Hack for now until we get Jenkins JDK updated. TEST THINGS LOCALLY
+            options.compilerArgs.addAll(['--release', '9'])
+        }
+    }
+}
+
 task wrapper(type: Wrapper) {
     gradleVersion = '2.14.1'
 }

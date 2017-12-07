@@ -5,6 +5,8 @@ apply plugin: 'eclipse'
 version = '1.0.342-SNAPSHOT' // OurVersion.FernFlowerCommitNumber-SNAPSHOT
 group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
 archivesBaseName = 'forgeflower'
+
+sourceCompatibility = targetCompatibility = 8
  
 sourceSets {
     main.java.srcDirs = ['src']
@@ -70,14 +72,24 @@ tasks.withType(JavaCompile) {
     options.deprecation = true
     sourceCompatibility = 8
     targetCompatibility = 8
-    options.compilerArgs.addAll(['--release', '8'])
+    if (!project.hasProperty('forgeMavenPass')) { //Hack for now until we get Jenkins JDK updated. TEST THINGS LOCALLY
+        options.compilerArgs.addAll(['--release', '8'])
+    }
 }
 
 compileJava9Java {
     options.encoding = 'utf-8'
     sourceCompatibility = 9
     targetCompatibility = 9
-    options.compilerArgs.addAll(['--release', '9'])
+    if (!project.hasProperty('forgeMavenPass')) { //Hack for now until we get Jenkins JDK updated. TEST THINGS LOCALLY
+        options.compilerArgs.addAll(['--release', '9'])
+    }
+}
+
+eclipse {
+    classpath {
+        sourceSets -= [sourceSets.java9]
+    }	
 }
 
 jar {

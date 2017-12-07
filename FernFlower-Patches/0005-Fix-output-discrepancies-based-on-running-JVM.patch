@@ -1,4 +1,4 @@
-From 6b08e34f38dc0005572a80a800ec7d154de6651e Mon Sep 17 00:00:00 2001
+From 0f31268351925ac35cfb2e9623a17ba0940e3cef Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:08:10 -0700
 Subject: [PATCH] Fix output discrepancies based on running JVM
@@ -193,7 +193,7 @@ index bba1484..0297f03 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-index 0cee74c..1b70231 100644
+index 0cee74c..7c42469 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 @@ -27,10 +27,10 @@ public class DominatorTreeExceptionFilter {
@@ -218,6 +218,24 @@ index 0cee74c..1b70231 100644
        }
        set.add(key);
      }
+@@ -101,7 +101,7 @@ public class DominatorTreeExceptionFilter {
+       List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
+       if (!lstPreds.isEmpty()) {
+ 
+-        Set<Integer> set = new HashSet<>();
++        Set<Integer> set = new LinkedHashSet<>();
+ 
+         for (Statement st : lstPreds) {
+           set.add(st.id);
+@@ -164,7 +164,7 @@ public class DominatorTreeExceptionFilter {
+             }
+             else {
+               // exit = map.containsKey(handler)?-1:mapChild.get(handler); FIXME: Eclipse bug?
+-              exit = map.containsKey(handler) ? -1 : mapChild.get(handler);
++              exit = map.containsKey(handler) ? Integer.valueOf(-1) : mapChild.get(handler);
+             }
+ 
+             if (exit != null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 index 9a4e046..f232dc9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
@@ -1299,5 +1317,5 @@ index b6984c3..3406481 100644
  }
  
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 
