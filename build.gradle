@@ -23,6 +23,17 @@ project(':ForgeFlower9') {
     sourceSets {
         java9.java.srcDirs = ['../ForgeFlower/java9']
     }
+    
+    eclipse {
+        project {
+            name 'FernFlower9'
+            linkedResource name: 'java9', type: '2', location: project(':ForgeFlower').file('java9').getAbsolutePath()
+        }
+        jdt {
+            sourceCompatibility = targetCompatibility = 9
+        }
+    }
+    
     dependencies {
         compile project(':ForgeFlower')
     }
