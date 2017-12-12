@@ -1,14 +1,14 @@
-From 89d1db01782518fe97991bdb48112c5ab2398a73 Mon Sep 17 00:00:00 2001
+From 2877de8e7afca7f487bd0d49b75f9e19b7bc2ab0 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 3b4e1ff..be2c5eb 100644
+index 89a865f..d74198a 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -705,6 +705,11 @@ public class ClassWriter {
+@@ -688,6 +688,11 @@ public class ClassWriter {
  
              buffer.append(' ');
              String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
@@ -41,7 +41,7 @@ index 1c5b8e8..edb0339 100644
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index 4ea35aa..21a10ba 100644
+index 9c706f7..ba256e8 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 @@ -7,8 +7,10 @@ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
@@ -55,15 +55,15 @@ index 4ea35aa..21a10ba 100644
  
  import java.util.HashMap;
  import java.util.Locale;
-@@ -22,6 +24,7 @@ public class DecompilerContext {
+@@ -21,6 +23,7 @@ public class DecompilerContext {
+   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
    public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
-   public static final String CURRENT_METHOD_DESCRIPTOR = "CURRENT_METHOD_DESCRIPTOR";
    public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 +  public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
  
    private static volatile DecompilerContext currentContext = null;
  
-@@ -34,6 +37,7 @@ public class DecompilerContext {
+@@ -33,6 +36,7 @@ public class DecompilerContext {
    private VarProcessor varProcessor;
    private CounterContainer counterContainer;
    private BytecodeSourceMapper bytecodeSourceMapper;
@@ -71,7 +71,7 @@ index 4ea35aa..21a10ba 100644
  
    private DecompilerContext(Map<String, Object> properties,
                              IFernflowerLogger logger,
-@@ -75,6 +79,22 @@ public class DecompilerContext {
+@@ -74,6 +78,22 @@ public class DecompilerContext {
      }
  
      currentContext = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor);
@@ -94,7 +94,7 @@ index 4ea35aa..21a10ba 100644
    }
  
    public static void clearContext() {
-@@ -141,6 +161,10 @@ public class DecompilerContext {
+@@ -140,6 +160,10 @@ public class DecompilerContext {
      return currentContext.counterContainer;
    }
  
