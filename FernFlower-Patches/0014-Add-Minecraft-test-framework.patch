@@ -1,4 +1,4 @@
-From e9ec9eb48924137aa8511711df24f10fc2653595 Mon Sep 17 00:00:00 2001
+From 8374a6903ae856657f584f7be6008ce7585c6ef3 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 19 Apr 2017 01:59:28 -0700
 Subject: [PATCH] Add Minecraft test framework
@@ -6,10 +6,10 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000..981ceff
+index 0000000..3f2f99d
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-@@ -0,0 +1,111 @@
+@@ -0,0 +1,112 @@
 +package org.jetbrains.java.decompiler;
 +
 +import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -22,6 +22,7 @@ index 0000000..981ceff
 +
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
++import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 +import org.junit.Test;
 +
@@ -67,7 +68,7 @@ index 0000000..981ceff
 +        for (int i = 0; i < optionPairs.length; i += 2) {
 +          options.put(optionPairs[i], optionPairs[i + 1]);
 +        }
-+        decompiler = new ConsoleDecompiler(targetDir, options) {
++        decompiler = new ConsoleDecompiler(targetDir, options, new PrintStreamLogger(System.out)) {
 +          @Override
 +          public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
 +            RESULTS.put(path, content);
@@ -122,5 +123,5 @@ index 0000000..981ceff
 +
 +}
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

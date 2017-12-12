@@ -1,22 +1,14 @@
-From b627df9d04e4788c7a4e43ae7a4331dbce4217bb Mon Sep 17 00:00:00 2001
+From b70236fcf52c15de9cb731f8e0b61396dd374622 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 13 May 2017 22:17:47 -0700
 Subject: [PATCH] Better detection of ambiguous method parameters.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b423fb4..cf0ab0a 100644
+index ad18f8e..6e612b8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -16,6 +16,7 @@
- package org.jetbrains.java.decompiler.modules.decompiler.exps;
- 
- import org.jetbrains.java.decompiler.code.CodeConstants;
-+import org.jetbrains.java.decompiler.code.interpreter.Util;
- import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
- import org.jetbrains.java.decompiler.main.DecompilerContext;
- import org.jetbrains.java.decompiler.main.TextBuffer;
-@@ -632,6 +633,8 @@ public class InvocationExprent extends Exprent {
+@@ -670,6 +670,8 @@ public class InvocationExprent extends Exprent {
        return EMPTY_BIT_SET;
      }
  
@@ -25,7 +17,7 @@ index b423fb4..cf0ab0a 100644
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
      if (mt != null) {
-@@ -640,19 +643,51 @@ public class InvocationExprent extends Exprent {
+@@ -678,19 +680,51 @@ public class InvocationExprent extends Exprent {
          boolean exact = true;
          for (int i = 0; i < md.params.length; i++) {
            if (!md.params[i].equals(lstParameters.get(i).getExprType())) {
@@ -53,7 +45,7 @@ index b423fb4..cf0ab0a 100644
 +        else {
 +          if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
 +            if (ptype.type != CodeConstants.TYPE_NULL) {
-+              if (!Util.instanceOf(DecompilerContext.getStructContext(), ptype.value, md.params[i].value)) {
++              if (!DecompilerContext.getStructContext().instanceOf(ptype.value, md.params[i].value)) {
 +                failed = true;
 +                break;
 +              }
@@ -77,8 +69,8 @@ index b423fb4..cf0ab0a 100644
 -      for (StructMethod mtt : matches) {
 +      for (StructMethod mtt : mtds) {
  
-         if (mtt.getSignature() != null && mtt.getSignature().params.get(i).isGeneric()) {
+         if (mtt.getSignature() != null && mtt.getSignature().parameterTypes.get(i).isGeneric()) {
            break;
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

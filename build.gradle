@@ -51,6 +51,10 @@ task wrapper(type: Wrapper) {
     gradleVersion = '2.14.1'
 }
 
+task eclipse() {
+    dependsOn('applyPatches', 'ForgeFlower:eclipse', 'ForgeFlower9:eclipse')
+}
+
 if (!JavaVersion.current().java9Compatible) {
     println("You must build this with JDK 9")
     System.exit(1)

@@ -1,4 +1,4 @@
-From 2b4bb7b965e82467a688869b0d6f5405f03e72df Mon Sep 17 00:00:00 2001
+From 3b7416c22eb115f3b535ef2ebd2df28099849b03 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,10 +6,10 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b76d223..b423fb4 100644
+index a520bab..ad18f8e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -71,6 +71,7 @@ public class InvocationExprent extends Exprent {
+@@ -60,6 +60,7 @@ public class InvocationExprent extends Exprent {
    private List<Exprent> lstParameters = new ArrayList<>();
    private List<PooledConstant> bootstrapArguments;
    private List<VarType> genericArgs = new ArrayList<>();
@@ -17,22 +17,49 @@ index b76d223..b423fb4 100644
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -269,7 +270,7 @@ public class InvocationExprent extends Exprent {
-     tracer.addMapping(bytecode);
+@@ -262,7 +263,7 @@ public class InvocationExprent extends Exprent {
+     }
  
      if (isStatic) {
--      if (isBoxingCall()) {
-+      if (isBoxingCall() && !forceBoxing) {
+-      if (isBoxingCall() && canIgnoreBoxing) {
++      if (isBoxingCall() && canIgnoreBoxing && !forceBoxing) {
          // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
          // here 'byte' and 'short' values do not need an explicit narrowing type cast
          ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
-@@ -427,9 +428,66 @@ public class InvocationExprent extends Exprent {
+@@ -309,14 +310,24 @@ public class InvocationExprent extends Exprent {
+           TextUtil.writeQualifiedSuper(buf, super_qualifier);
+         }
+         else if (instance != null) {
+-          TextBuffer res = instance.toJava(indent, tracer);
+-
+           if (isUnboxingCall()) {
+             // we don't print the unboxing call - no need to bother with the instance wrapping / casting
+-            buf.append(res);
++            if (instance.type == Exprent.EXPRENT_FUNCTION) {
++              FunctionExprent func = (FunctionExprent)instance;
++              if (func.getFuncType() == FunctionExprent.FUNCTION_CAST && func.getLstOperands().get(1).type == Exprent.EXPRENT_CONST) {
++                ConstExprent _const = (ConstExprent)func.getLstOperands().get(1);
++                if (this.classname.equals(_const.getConstType().value)) {
++                    buf.append(func.getLstOperands().get(0).toJava(indent, tracer));
++                    return buf;
++                }
++              }
++            }
++            buf.append(instance.toJava(indent, tracer));
+             return buf;
+           }
+ 
++          TextBuffer res = instance.toJava(indent, tracer);
++
+           VarType rightType = instance.getExprType();
+           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
+ 
+@@ -416,8 +427,65 @@ public class InvocationExprent extends Exprent {
        }
      }
  
 -    boolean firstParameter = true;
      int start = isEnum ? 2 : 0;
--    for (int i = start; i < lstParameters.size(); i++) {
 +    List<Exprent> parameters = new ArrayList<>(lstParameters);
 +    VarType[] types = Arrays.copyOf(descriptor.params, descriptor.params.length);
 +    for (int i = start; i < parameters.size(); i++) {
@@ -91,29 +118,21 @@ index b76d223..b423fb4 100644
 +
 +
 +    boolean firstParameter = true;
-+    for (int i = start; i < parameters.size(); i++) {
-       if (sigFields == null || sigFields.get(i) == null) {
+     for (int i = start; i < lstParameters.size(); i++) {
+       if (mask == null || mask.get(i) == null) {
          TextBuffer buff = new TextBuffer();
-         boolean ambiguous = setAmbiguousParameters.get(i);
-@@ -462,13 +520,9 @@ public class InvocationExprent extends Exprent {
-         }
-         */
+@@ -453,7 +521,7 @@ public class InvocationExprent extends Exprent {
  
--        Exprent param = lstParameters.get(i);
--        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
--        if (param.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)param).isBoxingCall()) {
--          param = ((InvocationExprent)param).lstParameters.get(0);
--        }
-+        Exprent param = parameters.get(i);
+         Exprent param = unboxIfNeeded(lstParameters.get(i));
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
 -        ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
 +        ExprProcessor.getCastedExprent(param, types[i], buff, indent, true, ambiguous, true, tracer);
  
          // the last "new Object[0]" in the vararg call is not printed
          if (buff.length() > 0) {
-@@ -512,7 +566,7 @@ public class InvocationExprent extends Exprent {
-       // special handling for ambiguous types
-       if (lstParameters.get(0).type == Exprent.EXPRENT_CONST) {
+@@ -514,7 +582,7 @@ public class InvocationExprent extends Exprent {
+         }
+ 
          if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
 -          if (classname.equals("java/lang/Character")) {
 +          if (classname.equals("java/lang/Character") || classname.equals("java/lang/Short")) {
@@ -121,80 +140,136 @@ index b76d223..b423fb4 100644
            }
          }
 diff --git a/testData/classes/pkg/TestPrimitives.class b/testData/classes/pkg/TestPrimitives.class
-index be15ee5f11867ff023c89f26814bcbc4985d2194..e4b847e54ace05749e45433aa31fd64ff27b65cf 100644
+index 1dad0d2fa50e49c17bf63e6886a417c2e77226d6..2c9ff1758b20abb9d967f8ebfc776bfd1ce94269 100644
 GIT binary patch
-literal 3711
-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
+literal 7392
+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
 
-literal 3197
-zcmaKu`%@cL6vw}tENoa7NFY2cRj4gCP1B}UR9f0Xfl@&VXet$2A4^zZX_CcdLv5=T
-z-><5z^;K)@V>;t6PG|IoG^3+`fd7SmgTFfJxpz043vJ4f%{k}Z^SS4od+y!*`R}iP
-z0O-aKDk6AZ#Y1?3JziuFojqo&Xq^3>XIfhByS{vrNpsbGf8UCp`|Ic}rWx!pUxNiK
-zhF~gKV)|(n8DyE1Q?U&ela^Jy1e-}KDjeihtm2G{mvJ_Pb0N0KD|j`8*Hm1<nu^!)
-zMhI`JcnfbUc!yEmRq&pK>H}uZbPh=f#&%3ekO!?fLqfxtnKQ=o*;&IruFq!3(l}<N
-z^~{uRn@snNva@KeNQjOtpI%5FH&&cU+svAdxoWKRN(e36X3jaB$w<(+IAB>BL(kDF
-zu^G0QG)tcu2{rEMS%=n<V*`9>K!VE6sYT0nm_5bqw49VGu}5-zWQ32HG%`|xjaj(`
-z<}}KOC<1A;1RTy-I(Hl9WAijNETNV!He}^_wsLHU56;oxP>DIXsN0M=$cNH2G)T+^
-z!}0T?8d5q6Gx20dr#wQWds&cyg0Ch651mwsxQ;J9uG_YC#-J5z(^hW9vGZxiqV<%t
-zm0i|tUYbFM584J5p)Td<>C?ybWp69gl$E#B#<0mYt7-jS>|WAWbq(7Q(~!g-4UeE(
-z!((_{!+!K?ID|e80~pjWjH4Px@uY(HHGF^%CDeD#COW(3N*@Vf21{o2+(L3<cF9OP
-z8pbi9;G%|)@UezTJjJ9>G(3%zf=f)ftl>DGQSd2Kt|<6S!{_)y!Iv7o!c_@@F6x9p
-z*PMc{*^FyUnOE=)Q?4tx!M?v`#<YU(nDRXZR*r)eo2A!HZF*-Xt_wMJcEvHWR75LJ
-zJ<vSHA*Pj_WUZQVY(vjd=SBo}sb`f{J(D*ks9jp9dtFCf1#kDst%-V99H6ks+E9jh
-zT@a;S7Ups5`c<hrj0J;sza=&zPW9|GS=a^&+hpBdJ#X1r*4q1GBAt)+o)k>(zV(V=
-zm%(zlOGT&&d5dP~=r-Sl&CY|c9q!p{qO&Kg$&BlZ;hn>1Y*?Jft?TnE9m-}plmgK;
-z`yunaU`JF>JFIeTbWVlY{zxyj(486KH*o|KI~DZYL3)zDCHk(4--h%v2?50ES<Q_>
-z>?B!pCm?}cq)FKAI~ToqOL4h?Ks<cDfM7f#Nd?GUsftHYT|g+_SW|#XN^Jpk@$gIm
-z^}nE@F|7QK$aFAXKw}Y2scD&{Xc5h+=_-<1ifBzuSCiCM#C@qEHWkobjxY|D$5{mh
-zwFsdRHE1JS2Wedta{_hPiw2ko3t24rS<sz8xv&yUP!<9DZe=lTmU&F=ETD}`s(e}#
-zS`g*P7T3)~5&#d=lB}L|*W3+$zYlM&0B<FDTSfSz98P!Gz2U7D;Ozw8TmjyLeH>1A
-z<GtZ`?u1*G4uW@9fFHm?4yQZUhbst{YVMV#qlgD8M81{a+bY2OahSvDF8ATWhIY6$
-z-&#ax1^9M?$11>waD>C@9pS@;$UXS>BDPe3?<9Dl0{jV#a5%kte7F$#gMPPctpHCF
-zd`|`V7>;o`y{9~Qg6nj`gFjK_#dF@x8SXg`_$P#3YM$pV&odZa+vwUOxCVV!dJB54
-zyFFJqvWAVm2LxZ)_obKS9m~cyy7mjM<z=V*o9PJU$F8-eIJ-YCvwMjNSLkLcUm^9p
-z1&8S3I6~LQuz+mxqdDOtduTR8s=r~|w0s*~C(0!E2#gSERG_FHC4gr!?dBx)QDCg`
-zueAqmLXm%j96Z>5!<Xc;F&q-)8bMYCSrg<sLGBb}U65x4`9fKa;6Gp4%xWFvZ-M=&
-zC;1rNsN-m+KI)_&Itl8E9{QOxL|Z&bzi>{`b}eFxevO~N8YOy>QoV{9UWQILRj&+`
-pG~BMN#U+}tmr8Mx_z7&P>6iXNNa~kJP%Hn}_Or|N6!`@3-2apXB8mV2
+literal 6576
+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
+RSEUl4b~~HT5Wt7K{|`TSLEZoW
 
 diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
-index 52f2cdf..c85c4e7 100644
+index f81bba9..448ac8a 100644
 --- a/testData/results/TestPrimitives.dec
 +++ b/testData/results/TestPrimitives.dec
-@@ -1,480 +1,549 @@
+@@ -1,680 +1,1181 @@
  package pkg;
  
 +import java.util.List;
@@ -202,12 +277,17 @@ index 52f2cdf..c85c4e7 100644
  public class TestPrimitives {
 +   private void testInvalidUnboxing() {
 +      List<Integer> lst = null;// 7
-+      lst.remove(Integer.valueOf(0));// 8
-+      this.genericBoxing((short)0);// 9
-+   }// 10
++      lst.remove(0);// 8
++      this.genericBoxing(0);// 9
++      int a = this.genericReturn(lst);// 10
++   }// 11
 +
 +   private <T> void genericBoxing(T value) {
-+   }// 12
++   }// 13
++
++   private <T> T genericReturn(List<T> value) {
++      return value.get(0);// 14
++   }
 +
     public void printAll() {
 -      this.printBoolean(true);// 6
@@ -218,163 +298,257 @@ index 52f2cdf..c85c4e7 100644
 -      this.printFloat(1.23F);// 11
 -      this.printDouble(1.23D);// 12
 -      this.printChar('Z');// 13
--      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 15
--   }// 16
-+      this.printBoolean(true);// 15
-+      this.printByte((byte)123);// 16
-+      this.printShort((short)257);// 17
-+      this.printInt(123);// 18
-+      this.printLong(123L);// 19
-+      this.printFloat(1.23F);// 20
-+      this.printDouble(1.23D);// 21
-+      this.printChar('Z');// 22
-+      System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 24
-+   }// 25
+-      this.printBooleanBoxed(true);// 15
+-      this.printByteBoxed((byte)123);// 16
+-      this.printShortBoxed((short)257);// 17
+-      this.printIntBoxed(1);// 18
+-      this.printIntBoxed(40000);// 19
+-      this.printLongBoxed(123L);// 20
+-      this.printFloatBoxed(1.23F);// 21
+-      this.printDoubleBoxed(1.23D);// 22
+-      this.printCharBoxed('Z');// 23
+-      this.printBoolean(Boolean.valueOf("true"));// 25
+-      this.printByte(Byte.valueOf("123"));// 26
+-      this.printShort(Short.valueOf("257"));// 27
+-      this.printInt(Integer.valueOf("123"));// 28
+-      this.printLong(Long.valueOf("123"));// 29
+-      this.printFloat(Float.valueOf("1.23"));// 30
+-      this.printDouble(Double.valueOf("1.23"));// 31
+-      this.printChar(new Character('Z'));// 32
+-      this.printInt(this.getInteger());// 34
+-      this.printChar(this.getCharacter());// 35
+-      System.out.printf("%b, %d, %d, %d, %c, %d", true, 1, 213, 40000, 'c', 42L);// 37
+-      System.out.printf("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt());// 38
+-      new TestPrimitives(false, (byte)123, (short)257, 40000, 123L, 3.14F, 1.618D, 'A');// 40
+-      new TestPrimitives('A', 1.618D, 3.14F, 123L, 40000, (short)257, (byte)123, false);// 41
+-      new TestPrimitives(Boolean.valueOf("false"), Byte.valueOf("123"), Short.valueOf("257"), Integer.valueOf("40000"), Long.valueOf("123"), Float.valueOf("3.14"), Double.valueOf("1.618"), new Character('A'));// 42 43
+-   }// 44
++      this.printBoolean(true);// 17
++      this.printByte((byte)123);// 18
++      this.printShort((short)257);// 19
++      this.printInt(123);// 20
++      this.printLong(123L);// 21
++      this.printFloat(1.23F);// 22
++      this.printDouble(1.23D);// 23
++      this.printChar('Z');// 24
++      this.printBooleanBoxed(true);// 26
++      this.printByteBoxed((byte)123);// 27
++      this.printShortBoxed((short)257);// 28
++      this.printIntBoxed(1);// 29
++      this.printIntBoxed(40000);// 30
++      this.printLongBoxed(123L);// 31
++      this.printFloatBoxed(1.23F);// 32
++      this.printDoubleBoxed(1.23D);// 33
++      this.printCharBoxed('Z');// 34
++      this.printBoolean(Boolean.valueOf("true"));// 36
++      this.printByte(Byte.valueOf("123"));// 37
++      this.printShort(Short.valueOf("257"));// 38
++      this.printInt(Integer.valueOf("123"));// 39
++      this.printLong(Long.valueOf("123"));// 40
++      this.printFloat(Float.valueOf("1.23"));// 41
++      this.printDouble(Double.valueOf("1.23"));// 42
++      this.printChar(new Character('Z'));// 43
++      this.printInt(this.getInteger());// 45
++      this.printChar(this.getCharacter());// 46
++      System.out.printf("%b, %d, %d, %d, %c, %d", true, 1, 213, 40000, 'c', 42L);// 48
++      System.out.printf("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt());// 49
++      new TestPrimitives(false, (byte)123, (short)257, 40000, 123L, 3.14F, 1.618D, 'A');// 51
++      new TestPrimitives('A', 1.618D, 3.14F, 123L, 40000, (short)257, (byte)123, false);// 52
++      new TestPrimitives(Boolean.valueOf("false"), Byte.valueOf("123"), Short.valueOf("257"), Integer.valueOf("40000"), Long.valueOf("123"), Float.valueOf("3.14"), Double.valueOf("1.618"), new Character('A'));// 53 54
++   }// 55
+ 
+    private TestPrimitives(boolean bool, byte b, short s, int i, long l, float f, double d, char c) {
+-      System.out.printf("%b, %d, %d, %d, %d, %.2f, %.2f, %c", bool, b, s, i, l, f, d, c);// 47
+-   }// 48
++      System.out.printf("%b, %d, %d, %d, %d, %.2f, %.2f, %c", bool, b, s, i, l, f, d, c);// 58
++   }// 59
+ 
+    private TestPrimitives(Character c, Double d, Float f, Long l, Integer i, Short s, Byte b, Boolean bool) {
+-      System.out.printf("%b, %d, %d, %d, %d, %.2f, %.2f, %c", bool, b, s, i, l, f, d, c);// 51
+-   }// 52
++      System.out.printf("%b, %d, %d, %d, %d, %.2f, %.2f, %c", bool, b, s, i, l, f, d, c);// 62
++   }// 63
  
     public void printBoolean(boolean b) {
--      System.out.println(String.format("%b", b));// 19
--   }// 20
-+      System.out.println(String.format("%b", b));// 28
-+   }// 29
+-      System.out.printf("%b", b);// 55
+-   }// 56
++      System.out.printf("%b", b);// 66
++   }// 67
  
     public void printByte(byte b) {
--      System.out.println(String.format("%d", b));// 23
--   }// 24
-+      System.out.println(String.format("%d", b));// 32
-+   }// 33
+-      System.out.printf("%d", b);// 59
+-   }// 60
++      System.out.printf("%d", b);// 70
++   }// 71
  
     public void printShort(short s) {
--      System.out.println(String.format("%d", s));// 27
--   }// 28
-+      System.out.println(String.format("%d", s));// 36
-+   }// 37
+-      System.out.printf("%d", s);// 63
+-   }// 64
++      System.out.printf("%d", s);// 74
++   }// 75
  
     public void printInt(int i) {
--      System.out.println(String.format("%d", i));// 31
--   }// 32
-+      System.out.println(String.format("%d", i));// 40
-+   }// 41
+-      System.out.printf("%d", i);// 67
+-   }// 68
++      System.out.printf("%d", i);// 78
++   }// 79
  
     public void printLong(long l) {
--      System.out.println(String.format("%d", l));// 35
--   }// 36
-+      System.out.println(String.format("%d", l));// 44
-+   }// 45
+-      System.out.printf("%d", l);// 71
+-   }// 72
++      System.out.printf("%d", l);// 82
++   }// 83
  
     public void printFloat(float f) {
--      System.out.println(String.format("%f", f));// 39
--   }// 40
-+      System.out.println(String.format("%f", f));// 48
-+   }// 49
+-      System.out.printf("%f", f);// 75
+-   }// 76
++      System.out.printf("%f", f);// 86
++   }// 87
  
     public void printDouble(double d) {
--      System.out.println(String.format("%f", d));// 43
--   }// 44
-+      System.out.println(String.format("%f", d));// 52
-+   }// 53
+-      System.out.printf("%f", d);// 79
+-   }// 80
++      System.out.printf("%f", d);// 90
++   }// 91
  
     public void printChar(char c) {
--      System.out.println(String.format("%c", c));// 47
--   }// 48
-+      System.out.println(String.format("%c", c));// 56
-+   }// 57
+-      System.out.printf("%c", c);// 83
+-   }// 84
++      System.out.printf("%c", c);// 94
++   }// 95
+ 
+    public void printBooleanBoxed(Boolean b) {
+-      System.out.printf("%b", b);// 88
+-   }// 89
++      System.out.printf("%b", b);// 99
++   }// 100
+ 
+    public void printByteBoxed(Byte b) {
+-      System.out.printf("%d", b);// 92
+-   }// 93
++      System.out.printf("%d", b);// 103
++   }// 104
+ 
+    public void printShortBoxed(Short s) {
+-      System.out.printf("%d", s);// 96
+-   }// 97
++      System.out.printf("%d", s);// 107
++   }// 108
+ 
+    public void printIntBoxed(Integer i) {
+-      System.out.printf("%d", i);// 100
+-   }// 101
++      System.out.printf("%d", i);// 111
++   }// 112
+ 
+    public void printLongBoxed(Long l) {
+-      System.out.printf("%d", l);// 104
+-   }// 105
++      System.out.printf("%d", l);// 115
++   }// 116
+ 
+    public void printFloatBoxed(Float f) {
+-      System.out.printf("%f", f);// 108
+-   }// 109
++      System.out.printf("%f", f);// 119
++   }// 120
+ 
+    public void printDoubleBoxed(Double d) {
+-      System.out.printf("%f", d);// 112
+-   }// 113
++      System.out.printf("%f", d);// 123
++   }// 124
+ 
+    public void printCharBoxed(Character c) {
+-      System.out.printf("%c", c);// 116
+-   }// 117
++      System.out.printf("%c", c);// 127
++   }// 128
  
     public boolean getBoolean() {
--      return false;// 52
-+      return false;// 61
+-      return false;// 121
++      return false;// 132
     }
  
     public byte getByte() {
--      return -128;// 56
-+      return -128;// 65
+-      return -128;// 125
++      return -128;// 136
     }
  
     public short getShort() {
--      return -32768;// 60
-+      return -32768;// 69
+-      return -32768;// 129
++      return -32768;// 140
     }
  
     public int getInt() {
--      return 42;// 64
-+      return 42;// 73
+-      return 42;// 133
++      return 42;// 144
+    }
+ 
+    public Integer getInteger() {
+-      return 40000;// 137
++      return 40000;// 148
+    }
+ 
+    public Character getCharacter() {
+-      return 'Z';// 141
++      return 'Z';// 152
     }
  
     public void printNarrowed() {
--      this.printByte((byte)this.getInt());// 68
--      this.printShort((short)this.getInt());// 69
--   }// 70
-+      this.printByte((byte)this.getInt());// 77
-+      this.printShort((short)this.getInt());// 78
-+   }// 79
+-      this.printByte((byte)this.getInt());// 145
+-      this.printShort((short)this.getInt());// 146
+-   }// 147
++      this.printByte((byte)this.getInt());// 156
++      this.printShort((short)this.getInt());// 157
++   }// 158
  
     public void constructor() {
--      new Byte((byte)1);// 73
--   }// 74
-+      new Byte((byte)1);// 82
-+   }// 83
+-      new Byte((byte)1);// 150
+-   }// 151
++      new Byte((byte)1);// 161
++   }// 162
  
     private boolean compare(char c) {
--      boolean res = c > -1;// 77
--      res = c > 0;// 78
--      res = c > 1;// 79
--      res = c > '\b';// 80
--      res = c > '\t';// 81
--      res = c > '\n';// 82
--      res = c > '\f';// 83
--      res = c > '\r';// 84
--      res = c > ' ';// 85
--      res = c > 'a';// 86
--      res = c > 'Z';// 87
--      res = c > 127;// 88
--      res = c > 255;// 89
--      return res;// 90
-+      boolean res = c > -1;// 86
-+      res = c > 0;// 87
-+      res = c > 1;// 88
-+      res = c > '\b';// 89
-+      res = c > '\t';// 90
-+      res = c > '\n';// 91
-+      res = c > '\f';// 92
-+      res = c > '\r';// 93
-+      res = c > ' ';// 94
-+      res = c > 'a';// 95
-+      res = c > 'Z';// 96
-+      res = c > 127;// 97
-+      res = c > 255;// 98
-+      return res;// 99
+-      boolean res = c > -1;// 154
+-      res = c > 0;// 155
+-      res = c > 1;// 156
+-      res = c > '\b';// 157
+-      res = c > '\t';// 158
+-      res = c > '\n';// 159
+-      res = c > '\f';// 160
+-      res = c > '\r';// 161
+-      res = c > ' ';// 162
+-      res = c > 'a';// 163
+-      res = c > 'Z';// 164
+-      res = c > 127;// 165
+-      res = c > 255;// 166
+-      return res;// 167
++      boolean res = c > -1;// 165
++      res = c > 0;// 166
++      res = c > 1;// 167
++      res = c > '\b';// 168
++      res = c > '\t';// 169
++      res = c > '\n';// 170
++      res = c > '\f';// 171
++      res = c > '\r';// 172
++      res = c > ' ';// 173
++      res = c > 'a';// 174
++      res = c > 'Z';// 175
++      res = c > 127;// 176
++      res = c > 255;// 177
++      return res;// 178
     }
+ 
+    void testAutoBoxingCallRequired(boolean value) {
+-      Boolean.valueOf(value).hashCode();// 171
+-   }// 172
++      Boolean.valueOf(value).hashCode();// 182
++   }// 183
  }
  
  class 'pkg/TestPrimitives' {
-+   method 'testInvalidUnboxing ()V' {
-+      0      6
-+      1      6
-+      2      7
-+      3      7
-+      4      7
-+      5      7
-+      6      7
-+      7      7
-+      8      7
-+      9      7
-+      a      7
-+      b      7
-+      d      8
-+      e      8
-+      f      8
-+      10      8
-+      11      8
-+      12      8
-+      13      8
-+      14      8
-+      15      9
-+   }
-+
-+   method 'genericBoxing (Ljava/lang/Object;)V' {
-+      0      12
-+   }
-+
-    method 'printAll ()V' {
+-   method 'printAll ()V' {
 -      0      4
 -      1      4
 -      2      4
@@ -406,8 +580,30 @@ index 52f2cdf..c85c4e7 100644
 -      1c      8
 -      1d      8
 -      1e      8
--      1f      9
--      20      9
++   method 'testInvalidUnboxing ()V' {
++      0      6
++      1      6
++      2      7
++      3      7
++      7      7
++      8      7
++      9      7
++      a      7
++      b      7
++      d      8
++      e      8
++      12      8
++      13      8
++      14      8
++      15      9
++      16      9
++      17      9
++      18      9
++      19      9
++      1d      9
++      1e      9
+       1f      9
+       20      9
 -      21      9
 -      22      9
 -      23      9
@@ -427,604 +623,1108 @@ index 52f2cdf..c85c4e7 100644
 -      31      11
 -      32      12
 -      33      12
--      34      12
--      35      12
--      36      12
--      3d      12
--      3e      12
--      3f      12
--      40      12
--      41      12
--      42      12
--      43      12
--      47      12
--      48      12
--      49      12
--      4a      12
--      4b      12
--      4c      12
--      4d      12
--      51      12
--      52      12
--      53      12
--      54      12
--      55      12
--      56      12
--      57      12
--      5b      12
--      5c      12
--      5d      12
--      5e      12
--      5f      12
--      60      12
--      61      12
--      63      12
--      64      12
--      65      12
--      66      12
--      67      12
--      68      12
--      69      13
-+      0      15
-+      1      15
-+      2      15
-+      3      15
-+      4      15
+-      37      12
+-      3b      13
+-      40      13
+-      44      14
+-      4a      14
+-      4e      15
+-      52      15
+-      56      16
+-      5b      16
+-      5f      17
+-      65      17
+-      69      18
+-      6e      18
+-      72      19
+-      78      19
+-      7c      20
+-      81      20
+-      85      21
+-      87      21
+-      8a      21
+-      8d      21
+-      91      22
+-      93      22
+-      96      22
+-      99      22
+-      9d      23
+-      9f      23
+-      a2      23
+-      a5      23
+-      a9      24
+-      ab      24
+-      ae      24
+-      b1      24
+-      b5      25
+-      b7      25
+-      ba      25
+-      bd      25
+-      c1      26
+-      c3      26
+-      c6      26
+-      c9      26
+-      cd      27
+-      cf      27
+-      d2      27
+-      d5      27
+-      dd      28
+-      e2      28
+-      e5      28
+-      ea      29
+-      ed      29
+-      f0      29
+-      f5      30
+-      f8      30
+-      fb      30
+-      fe      31
+-      101      31
+-      10a      31
+-      10b      31
+-      111      31
+-      112      31
+-      118      31
+-      11b      31
+-      121      31
+-      123      31
+-      129      31
+-      12b      31
+-      131      31
+-      134      31
+-      138      31
+-      13c      32
+-      13f      32
+-      148      32
+-      14b      32
+-      152      32
+-      155      32
+-      15c      32
+-      15f      32
+-      166      32
+-      169      32
+-      16d      32
+-      175      33
+-      176      33
+-      178      33
+-      17b      33
+-      17d      33
+-      180      33
+-      182      33
+-      185      33
+-      18f      34
+-      194      34
+-      19a      34
+-      19f      34
+-      1a5      34
+-      1aa      34
+-      1b0      34
+-      1b5      34
+-      1c1      35
+-      1c3      35
+-      1c6      35
+-      1c9      35
+-      1cb      35
+-      1ce      35
+-      1d1      35
+-      1d3      35
+-      1d6      35
+-      1d9      35
+-      1db      35
+-      1de      35
+-      1e1      35
+-      1e3      35
+-      1e6      35
+-      1e9      35
+-      1eb      35
+-      1ee      35
+-      1f1      35
+-      1f3      35
+-      1f6      35
+-      1fd      35
+-      202      35
+-      209      36
++      21      10
+    }
+ 
+-   method '<init> (ZBSIJFDC)V' {
+-      4      39
+-      7      39
+-      11      39
+-      18      39
+-      1f      39
+-      27      39
+-      2f      39
+-      37      39
+-      40      39
+-      49      39
+-      4d      39
+-      51      40
++   method 'genericBoxing (Ljava/lang/Object;)V' {
++      0      13
+    }
+ 
+-   method '<init> (Ljava/lang/Character;Ljava/lang/Double;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Integer;Ljava/lang/Short;Ljava/lang/Byte;Ljava/lang/Boolean;)V' {
+-      4      43
+-      7      43
+-      35      43
+-      39      44
++   method 'genericReturn (Ljava/util/List;)Ljava/lang/Object;' {
++      0      16
++      1      16
++      2      16
++      3      16
++      4      16
 +      5      16
 +      6      16
 +      7      16
-+      8      16
-+      9      16
-+      a      16
-+      b      17
-+      c      17
-+      d      17
-+      e      17
-+      f      17
-+      10      17
-+      11      17
-+      12      18
-+      13      18
-+      14      18
-+      15      18
-+      16      18
-+      17      18
-+      18      19
-+      19      19
-+      1a      19
-+      1b      19
-+      1c      19
-+      1d      19
-+      1e      19
-+      1f      20
-+      20      20
-+      21      20
-+      22      20
-+      23      20
-+      24      20
-+      25      21
-+      26      21
-+      27      21
-+      28      21
-+      29      21
-+      2a      21
-+      2b      21
-+      2c      22
-+      2d      22
-+      2e      22
-+      2f      22
-+      30      22
-+      31      22
-+      32      23
-+      33      23
-+      34      23
-+      35      23
-+      36      23
-+      3d      23
-+      3e      23
-+      3f      23
-+      40      23
-+      41      23
-+      42      23
-+      43      23
-+      47      23
-+      48      23
-+      49      23
-+      4a      23
-+      4b      23
-+      4c      23
-+      4d      23
-+      51      23
-+      52      23
-+      53      23
-+      54      23
-+      55      23
-+      56      23
-+      57      23
-+      5b      23
-+      5c      23
-+      5d      23
-+      5e      23
-+      5f      23
-+      60      23
-+      61      23
-+      63      23
-+      64      23
-+      65      23
-+      66      23
-+      67      23
-+      68      23
-+      69      24
     }
  
-    method 'printBoolean (Z)V' {
--      0      16
--      1      16
--      2      16
--      3      16
--      4      16
--      b      16
--      c      16
--      d      16
--      e      16
--      10      16
--      11      16
--      12      16
--      13      16
--      14      16
--      15      16
--      16      17
-+      0      27
-+      1      27
-+      2      27
-+      3      27
-+      4      27
-+      b      27
-+      c      27
-+      d      27
-+      e      27
-+      10      27
-+      11      27
-+      12      27
-+      13      27
-+      14      27
-+      15      27
-+      16      28
+-   method 'printBoolean (Z)V' {
+-      0      47
+-      3      47
+-      c      47
+-      10      47
+-      14      48
+-   }
+-
+-   method 'printByte (B)V' {
+-      0      51
+-      3      51
+-      c      51
+-      10      51
+-      14      52
++   method 'printAll ()V' {
++      0      20
++      1      20
++      2      20
++      3      20
++      4      20
++      5      21
++      6      21
++      7      21
++      8      21
++      9      21
++      a      21
++      b      22
++      c      22
++      d      22
++      e      22
++      f      22
++      10      22
++      11      22
++      12      23
++      13      23
++      14      23
++      15      23
++      16      23
++      17      23
++      18      24
++      19      24
++      1a      24
++      1b      24
++      1c      24
++      1d      24
++      1e      24
++      1f      25
++      20      25
++      21      25
++      22      25
++      23      25
++      24      25
++      25      26
++      26      26
++      27      26
++      28      26
++      29      26
++      2a      26
++      2b      26
++      2c      27
++      2d      27
++      2e      27
++      2f      27
++      30      27
++      31      27
++      32      28
++      33      28
++      37      28
++      38      28
++      39      28
++      3a      29
++      3b      29
++      3c      29
++      40      29
++      41      29
++      42      29
++      43      30
++      44      30
++      45      30
++      46      30
++      4a      30
++      4b      30
++      4c      30
++      4d      31
++      4e      31
++      52      31
++      53      31
++      54      31
++      55      32
++      56      32
++      57      32
++      5b      32
++      5c      32
++      5d      32
++      5e      33
++      5f      33
++      60      33
++      61      33
++      65      33
++      66      33
++      67      33
++      68      34
++      69      34
++      6a      34
++      6e      34
++      6f      34
++      70      34
++      71      35
++      72      35
++      73      35
++      74      35
++      78      35
++      79      35
++      7a      35
++      7b      36
++      7c      36
++      7d      36
++      81      36
++      82      36
++      83      36
++      84      37
++      85      37
++      86      37
++      87      37
++      88      37
++      89      37
++      8a      37
++      8b      37
++      8c      37
++      8d      37
++      8e      37
++      8f      37
++      90      38
++      91      38
++      92      38
++      93      38
++      94      38
++      95      38
++      96      38
++      97      38
++      98      38
++      99      38
++      9a      38
++      9b      38
++      9c      39
++      9d      39
++      9e      39
++      9f      39
++      a0      39
++      a1      39
++      a2      39
++      a3      39
++      a4      39
++      a5      39
++      a6      39
++      a7      39
++      a8      40
++      a9      40
++      aa      40
++      ab      40
++      ac      40
++      ad      40
++      ae      40
++      af      40
++      b0      40
++      b1      40
++      b2      40
++      b3      40
++      b4      41
++      b5      41
++      b6      41
++      b7      41
++      b8      41
++      b9      41
++      ba      41
++      bb      41
++      bc      41
++      bd      41
++      be      41
++      bf      41
++      c0      42
++      c1      42
++      c2      42
++      c3      42
++      c4      42
++      c5      42
++      c6      42
++      c7      42
++      c8      42
++      c9      42
++      ca      42
++      cb      42
++      cc      43
++      cd      43
++      ce      43
++      cf      43
++      d0      43
++      d1      43
++      d2      43
++      d3      43
++      d4      43
++      d5      43
++      d6      43
++      d7      43
++      d8      44
++      dd      44
++      de      44
++      e2      44
++      e3      44
++      e4      44
++      e5      44
++      e6      44
++      e7      44
++      e8      45
++      e9      45
++      ea      45
++      eb      45
++      ec      45
++      ed      45
++      ee      45
++      ef      45
++      f0      45
++      f1      45
++      f2      45
++      f3      46
++      f4      46
++      f5      46
++      f6      46
++      f7      46
++      f8      46
++      f9      46
++      fa      46
++      fb      46
++      fc      46
++      fd      46
++      fe      47
++      ff      47
++      100      47
++      101      47
++      102      47
++      10a      47
++      10b      47
++      10c      47
++      10d      47
++      111      47
++      112      47
++      113      47
++      114      47
++      118      47
++      119      47
++      11a      47
++      11b      47
++      11c      47
++      11d      47
++      121      47
++      122      47
++      123      47
++      124      47
++      125      47
++      129      47
++      12a      47
++      12b      47
++      12c      47
++      12d      47
++      131      47
++      132      47
++      133      47
++      134      47
++      135      47
++      136      47
++      138      47
++      139      47
++      13a      47
++      13c      48
++      13d      48
++      13e      48
++      13f      48
++      140      48
++      147      48
++      148      48
++      149      48
++      14a      48
++      14b      48
++      14c      48
++      14d      48
++      151      48
++      152      48
++      153      48
++      154      48
++      155      48
++      156      48
++      157      48
++      15b      48
++      15c      48
++      15d      48
++      15e      48
++      15f      48
++      160      48
++      161      48
++      165      48
++      166      48
++      167      48
++      168      48
++      169      48
++      16a      48
++      16b      48
++      16d      48
++      16e      48
++      16f      48
++      175      49
++      176      49
++      177      49
++      178      49
++      179      49
++      17a      49
++      17b      49
++      17c      49
++      17d      49
++      17e      49
++      17f      49
++      180      49
++      181      49
++      182      49
++      183      49
++      184      49
++      185      49
++      186      49
++      18f      50
++      190      50
++      194      50
++      195      50
++      196      50
++      19a      50
++      19b      50
++      19f      50
++      1a0      50
++      1a1      50
++      1a5      50
++      1a6      50
++      1aa      50
++      1ab      50
++      1ac      50
++      1b0      50
++      1b1      50
++      1b5      50
++      1c1      51
++      1c2      51
++      1c3      51
++      1c4      51
++      1c5      51
++      1c6      51
++      1c7      51
++      1c8      51
++      1c9      51
++      1ca      51
++      1cb      51
++      1cc      51
++      1cd      51
++      1ce      51
++      1cf      51
++      1d0      51
++      1d1      51
++      1d2      51
++      1d3      51
++      1d4      51
++      1d5      51
++      1d6      51
++      1d7      51
++      1d8      51
++      1d9      51
++      1da      51
++      1db      51
++      1dc      51
++      1dd      51
++      1de      51
++      1df      51
++      1e0      51
++      1e1      51
++      1e2      51
++      1e3      51
++      1e4      51
++      1e5      51
++      1e6      51
++      1e7      51
++      1e8      51
++      1e9      51
++      1ea      51
++      1eb      51
++      1ec      51
++      1ed      51
++      1ee      51
++      1ef      51
++      1f0      51
++      1f1      51
++      1f2      51
++      1f3      51
++      1f4      51
++      1f5      51
++      1f6      51
++      1f7      51
++      1f8      51
++      1fd      51
++      1fe      51
++      202      51
++      203      51
++      204      51
++      209      52
     }
  
-    method 'printByte (B)V' {
--      0      20
--      1      20
--      2      20
--      3      20
--      4      20
--      b      20
--      c      20
--      d      20
--      e      20
--      10      20
--      11      20
--      12      20
--      13      20
--      14      20
--      15      20
--      16      21
-+      0      31
-+      1      31
-+      2      31
-+      3      31
-+      4      31
-+      b      31
-+      c      31
-+      d      31
-+      e      31
-+      10      31
-+      11      31
-+      12      31
-+      13      31
-+      14      31
-+      15      31
-+      16      32
-    }
- 
-    method 'printShort (S)V' {
--      0      24
--      1      24
--      2      24
--      3      24
--      4      24
--      b      24
--      c      24
--      d      24
--      e      24
--      10      24
--      11      24
--      12      24
--      13      24
--      14      24
--      15      24
--      16      25
-+      0      35
-+      1      35
-+      2      35
-+      3      35
-+      4      35
-+      b      35
-+      c      35
-+      d      35
-+      e      35
-+      10      35
-+      11      35
-+      12      35
-+      13      35
-+      14      35
-+      15      35
-+      16      36
-    }
- 
-    method 'printInt (I)V' {
--      0      28
--      1      28
--      2      28
--      3      28
--      4      28
--      b      28
--      c      28
--      d      28
--      e      28
--      10      28
--      11      28
--      12      28
--      13      28
--      14      28
--      15      28
--      16      29
-+      0      39
-+      1      39
-+      2      39
-+      3      39
-+      4      39
-+      b      39
-+      c      39
-+      d      39
-+      e      39
-+      10      39
-+      11      39
-+      12      39
-+      13      39
-+      14      39
-+      15      39
-+      16      40
-    }
- 
-    method 'printLong (J)V' {
--      0      32
--      1      32
--      2      32
--      3      32
--      4      32
--      b      32
--      c      32
--      d      32
--      e      32
--      10      32
--      11      32
--      12      32
--      13      32
--      14      32
--      15      32
--      16      33
-+      0      43
-+      1      43
-+      2      43
-+      3      43
-+      4      43
-+      b      43
-+      c      43
-+      d      43
-+      e      43
-+      10      43
-+      11      43
-+      12      43
-+      13      43
-+      14      43
-+      15      43
-+      16      44
-    }
- 
-    method 'printFloat (F)V' {
--      0      36
--      1      36
--      2      36
--      3      36
--      4      36
--      b      36
--      c      36
--      d      36
--      e      36
--      10      36
--      11      36
--      12      36
--      13      36
--      14      36
--      15      36
--      16      37
-+      0      47
-+      1      47
-+      2      47
-+      3      47
-+      4      47
-+      b      47
-+      c      47
-+      d      47
-+      e      47
-+      10      47
-+      11      47
-+      12      47
-+      13      47
-+      14      47
-+      15      47
-+      16      48
-    }
- 
-    method 'printDouble (D)V' {
--      0      40
--      1      40
--      2      40
--      3      40
--      4      40
--      b      40
--      c      40
--      d      40
--      e      40
--      10      40
--      11      40
--      12      40
--      13      40
--      14      40
--      15      40
--      16      41
-+      0      51
-+      1      51
-+      2      51
-+      3      51
-+      4      51
-+      b      51
-+      c      51
-+      d      51
-+      e      51
-+      10      51
-+      11      51
-+      12      51
-+      13      51
-+      14      51
-+      15      51
-+      16      52
-    }
- 
-    method 'printChar (C)V' {
--      0      44
--      1      44
--      2      44
--      3      44
--      4      44
--      b      44
--      c      44
--      d      44
--      e      44
--      10      44
--      11      44
--      12      44
--      13      44
--      14      44
--      15      44
--      16      45
-+      0      55
-+      1      55
-+      2      55
-+      3      55
+-   method 'printShort (S)V' {
+-      0      55
+-      3      55
+-      c      55
++   method '<init> (ZBSIJFDC)V' {
 +      4      55
-+      b      55
-+      c      55
-+      d      55
-+      e      55
-+      10      55
++      5      55
++      6      55
++      7      55
++      8      55
+       10      55
+-      14      56
 +      11      55
 +      12      55
 +      13      55
-+      14      55
-+      15      55
-+      16      56
++      17      55
++      18      55
++      19      55
++      1a      55
++      1e      55
++      1f      55
++      20      55
++      21      55
++      25      55
++      26      55
++      27      55
++      28      55
++      29      55
++      2d      55
++      2e      55
++      2f      55
++      30      55
++      31      55
++      35      55
++      36      55
++      37      55
++      38      55
++      39      55
++      3e      55
++      3f      55
++      40      55
++      41      55
++      42      55
++      47      55
++      48      55
++      49      55
++      4a      55
++      4b      55
++      4d      55
++      4e      55
++      4f      55
++      51      56
     }
  
-    method 'getBoolean ()Z' {
--      0      48
--      1      48
-+      0      59
-+      1      59
+-   method 'printInt (I)V' {
+-      0      59
+-      3      59
+-      c      59
++   method '<init> (Ljava/lang/Character;Ljava/lang/Double;Ljava/lang/Float;Ljava/lang/Long;Ljava/lang/Integer;Ljava/lang/Short;Ljava/lang/Byte;Ljava/lang/Boolean;)V' {
++      4      59
++      5      59
++      6      59
++      7      59
++      8      59
+       10      59
+-      14      60
++      11      59
++      15      59
++      16      59
++      1a      59
++      1b      59
++      1f      59
++      20      59
++      24      59
++      25      59
++      29      59
++      2e      59
++      33      59
++      35      59
++      36      59
++      37      59
++      39      60
     }
  
-    method 'getByte ()B' {
--      0      52
--      1      52
--      2      52
-+      0      63
+-   method 'printLong (J)V' {
++   method 'printBoolean (Z)V' {
+       0      63
 +      1      63
 +      2      63
+       3      63
++      4      63
++      b      63
+       c      63
++      d      63
++      e      63
+       10      63
++      11      63
++      12      63
+       14      64
     }
  
-    method 'getShort ()S' {
--      0      56
--      1      56
--      2      56
--      3      56
-+      0      67
+-   method 'printFloat (F)V' {
++   method 'printByte (B)V' {
+       0      67
 +      1      67
 +      2      67
-+      3      67
+       3      67
++      4      67
++      b      67
+       c      67
++      d      67
++      e      67
+       10      67
++      11      67
++      12      67
+       14      68
     }
  
-    method 'getInt ()I' {
--      0      60
--      1      60
--      2      60
-+      0      71
+-   method 'printDouble (D)V' {
++   method 'printShort (S)V' {
+       0      71
 +      1      71
 +      2      71
+       3      71
++      4      71
++      b      71
+       c      71
++      d      71
++      e      71
+       10      71
++      11      71
++      12      71
+       14      72
     }
  
-    method 'printNarrowed ()V' {
--      0      64
--      1      64
--      2      64
--      3      64
--      4      64
--      5      64
--      6      64
--      7      64
--      8      64
--      9      65
--      a      65
--      b      65
--      c      65
--      d      65
--      e      65
--      f      65
--      10      65
--      11      65
--      12      66
-+      0      75
+-   method 'printChar (C)V' {
++   method 'printInt (I)V' {
+       0      75
 +      1      75
 +      2      75
-+      3      75
+       3      75
 +      4      75
-+      5      75
-+      6      75
-+      7      75
-+      8      75
-+      9      76
-+      a      76
-+      b      76
-+      c      76
-+      d      76
-+      e      76
-+      f      76
-+      10      76
-+      11      76
-+      12      77
++      b      75
+       c      75
++      d      75
++      e      75
+       10      75
++      11      75
++      12      75
+       14      76
+    }
+ 
+-   method 'printBooleanBoxed (Ljava/lang/Boolean;)V' {
++   method 'printLong (J)V' {
+       0      79
++      1      79
++      2      79
+       3      79
++      4      79
++      b      79
++      c      79
+       d      79
+-      11      80
++      e      79
++      10      79
++      11      79
++      12      79
++      14      80
+    }
+ 
+-   method 'printByteBoxed (Ljava/lang/Byte;)V' {
++   method 'printFloat (F)V' {
+       0      83
++      1      83
++      2      83
+       3      83
++      4      83
++      b      83
++      c      83
+       d      83
+-      11      84
++      e      83
++      10      83
++      11      83
++      12      83
++      14      84
+    }
+ 
+-   method 'printShortBoxed (Ljava/lang/Short;)V' {
++   method 'printDouble (D)V' {
+       0      87
++      1      87
++      2      87
+       3      87
++      4      87
++      b      87
++      c      87
+       d      87
+-      11      88
++      e      87
++      10      87
++      11      87
++      12      87
++      14      88
+    }
+ 
+-   method 'printIntBoxed (Ljava/lang/Integer;)V' {
++   method 'printChar (C)V' {
+       0      91
++      1      91
++      2      91
+       3      91
++      4      91
++      b      91
++      c      91
+       d      91
+-      11      92
++      e      91
++      10      91
++      11      91
++      12      91
++      14      92
+    }
+ 
+-   method 'printLongBoxed (Ljava/lang/Long;)V' {
++   method 'printBooleanBoxed (Ljava/lang/Boolean;)V' {
+       0      95
++      1      95
++      2      95
+       3      95
++      4      95
++      b      95
+       d      95
++      e      95
++      f      95
+       11      96
+    }
+ 
+-   method 'printFloatBoxed (Ljava/lang/Float;)V' {
++   method 'printByteBoxed (Ljava/lang/Byte;)V' {
+       0      99
++      1      99
++      2      99
+       3      99
++      4      99
++      b      99
+       d      99
++      e      99
++      f      99
+       11      100
+    }
+ 
+-   method 'printDoubleBoxed (Ljava/lang/Double;)V' {
++   method 'printShortBoxed (Ljava/lang/Short;)V' {
+       0      103
++      1      103
++      2      103
+       3      103
++      4      103
++      b      103
+       d      103
++      e      103
++      f      103
+       11      104
+    }
+ 
+-   method 'printCharBoxed (Ljava/lang/Character;)V' {
++   method 'printIntBoxed (Ljava/lang/Integer;)V' {
+       0      107
++      1      107
++      2      107
+       3      107
++      4      107
++      b      107
+       d      107
++      e      107
++      f      107
+       11      108
+    }
+ 
+-   method 'getBoolean ()Z' {
++   method 'printLongBoxed (Ljava/lang/Long;)V' {
+       0      111
+       1      111
++      2      111
++      3      111
++      4      111
++      b      111
++      d      111
++      e      111
++      f      111
++      11      112
+    }
+ 
+-   method 'getByte ()B' {
++   method 'printFloatBoxed (Ljava/lang/Float;)V' {
+       0      115
++      1      115
+       2      115
++      3      115
++      4      115
++      b      115
++      d      115
++      e      115
++      f      115
++      11      116
+    }
+ 
+-   method 'getShort ()S' {
++   method 'printDoubleBoxed (Ljava/lang/Double;)V' {
+       0      119
++      1      119
++      2      119
+       3      119
++      4      119
++      b      119
++      d      119
++      e      119
++      f      119
++      11      120
+    }
+ 
+-   method 'getInt ()I' {
++   method 'printCharBoxed (Ljava/lang/Character;)V' {
+       0      123
++      1      123
+       2      123
++      3      123
++      4      123
++      b      123
++      d      123
++      e      123
++      f      123
++      11      124
+    }
+ 
+-   method 'getInteger ()Ljava/lang/Integer;' {
++   method 'getBoolean ()Z' {
+       0      127
+-      2      127
+-      5      127
++      1      127
+    }
+ 
+-   method 'getCharacter ()Ljava/lang/Character;' {
++   method 'getByte ()B' {
+       0      131
++      1      131
+       2      131
+-      5      131
+    }
+ 
+-   method 'printNarrowed ()V' {
++   method 'getShort ()S' {
++      0      135
++      1      135
+       2      135
+-      5      135
+-      6      135
+-      b      136
+-      e      136
+-      f      136
+-      12      137
++      3      135
++   }
++
++   method 'getInt ()I' {
++      0      139
++      1      139
++      2      139
++   }
++
++   method 'getInteger ()Ljava/lang/Integer;' {
++      0      143
++      1      143
++      2      143
++      3      143
++      4      143
++      5      143
++   }
++
++   method 'getCharacter ()Ljava/lang/Character;' {
++      0      147
++      1      147
++      2      147
++      3      147
++      4      147
++      5      147
++   }
++
++   method 'printNarrowed ()V' {
++      0      151
++      1      151
++      2      151
++      3      151
++      4      151
++      5      151
++      6      151
++      7      151
++      8      151
++      9      152
++      a      152
++      b      152
++      c      152
++      d      152
++      e      152
++      f      152
++      10      152
++      11      152
++      12      153
     }
  
     method 'constructor ()V' {
--      4      69
--      9      70
-+      4      80
-+      9      81
+-      4      140
+-      9      141
++      4      156
++      9      157
     }
  
     method 'compare (C)Z' {
--      1      73
--      2      73
--      a      73
--      c      74
--      14      74
--      16      75
--      17      75
--      1f      75
--      21      76
--      23      76
--      2b      76
--      2d      77
--      2f      77
--      37      77
--      39      78
--      3b      78
--      43      78
--      45      79
--      47      79
--      4f      79
--      51      80
--      53      80
--      5b      80
--      5d      81
--      5f      81
--      67      81
--      69      82
--      6b      82
--      73      82
--      75      83
--      77      83
--      7f      83
--      81      84
--      83      84
--      8b      84
--      8d      85
--      90      85
--      98      85
--      9a      86
-+      0      84
-+      1      84
-+      2      84
-+      a      84
-+      b      85
-+      c      85
-+      14      85
-+      15      86
-+      16      86
-+      17      86
-+      1f      86
-+      20      87
-+      21      87
-+      22      87
-+      23      87
-+      2b      87
-+      2c      88
-+      2d      88
-+      2e      88
-+      2f      88
-+      37      88
-+      38      89
-+      39      89
-+      3a      89
-+      3b      89
-+      43      89
-+      44      90
-+      45      90
-+      46      90
-+      47      90
-+      4f      90
-+      50      91
-+      51      91
-+      52      91
-+      53      91
-+      5b      91
-+      5c      92
-+      5d      92
-+      5e      92
-+      5f      92
-+      67      92
-+      68      93
-+      69      93
-+      6a      93
-+      6b      93
-+      73      93
-+      74      94
-+      75      94
-+      76      94
-+      77      94
-+      7f      94
-+      80      95
-+      81      95
-+      82      95
-+      83      95
-+      8b      95
-+      8c      96
-+      8d      96
-+      8e      96
-+      8f      96
-+      90      96
-+      98      96
-+      99      97
-+      9a      97
+-      1      144
+-      2      144
+-      a      144
+-      c      145
+-      14      145
+-      16      146
+-      17      146
+-      1f      146
+-      21      147
+-      23      147
+-      2b      147
+-      2d      148
+-      2f      148
+-      37      148
+-      39      149
+-      3b      149
+-      43      149
+-      45      150
+-      47      150
+-      4f      150
+-      51      151
+-      53      151
+-      5b      151
+-      5d      152
+-      5f      152
+-      67      152
+-      69      153
+-      6b      153
+-      73      153
+-      75      154
+-      77      154
+-      7f      154
+-      81      155
+-      83      155
+-      8b      155
+-      8d      156
+-      90      156
+-      98      156
+-      9a      157
++      0      160
++      1      160
++      2      160
++      a      160
++      b      161
++      c      161
++      14      161
++      15      162
++      16      162
++      17      162
++      1f      162
++      20      163
++      21      163
++      22      163
++      23      163
++      2b      163
++      2c      164
++      2d      164
++      2e      164
++      2f      164
++      37      164
++      38      165
++      39      165
++      3a      165
++      3b      165
++      43      165
++      44      166
++      45      166
++      46      166
++      47      166
++      4f      166
++      50      167
++      51      167
++      52      167
++      53      167
++      5b      167
++      5c      168
++      5d      168
++      5e      168
++      5f      168
++      67      168
++      68      169
++      69      169
++      6a      169
++      6b      169
++      73      169
++      74      170
++      75      170
++      76      170
++      77      170
++      7f      170
++      80      171
++      81      171
++      82      171
++      83      171
++      8b      171
++      8c      172
++      8d      172
++      8e      172
++      8f      172
++      90      172
++      98      172
++      99      173
++      9a      173
+    }
+ 
+    method 'testAutoBoxingCallRequired (Z)V' {
+-      1      161
+-      4      161
+-      8      162
++      0      177
++      1      177
++      2      177
++      3      177
++      4      177
++      5      177
++      6      177
++      8      178
     }
  }
  
@@ -1039,104 +1739,207 @@ index 52f2cdf..c85c4e7 100644
 -13 <-> 12
 -15 <-> 13
 -16 <-> 14
+-17 <-> 15
+-18 <-> 16
 -19 <-> 17
 -20 <-> 18
+-21 <-> 19
+-22 <-> 20
 -23 <-> 21
--24 <-> 22
--27 <-> 25
--28 <-> 26
--31 <-> 29
--32 <-> 30
--35 <-> 33
--36 <-> 34
--39 <-> 37
--40 <-> 38
--43 <-> 41
--44 <-> 42
--47 <-> 45
--48 <-> 46
--52 <-> 49
--56 <-> 53
--60 <-> 57
--64 <-> 61
--68 <-> 65
--69 <-> 66
--70 <-> 67
--73 <-> 70
--74 <-> 71
--77 <-> 74
--78 <-> 75
--79 <-> 76
--80 <-> 77
--81 <-> 78
--82 <-> 79
--83 <-> 80
--84 <-> 81
--85 <-> 82
--86 <-> 83
--87 <-> 84
--88 <-> 85
--89 <-> 86
--90 <-> 87
+-25 <-> 22
+-26 <-> 23
+-27 <-> 24
+-28 <-> 25
+-29 <-> 26
+-30 <-> 27
+-31 <-> 28
+-32 <-> 29
+-34 <-> 30
+-35 <-> 31
+-37 <-> 32
+-38 <-> 33
+-40 <-> 34
+-41 <-> 35
+-42 <-> 36
+-43 <-> 36
+-44 <-> 37
+-47 <-> 40
+-48 <-> 41
+-51 <-> 44
+-52 <-> 45
+-55 <-> 48
+-56 <-> 49
+-59 <-> 52
+-60 <-> 53
+-63 <-> 56
+-64 <-> 57
+-67 <-> 60
+-68 <-> 61
+-71 <-> 64
+-72 <-> 65
+-75 <-> 68
+-76 <-> 69
+-79 <-> 72
+-80 <-> 73
+-83 <-> 76
+-84 <-> 77
+-88 <-> 80
+-89 <-> 81
+-92 <-> 84
+-93 <-> 85
+-96 <-> 88
+-97 <-> 89
+-100 <-> 92
+-101 <-> 93
+-104 <-> 96
+-105 <-> 97
+-108 <-> 100
+-109 <-> 101
+-112 <-> 104
+-113 <-> 105
+-116 <-> 108
+-117 <-> 109
+-121 <-> 112
+-125 <-> 116
+-129 <-> 120
+-133 <-> 124
+-137 <-> 128
+-141 <-> 132
+-145 <-> 136
+-146 <-> 137
+-147 <-> 138
+-150 <-> 141
+-151 <-> 142
+-154 <-> 145
+-155 <-> 146
+-156 <-> 147
+-157 <-> 148
+-158 <-> 149
+-159 <-> 150
+-160 <-> 151
+-161 <-> 152
+-162 <-> 153
+-163 <-> 154
+-164 <-> 155
+-165 <-> 156
+-166 <-> 157
+-167 <-> 158
+-171 <-> 162
+-172 <-> 163
 +7 <-> 7
 +8 <-> 8
 +9 <-> 9
 +10 <-> 10
-+12 <-> 13
-+15 <-> 16
-+16 <-> 17
-+17 <-> 18
-+18 <-> 19
-+19 <-> 20
-+20 <-> 21
-+21 <-> 22
-+22 <-> 23
-+24 <-> 24
-+25 <-> 25
-+28 <-> 28
-+29 <-> 29
-+32 <-> 32
-+33 <-> 33
-+36 <-> 36
-+37 <-> 37
-+40 <-> 40
-+41 <-> 41
-+44 <-> 44
-+45 <-> 45
++11 <-> 11
++13 <-> 14
++14 <-> 17
++17 <-> 21
++18 <-> 22
++19 <-> 23
++20 <-> 24
++21 <-> 25
++22 <-> 26
++23 <-> 27
++24 <-> 28
++26 <-> 29
++27 <-> 30
++28 <-> 31
++29 <-> 32
++30 <-> 33
++31 <-> 34
++32 <-> 35
++33 <-> 36
++34 <-> 37
++36 <-> 38
++37 <-> 39
++38 <-> 40
++39 <-> 41
++40 <-> 42
++41 <-> 43
++42 <-> 44
++43 <-> 45
++45 <-> 46
++46 <-> 47
 +48 <-> 48
 +49 <-> 49
-+52 <-> 52
-+53 <-> 53
-+56 <-> 56
-+57 <-> 57
-+61 <-> 60
-+65 <-> 64
-+69 <-> 68
-+73 <-> 72
-+77 <-> 76
-+78 <-> 77
-+79 <-> 78
-+82 <-> 81
-+83 <-> 82
-+86 <-> 85
-+87 <-> 86
-+88 <-> 87
-+89 <-> 88
-+90 <-> 89
-+91 <-> 90
-+92 <-> 91
-+93 <-> 92
-+94 <-> 93
-+95 <-> 94
-+96 <-> 95
-+97 <-> 96
-+98 <-> 97
-+99 <-> 98
++51 <-> 50
++52 <-> 51
++53 <-> 52
++54 <-> 52
++55 <-> 53
++58 <-> 56
++59 <-> 57
++62 <-> 60
++63 <-> 61
++66 <-> 64
++67 <-> 65
++70 <-> 68
++71 <-> 69
++74 <-> 72
++75 <-> 73
++78 <-> 76
++79 <-> 77
++82 <-> 80
++83 <-> 81
++86 <-> 84
++87 <-> 85
++90 <-> 88
++91 <-> 89
++94 <-> 92
++95 <-> 93
++99 <-> 96
++100 <-> 97
++103 <-> 100
++104 <-> 101
++107 <-> 104
++108 <-> 105
++111 <-> 108
++112 <-> 109
++115 <-> 112
++116 <-> 113
++119 <-> 116
++120 <-> 117
++123 <-> 120
++124 <-> 121
++127 <-> 124
++128 <-> 125
++132 <-> 128
++136 <-> 132
++140 <-> 136
++144 <-> 140
++148 <-> 144
++152 <-> 148
++156 <-> 152
++157 <-> 153
++158 <-> 154
++161 <-> 157
++162 <-> 158
++165 <-> 161
++166 <-> 162
++167 <-> 163
++168 <-> 164
++169 <-> 165
++170 <-> 166
++171 <-> 167
++172 <-> 168
++173 <-> 169
++174 <-> 170
++175 <-> 171
++176 <-> 172
++177 <-> 173
++178 <-> 174
++182 <-> 178
++183 <-> 179
+ Not mapped:
+-46
+-50
++57
++61
 diff --git a/testData/src/pkg/TestPrimitives.java b/testData/src/pkg/TestPrimitives.java
-index 39041ef..fd850be 100644
+index 55bd806..015c87d 100644
 --- a/testData/src/pkg/TestPrimitives.java
 +++ b/testData/src/pkg/TestPrimitives.java
-@@ -1,6 +1,15 @@
+@@ -1,6 +1,17 @@
  package pkg;
  
 +import java.util.List;
@@ -1146,12 +1949,14 @@ index 39041ef..fd850be 100644
 +    List<Integer> lst = null;
 +    lst.remove(Integer.valueOf(0));
 +    this.<Short>genericBoxing((short)0);
++    int a = genericReturn(lst);
 +  }
 +
 +  private <T> void genericBoxing(T value) {}
++  private <T> T genericReturn(List<T> value) { return value.get(0); }
  
    public void printAll() {
      printBoolean(true);
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

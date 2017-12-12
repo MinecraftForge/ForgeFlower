@@ -1,4 +1,4 @@
-From fd10f6712eac2c29ce6fc49b9a860aa3dc6f60da Mon Sep 17 00:00:00 2001
+From da21e1b9cf76ccf717d86a547d2cf5349471835b Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 15:18:38 -0700
 Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
@@ -8,13 +8,109 @@ Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
  much of the code we are processing/outputting
 
 
+diff --git a/src/org/jetbrains/java/decompiler/code/Instruction.java b/src/org/jetbrains/java/decompiler/code/Instruction.java
+index 23d510a..2aee1a6 100644
+--- a/src/org/jetbrains/java/decompiler/code/Instruction.java
++++ b/src/org/jetbrains/java/decompiler/code/Instruction.java
+@@ -1,19 +1,21 @@
+ // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package org.jetbrains.java.decompiler.code;
+ 
++import static org.jetbrains.java.decompiler.code.CodeConstants.*;
++
+ public class Instruction implements CodeConstants {
+-  public static Instruction create(int opcode, boolean wide, int group, int bytecodeVersion, int[] operands) {
++  public static Instruction create(int opcode, boolean wide, int group, int bytecodeVersion, int[] operands, int length) {
+     if (opcode >= opc_ifeq && opcode <= opc_if_acmpne ||
+         opcode == opc_ifnull || opcode == opc_ifnonnull ||
+         opcode == opc_jsr || opcode == opc_jsr_w ||
+         opcode == opc_goto || opcode == opc_goto_w) {
+-      return new JumpInstruction(opcode, group, wide, bytecodeVersion, operands);
++      return new JumpInstruction(opcode, group, wide, bytecodeVersion, operands, length);
+     }
+     else if (opcode == opc_tableswitch || opcode == opc_lookupswitch) {
+-      return new SwitchInstruction(opcode, group, wide, bytecodeVersion, operands);
++      return new SwitchInstruction(opcode, group, wide, bytecodeVersion, operands, length);
+     }
+     else {
+-      return new Instruction(opcode, group, wide, bytecodeVersion, operands);
++      return new Instruction(opcode, group, wide, bytecodeVersion, operands, length);
+     }
+   }
+ 
+@@ -29,15 +31,17 @@ public class Instruction implements CodeConstants {
+   public final int group;
+   public final boolean wide;
+   public final int bytecodeVersion;
++  public final int length;
+ 
+   protected final int[] operands;
+ 
+-  public Instruction(int opcode, int group, boolean wide, int bytecodeVersion, int[] operands) {
++  public Instruction(int opcode, int group, boolean wide, int bytecodeVersion, int[] operands, int length) {
+     this.opcode = opcode;
+     this.group = group;
+     this.wide = wide;
+     this.bytecodeVersion = bytecodeVersion;
+     this.operands = operands;
++    this.length = length;
+   }
+ 
+   public void initInstruction(InstructionSequence seq) { }
+@@ -60,6 +64,6 @@ public class Instruction implements CodeConstants {
+   @Override
+   @SuppressWarnings("MethodDoesntCallSuperMethod")
+   public Instruction clone() {
+-    return create(opcode, wide, group, bytecodeVersion, operands == null ? null : operands.clone());
++    return create(opcode, wide, group, bytecodeVersion, operands == null ? null : operands.clone(), length);
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/org/jetbrains/java/decompiler/code/JumpInstruction.java b/src/org/jetbrains/java/decompiler/code/JumpInstruction.java
+index 129df62..1597df0 100644
+--- a/src/org/jetbrains/java/decompiler/code/JumpInstruction.java
++++ b/src/org/jetbrains/java/decompiler/code/JumpInstruction.java
+@@ -4,8 +4,8 @@ package org.jetbrains.java.decompiler.code;
+ public class JumpInstruction extends Instruction {
+   public int destination;
+ 
+-  public JumpInstruction(int opcode, int group, boolean wide, int bytecodeVersion, int[] operands) {
+-    super(opcode, group, wide, bytecodeVersion, operands);
++  public JumpInstruction(int opcode, int group, boolean wide, int bytecodeVersion, int[] operands, int length) {
++    super(opcode, group, wide, bytecodeVersion, operands, length);
+   }
+ 
+   @Override
+diff --git a/src/org/jetbrains/java/decompiler/code/SwitchInstruction.java b/src/org/jetbrains/java/decompiler/code/SwitchInstruction.java
+index 61810d9..6379cca 100644
+--- a/src/org/jetbrains/java/decompiler/code/SwitchInstruction.java
++++ b/src/org/jetbrains/java/decompiler/code/SwitchInstruction.java
+@@ -6,8 +6,8 @@ public class SwitchInstruction extends Instruction {
+   private int[] values;
+   private int defaultDestination;
+ 
+-  public SwitchInstruction(int opcode, int group, boolean wide, int bytecodeVersion, int[] operands) {
+-    super(opcode, group, wide, bytecodeVersion, operands);
++  public SwitchInstruction(int opcode, int group, boolean wide, int bytecodeVersion, int[] operands, int length) {
++    super(opcode, group, wide, bytecodeVersion, operands, length);
+   }
+ 
+   @Override
+@@ -58,4 +58,4 @@ public class SwitchInstruction extends Instruction {
+     copy.values = values.clone();
+     return copy;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-index 55d7462..3b253c5 100644
+index 66d7ffb..e05192a 100644
 --- a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
 +++ b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-@@ -262,4 +262,19 @@ public class BasicBlock implements IGraphNode {
-   public void setPredExceptions(List<BasicBlock> predExceptions) {
-     this.predExceptions = predExceptions;
+@@ -189,4 +189,19 @@ public class BasicBlock implements IGraphNode {
+   public List<BasicBlock> getPredExceptions() {
+     return predExceptions;
    }
 +
 +  public int getStartInstruction() {
@@ -28,15 +124,16 @@ index 55d7462..3b253c5 100644
 +      if (seq.isEmpty()) {
 +          return 0;
 +      }
-+      int end = seq.getLastInstr().length();
++      int end = seq.getLastInstr().length;
 +      return end + instrOldOffsets.get(size() -1);
 +  }
  }
+\ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
-index 18e1b78..50ff12f 100644
+index 449c5df..5a3c0f0 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
-@@ -47,10 +47,10 @@ public class BytecodeMappingTracer {
+@@ -33,10 +33,10 @@ public class BytecodeMappingTracer {
      }
    }
  
@@ -51,10 +148,10 @@ index 18e1b78..50ff12f 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 2aaa54e..24c1947 100644
+index fa9ed31..30ce17e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -565,7 +565,7 @@ public class NestedClassProcessor {
+@@ -529,7 +529,7 @@ public class NestedClassProcessor {
                if (mapParamsToNewVars.containsKey(varIndex)) {
                  VarVersionPair newVar = mapParamsToNewVars.get(varIndex);
                  method.varproc.getExternalVars().add(newVar);
@@ -63,7 +160,7 @@ index 2aaa54e..24c1947 100644
                }
              }
              else if (exprent.type == Exprent.EXPRENT_FIELD) {
-@@ -576,7 +576,7 @@ public class NestedClassProcessor {
+@@ -540,7 +540,7 @@ public class NestedClassProcessor {
                  //		mapFieldsToNewVars.containsKey(key)) {
                  VarVersionPair newVar = mapFieldsToNewVars.get(key);
                  method.varproc.getExternalVars().add(newVar);
@@ -73,10 +170,10 @@ index 2aaa54e..24c1947 100644
              }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-index aea5afa..c68bb9a 100644
+index 7d5c207..5290152 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-@@ -24,8 +24,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -10,8 +10,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
  
  import java.util.ArrayList;
  import java.util.Arrays;
@@ -86,7 +183,7 @@ index aea5afa..c68bb9a 100644
  
  public class ConcatenationHelper {
  
-@@ -138,7 +138,7 @@ public class ConcatenationHelper {
+@@ -124,7 +124,7 @@ public class ConcatenationHelper {
      return createConcatExprent(lstOperands, expr.bytecode);
    }
  
@@ -96,10 +193,10 @@ index aea5afa..c68bb9a 100644
      Exprent func = lstOperands.get(0);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 81c822a..aeb987d 100644
+index d1259ad..7b5bf28 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -301,7 +301,15 @@ public class ExprProcessor implements CodeConstants {
+@@ -285,7 +285,15 @@ public class ExprProcessor implements CodeConstants {
  
        Instruction instr = seq.getInstr(i);
        Integer bytecode_offset = block.getOldOffset(i);
@@ -116,38 +213,38 @@ index 81c822a..aeb987d 100644
  
        switch (instr.opcode) {
          case opc_aconst_null:
-@@ -341,7 +349,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -325,7 +333,7 @@ public class ExprProcessor implements CodeConstants {
          case opc_fload:
          case opc_dload:
          case opc_aload:
--          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offset));
-+          pushEx(stack, exprlist, new VarExprent(instr.getOperand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offsets));
+-          pushEx(stack, exprlist, new VarExprent(instr.operand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offset));
++          pushEx(stack, exprlist, new VarExprent(instr.operand(0), varTypes[instr.opcode - opc_iload], varProcessor, bytecode_offsets));
            break;
          case opc_iaload:
          case opc_laload:
-@@ -371,8 +379,11 @@ public class ExprProcessor implements CodeConstants {
+@@ -355,8 +363,11 @@ public class ExprProcessor implements CodeConstants {
          case opc_astore:
-           Exprent top = stack.pop();
-           int varindex = instr.getOperand(0);
+           Exprent expr = stack.pop();
+           int varindex = instr.operand(0);
 +          if (bytecode_offsets != null) { //TODO: Figure out why this nulls in some cases
-+            bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length()); 
++            bytecode_offsets.set(bytecode_offset, bytecode_offset + instr.length);
 +          }
            AssignmentExprent assign = new AssignmentExprent(
--            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), top, bytecode_offsets);
-+            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets), top, bytecode_offsets);
+-            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, nextMeaningfulOffset(block, i)), expr, bytecode_offsets);
++            new VarExprent(varindex, varTypes[instr.opcode - opc_istore], varProcessor, bytecode_offsets), expr, bytecode_offsets);
            exprlist.add(assign);
            break;
          case opc_iastore:
-@@ -434,7 +445,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -418,7 +429,7 @@ public class ExprProcessor implements CodeConstants {
            pushEx(stack, exprlist, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, bytecode_offsets));
            break;
          case opc_iinc:
--          VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor);
-+          VarExprent vevar = new VarExprent(instr.getOperand(0), VarType.VARTYPE_INT, varProcessor, bytecode_offsets);
+-          VarExprent vevar = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor);
++          VarExprent vevar = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, bytecode_offsets);
            exprlist.add(new AssignmentExprent(vevar, new FunctionExprent(
-             instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
-             .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),
-@@ -624,23 +635,6 @@ public class ExprProcessor implements CodeConstants {
+             instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
+             .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null)),
+@@ -617,23 +628,6 @@ public class ExprProcessor implements CodeConstants {
      }
    }
  
@@ -171,11 +268,70 @@ index 81c822a..aeb987d 100644
    private void pushEx(ExprentStack stack, List<Exprent> exprlist, Exprent exprent) {
      pushEx(stack, exprlist, exprent, null);
    }
+@@ -921,4 +915,4 @@ public class ExprProcessor implements CodeConstants {
+     return VarType.VARTYPE_INT.isStrictSuperset(type) ||
+            type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
+index 8574432..59b014e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
+@@ -315,6 +315,7 @@ public class FinallyProcessor {
+       }
+     }
+ 
++    final int store_length = var <= 3 ? 1 : var <= 128 ? 2 : 4;
+     // disable semaphore at statement exit points
+     for (BasicBlock block : setTry) {
+       List<BasicBlock> lstSucc = block.getSuccs();
+@@ -324,8 +325,8 @@ public class FinallyProcessor {
+         if (!setCopy.contains(dest) && dest != graph.getLast()) {
+           // disable semaphore
+           SimpleInstructionSequence seq = new SimpleInstructionSequence();
+-          seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
+-          seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}), -1);
++          seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}, 1), -1);
++          seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}, store_length), -1);
+ 
+           // build a separate block
+           BasicBlock newblock = new BasicBlock(++graph.last_id);
+@@ -354,8 +355,8 @@ public class FinallyProcessor {
+ 
+     // enable semaphore at the statement entrance
+     SimpleInstructionSequence seq = new SimpleInstructionSequence();
+-    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{1}), -1);
+-    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}), -1);
++    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{1}, 1), -1);
++    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}, store_length), -1);
+ 
+     BasicBlock newhead = new BasicBlock(++graph.last_id);
+     newhead.setSeq(seq);
+@@ -364,8 +365,8 @@ public class FinallyProcessor {
+ 
+     // initialize semaphor with false
+     seq = new SimpleInstructionSequence();
+-    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
+-    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}), -1);
++    seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}, 1), -1);
++    seq.addInstruction(Instruction.create(CodeConstants.opc_istore, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{var}, store_length), -1);
+ 
+     BasicBlock newheadinit = new BasicBlock(++graph.last_id);
+     newheadinit.setSeq(seq);
+@@ -990,4 +991,4 @@ public class FinallyProcessor {
+       }
+     }
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 0bc723d..6d5f19e 100644
+index 779aeb8..efc1891 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-@@ -110,6 +110,12 @@ public class MergeHelper {
+@@ -89,6 +89,12 @@ public class MergeHelper {
            if (ifedge.getType() == StatEdge.TYPE_BREAK) {
              ifexpr.negateIf();
            }
@@ -188,7 +344,7 @@ index 0bc723d..6d5f19e 100644
            stat.setConditionExprent(ifexpr.getCondition());
            lastif.getFirst().removeSuccessor(ifedge);
            lastif.removeSuccessor(elseedge);
-@@ -167,6 +173,12 @@ public class MergeHelper {
+@@ -143,6 +149,12 @@ public class MergeHelper {
                // negate condition (while header)
                IfExprent ifexpr = (IfExprent)firstif.getHeadexprent().copy();
                ifexpr.negateIf();
@@ -201,7 +357,7 @@ index 0bc723d..6d5f19e 100644
                stat.setConditionExprent(ifexpr.getCondition());
  
                // remove edges
-@@ -205,7 +217,12 @@ public class MergeHelper {
+@@ -181,7 +193,12 @@ public class MergeHelper {
                stat.setLooptype(DoStatement.LOOP_WHILE);
  
                // no need to negate the while condition
@@ -215,7 +371,7 @@ index 0bc723d..6d5f19e 100644
  
                // remove edges
                StatEdge ifedge = firstif.getIfEdge();
-@@ -361,9 +378,17 @@ public class MergeHelper {
+@@ -333,9 +350,17 @@ public class MergeHelper {
  
        stat.setLooptype(DoStatement.LOOP_FOR);
        if (hasinit) {
@@ -236,31 +392,23 @@ index 0bc723d..6d5f19e 100644
  
      if (lastData.getExprents().isEmpty()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 0be7d59..3d6a79e 100644
+index 0bade66..e294b9b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+@@ -602,7 +602,7 @@ public class SimplifyExprentsHelper {
+     if (stat.type == Statement.TYPE_IF && stat.getExprents() == null) {
+       IfStatement statement = (IfStatement)stat;
+       Exprent ifHeadExpr = statement.getHeadexprent();
+-      Set<Integer> ifHeadExprBytecode = (ifHeadExpr == null ? null : ifHeadExpr.bytecode);
++      BitSet ifHeadExprBytecode = (ifHeadExpr == null ? null : ifHeadExpr.bytecode);
  
- import java.util.ArrayList;
- import java.util.Arrays;
-+import java.util.BitSet;
- import java.util.HashMap;
- import java.util.HashSet;
- import java.util.List;
-@@ -777,7 +778,7 @@ public class SimplifyExprentsHelper {
-       IfStatement stif = (IfStatement)stat;
- 
-       Exprent ifheadexpr = stif.getHeadexprent();
--      Set<Integer> ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
-+      BitSet ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
- 
-       if (stif.iftype == IfStatement.IFTYPE_IFELSE) {
-         Statement ifstat = stif.getIfstat();
+       if (statement.iftype == IfStatement.IFTYPE_IFELSE) {
+         Statement ifStatement = statement.getIfstat();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-index c17d921..dca2ead 100644
+index b6c828b..0eb275e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
@@ -268,7 +416,7 @@ index c17d921..dca2ead 100644
  import java.util.List;
  
  public class AnnotationExprent extends Exprent {
-@@ -107,4 +108,10 @@ public class AnnotationExprent extends Exprent {
+@@ -95,4 +96,10 @@ public class AnnotationExprent extends Exprent {
             InterpreterUtil.equalLists(parNames, ann.parNames) &&
             InterpreterUtil.equalLists(parValues, ann.parValues);
    }
@@ -281,10 +429,10 @@ index c17d921..dca2ead 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
-index 3590b48..7e3bcfd 100644
+index d329ac2..d6b1b50 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
-@@ -23,15 +23,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -11,15 +11,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
@@ -302,7 +450,7 @@ index 3590b48..7e3bcfd 100644
      super(EXPRENT_ARRAY);
      this.array = array;
      this.index = index;
-@@ -120,4 +120,11 @@ public class ArrayExprent extends Exprent {
+@@ -108,4 +108,11 @@ public class ArrayExprent extends Exprent {
    public Exprent getIndex() {
      return index;
    }
@@ -316,18 +464,18 @@ index 3590b48..7e3bcfd 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
-index af95d15..82305f3 100644
+index 0ae9fee..3b42a2f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
-@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
- import org.jetbrains.java.decompiler.main.TextBuffer;
+@@ -6,6 +6,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  
 +import java.util.BitSet;
  import java.util.List;
  
  public class AssertExprent extends Exprent {
-@@ -51,4 +52,10 @@ public class AssertExprent extends Exprent {
+@@ -39,4 +40,10 @@ public class AssertExprent extends Exprent {
  
      return buffer;
    }
@@ -339,10 +487,10 @@ index af95d15..82305f3 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 4374ff8..f0801e2 100644
+index 2e09e5b..81dae70 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-@@ -27,8 +27,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -15,8 +15,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
@@ -352,7 +500,7 @@ index 4374ff8..f0801e2 100644
  
  public class AssignmentExprent extends Exprent {
  
-@@ -52,7 +52,7 @@ public class AssignmentExprent extends Exprent {
+@@ -40,7 +40,7 @@ public class AssignmentExprent extends Exprent {
    private Exprent right;
    private int condType = CONDITION_NONE;
  
@@ -361,7 +509,7 @@ index 4374ff8..f0801e2 100644
      super(EXPRENT_ASSIGNMENT);
      this.left = left;
      this.right = right;
-@@ -182,6 +182,13 @@ public class AssignmentExprent extends Exprent {
+@@ -170,6 +170,13 @@ public class AssignmentExprent extends Exprent {
             condType == as.getCondType();
    }
  
@@ -376,16 +524,16 @@ index 4374ff8..f0801e2 100644
    // getter and setter methods
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 85f7d00..d07efe7 100644
+index fedfaa7..4e81505 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -50,15 +50,15 @@ public class ConstExprent extends Exprent {
+@@ -38,15 +38,15 @@ public class ConstExprent extends Exprent {
    private final Object value;
    private final boolean boolPermitted;
  
 -  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
 +  public ConstExprent(int val, boolean boolPermitted, BitSet bytecodeOffsets) {
-     this(guessType(val, boolPermitted), Integer.valueOf(val), boolPermitted, bytecodeOffsets);
+     this(guessType(val, boolPermitted), val, boolPermitted, bytecodeOffsets);
    }
  
 -  public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
@@ -398,23 +546,23 @@ index 85f7d00..d07efe7 100644
      super(EXPRENT_CONST);
      this.constType = constType;
      this.value = value;
-@@ -411,6 +411,11 @@ public class ConstExprent extends Exprent {
-   public boolean isBoolPermitted() {
+@@ -404,6 +404,11 @@ public class ConstExprent extends Exprent {
      return boolPermitted;
    }
-+
+ 
 +  @Override
 +  public void getBytecodeRange(BitSet values) {
 +    measureBytecode(values);
 +  }
-   
++  
    // *****************************************************************************
    // IMatchable implementation
+   // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index 0f16b66..8550569 100644
+index 67cf69b..aa2e504 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-@@ -30,8 +30,8 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+@@ -18,8 +18,8 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
@@ -424,7 +572,7 @@ index 0f16b66..8550569 100644
  
  public class ExitExprent extends Exprent {
  
-@@ -42,7 +42,7 @@ public class ExitExprent extends Exprent {
+@@ -30,7 +30,7 @@ public class ExitExprent extends Exprent {
    private Exprent value;
    private final VarType retType;
  
@@ -433,25 +581,25 @@ index 0f16b66..8550569 100644
      super(EXPRENT_EXIT);
      this.exitType = exitType;
      this.value = value;
-@@ -153,6 +153,13 @@ public class ExitExprent extends Exprent {
-   public VarType getRetType() {
+@@ -142,6 +142,13 @@ public class ExitExprent extends Exprent {
      return retType;
    }
-+
+ 
 +  @Override
 +  public void getBytecodeRange(BitSet values) {
 +    measureBytecode(values, value);
 +    measureBytecode(values);
 +  }
 +
-   
++  
    // *****************************************************************************
    // IMatchable implementation
+   // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index c3d3807..6284f3c 100644
+index 618d786..d0e1613 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-@@ -28,7 +28,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+@@ -16,7 +16,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
  
  import java.util.ArrayList;
@@ -460,7 +608,7 @@ index c3d3807..6284f3c 100644
  import java.util.Collections;
  import java.util.Comparator;
  import java.util.HashSet;
-@@ -36,7 +36,7 @@ import java.util.List;
+@@ -24,7 +24,7 @@ import java.util.List;
  import java.util.Map.Entry;
  import java.util.Set;
  
@@ -469,7 +617,7 @@ index c3d3807..6284f3c 100644
    public static final int MULTIPLE_USES = 1;
    public static final int SIDE_EFFECTS_FREE = 2;
    public static final int BOTH_FLAGS = 3;
-@@ -58,7 +58,7 @@ public class Exprent implements IMatchable {
+@@ -46,7 +46,7 @@ public class Exprent implements IMatchable {
  
    public final int type;
    public final int id;
@@ -478,7 +626,7 @@ index c3d3807..6284f3c 100644
  
    public Exprent(int type) {
      this.type = type;
-@@ -131,14 +131,31 @@ public class Exprent implements IMatchable {
+@@ -119,14 +119,31 @@ public class Exprent implements IMatchable {
  
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
  
@@ -517,10 +665,10 @@ index c3d3807..6284f3c 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 6d549b1..6ae5ac6 100644
+index 02425fc..1ab8dcf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-@@ -34,8 +34,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -22,8 +22,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
  import org.jetbrains.java.decompiler.util.TextUtil;
  
  import java.util.ArrayList;
@@ -530,7 +678,7 @@ index 6d549b1..6ae5ac6 100644
  
  public class FieldExprent extends Exprent {
    private final String name;
-@@ -44,11 +44,11 @@ public class FieldExprent extends Exprent {
+@@ -32,11 +32,11 @@ public class FieldExprent extends Exprent {
    private Exprent instance;
    private final FieldDescriptor descriptor;
  
@@ -544,24 +692,24 @@ index 6d549b1..6ae5ac6 100644
      super(EXPRENT_FIELD);
      this.name = name;
      this.classname = classname;
-@@ -196,6 +196,12 @@ public class FieldExprent extends Exprent {
-   public String getName() {
+@@ -185,6 +185,12 @@ public class FieldExprent extends Exprent {
      return name;
    }
-+
+ 
 +  @Override
 +  public void getBytecodeRange(BitSet values) {
 +    measureBytecode(values, instance);
 +    measureBytecode(values);
 +  }
-   
++  
    // *****************************************************************************
    // IMatchable implementation
+   // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 0cc0025..354b620 100644
+index 487d939..eb35f03 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -198,7 +198,7 @@ public class FunctionExprent extends Exprent {
+@@ -186,7 +186,7 @@ public class FunctionExprent extends Exprent {
    private VarType implicitType;
    private final List<Exprent> lstOperands;
  
@@ -570,7 +718,7 @@ index 0cc0025..354b620 100644
      this(funcType, new ArrayList<>(), bytecodeOffsets);
  
      if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
-@@ -214,7 +214,7 @@ public class FunctionExprent extends Exprent {
+@@ -202,7 +202,7 @@ public class FunctionExprent extends Exprent {
      }
    }
  
@@ -579,7 +727,7 @@ index 0cc0025..354b620 100644
      super(EXPRENT_FUNCTION);
      this.funcType = funcType;
      this.lstOperands = operands;
-@@ -222,7 +222,7 @@ public class FunctionExprent extends Exprent {
+@@ -210,7 +210,7 @@ public class FunctionExprent extends Exprent {
      addBytecodeOffsets(bytecodeOffsets);
    }
  
@@ -588,24 +736,24 @@ index 0cc0025..354b620 100644
      this(funcType, new ArrayList<>(1), bytecodeOffsets);
      lstOperands.add(operand);
    }
-@@ -619,6 +619,12 @@ public class FunctionExprent extends Exprent {
-   public void setImplicitType(VarType implicitType) {
+@@ -600,6 +600,12 @@ public class FunctionExprent extends Exprent {
      this.implicitType = implicitType;
    }
-+
+ 
 +  @Override
 +  public void getBytecodeRange(BitSet values) {
 +    measureBytecode(values, lstOperands);
 +    measureBytecode(values);
 +  }
-   
++  
    // *****************************************************************************
    // IMatchable implementation
+   // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
-index d1537bd..e4dfd21 100644
+index 6f10a69..6bb755d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
-@@ -75,7 +75,7 @@ public class IfExprent extends Exprent {
+@@ -62,7 +62,7 @@ public class IfExprent extends Exprent {
  
    private Exprent condition;
  
@@ -614,7 +762,7 @@ index d1537bd..e4dfd21 100644
      this(null, bytecodeOffsets);
  
      if (ifType <= IF_LE) {
-@@ -93,7 +93,7 @@ public class IfExprent extends Exprent {
+@@ -80,7 +80,7 @@ public class IfExprent extends Exprent {
      }
    }
  
@@ -623,22 +771,24 @@ index d1537bd..e4dfd21 100644
      super(EXPRENT_IF);
      this.condition = condition;
  
-@@ -146,4 +146,10 @@ public class IfExprent extends Exprent {
+@@ -133,4 +133,10 @@ public class IfExprent extends Exprent {
    public void setCondition(Exprent condition) {
      this.condition = condition;
    }
+-}
+\ No newline at end of file
 +
 +  @Override
 +  public void getBytecodeRange(BitSet values) {
 +    measureBytecode(values, condition);
 +    measureBytecode(values);
 +  }
- }
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 8d53711..277d72a 100644
+index 5175743..1b5eeb5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -78,7 +78,7 @@ public class InvocationExprent extends Exprent {
+@@ -67,7 +67,7 @@ public class InvocationExprent extends Exprent {
                             LinkConstant cn,
                             List<PooledConstant> bootstrapArguments,
                             ListStack<Exprent> stack,
@@ -647,7 +797,7 @@ index 8d53711..277d72a 100644
      this();
  
      name = cn.elementname;
-@@ -603,6 +603,13 @@ public class InvocationExprent extends Exprent {
+@@ -627,6 +627,13 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  
@@ -662,10 +812,10 @@ index 8d53711..277d72a 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
-index 1546064..0cc24ac 100644
+index 795ac06..877d289 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
-@@ -20,8 +20,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -8,8 +8,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
@@ -675,7 +825,7 @@ index 1546064..0cc24ac 100644
  
  public class MonitorExprent extends Exprent {
  
-@@ -31,7 +31,7 @@ public class MonitorExprent extends Exprent {
+@@ -19,7 +19,7 @@ public class MonitorExprent extends Exprent {
    private final int monType;
    private Exprent value;
  
@@ -684,7 +834,7 @@ index 1546064..0cc24ac 100644
      super(EXPRENT_MONITOR);
      this.monType = monType;
      this.value = value;
-@@ -87,4 +87,10 @@ public class MonitorExprent extends Exprent {
+@@ -75,4 +75,10 @@ public class MonitorExprent extends Exprent {
    public Exprent getValue() {
      return value;
    }
@@ -696,21 +846,21 @@ index 1546064..0cc24ac 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 8510a8b..34875cc 100644
+index 96d31fa..91f2ce7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -34,9 +34,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -22,8 +22,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
  import org.jetbrains.java.decompiler.util.ListStack;
  
  import java.util.ArrayList;
 +import java.util.BitSet;
- import java.util.Collections;
++import java.util.Collections;
  import java.util.List;
 -import java.util.Set;
  
  public class NewExprent extends Exprent {
    private InvocationExprent constructor;
-@@ -49,11 +49,11 @@ public class NewExprent extends Exprent {
+@@ -36,11 +37,11 @@ public class NewExprent extends Exprent {
    private boolean lambda;
    private boolean enumConst;
  
@@ -724,7 +874,7 @@ index 8510a8b..34875cc 100644
      super(EXPRENT_NEW);
      this.newType = newType;
      this.lstDims = lstDims;
-@@ -475,6 +475,14 @@ public class NewExprent extends Exprent {
+@@ -433,6 +434,14 @@ public class NewExprent extends Exprent {
             InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
    }
  
@@ -740,10 +890,10 @@ index 8510a8b..34875cc 100644
      return constructor;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
-index cadf94f..655cd2d 100644
+index 1b1025e..622cdec 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
-@@ -22,15 +22,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -10,15 +10,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
@@ -761,7 +911,7 @@ index cadf94f..655cd2d 100644
      super(EXPRENT_SWITCH);
      this.value = value;
  
-@@ -112,6 +112,22 @@ public class SwitchExprent extends Exprent {
+@@ -100,6 +100,22 @@ public class SwitchExprent extends Exprent {
      return InterpreterUtil.equalObjects(value, sw.getValue());
    }
  
@@ -785,10 +935,10 @@ index cadf94f..655cd2d 100644
      return value;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index d31f809..3972328 100644
+index 710bd1b..93b2b08 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -41,6 +41,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -29,6 +29,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
  import org.jetbrains.java.decompiler.util.TextUtil;
  
  import java.util.ArrayList;
@@ -796,10 +946,10 @@ index d31f809..3972328 100644
  import java.util.List;
  
  public class VarExprent extends Exprent {
-@@ -52,21 +53,20 @@ public class VarExprent extends Exprent {
+@@ -40,21 +41,20 @@ public class VarExprent extends Exprent {
    private VarType varType;
    private boolean definition = false;
-   private VarProcessor processor;
+   private final VarProcessor processor;
 -  private final int visibleOffset;
    private int version = 0;
    private boolean classDef = false;
@@ -821,7 +971,7 @@ index d31f809..3972328 100644
    }
  
    @Override
-@@ -86,7 +86,7 @@ public class VarExprent extends Exprent {
+@@ -74,7 +74,7 @@ public class VarExprent extends Exprent {
  
    @Override
    public Exprent copy() {
@@ -830,7 +980,7 @@ index d31f809..3972328 100644
      var.setDefinition(definition);
      var.setVersion(version);
      var.setClassDef(classDef);
-@@ -135,7 +135,7 @@ public class VarExprent extends Exprent {
+@@ -123,7 +123,7 @@ public class VarExprent extends Exprent {
      if (attr != null && processor != null) {
        Integer origIndex = processor.getVarOriginalIndex(index);
        if (origIndex != null) {
@@ -839,7 +989,7 @@ index d31f809..3972328 100644
          if (name != null && TextUtil.isValidIdentifier(name, method.getClassStruct().getBytecodeVersion())) {
            return name;
          }
-@@ -152,6 +152,7 @@ public class VarExprent extends Exprent {
+@@ -140,6 +140,7 @@ public class VarExprent extends Exprent {
          if (processor != null) {
            originalIndex = processor.getVarOriginalIndex(index);
          }
@@ -847,7 +997,7 @@ index d31f809..3972328 100644
          if (originalIndex != null) {
            // first try from signature
            if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-@@ -196,6 +197,11 @@ public class VarExprent extends Exprent {
+@@ -184,6 +185,11 @@ public class VarExprent extends Exprent {
             InterpreterUtil.equalObjects(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
    }
  
@@ -860,10 +1010,10 @@ index d31f809..3972328 100644
      return index;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-index 334637c..b359dc7 100644
+index 377d212..9d31e27 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
+@@ -12,6 +12,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -871,7 +1021,7 @@ index 334637c..b359dc7 100644
  
  public class BasicBlockStatement extends Statement {
  
-@@ -96,4 +97,13 @@ public class BasicBlockStatement extends Statement {
+@@ -84,4 +85,13 @@ public class BasicBlockStatement extends Statement {
    public BasicBlock getBlock() {
      return block;
    }
@@ -886,11 +1036,11 @@ index 334637c..b359dc7 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
-index f74e745..2add759 100644
+index 0b6e58b..c7825ce 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
-@@ -15,28 +15,24 @@
-  */
+@@ -1,28 +1,24 @@
+ // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  package org.jetbrains.java.decompiler.modules.decompiler.stats;
  
 -import java.util.Collection;
@@ -924,10 +1074,10 @@ index f74e745..2add759 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-index 9639e18..7fc3b97 100644
+index 7962bb1..9df96af 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
+@@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
  import org.jetbrains.java.decompiler.struct.match.IMatchable;
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
@@ -935,12 +1085,10 @@ index 9639e18..7fc3b97 100644
  import org.jetbrains.java.decompiler.util.TextUtil;
  
  import java.util.ArrayList;
-@@ -424,7 +425,14 @@ public class IfStatement extends Statement {
-   public StatEdge getElseEdge() {
+@@ -401,6 +402,13 @@ public class IfStatement extends Statement {
      return elseedge;
    }
--  
-+
+ 
 +  @Override
 +  public StartEndPair getStartEndRange() {
 +    return StartEndPair.join(super.getStartEndRange(), 
@@ -952,32 +1100,34 @@ index 9639e18..7fc3b97 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-index 7193f9a..7039ce7 100644
+index 5133036..6bef2fc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
- import org.jetbrains.java.decompiler.main.TextBuffer;
+@@ -6,6 +6,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 +import org.jetbrains.java.decompiler.util.StartEndPair;
  
- 
  public class RootStatement extends Statement {
-@@ -46,4 +47,9 @@ public class RootStatement extends Statement {
-   public void setDummyExit(DummyExitStatement dummyExit) {
-     this.dummyExit = dummyExit;
+   private final DummyExitStatement dummyExit;
+@@ -27,4 +28,9 @@ public class RootStatement extends Statement {
+   public DummyExitStatement getDummyExit() {
+     return dummyExit;
    }
+-}
+\ No newline at end of file
 +
 +  @Override
 +  public StartEndPair getStartEndRange() {
 +    return StartEndPair.join(first.getStartEndRange(), dummyExit != null ? dummyExit.getStartEndRange() : null);
 +  }
- }
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index a199c28..2370830 100644
+index e57e9ef..92b45b6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-@@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
+@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -985,10 +1135,10 @@ index a199c28..2370830 100644
  import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
  import java.util.*;
-@@ -860,6 +861,40 @@ public class Statement implements IMatchable {
+@@ -831,6 +832,40 @@ public class Statement implements IMatchable {
      return id.toString();
    }
-   
+ 
 +  //TODO: Cleanup/cache?
 +  public void getOffset(BitSet values) {
 +    if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null)
@@ -1022,15 +1172,15 @@ index a199c28..2370830 100644
 +    return endpoints;
 +  }
 +
-+  
++
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 1a3b59d..575660a 100644
+index 1f612ed..f50d8d0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -30,6 +30,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+@@ -18,6 +18,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -1038,7 +1188,7 @@ index 1a3b59d..575660a 100644
  
  import java.util.*;
  
-@@ -216,6 +217,17 @@ public class SwitchStatement extends Statement {
+@@ -204,6 +205,17 @@ public class SwitchStatement extends Statement {
      sortEdgesAndNodes();
    }
  
@@ -1056,6 +1206,32 @@ index 1a3b59d..575660a 100644
    // *****************************************************************************
    // private methods
    // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
+index 42003f3..fbf369a 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
+@@ -313,11 +313,11 @@ public class StructMethod extends StructMember {
+         }
+       }
+ 
+-      Instruction instr = Instruction.create(opcode, wide, group, bytecode_version, ops);
++      i++;
+ 
+-      instructions.addWithKey(instr, offset);
++      Instruction instr = Instruction.create(opcode, wide, group, bytecode_version, ops, i - offset);
+ 
+-      i++;
++      instructions.addWithKey(instr, offset);
+     }
+ 
+     // initialize exception table
+@@ -387,4 +387,4 @@ public class StructMethod extends StructMember {
+   public String toString() {
+     return name;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/util/StartEndPair.java b/src/org/jetbrains/java/decompiler/util/StartEndPair.java
 new file mode 100644
 index 0000000..ded36aa
@@ -1789,7 +1965,7 @@ index 852ae47..1547551 100644
     }
  }
 diff --git a/testData/results/TestClassLambda.dec b/testData/results/TestClassLambda.dec
-index 609928c..fa9109d 100644
+index daeb7e1..4d8afe7 100644
 --- a/testData/results/TestClassLambda.dec
 +++ b/testData/results/TestClassLambda.dec
 @@ -25,12 +25,12 @@ public class TestClassLambda {
@@ -3089,7 +3265,7 @@ index 7ddb0ce..9892a07 100644
     }
  }
 diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
-index 406e1f4..623193f 100644
+index 9acbef8..459ecc8 100644
 --- a/testData/results/TestInnerSignature.dec
 +++ b/testData/results/TestInnerSignature.dec
 @@ -36,27 +36,64 @@ public class TestInnerSignature<A, B, C> {
@@ -3311,21 +3487,6 @@ index d1e3f7b..0e94145 100644
 -12 <-> 24
 +12 <-> 32
  13 <-> 35
-diff --git a/testData/results/TestLocalClass.dec b/testData/results/TestLocalClass.dec
-index 27c2958..00e06e1 100644
---- a/testData/results/TestLocalClass.dec
-+++ b/testData/results/TestLocalClass.dec
-@@ -38,7 +38,10 @@ class 'pkg/TestLocalClass' {
-       0      4
-       1      4
-       a      12
-+      b      13
-       c      13
-+      d      13
-+      e      13
-       f      14
-    }
- 
 diff --git a/testData/results/TestLocalsNames.dec b/testData/results/TestLocalsNames.dec
 index fe6fe79..59563dd 100644
 --- a/testData/results/TestLocalsNames.dec
@@ -3497,10 +3658,10 @@ index 3449a8c..0ddb1b5 100644
     }
  }
 diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
-index eae376a..52f2cdf 100644
+index 8809dcc..f81bba9 100644
 --- a/testData/results/TestPrimitives.dec
 +++ b/testData/results/TestPrimitives.dec
-@@ -90,106 +90,247 @@ public class TestPrimitives {
+@@ -165,22 +165,57 @@ public class TestPrimitives {
  
  class 'pkg/TestPrimitives' {
     method 'printAll ()V' {
@@ -3554,243 +3715,10 @@ index eae376a..52f2cdf 100644
        2f      11
 +      30      11
 +      31      11
-       32      12
-+      33      12
-+      34      12
-       35      12
-+      36      12
-+      3d      12
-       3e      12
-+      3f      12
-+      40      12
-       41      12
-+      42      12
-+      43      12
-+      47      12
-       48      12
-+      49      12
-+      4a      12
-       4b      12
-+      4c      12
-+      4d      12
-+      51      12
-       52      12
-+      53      12
-+      54      12
-       55      12
-+      56      12
-+      57      12
-+      5b      12
-       5c      12
-+      5d      12
-+      5e      12
-       5f      12
-+      60      12
-+      61      12
-       63      12
-+      64      12
-+      65      12
-       66      12
-+      67      12
-+      68      12
-       69      13
-    }
- 
-    method 'printBoolean (Z)V' {
-       0      16
-+      1      16
-+      2      16
-       3      16
-+      4      16
-+      b      16
-       c      16
-+      d      16
-+      e      16
-       10      16
-+      11      16
-+      12      16
-       13      16
-+      14      16
-+      15      16
-       16      17
-    }
- 
-    method 'printByte (B)V' {
-       0      20
-+      1      20
-+      2      20
-       3      20
-+      4      20
-+      b      20
-       c      20
-+      d      20
-+      e      20
-       10      20
-+      11      20
-+      12      20
-       13      20
-+      14      20
-+      15      20
-       16      21
-    }
- 
-    method 'printShort (S)V' {
-       0      24
-+      1      24
-+      2      24
-       3      24
-+      4      24
-+      b      24
-       c      24
-+      d      24
-+      e      24
-       10      24
-+      11      24
-+      12      24
-       13      24
-+      14      24
-+      15      24
-       16      25
-    }
- 
-    method 'printInt (I)V' {
-       0      28
-+      1      28
-+      2      28
-       3      28
-+      4      28
-+      b      28
-       c      28
-+      d      28
-+      e      28
-       10      28
-+      11      28
-+      12      28
-       13      28
-+      14      28
-+      15      28
-       16      29
-    }
- 
-    method 'printLong (J)V' {
-       0      32
-+      1      32
-+      2      32
-       3      32
-+      4      32
-+      b      32
-       c      32
-+      d      32
-+      e      32
-       10      32
-+      11      32
-+      12      32
-       13      32
-+      14      32
-+      15      32
-       16      33
-    }
- 
-    method 'printFloat (F)V' {
-       0      36
-+      1      36
-+      2      36
-       3      36
-+      4      36
-+      b      36
-       c      36
-+      d      36
-+      e      36
-       10      36
-+      11      36
-+      12      36
-       13      36
-+      14      36
-+      15      36
-       16      37
-    }
- 
-    method 'printDouble (D)V' {
-       0      40
-+      1      40
-+      2      40
-       3      40
-+      4      40
-+      b      40
-       c      40
-+      d      40
-+      e      40
-       10      40
-+      11      40
-+      12      40
-       13      40
-+      14      40
-+      15      40
-       16      41
-    }
- 
-    method 'printChar (C)V' {
-       0      44
-+      1      44
-+      2      44
-       3      44
-+      4      44
-+      b      44
-       c      44
-+      d      44
-+      e      44
-       10      44
-+      11      44
-+      12      44
-       13      44
-+      14      44
-+      15      44
-       16      45
-    }
- 
-@@ -200,26 +341,42 @@ class 'pkg/TestPrimitives' {
- 
-    method 'getByte ()B' {
-       0      52
-+      1      52
-       2      52
-    }
- 
-    method 'getShort ()S' {
-       0      56
-+      1      56
-+      2      56
-       3      56
-    }
- 
-    method 'getInt ()I' {
-       0      60
-+      1      60
-       2      60
-    }
- 
-    method 'printNarrowed ()V' {
-+      0      64
-+      1      64
-       2      64
-+      3      64
-+      4      64
-       5      64
-       6      64
-+      7      64
-+      8      64
-+      9      65
-+      a      65
-       b      65
-+      c      65
-+      d      65
-       e      65
-       f      65
-+      10      65
-+      11      65
-       12      66
-    }
- 
++      32      12
+       33      12
+       37      12
+       3b      13
 diff --git a/testData/results/TestStaticNameClash.dec b/testData/results/TestStaticNameClash.dec
 index 230983e..6ba0c70 100644
 --- a/testData/results/TestStaticNameClash.dec
@@ -4097,7 +4025,7 @@ index 092564e..b3e3ac2 100644
     }
  }
 diff --git a/testData/results/TestVarArgCalls.dec b/testData/results/TestVarArgCalls.dec
-index 1ccd16a..5313dae 100644
+index 6cdcd8f..db4cb49 100644
 --- a/testData/results/TestVarArgCalls.dec
 +++ b/testData/results/TestVarArgCalls.dec
 @@ -27,58 +27,135 @@ public class TestVarArgCalls {
@@ -4249,5 +4177,5 @@ index 590d894..f743fc8 100644
     }
  
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

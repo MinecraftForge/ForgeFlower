@@ -1,14 +1,14 @@
-From 5b6aae55c84fea45e1eb5e2c1776da962d02746c Mon Sep 17 00:00:00 2001
+From 616a3ced8938fcb2c7f5eb9c59c12171d9c3f380 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 15 Apr 2017 17:32:28 -0700
 Subject: [PATCH] Enhance switch on enum output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 24c1947..ba77e1e 100644
+index 30ce17e..e121ed5 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -16,6 +16,7 @@
+@@ -2,6 +2,7 @@
  package org.jetbrains.java.decompiler.main.rels;
  
  import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -16,7 +16,7 @@ index 24c1947..ba77e1e 100644
  import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-@@ -25,8 +26,11 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+@@ -11,8 +12,11 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
  import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
  import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -28,7 +28,7 @@ index 24c1947..ba77e1e 100644
  import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
-@@ -100,6 +104,125 @@ public class NestedClassProcessor {
+@@ -81,6 +85,125 @@ public class NestedClassProcessor {
        processClass(root, child);
      }
    }
@@ -155,19 +155,19 @@ index 24c1947..ba77e1e 100644
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index cf935f4..3513ffc 100644
+index 92ee80e..c3eb3cc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-@@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+@@ -8,7 +8,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
- import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 -
 +import org.jetbrains.java.decompiler.struct.StructField;
  import java.util.ArrayList;
  import java.util.HashMap;
  import java.util.List;
-@@ -85,10 +85,45 @@ public class SwitchHelper {
+@@ -67,10 +67,45 @@ public class SwitchHelper {
      }
    }
  
@@ -485,5 +485,5 @@ index e474d34..974898e 100644
 +  }
  }
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

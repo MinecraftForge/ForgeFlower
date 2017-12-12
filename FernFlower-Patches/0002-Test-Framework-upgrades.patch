@@ -1,14 +1,14 @@
-From e686cb3e938893d7f11715e5ae3223a41e662a26 Mon Sep 17 00:00:00 2001
+From 549c5514298b30d410cde2c318b561097f8ede9d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 23:18:58 -0700
 Subject: [PATCH] Test Framework upgrades
 
 
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index 2dbcce6..d1d7f88 100644
+index aebf570..b190b4d 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-@@ -33,6 +33,7 @@ public class DecompilerTestFixture {
+@@ -22,6 +22,7 @@ public class DecompilerTestFixture {
    private File tempDir;
    private File targetDir;
    private TestConsoleDecompiler decompiler;
@@ -16,7 +16,7 @@ index 2dbcce6..d1d7f88 100644
  
    public void setUp(String... optionPairs) throws IOException {
      assertThat(optionPairs.length % 2).isEqualTo(0);
-@@ -66,7 +67,7 @@ public class DecompilerTestFixture {
+@@ -55,7 +56,7 @@ public class DecompilerTestFixture {
    }
  
    public void tearDown() {
@@ -25,7 +25,7 @@ index 2dbcce6..d1d7f88 100644
        delete(tempDir);
      }
      decompiler.close();
-@@ -87,6 +88,14 @@ public class DecompilerTestFixture {
+@@ -76,6 +77,14 @@ public class DecompilerTestFixture {
    public ConsoleDecompiler getDecompiler() {
      return decompiler;
    }
@@ -41,11 +41,11 @@ index 2dbcce6..d1d7f88 100644
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index fd48f0d..30efdbe 100644
+index 9c971c3..de78855 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -15,35 +15,18 @@
-  */
+@@ -1,35 +1,18 @@
+ // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  package org.jetbrains.java.decompiler;
  
 -import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -88,11 +88,11 @@ index fd48f0d..30efdbe 100644
 +    };
    }
  
-   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
-@@ -119,45 +102,4 @@ public class SingleClassesTest {
-   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
-   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
-   //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
+   @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
+@@ -114,45 +97,4 @@ public class SingleClassesTest {
+   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
+   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
 -
 -  private void doTest(String testFile, String... companionFiles) {
 -    ConsoleDecompiler decompiler = fixture.getDecompiler();
@@ -233,5 +233,5 @@ index 0000000..eadf5e8
 +}
 \ No newline at end of file
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

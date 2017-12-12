@@ -1,14 +1,14 @@
-From 7be525ac7d736bac0e87a6be0343edc474801d8c Mon Sep 17 00:00:00 2001
+From db2fc662ea2cabda8a0161004f2d98a4b37f85c0 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 18:37:18 -0700
 Subject: [PATCH] Reintroduce DotExporter for debugging purposes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index ba77e1e..7367df0 100644
+index e121ed5..af07983 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -40,6 +40,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
+@@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -16,19 +16,19 @@ index ba77e1e..7367df0 100644
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.*;
-@@ -410,6 +411,7 @@ public class NestedClassProcessor {
+@@ -380,6 +381,7 @@ public class NestedClassProcessor {
        // iterate enclosing class
-       for (final MethodWrapper method : node.getWrapper().getMethods()) {
+       for (MethodWrapper method : node.getWrapper().getMethods()) {
          if (method.root != null) { // neither abstract, nor native
 +          DotExporter.toDotFile(method.getOrBuildGraph(), method.methodStruct, "computeLocalVars");
-           method.getOrBuildGraph().iterateExprents(new DirectGraph.ExprentIterator() {
-             @Override
-             public int processExprent(Exprent exprent) {
+           method.getOrBuildGraph().iterateExprents(exprent -> {
+             List<Exprent> lst = exprent.getAllExprents(true);
+             lst.add(exprent);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index b6a2245..df3c1b5 100644
+index 6efce5e..8e57cd7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-@@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+@@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -36,7 +36,7 @@ index b6a2245..df3c1b5 100644
  import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
  import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -69,9 +70,7 @@ public class SSAConstructorSparseEx {
+@@ -53,9 +54,7 @@ public class SSAConstructorSparseEx {
      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
      DirectGraph dgraph = flatthelper.buildDirectGraph(root);
  
@@ -47,7 +47,7 @@ index b6a2245..df3c1b5 100644
  
      List<Integer> setInit = new ArrayList<>();
      for (int i = 0; i < 64; i++) {
-@@ -84,20 +83,19 @@ public class SSAConstructorSparseEx {
+@@ -68,20 +67,19 @@ public class SSAConstructorSparseEx {
  
      setCatchMaps(root, dgraph, flatthelper);
  
@@ -73,10 +73,10 @@ index b6a2245..df3c1b5 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 01d21d5..6f3ab79 100644
+index f5719d1..3607a8d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-@@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
  import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -84,7 +84,7 @@ index 01d21d5..6f3ab79 100644
  import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
  import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -88,6 +89,8 @@ public class SSAUConstructorSparseEx {
+@@ -71,6 +72,8 @@ public class SSAUConstructorSparseEx {
      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
      DirectGraph dgraph = flatthelper.buildDirectGraph(root);
  
@@ -93,7 +93,7 @@ index 01d21d5..6f3ab79 100644
      List<Integer> setInit = new ArrayList<>();
      for (int i = 0; i < 64; i++) {
        setInit.add(i);
-@@ -98,25 +101,24 @@ public class SSAUConstructorSparseEx {
+@@ -81,25 +84,24 @@ public class SSAUConstructorSparseEx {
  
      setCatchMaps(root, dgraph, flatthelper);
  
@@ -126,10 +126,10 @@ index 01d21d5..6f3ab79 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index cce407c..4c18dd7 100644
+index c211d68..eca0d0f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-@@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+@@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
  import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -137,7 +137,7 @@ index cce407c..4c18dd7 100644
  import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
  
  import java.util.*;
-@@ -50,6 +51,8 @@ public class VarVersionsProcessor {
+@@ -36,6 +37,8 @@ public class VarVersionsProcessor {
      FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
      DirectGraph graph = flattenHelper.buildDirectGraph(root);
  
@@ -392,5 +392,5 @@ index 0000000..d3c6f92
 +}
 \ No newline at end of file
 -- 
-2.10.0.windows.1
+2.14.1.windows.1
 

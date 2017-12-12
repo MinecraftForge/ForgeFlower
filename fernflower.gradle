@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
 
-version = '1.0.342-SNAPSHOT' // OurVersion.FernFlowerCommitNumber-SNAPSHOT
+version = '1.5.380-SNAPSHOT' // OurVersion.FernFlowerCommitNumber-SNAPSHOT
 group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
 archivesBaseName = 'forgeflower'
 
@@ -25,9 +25,9 @@ dependencies {
     // The Java9 code depends on (can see) the "main" source set
     java9Implementation files(sourceSets.main.output.classesDirs) { builtBy compileJava }
 
-    testCompile 'junit:junit:4.12'
+    testCompile 'junit:junit:4.+'
     testCompile 'org.hamcrest:hamcrest-core:1.3'
-    testCompile 'org.assertj:assertj-core:3.6.1'
+    testCompile 'org.assertj:assertj-core:3.+'
     
     // MC test only
     testRuntime "com.mojang:patchy:1.0"
