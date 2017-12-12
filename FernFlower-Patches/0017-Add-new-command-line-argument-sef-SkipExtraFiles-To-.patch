@@ -1,0 +1,51 @@
+From b3395fc7812565e759fdefbffa571854e51f5529 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Tue, 12 Dec 2017 00:18:19 -0800
+Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip
+ copying non-class files from the input jars to the output.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 863bf3d..4038554 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -49,6 +49,8 @@ public interface IFernflowerPreferences {
+ 
+   String USE_JAD_VARNAMING = "jvn";
+ 
++  String SKIP_EXTRA_FILES = "sef";
++
+   Map<String, Object> DEFAULTS = getDefaults();
+ 
+   static Map<String, Object> getDefaults() {
+@@ -88,6 +90,7 @@ public interface IFernflowerPreferences {
+     defaults.put(UNIT_TEST_MODE, "0");
+     defaults.put(DUMP_ORIGINAL_LINES, "0");
+     defaults.put(USE_JAD_VARNAMING, "0");
++    defaults.put(SKIP_EXTRA_FILES, "0");
+ 
+     return Collections.unmodifiableMap(defaults);
+   }
+diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+index f9cd2af..f7b253b 100644
+--- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
++++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+@@ -54,6 +54,8 @@ public class ContextUnit {
+   }
+ 
+   public void addOtherEntry(String fullPath, String entry) {
++    if (DecompilerContext.getOption(IFernflowerPreferences.SKIP_EXTRA_FILES))
++        return;
+     otherEntries.add(new String[]{fullPath, entry});
+   }
+ 
+@@ -150,4 +152,4 @@ public class ContextUnit {
+   public List<StructClass> getClasses() {
+     return classes;
+   }
+-}
+\ No newline at end of file
++}
+-- 
+2.14.1.windows.1
+
