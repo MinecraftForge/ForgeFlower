@@ -1,4 +1,4 @@
-From 2877de8e7afca7f487bd0d49b75f9e19b7bc2ab0 Mon Sep 17 00:00:00 2001
+From fa0969c57ffe9149a3648f6aaf5df44462a7f081 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -21,7 +21,7 @@ index 89a865f..d74198a 100644
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 1c5b8e8..edb0339 100644
+index 1c5b8e8..9af622c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -40,6 +40,22 @@ index 1c5b8e8..edb0339 100644
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
+@@ -384,7 +386,7 @@ public class ClassesProcessor {
+ 
+       anonymousClassType = new VarType(lambda_class_name, true);
+ 
+-      boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
++      boolean is_method_reference = !classStruct.qualifiedName.equals(content_class_name);
+       if (!is_method_reference) { // content method in the same class, check synthetic flag
+         StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
+         is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
+@@ -439,4 +441,4 @@ public class ClassesProcessor {
+       public boolean is_content_method_static;
+     }
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 index 9c706f7..ba256e8 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
@@ -266,7 +282,7 @@ index eaacb61..f3f3eaa 100644
                  method.varproc.getExternalVars().add(newVar);
                  VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index ec2bb02..0635caf 100644
+index ec2bb02..054abbb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,13 +2,16 @@
@@ -303,7 +319,7 @@ index ec2bb02..0635caf 100644
            var.setLVT(lvt);
          }
  
-@@ -758,6 +762,39 @@ public class VarDefinitionHelper {
+@@ -758,6 +762,44 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().typeName());
      }
@@ -311,39 +327,44 @@ index ec2bb02..0635caf 100644
 +    Map<VarVersionPair, String> renames = this.mt.getVariableNamer().rename(typeNames);
 +
 +    // Stuff the parent context into enclosed child methods
-+    StatementIterator.iterate(root, new ExprentIterator(){
-+      @Override
-+      public int processExprent(Exprent exprent){
-+        ClassNode child = null;
-+        if (exprent.type == Exprent.EXPRENT_VAR) {
-+          VarExprent var = (VarExprent)exprent;
-+          if (var.isClassDef()) {
-+            child = DecompilerContext.getClassProcessor().getMapRootClasses().get(var.getVarType().value);
-+          }
++    StatementIterator.iterate(root, (exprent) -> {
++      List<StructMethod> methods = new ArrayList<>();
++      if (exprent.type == Exprent.EXPRENT_VAR) {
++        VarExprent var = (VarExprent)exprent;
++        if (var.isClassDef()) {
++          ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(var.getVarType().value);
++          if (child != null)
++            methods.addAll(child.classStruct.getMethods());
 +        }
-+        else if (exprent.type == Exprent.EXPRENT_NEW) {
-+          NewExprent _new = (NewExprent)exprent;
-+          if (_new.isAnonymous()) { //TODO: Check for Lambda here?
-+            child = DecompilerContext.getClassProcessor().getMapRootClasses().get(_new.getNewType().value);
-+            if (child != null && _new.isLambda() && child.lambdaInformation.is_method_reference) {
-+               child = null; // Lambda method reference has no methods, causes var leak to other methods in this class...
++      }
++      else if (exprent.type == Exprent.EXPRENT_NEW) {
++        NewExprent _new = (NewExprent)exprent;
++        if (_new.isAnonymous()) { //TODO: Check for Lambda here?
++          ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(_new.getNewType().value);
++          if (child != null) {
++            if (_new.isLambda()) {
++              if (child.lambdaInformation.is_method_reference) {
++                //methods.add(child.getWrapper().getClassStruct().getMethod(child.lambdaInformation.content_method_key));
++              } else {
++                methods.add(child.classStruct.getMethod(child.lambdaInformation.content_method_name, child.lambdaInformation.content_method_descriptor));
++              }
++            } else {
++              methods.addAll(child.classStruct.getMethods());
 +            }
 +          }
 +        }
-+
-+        if (child != null) {
-+          for (StructMethod meth : child.classStruct.getMethods()) {
-+            meth.getVariableNamer().addParentContext(VarDefinitionHelper.this.mt.getVariableNamer());
-+          }
-+        }
-+        return 0;
 +      }
++
++      for (StructMethod meth : methods) {
++        meth.getVariableNamer().addParentContext(VarDefinitionHelper.this.mt.getVariableNamer());
++      }
++      return 0;
 +    });
 +
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -767,7 +804,16 @@ public class VarDefinitionHelper {
+@@ -767,7 +809,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().lvt;
@@ -360,7 +381,7 @@ index ec2bb02..0635caf 100644
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -866,7 +912,7 @@ public class VarDefinitionHelper {
+@@ -866,7 +917,7 @@ public class VarDefinitionHelper {
        }
      }
    }
@@ -369,7 +390,7 @@ index ec2bb02..0635caf 100644
    //Helper classes because Java is dumb and doesn't have a Pair<K,V> class
    private static class SimpleEntry<K, V> implements Entry<K, V> {
      private K key;
-@@ -894,7 +940,7 @@ public class VarDefinitionHelper {
+@@ -894,7 +945,7 @@ public class VarDefinitionHelper {
      String cast;
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null) {
