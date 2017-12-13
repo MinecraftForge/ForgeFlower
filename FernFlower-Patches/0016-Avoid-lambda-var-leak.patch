@@ -1,0 +1,24 @@
+From d258c22def23386a089460a43506def2feb900c3 Mon Sep 17 00:00:00 2001
+From: kashike <kashike@vq.lc>
+Date: Wed, 2 Aug 2017 16:17:02 -0700
+Subject: [PATCH] Avoid lambda var leak
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 69b1351..8018ec6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -802,7 +802,9 @@ public class VarDefinitionHelper {
+ 
+         if (child != null) {
+           for (StructMethod meth : child.classStruct.getMethods()) {
+-            meth.getVariableNamer().addParentContext(VarDefinitionHelper.this.mt.getVariableNamer());
++            if (meth.isSynthetic() && (child.lambdaInformation != null && meth.getName().equals(child.lambdaInformation.content_method_name))) {
++              meth.getVariableNamer().addParentContext(VarDefinitionHelper.this.mt.getVariableNamer());
++            }
+           }
+         }
+         return 0;
+-- 
+2.13.3
+
