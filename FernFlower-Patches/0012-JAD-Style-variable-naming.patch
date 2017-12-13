@@ -1,4 +1,4 @@
-From fa0969c57ffe9149a3648f6aaf5df44462a7f081 Mon Sep 17 00:00:00 2001
+From a784cedac27f10a1feb24ffc316c78fd941730d0 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -256,10 +256,10 @@ index 0000000..fc1d7d6
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index eaacb61..f3f3eaa 100644
+index 4ca0748..32e77e4 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -522,7 +522,11 @@ public class NestedClassProcessor {
+@@ -536,7 +536,11 @@ public class NestedClassProcessor {
          Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
          Map<VarVersionPair, LocalVariable> mapNewLVTs = new HashMap<>(); // local var table entries
  
@@ -272,15 +272,6 @@ index eaacb61..f3f3eaa 100644
          if (method.synthParameters != null) {
            int index = 0, varIndex = 1;
            MethodDescriptor md = MethodDescriptor.parseDescriptor(method.methodStruct.getDescriptor());
-@@ -685,7 +689,7 @@ public class NestedClassProcessor {
-               String key = InterpreterUtil.makeUniqueKey(fExpr.getClassname(), fExpr.getName(), fExpr.getDescriptor().descriptorString);
-               if (mapFieldsToNewVars.containsKey(key)) {
-                 //if(fExpr.getClassname().equals(child.classStruct.qualifiedName) &&
--                //		mapFieldsToNewVars.containsKey(key)) {
-+                //        mapFieldsToNewVars.containsKey(key)) {
-                 VarVersionPair newVar = mapFieldsToNewVars.get(key);
-                 method.varproc.getExternalVars().add(newVar);
-                 VarExprent ret = new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 index ec2bb02..054abbb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java

@@ -1,4 +1,4 @@
-From 9d20508b4ef0b3875438fe0b5acf5837d31d935a Mon Sep 17 00:00:00 2001
+From 78eb7d540b1610d7d53126446c62f3e489f13420 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -144,7 +144,7 @@ index 9f047d4..8ac1d92 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index af07983..ec6b437 100644
+index af07983..313b473 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
@@ -155,7 +155,42 @@ index af07983..ec6b437 100644
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.util.DotExporter;
-@@ -519,6 +520,7 @@ public class NestedClassProcessor {
+@@ -232,6 +233,7 @@ public class NestedClassProcessor {
+     }
+ 
+     Map<VarVersionPair, String> mapNewNames = new HashMap<>();
++    Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
+ 
+     enclosingMethod.getOrBuildGraph().iterateExprents(exprent -> {
+       List<Exprent> lst = exprent.getAllExprents(true);
+@@ -256,6 +258,7 @@ public class NestedClassProcessor {
+ 
+                 if (param.type == Exprent.EXPRENT_VAR) {
+                   mapNewNames.put(varVersion, enclosingMethod.varproc.getVarName(new VarVersionPair((VarExprent)param)));
++                  lvts.put(varVersion, ((VarExprent)param).getLVT());
+                 }
+               }
+               else {
+@@ -281,6 +284,18 @@ public class NestedClassProcessor {
+     for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
+       method.varproc.setVarName(entry.getKey(), entry.getValue());
+     }
++
++    method.getOrBuildGraph().iterateExprentsDeep(exp -> {
++      if (exp.type == Exprent.EXPRENT_VAR) {
++        VarExprent var = (VarExprent)exp;
++        LocalVariable lv = lvts.get(var.getVarVersionPair());
++        if (lv != null)
++          var.setLVT(lv);
++        else if (mapNewNames.containsKey(var.getVarVersionPair()))
++          var.setLVT(null);
++      }
++      return 0;
++    });
+   }
+ 
+   private static void checkNotFoundClasses(ClassNode root, ClassNode node) {
+@@ -519,6 +534,7 @@ public class NestedClassProcessor {
        if (method.root != null) { // neither abstract nor native
          Map<VarVersionPair, String> mapNewNames = new HashMap<>();  // local var names
          Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
@@ -163,7 +198,7 @@ index af07983..ec6b437 100644
  
          Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
          if (method.synthParameters != null) {
-@@ -533,15 +535,17 @@ public class NestedClassProcessor {
+@@ -533,15 +549,17 @@ public class NestedClassProcessor {
  
                String varName = null;
                VarType varType = null;
@@ -182,7 +217,7 @@ index af07983..ec6b437 100644
                  if (parent.simpleName == null) {
                    // anonymous enclosing class, no access to this
                    varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
-@@ -549,11 +553,15 @@ public class NestedClassProcessor {
+@@ -549,11 +567,15 @@ public class NestedClassProcessor {
                  else {
                    varName = parent.simpleName + ".this";
                  }
@@ -198,7 +233,7 @@ index af07983..ec6b437 100644
              }
  
              varIndex += md.params[index++].stackSize;
-@@ -569,17 +577,19 @@ public class NestedClassProcessor {
+@@ -569,17 +591,19 @@ public class NestedClassProcessor {
  
              String varName = null;
              VarType varType = null;
@@ -219,7 +254,7 @@ index af07983..ec6b437 100644
                if (classNode.parent.simpleName == null) {
                  // anonymous enclosing class, no access to this
                  varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
-@@ -587,11 +597,15 @@ public class NestedClassProcessor {
+@@ -587,11 +611,15 @@ public class NestedClassProcessor {
                else {
                  varName = classNode.parent.simpleName + ".this";
                }
@@ -235,7 +270,7 @@ index af07983..ec6b437 100644
  
              // hide synthetic field
              if (classNode == child) { // fields higher up the chain were already handled with their classes
-@@ -610,16 +624,20 @@ public class NestedClassProcessor {
+@@ -610,16 +638,20 @@ public class NestedClassProcessor {
          for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
            VarVersionPair pair = entry.getKey();
            VarType type = mapNewTypes.get(pair);
@@ -258,7 +293,7 @@ index af07983..ec6b437 100644
              if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
                AssignmentExprent assignExpr = (AssignmentExprent)exprent;
                if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-@@ -627,7 +645,7 @@ public class NestedClassProcessor {
+@@ -627,7 +659,7 @@ public class NestedClassProcessor {
                  String qName = child.classStruct.qualifiedName;
                  if (fExpr.getClassname().equals(qName) &&  // process this class only
                      mapFieldsToNewVars.containsKey(InterpreterUtil.makeUniqueKey(qName, fExpr.getName(), fExpr.getDescriptor().descriptorString))) {
@@ -267,7 +302,7 @@ index af07983..ec6b437 100644
                  }
                }
              }
-@@ -639,13 +657,13 @@ public class NestedClassProcessor {
+@@ -639,13 +671,13 @@ public class NestedClassProcessor {
                if (invokeExpr.getFunctype() == InvocationExprent.TYP_INIT) {
                  // invocation of the super constructor in an anonymous class
                  child.superInvocation = invokeExpr; // FIXME: save original names of parameters
@@ -284,7 +319,7 @@ index af07983..ec6b437 100644
            }
  
            private Exprent replaceExprent(Exprent exprent) {
-@@ -654,7 +672,12 @@ public class NestedClassProcessor {
+@@ -654,7 +686,12 @@ public class NestedClassProcessor {
                if (mapParamsToNewVars.containsKey(varIndex)) {
                  VarVersionPair newVar = mapParamsToNewVars.get(varIndex);
                  method.varproc.getExternalVars().add(newVar);
@@ -298,8 +333,12 @@ index af07983..ec6b437 100644
                }
              }
              else if (exprent.type == Exprent.EXPRENT_FIELD) {
-@@ -665,7 +688,12 @@ public class NestedClassProcessor {
-                 //		mapFieldsToNewVars.containsKey(key)) {
+@@ -662,10 +699,15 @@ public class NestedClassProcessor {
+               String key = InterpreterUtil.makeUniqueKey(fExpr.getClassname(), fExpr.getName(), fExpr.getDescriptor().descriptorString);
+               if (mapFieldsToNewVars.containsKey(key)) {
+                 //if(fExpr.getClassname().equals(child.classStruct.qualifiedName) &&
+-                //		mapFieldsToNewVars.containsKey(key)) {
++                //        mapFieldsToNewVars.containsKey(key)) {
                  VarVersionPair newVar = mapFieldsToNewVars.get(key);
                  method.varproc.getExternalVars().add(newVar);
 -                return new VarExprent(newVar.var, method.varproc.getVarType(newVar), method.varproc, exprent.bytecode);
@@ -312,7 +351,7 @@ index af07983..ec6b437 100644
                }
              }
  
-@@ -1047,4 +1075,41 @@ public class NestedClassProcessor {
+@@ -1047,4 +1089,41 @@ public class NestedClassProcessor {
        return fieldKey.hashCode() + varPair.hashCode();
      }
    }
@@ -1627,6 +1666,32 @@ index 93b2b08..0c3c48f 100644
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
+index 6f33885..ba61e34 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
+@@ -113,6 +113,21 @@ public class DirectGraph {
+     return true;
+   }
+ 
++  public boolean iterateExprentsDeep(ExprentIterator itr) {
++    return iterateExprents(exprent -> {
++      List<Exprent> lst = exprent.getAllExprents(true);
++      lst.add(exprent);
++
++      for (Exprent expr : lst) {
++        int res = itr.processExprent(expr);
++        if (res == 1 || res == 2) {
++          return res;
++        }
++      }
++      return 0;
++    });
++  }
++
+   public interface ExprentIterator {
+     // 0 - success, do nothing
+     // 1 - cancel iteration
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 index f1dbf9f..0724aef 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
