@@ -1,4 +1,4 @@
-From b3395fc7812565e759fdefbffa571854e51f5529 Mon Sep 17 00:00:00 2001
+From 36412ce96b7379314f0cfd5bcd95ac9429cf69ef Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 12 Dec 2017 00:18:19 -0800
 Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip

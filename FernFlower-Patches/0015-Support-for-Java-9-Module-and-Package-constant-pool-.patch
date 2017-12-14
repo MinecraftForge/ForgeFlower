@@ -1,4 +1,4 @@
-From 4e9f9fbc910ea59925083a626b2430258f4d9bb2 Mon Sep 17 00:00:00 2001
+From c304b6a3e38e69faf88add043fc173df502c6825 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 25 Sep 2017 13:46:14 -0700
 Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
