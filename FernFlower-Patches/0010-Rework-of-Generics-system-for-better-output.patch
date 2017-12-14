@@ -1,4 +1,4 @@
-From 8ff5845a4c21b080cb91b98f245cffff6f5d0d9e Mon Sep 17 00:00:00 2001
+From 183bdfe9ccfa8050bb6595ebd52859fb05ecd645 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -936,7 +936,7 @@ index eb35f03..9025746 100644
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 1b5eeb5..a520bab 100644
+index 97a820c..f2f7b4d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -1139,13 +1139,6 @@ index 1b5eeb5..a520bab 100644
          if (!paramType.equals(md.params[i])) {
            ambiguous.set(i);
            break;
-@@ -668,4 +783,4 @@ public class InvocationExprent extends Exprent {
- 
-     return true;
-   }
--}
-\ No newline at end of file
-+}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 index 91f2ce7..4c8bcf1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java

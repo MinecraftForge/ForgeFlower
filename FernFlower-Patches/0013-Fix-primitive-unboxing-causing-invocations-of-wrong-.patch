@@ -1,4 +1,4 @@
-From b4a95e2affe716bb97348b50929d910a031be965 Mon Sep 17 00:00:00 2001
+From c15dbb31dc5cbfabcc8620f53361306e146331a9 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a520bab..aa48a4f 100644
+index f2f7b4d..740b37c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -60,6 +60,7 @@ public class InvocationExprent extends Exprent {

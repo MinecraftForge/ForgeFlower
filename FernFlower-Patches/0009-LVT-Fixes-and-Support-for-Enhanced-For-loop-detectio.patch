@@ -1,4 +1,4 @@
-From 78eb7d540b1610d7d53126446c62f3e489f13420 Mon Sep 17 00:00:00 2001
+From 3889cb72280fd6b263902ba28d800ec122e36d35 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -991,7 +991,7 @@ index 0000000..c62c74d
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index efc1891..1de7cd4 100644
+index efc1891..c7d623f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1063,7 +1063,7 @@ index efc1891..1de7cd4 100644
      }
    }
  
-@@ -401,15 +415,271 @@ public class MergeHelper {
+@@ -401,15 +415,282 @@ public class MergeHelper {
        return stat;
      }
  
@@ -1113,9 +1113,9 @@ index efc1891..1de7cd4 100644
 +                 }
 +              }
 +            }
-+          }
+           }
 +          break;
-+        }
+         }
 +      }
 +      else {
 +        break;
@@ -1148,11 +1148,13 @@ index efc1891..1de7cd4 100644
 +        }
 +
 +        AssignmentExprent ass = (AssignmentExprent)firstDoExprent;
-+        if (!isNextCall(ass.getRight()) || ass.getLeft().type != Exprent.EXPRENT_VAR) {
++        if ((!isNextCall(ass.getRight()) && !isNextUnboxing(ass.getRight())) || ass.getLeft().type != Exprent.EXPRENT_VAR) {
 +          return false;
 +        }
 +
 +        InvocationExprent next = (InvocationExprent)getUncast(ass.getRight());
++        if (isNextUnboxing(next))
++          next = (InvocationExprent)getUncast(next.getInstance());
 +        InvocationExprent hnext = (InvocationExprent)getUncast(drillNots(stat.getConditionExprent()));
 +        if (next.getInstance().type != Exprent.EXPRENT_VAR ||
 +            hnext.getInstance().type != Exprent.EXPRENT_VAR ||
@@ -1162,13 +1164,15 @@ index efc1891..1de7cd4 100644
 +
 +        InvocationExprent holder = (InvocationExprent)((AssignmentExprent)initExprents[0]).getRight();
 +
-+        holder.getInstance().addBytecodeOffsets(initExprents[0].bytecode);
-+        ass.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
++        initExprents[0].getBytecodeRange(holder.getInstance().bytecode);
++        holder.getBytecodeRange(holder.getInstance().bytecode);
++        firstDoExprent.getBytecodeRange(ass.getLeft().bytecode);
++        ass.getRight().getBytecodeRange(ass.getLeft().bytecode);
 +        if (stat.getIncExprent() != null) {
-+          holder.getInstance().addBytecodeOffsets(stat.getIncExprent().bytecode);
++          stat.getIncExprent().getBytecodeRange(holder.getInstance().bytecode);
 +        }
 +        if (stat.getInitExprent() != null) {
-+          ass.getLeft().addBytecodeOffsets(stat.getInitExprent().bytecode);
++          stat.getInitExprent().getBytecodeRange(ass.getLeft().bytecode);
 +        }
 +
 +        stat.setLooptype(DoStatement.LOOP_FOREACH);
@@ -1183,11 +1187,11 @@ index efc1891..1de7cd4 100644
 +          VarExprent inc = (VarExprent)holder.getInstance();
 +          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() && !inc.isVarReferenced(stat.getTopParent(), copy)) {
 +            preData.getExprents().remove(initExprents[1]);
-+            initExprents[1].getRight().addBytecodeOffsets(initExprents[1].bytecode);
-+            initExprents[1].getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
++            initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
++            stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.setIncExprent(initExprents[1].getRight());
-           }
-         }
++          }
++        }
 +
 +        return true;
 +      }
@@ -1342,6 +1346,13 @@ index efc1891..1de7cd4 100644
 +           isInvoke(exp, "java/util/ListIterator", "next", "()Ljava/lang/Object;");
 +  }
 +
++  private static boolean isNextUnboxing(Exprent exprent) {
++    Exprent exp = getUncast(exprent);
++    if (exp.type != Exprent.EXPRENT_INVOCATION)
++      return false;
++    InvocationExprent inv = (InvocationExprent)exp;
++    return inv.isUnboxingCall() && isNextCall(inv.getInstance());
++  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 index d73535f..94dc0a3 100644
@@ -1470,6 +1481,26 @@ index c481c0a..cdbcb70 100644
    public StatEdge(int type, Statement source, Statement destination, Statement closure) {
      this(type, source, destination);
      this.closure = closure;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 1b5eeb5..97a820c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -467,7 +467,7 @@ public class InvocationExprent extends Exprent {
+     UNBOXING_METHODS.put("charValue", "java/lang/Character");
+   }
+ 
+-  private boolean isUnboxingCall() {
++  public boolean isUnboxingCall() {
+     return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));
+   }
+ 
+@@ -668,4 +668,4 @@ public class InvocationExprent extends Exprent {
+ 
+     return true;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 index 93b2b08..0c3c48f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
@@ -3229,24 +3260,28 @@ index cdb1db5..5e4c220 100644
     }
 diff --git a/testData/classes/pkg/TestEnhancedForLoops.class b/testData/classes/pkg/TestEnhancedForLoops.class
 new file mode 100644
-index 0000000000000000000000000000000000000000..9350e5cb8e306aed006ed7644bd78e0c7cdab41d
+index 0000000000000000000000000000000000000000..bdb8a786b1c9e708620e423c250c63925ac12493
 GIT binary patch
-literal 1215
-zcmZ`&T~8B16g|`K?v%2W3KR+m@+GuTs3M{QRw_c$q)-zG$?DTmR#+&z&30?#-9O=@
-zzVPCUK0r`IeD;T!_z#SU;+<V6U)nS?bMM@H&$(yre*5$32*3p9!%#6)hXj&g3}b{N
-z6^4YNdW>SM9%<YX%WaNvaeaqlg5xfOGGkh%n_&nhlB*2ToV{)^H0DjqSgP)<8P1Bn
-zRw7SR-Y)8;RoyX#ed3hdO|!z#kuPs=q*siJJ8y03R?%2ru${bZmn+i@p%=E3bsT+{
-zuq>}41IsaR-=Orsb21y2UA?%ysF%Ic9=kY$O369bH5}cw9V$?99n;znY_{~5db*@r
-z8|h`wM@ZbirHWDiy6T#xbl$AEblG~5|8DuThk;A6GgnJzra2}#?lFXy?W$8W7EB>Y
-z`@cFK6U0<BAi{B9#RE)nOskl|LxyILw8zR*L{Ov3Dl&LP<yFigtKu={sDsP>i4sp3
-z;{Q|nLP}w6%P6`GkuyMnMY^3iay3=YW9?R4V~2*pu2OW&m%_BuPf2!{gf{dY($eqa
-zqMPI|i=dK4LzKvgSqhmoh}J~%oXn@t;>|Yo%98Plz-a!SQL5z`EvNC`3;XR*bS!c8
-zagwX(MLo^F_ys|egb1yTWTk0mw9CT>U?1oZK$KR+bH;Fu&Z-}PCNz`9&{9i&Pals$
-zzHC(a64ruJL6hWyCMyL^;RTI{3R)<t6!IgBsiRDAQi@4k@6eWtNn?}pM+9Q>K7y|$
-zws-tP00%wbR>*X2LpS0WM?0oypGBufq=#b05kd@pRQ7~YH~J|fPSo1H+`usgA#-$a
-zbkd(ue?RGp;d+hvTk2Dy;L*>Jv;)ZbkwYj9i>X6!hBw6W5Fv)Is9PeYqx%T&9e)=r
-zrE@I1iOUW2p$AFQH$^8QmtffkjxOpUC?HN)hH#Ujdx%Cad4;IHr;kp8cLagoXyoYU
-O82Ck08O4j|82k&~`2qs~
+literal 1725
+zcmaKsUsD@Z7{;HIY;w}D{3(#oR-uT61_;E)ib^mx)S}Tqs!%koH%nMy+pwG2Y@BlM
+zm+(?=dgF~=q(kd;y!Os7;f&wF=}g7v>?S~<EyJ8W=RNOv-{13`1AqSa<QahL_%@DV
+zWY6JUT#w^DEJ(Z`hlXqqX7E7|X7QmK7A10Odr9J>IC_wm_&APUWMjCYz6CWbtKp`^
+zCla>=qDz)-d3k|wYI;*ZyXkD30{tb+HrJYaTc*2VY}FVUEIC!9wrRMQTDOCmw`(;7
+zE|uyJb}}1g!@Fhg8g|v(UUA%#<J22Df!KGBTX0=tpS^6qqJSt0$Y8<ap?h5Ru6suH
+z!KzXBOG}Ik=sa2UJkvEi$K~mU=UVoTLb-2zZ)9qQy^~q@V{9XXU6vaNwws<+%ap8!
+z$IWCn{C>S7;L54orL(2;If)gCPX&fg^4zhvoQFP+uxOiQdu%=VnsP<kGj~ikmnTnr
+z-D$d2bH!55UVNEx^Gc$Q1d<Y;=_ulJi7#}NuqrU*%lGy9#ww9I)=<`Q8(-@93hQ*?
+zv`6ajhQRsbc$-Ma9q{HyjyD2Rmz!2?+obVw)2KDg#c>^9;~O<pblk-~feWv?_OABj
+zt@~!x6X-j}R>Zu=<3RD~mQQl;H#~EXFVkr<I}vzmIhosh1|AtrV~<`2ZghvqTvtgo
+zn^%)6s)rr3j#?yB(<kn!)0(B^uF+UCAF>($81C|@?JtHq`TmOw<S;vtI{R3HPPXSe
+z=9l5qjvDp4X>SY6z3jx9B5mK<;Z35yW;^CN!A<dLb|D7Q9NxkZ|7)lp4dg|V;|Nz7
+zeg(ggna2>nauUJ?j!{3Dz(vmWAOV-~23JHmI{XWZMHwp$M1PN0!dkhaMaq>(v|NeG
+zaz)0<mDoVET$)`?Kg)*~w1hVLGe*)0ZGIv08$yXl3*jF$@#yd$)i~@oP9nnj2*$X|
+zvi%~zH`rK#j58;T7)H6PvI=daF}#h-+!a)*&V~*#g^0wE!~}l@_5I5Nf@vMuKT)T~
+z<hiHNDvuE<%^n~su$n%A6!?*p2Z#y$fpcploogZf=<shvshyx4Bg<t>u=6xKr#b6T
+zPC()cCdtbdZORzeQ@Bcu6r;-2ATr(N?nCGW`Xy#0W}nk!!HOMR8s+0IzXCVi!R={5
+z&y)BmdMT@Ku)l?Y(H73PFz9Re>$HYRQcRKTD)QtiP)SF_BxiGUT4`85(y)m6QyNr6
+Sy&~m(w}xwszQbq;*Zv0xhj@4Z
 
 literal 0
 HcmV?d00001
@@ -3428,10 +3463,10 @@ index e873e7e..18beb9a 100644
  }
 diff --git a/testData/results/TestEnhancedForLoops.dec b/testData/results/TestEnhancedForLoops.dec
 new file mode 100644
-index 0000000..16c634c
+index 0000000..a83751c
 --- /dev/null
 +++ b/testData/results/TestEnhancedForLoops.dec
-@@ -0,0 +1,77 @@
+@@ -0,0 +1,127 @@
 +package pkg;
 +
 +import java.util.ArrayList;
@@ -3450,6 +3485,13 @@ index 0000000..16c634c
 +      for(String string : new ArrayList()) {// 32
 +         System.out.println(string);
 +      }// 34
++
++   }
++// 38
++   public void forItteratorUnboxing() {// 39
++      for(int i : new ArrayList()) {
++         System.out.println("Value: " + i);// 41
++      }
 +
 +   }
 +}
@@ -3486,6 +3528,15 @@ index 0000000..16c634c
 +   }
 +
 +   method 'forItterator ()V' {
++      18      14
++      19      14
++      1a      14
++      1b      14
++      1c      14
++      1d      14
++      1e      14
++      1f      14
++      20      14
 +      21      14
 +      22      15
 +      23      15
@@ -3495,6 +3546,35 @@ index 0000000..16c634c
 +      27      15
 +      28      15
 +      2c      17
++   }
++
++   method 'forItteratorUnboxing ()V' {
++      18      20
++      19      20
++      1a      20
++      1b      20
++      1c      20
++      1d      20
++      1e      20
++      1f      20
++      20      20
++      21      20
++      22      20
++      23      20
++      24      20
++      25      21
++      26      21
++      27      21
++      2f      21
++      30      21
++      34      21
++      38      21
++      39      21
++      3a      21
++      3b      21
++      3c      21
++      3d      21
++      41      23
 +   }
 +}
 +
@@ -3506,9 +3586,14 @@ index 0000000..16c634c
 +31 <-> 15
 +32 <-> 16
 +34 <-> 18
++38 <-> 21
++39 <-> 22
++41 <-> 24
 +Not mapped:
 +30
 +33
++37
++40
 diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
 index 0e94145..e57e91a 100644
 --- a/testData/results/TestKotlinConstructorKt.dec
@@ -4206,10 +4291,10 @@ index 0000000..56fb422
 +}
 diff --git a/testData/src/pkg/TestEnhancedForLoops.java b/testData/src/pkg/TestEnhancedForLoops.java
 new file mode 100644
-index 0000000..40ea47e
+index 0000000..d808218
 --- /dev/null
 +++ b/testData/src/pkg/TestEnhancedForLoops.java
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,42 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -4237,15 +4322,21 @@ index 0000000..40ea47e
 +      System.out.println(number);
 +    }
 +  }
-+  
++
 +  public void forItterator() {
 +    List<String> strings = new ArrayList<>();
 +    for (String string : strings) {
 +      System.out.println(string);
 +    }
 +  }
++
++  public void forItteratorUnboxing() {
++    List<Integer> ints = new ArrayList<>();
++    for (int i : ints) {
++      System.out.println("Value: " + i);
++    }
++  }
 +}
-\ No newline at end of file
 diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
 new file mode 100644
 index 0000000..b9eed0d
