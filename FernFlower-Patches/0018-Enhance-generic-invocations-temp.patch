@@ -1,0 +1,188 @@
+From 9661e8951c044d6122f30e61d7f98e9716ab5861 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Fri, 16 Feb 2018 22:04:00 -0800
+Subject: [PATCH] Enhance Generic Invocations Temporarily.
+This is a temp separate patch until I get some time to merge it to patch 10/13.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index 9025746..bf30fd0 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -7,6 +7,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
++import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -325,6 +327,9 @@ public class FunctionExprent extends Exprent {
+             this.needsCast = false;
+           }
+         }
++        else {
++            this.needsCast = right.type == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.value, upperBound.value);
++        }
+       }
+       else { //TODO: Capture generics to make cast better?
+         this.needsCast = right.type == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.value, cast.value);
+@@ -569,7 +574,7 @@ public class FunctionExprent extends Exprent {
+         TYPES[funcType - FUNCTION_I2L]) + ")");
+     }
+ 
+-    //		return "<unknown function>";
++    //        return "<unknown function>";
+     throw new RuntimeException("invalid function");
+   }
+ 
+@@ -650,7 +655,7 @@ public class FunctionExprent extends Exprent {
+     measureBytecode(values, lstOperands);
+     measureBytecode(values);
+   }
+-  
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+@@ -664,4 +669,4 @@ public class FunctionExprent extends Exprent {
+     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
+     return type == null || this.funcType == type;
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 9b2250e..87f97f6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -481,6 +481,22 @@ public class InvocationExprent extends Exprent {
+ 
+     }
+ 
++    if (instance != null && !genArgs.isEmpty()) {
++        StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
++        StructMethod me = stClass.getMethodRecursive(getName(), getStringDescriptor());
++        if (me != null && me.getSignature() != null) {
++            for (int x = 0; x < types.length; x++) {
++                VarType type = me.getSignature().parameterTypes.get(x);
++                if (type.isGeneric()) {
++                    VarType _new = type.remap(genArgs);
++                    if (_new != type) {
++                        types[x] = _new;
++                    }
++                }
++            }
++        }
++    }
++
+ 
+     boolean firstParameter = true;
+     for (int i = start; i < lstParameters.size(); i++) {
+@@ -646,24 +662,56 @@ public class InvocationExprent extends Exprent {
+     StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+     if (cl == null) return matches;
+ 
+-    nextMethod:
+-    for (StructMethod mt : cl.getMethods()) {
+-      if (name.equals(mt.getName())) {
+-        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+-        if (md.params.length == descriptor.params.length) {
+-          for (int i = 0; i < md.params.length; i++) {
+-            if (md.params[i].typeFamily != descriptor.params[i].typeFamily) {
+-              continue nextMethod;
+-            }
++    Set<String> visited = new HashSet<>();
++    Queue<StructClass> que = new ArrayDeque<>();
++    que.add(cl);
++
++    while (!que.isEmpty()) {
++      StructClass cls = que.poll();
++      if (cls == null)
++          continue;
++
++      for (StructMethod mt : cls.getMethods()) {
++        if (name.equals(mt.getName())) {
++          MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
++          if (matches(md.params, descriptor.params)) {
++            matches.add(mt);
+           }
+-          matches.add(mt);
+         }
+       }
++
++      if (cls == cl && !matches.isEmpty()) {
++        return matches;
++      }
++
++      visited.add(cls.qualifiedName);
++      if (cls.superClass != null && !visited.contains(cls.superClass.value)) {
++        que.add(DecompilerContext.getStructContext().getClass((String)cls.superClass.value));
++      }
++
++      for (String intf : cls.getInterfaceNames()) {
++        if (!visited.contains(intf)) {
++          que.add(DecompilerContext.getStructContext().getClass(intf));
++        }
++      }
++
+     }
+ 
+     return matches;
+   }
+ 
++  private boolean matches(VarType[] left, VarType[] right) {
++    if (left.length == right.length) {
++      for (int i = 0; i < left.length; i++) {
++        if (left[i].typeFamily != right[i].typeFamily) {
++          return false;
++        }
++      }
++      return true;
++    }
++    return false;
++  }
++
+   private BitSet getAmbiguousParameters(List<StructMethod> matches) {
+     StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+     if (cl == null || matches.size() == 1) {
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
+index 39fe8a6..e7e1e4e 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
+@@ -130,6 +130,31 @@ public class StructClass extends StructMember {
+     return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
+   }
+ 
++  public StructMethod getMethodRecursive(String name, String descriptor) {
++    StructMethod ret = getMethod(name, descriptor);
++
++    if (ret != null) {
++      return ret;
++    }
++
++    if (superClass != null) {
++      StructClass cls = DecompilerContext.getStructContext().getClass((String)superClass.value);
++      ret = cls.getMethodRecursive(name, descriptor);
++      if (ret != null) {
++        return ret;
++      }
++    }
++
++    for (String intf : getInterfaceNames()) {
++      StructClass cls = DecompilerContext.getStructContext().getClass(intf);
++      ret = cls.getMethodRecursive(name, descriptor);
++      if (ret != null) {
++        return ret;
++      }
++    }
++    return null;
++  }
++
+   public String getInterface(int i) {
+     return interfaceNames[i];
+   }
+-- 
+2.14.1.windows.1
+
