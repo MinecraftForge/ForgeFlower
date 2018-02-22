@@ -1,4 +1,4 @@
-From 8374a6903ae856657f584f7be6008ce7585c6ef3 Mon Sep 17 00:00:00 2001
+From fba9cd7bcf334afe2f73b94ef3f825c714334d7b Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 19 Apr 2017 01:59:28 -0700
 Subject: [PATCH] Add Minecraft test framework
@@ -6,17 +6,19 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000..3f2f99d
+index 0000000..97c3e2c
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,140 @@
 +package org.jetbrains.java.decompiler;
 +
 +import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 +
 +import java.io.File;
 +import java.io.IOException;
++import java.nio.file.Files;
 +import java.util.HashMap;
++import java.util.List;
 +import java.util.Map;
 +import java.util.Map.Entry;
 +
@@ -26,9 +28,13 @@ index 0000000..3f2f99d
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 +import org.junit.Test;
 +
++import com.google.gson.Gson;
++import com.google.gson.GsonBuilder;
++
 +public class MinecraftTest  extends SingleClassesTestBase {
-+  private static final String MC_PATH = "Z:\\Projects\\MCP\\BlueMining\\mcp_update\\new";//\\temp\\minecraft_ff_in.jar";
++  private static final String MC_PATH = "Z:\\Projects\\MCP\\BlueMining\\mcp_update\\new";
 +  private static final Map<String, String> RESULTS = new HashMap<>();
++  private static final Gson GSON = new GsonBuilder().create();
 +
 +  @Override
 +  protected String[] getDecompilerOptions() {
@@ -102,6 +108,7 @@ index 0000000..3f2f99d
 +    ConsoleDecompiler decompiler = fixture.getDecompiler();
 +    if (MC_JAR.isDirectory()) {
 +      //decompiler.addSpace(new File(MC_JAR, "jars\\libraries"), false);
++      gatherLibraries(decompiler);
 +      decompiler.addSpace(new File(MC_JAR, "temp\\minecraft_ff_in.jar"), true);
 +    }
 +    else {
@@ -118,9 +125,30 @@ index 0000000..3f2f99d
 +    }
 +  }
 +
-+  @Test public void testWoodlandMansionPieces() { doTest("net/minecraft/world/gen/structure/WoodlandMansionPieces"); }
-+  @Test public void testEntityPlayer() { doTest("net/minecraft/entity/player/EntityPlayerMP"); }
++  @SuppressWarnings("unchecked")
++  private void gatherLibraries(ConsoleDecompiler decompiler) {
++    try {
++      String version = null;
++      for (String line : Files.readAllLines(new File(MC_PATH, "conf/version.cfg").toPath())) {
++        if (line.startsWith("ClientVersion")) {
++          version = line.split(" ")[2];
++        }
++      }
++      String data = new String(Files.readAllBytes(new File(MC_PATH, "jars/versions/" + version + "/" + version + ".json").toPath()));
++      List<Map<String, Object>> libs = (List<Map<String, Object>>)GSON.fromJson(data, Map.class).get("libraries");
 +
++      for (Map<String, Object> e : libs) {
++        String path = ((Map<String, Map<String, String>>)e.get("downloads")).get("artifact").get("path");
++        File lib = new File(MC_PATH, "jars/libraries/" + path);
++        decompiler.addSpace(lib, false);
++      }
++    } catch (Exception e) {
++      throw new RuntimeException(e);
++    }
++  }
++
++  @Test public void testWoodlandMansionPieces() { doTest("net/minecraft/world/gen/structure/WoodlandMansionPieces"); }
++  @Test public void testEntityPlayer() { doTest("net/minecraft/command/impl/SeedCommand"); }
 +}
 -- 
 2.14.1.windows.1
