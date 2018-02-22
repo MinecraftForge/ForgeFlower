@@ -1,4 +1,4 @@
-From 183bdfe9ccfa8050bb6595ebd52859fb05ecd645 Mon Sep 17 00:00:00 2001
+From 6efbc3b4e49b8915bc86e68a4c4b2103b35b0df8 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -545,7 +545,7 @@ index e294b9b..b71a264 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 81dae70..9dad2de 100644
+index 81dae70..66f9eab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -53,6 +53,11 @@ public class AssignmentExprent extends Exprent {
@@ -554,7 +554,7 @@ index 81dae70..9dad2de 100644
  
 +  @Override
 +  public VarType getInferredExprType(VarType upperBounds) {
-+    return getExprType();
++    return left.getInferredExprType(upperBounds);
 +  }
 +
    @Override
@@ -821,7 +821,7 @@ index d0e1613..05d9d69 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 1ab8dcf..b50fab5 100644
+index 1ab8dcf..9267f77 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -11,6 +11,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -833,31 +833,59 @@ index 1ab8dcf..b50fab5 100644
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
  import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
  import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
-@@ -52,6 +54,24 @@ public class FieldExprent extends Exprent {
+@@ -23,7 +25,9 @@ import org.jetbrains.java.decompiler.util.TextUtil;
+ 
+ import java.util.ArrayList;
+ import java.util.BitSet;
++import java.util.Collections;
+ import java.util.List;
++import java.util.Map;
+ 
+ public class FieldExprent extends Exprent {
+   private final String name;
+@@ -52,6 +56,26 @@ public class FieldExprent extends Exprent {
      return descriptor.type;
    }
  
 +  @Override
 +  public VarType getInferredExprType(VarType upperBound) {
 +    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
++    Map<String, Map<VarType, VarType>> types = cl == null ? Collections.emptyMap() : cl.getAllGenerics();
++
++    StructField ft = null;
 +    while(cl != null) {
-+      StructField ft = cl.getField(name, descriptor.descriptorString);
-+      if(ft != null && ft.getSignature() != null) {
-+        return ft.getSignature().type;
-+      }
-+      if (cl.superClass == null) {
-+        cl = null;
-+      }
-+      else {
-+        cl = DecompilerContext.getStructContext().getClass((String)cl.superClass.value);
-+      }
++      ft = cl.getField(name, descriptor.descriptorString);
++      if (ft != null)
++        break;
++      cl = cl.superClass == null ? null : DecompilerContext.getStructContext().getClass((String)cl.superClass.value);
 +    }
++
++    if (ft != null && ft.getSignature() != null) {
++      return ft.getSignature().type.remap(types.getOrDefault(cl.qualifiedName, Collections.emptyMap()));
++    }
++
 +    return getExprType();
 +  }
 +
    @Override
    public int getExprentUse() {
      return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
+@@ -190,7 +214,7 @@ public class FieldExprent extends Exprent {
+     measureBytecode(values, instance);
+     measureBytecode(values);
+   }
+-  
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+@@ -213,4 +237,4 @@ public class FieldExprent extends Exprent {
+ 
+     return true;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 index eb35f03..9025746 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
@@ -1300,10 +1328,10 @@ index 01fd4af..ec2bb02 100644
        else if (lvt != null) {
          cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 5815c89..cbf7f40 100644
+index 5815c89..39fe8a6 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-@@ -2,8 +2,14 @@
+@@ -2,14 +2,28 @@
  package org.jetbrains.java.decompiler.struct;
  
  import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -1313,12 +1341,26 @@ index 5815c89..cbf7f40 100644
 +import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
  import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
  import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
 +import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
 +import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
  import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -44,6 +50,7 @@ public class StructClass extends StructMember {
+ import org.jetbrains.java.decompiler.util.VBStyleCollection;
+ 
+ import java.io.IOException;
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.HashSet;
++import java.util.Map;
++import java.util.Map.Entry;
++import java.util.Set;
+ 
+ /*
+   class_file {
+@@ -44,6 +58,7 @@ public class StructClass extends StructMember {
    private final String[] interfaceNames;
    private final VBStyleCollection<StructField, String> fields;
    private final VBStyleCollection<StructMethod, String> methods;
@@ -1326,7 +1368,7 @@ index 5815c89..cbf7f40 100644
  
    private ConstantPool pool;
  
-@@ -185,4 +192,18 @@ public class StructClass extends StructMember {
+@@ -185,4 +200,116 @@ public class StructClass extends StructMember {
    public String toString() {
      return qualifiedName;
    }
@@ -1343,6 +1385,104 @@ index 5815c89..cbf7f40 100644
 +      this.signature = GenericMain.parseClassSignature(qualifiedName, signature.getSignature());
 +    }
 +    return attribute;
++  }
++
++  private Map<VarType, VarType> getGenericMap(VarType type) {
++    if (this.signature == null || type == null || !type.isGeneric()) {
++      return Collections.emptyMap();
++    }
++    GenericType gtype = (GenericType)type;
++    if (gtype.getArguments().size() != this.signature.fparameters.size()) { //Invalid instance type?
++      return Collections.emptyMap();
++    }
++
++    Map<VarType, VarType> ret = new HashMap<>();
++    for (int x = 0; x < this.signature.fparameters.size(); x++) {
++      VarType var = gtype.getArguments().get(x);
++      if (var != null) {
++        ret.put(GenericType.parse("T" + this.signature.fparameters.get(x) + ";"), var);
++      }
++    }
++    return ret;
++  }
++
++  private Map<String, Map<VarType, VarType>> genericHiarachy;
++  public Map<String, Map<VarType, VarType>> getAllGenerics() {
++    if (genericHiarachy != null) {
++      return genericHiarachy;
++    }
++
++    Map<String, Map<VarType, VarType>> ret = new HashMap<>();
++    if (this.signature != null && !this.signature.fparameters.isEmpty()) {
++      Map<VarType, VarType> mine = new HashMap<>();
++      for (String par : this.signature.fparameters) {
++        VarType type = GenericType.parse("T" + par + ";");
++        mine.put(type, type);
++      }
++      ret.put(this.qualifiedName, mine);
++    }
++
++    Set<String> visited = new HashSet<>(); //Is there a better way? Is the signature forced to contain all interfaces?
++    if (this.signature != null) {
++      for (VarType intf : this.signature.superinterfaces) {
++        visited.add((String)intf.value);
++
++        StructClass cls = DecompilerContext.getStructContext().getClass((String)intf.value);
++        if (cls != null) {
++          Map<VarType, VarType> sig = cls.getGenericMap(intf);
++
++          for (Entry<String, Map<VarType, VarType>> e : cls.getAllGenerics().entrySet()) {
++            if (e.getValue().isEmpty()) {
++              ret.put(e.getKey(), e.getValue());
++            }
++            else {
++              Map<VarType, VarType> sub = new HashMap<>();
++              for (Entry<VarType, VarType> e2 : e.getValue().entrySet()) {
++                sub.put(e2.getKey(), sig.getOrDefault(e2.getValue(), e2.getValue()));
++              }
++              ret.put(e.getKey(), sub);
++            }
++          }
++        }
++      }
++    }
++
++    for (String intf : this.interfaceNames) {
++      if (visited.contains(intf)) {
++        continue;
++      }
++      StructClass cls = DecompilerContext.getStructContext().getClass(intf);
++      if (cls != null) {
++        ret.putAll(cls.getAllGenerics());
++      }
++    }
++
++    if (this.superClass != null) {
++      StructClass cls = DecompilerContext.getStructContext().getClass((String)this.superClass.value);
++      if (cls != null) {
++        Map<VarType, VarType> sig = this.signature == null ? Collections.emptyMap() : cls.getGenericMap(this.signature.superclass);
++        if (sig.isEmpty()) {
++          ret.putAll(cls.getAllGenerics());
++        }
++        else {
++          for (Entry<String, Map<VarType, VarType>> e : cls.getAllGenerics().entrySet()) {
++            if (e.getValue().isEmpty()) {
++              ret.put(e.getKey(), e.getValue());
++            }
++            else {
++              Map<VarType, VarType> sub = new HashMap<>();
++              for (Entry<VarType, VarType> e2 : e.getValue().entrySet()) {
++                sub.put(e2.getKey(), sig.getOrDefault(e2.getValue(), e2.getValue()));
++              }
++              ret.put(e.getKey(), sub);
++            }
++          }
++        }
++      }
++    }
++
++    this.genericHiarachy = ret.isEmpty() ? Collections.emptyMap() : ret;
++    return this.genericHiarachy;
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
