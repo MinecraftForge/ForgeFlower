@@ -1,9 +1,9 @@
-From 9661e8951c044d6122f30e61d7f98e9716ab5861 Mon Sep 17 00:00:00 2001
+From e7f97804d33f94828df08331d7042c0747adddff Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
-This is a temp separate patch until I get some time to merge it to patch 10/13.
 
+This is a temp separate patch until I get some time to merge it to patch 10/13.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 index 9025746..bf30fd0 100644
@@ -54,7 +54,7 @@ index 9025746..bf30fd0 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 9b2250e..87f97f6 100644
+index 740b37c..a2906b1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -481,6 +481,22 @@ public class InvocationExprent extends Exprent {
@@ -80,7 +80,7 @@ index 9b2250e..87f97f6 100644
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -646,24 +662,56 @@ public class InvocationExprent extends Exprent {
+@@ -646,24 +662,62 @@ public class InvocationExprent extends Exprent {
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null) return matches;
  
@@ -107,10 +107,9 @@ index 9b2250e..87f97f6 100644
 +          MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 +          if (matches(md.params, descriptor.params)) {
 +            matches.add(mt);
-           }
--          matches.add(mt);
-         }
-       }
++          }
++        }
++      }
 +
 +      if (cls == cl && !matches.isEmpty()) {
 +        return matches;
@@ -118,14 +117,21 @@ index 9b2250e..87f97f6 100644
 +
 +      visited.add(cls.qualifiedName);
 +      if (cls.superClass != null && !visited.contains(cls.superClass.value)) {
-+        que.add(DecompilerContext.getStructContext().getClass((String)cls.superClass.value));
++        StructClass tmp = DecompilerContext.getStructContext().getClass((String)cls.superClass.value);
++        if (tmp != null) {
++          que.add(tmp);
++        }
 +      }
 +
 +      for (String intf : cls.getInterfaceNames()) {
 +        if (!visited.contains(intf)) {
-+          que.add(DecompilerContext.getStructContext().getClass(intf));
-+        }
-+      }
++          StructClass tmp = DecompilerContext.getStructContext().getClass(intf);
++          if (tmp != null) {
++            que.add(tmp);
+           }
+-          matches.add(mt);
+         }
+       }
 +
      }
  
