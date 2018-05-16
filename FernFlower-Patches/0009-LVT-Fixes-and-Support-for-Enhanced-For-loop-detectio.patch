@@ -1,4 +1,4 @@
-From 3889cb72280fd6b263902ba28d800ec122e36d35 Mon Sep 17 00:00:00 2001
+From 344200cc5a2ac3ffa9398b875cdbd9d70c30f9c5 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -991,7 +991,7 @@ index 0000000..c62c74d
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index efc1891..c7d623f 100644
+index efc1891..ad1575d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1063,7 +1063,7 @@ index efc1891..c7d623f 100644
      }
    }
  
-@@ -401,15 +415,282 @@ public class MergeHelper {
+@@ -401,15 +415,296 @@ public class MergeHelper {
        return stat;
      }
  
@@ -1113,9 +1113,9 @@ index efc1891..c7d623f 100644
 +                 }
 +              }
 +            }
-           }
++          }
 +          break;
-         }
++        }
 +      }
 +      else {
 +        break;
@@ -1190,8 +1190,8 @@ index efc1891..c7d623f 100644
 +            initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.setIncExprent(initExprents[1].getRight());
-+          }
-+        }
+           }
+         }
 +
 +        return true;
 +      }
@@ -1269,21 +1269,6 @@ index efc1891..c7d623f 100644
 +    return false;
 +  }
 +
-+  private static boolean isType(Exprent exp, int type) { //This is just a helper macro, Wish java had real macros.
-+    return exp != null && exp.type == type;
-+  }
-+
-+  private static boolean isInvoke(Exprent exp, String cls, String method, String desc) {
-+    exp = getUncast(exp);
-+    if (!isType(exp,  Exprent.EXPRENT_INVOCATION)) {
-+      return false;
-+    }
-+    InvocationExprent invoc = (InvocationExprent)exp;
-+    if (cls != null && !cls.equals(invoc.getClassname())) {
-+      return false;
-+    }
-+    return method.equals(invoc.getName()) && desc.equals(invoc.getStringDescriptor());
-+  }
 +  private static Exprent drillNots(Exprent exp) {
 +    while (true) {
 +      if (exp.type == Exprent.EXPRENT_FUNCTION) {
@@ -1315,11 +1300,9 @@ index efc1891..c7d623f 100644
 +      if (ret != null) {
 +        return ret;
 +      }
-     }
-     return null;
-   }
--}
-\ No newline at end of file
++    }
++    return null;
++  }
 +
 +  private static Exprent getUncast(Exprent exp) {
 +    if (exp.type == Exprent.EXPRENT_FUNCTION) {
@@ -1331,19 +1314,50 @@ index efc1891..c7d623f 100644
 +    return exp;
 +  }
 +
++  private static InvocationExprent asInvocationExprent(Exprent exp) {
++    exp = getUncast(exp);
++    if (exp.type == Exprent.EXPRENT_INVOCATION) {
++      return (InvocationExprent) exp;
+     }
+     return null;
+   }
+-}
+\ No newline at end of file
++
 +  private static boolean isIteratorCall(Exprent exp) {
-+    return isInvoke(exp, null, "iterator",     "()Ljava/util/Iterator;"    ) ||
-+           isInvoke(exp, null, "listIterator", "()Ljava/util/ListIterator;");
++    final InvocationExprent iexp = asInvocationExprent(exp);
++    if (iexp == null) {
++      return false;
++    }
++    final org.jetbrains.java.decompiler.struct.gen.MethodDescriptor descriptor = iexp.getDescriptor();
++    if (!DecompilerContext.getStructContext().instanceOf(descriptor.ret.value, "java/util/Iterator")) {
++      return false;
++    }
++    final String name = iexp.getName();
++    return "iterator".equals(name) ||
++           "listIterator".equals(name);
 +  }
 +
 +  private static boolean isHasNextCall(Exprent exp) {
-+    return isInvoke(exp, "java/util/Iterator",     "hasNext", "()Z") ||
-+           isInvoke(exp, "java/util/ListIterator", "hasNext", "()Z");
++    final InvocationExprent iexp = asInvocationExprent(exp);
++    if (iexp == null) {
++      return false;
++    }
++    if (!DecompilerContext.getStructContext().instanceOf(iexp.getClassname(), "java/util/Iterator")) {
++      return false;
++    }
++    return "hasNext".equals(iexp.getName()) && "()Z".equals(iexp.getStringDescriptor());
 +  }
 +
 +  private static boolean isNextCall(Exprent exp) {
-+    return isInvoke(exp, "java/util/Iterator",     "next", "()Ljava/lang/Object;") ||
-+           isInvoke(exp, "java/util/ListIterator", "next", "()Ljava/lang/Object;");
++    final InvocationExprent iexp = asInvocationExprent(exp);
++    if (iexp == null) {
++      return false;
++    }
++    if (!DecompilerContext.getStructContext().instanceOf(iexp.getClassname(), "java/util/Iterator")) {
++      return false;
++    }
++    return "next".equals(iexp.getName()) && "()Ljava/lang/Object;".equals(iexp.getStringDescriptor());
 +  }
 +
 +  private static boolean isNextUnboxing(Exprent exprent) {
@@ -4573,5 +4587,5 @@ index 0000000..15e2171
 +  }
 +}
 -- 
-2.14.1.windows.1
+2.17.0
 
