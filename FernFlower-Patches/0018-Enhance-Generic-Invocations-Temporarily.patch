@@ -154,7 +154,7 @@ index 740b37c..a2906b1 100644
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 39fe8a6..e7e1e4e 100644
+index 39fe8a6..8c34061 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -130,6 +130,31 @@ public class StructClass extends StructMember {
@@ -170,7 +170,7 @@ index 39fe8a6..e7e1e4e 100644
 +
 +    if (superClass != null) {
 +      StructClass cls = DecompilerContext.getStructContext().getClass((String)superClass.value);
-+      ret = cls.getMethodRecursive(name, descriptor);
++      ret = cls != null ? cls.getMethodRecursive(name, descriptor) : null;
 +      if (ret != null) {
 +        return ret;
 +      }
@@ -178,7 +178,7 @@ index 39fe8a6..e7e1e4e 100644
 +
 +    for (String intf : getInterfaceNames()) {
 +      StructClass cls = DecompilerContext.getStructContext().getClass(intf);
-+      ret = cls.getMethodRecursive(name, descriptor);
++      ret = cls != null ? cls.getMethodRecursive(name, descriptor) : null;
 +      if (ret != null) {
 +        return ret;
 +      }
