@@ -1,0 +1,22 @@
+From 8decaf804432adcc485b4800cbbc5b8ca950b209 Mon Sep 17 00:00:00 2001
+From: kashike <kashike@vq.lc>
+Date: Tue, 10 Jul 2018 16:46:13 -0700
+Subject: [PATCH] Avoid NPE in getClassEntryName
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index f1cb1d2..a0e8238 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -79,7 +79,7 @@ public class Fernflower implements IDecompiledData {
+   @Override
+   public String getClassEntryName(StructClass cl, String entryName) {
+     ClassNode node = classProcessor.getMapRootClasses().get(cl.qualifiedName);
+-    if (node.type != ClassNode.CLASS_ROOT) {
++    if (node != null && node.type != ClassNode.CLASS_ROOT) {
+       return null;
+     }
+     else if (converter != null) {
+-- 
+2.18.0
+
