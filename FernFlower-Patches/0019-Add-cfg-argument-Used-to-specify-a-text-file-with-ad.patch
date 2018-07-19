@@ -1,0 +1,74 @@
+From ed26ad7c1d4e3daa813c3afd198c39b1b575085c Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Fri, 6 Apr 2018 20:45:33 -0700
+Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
+ command line arguments. Our use case is specifying a ton of external
+ libraries. It will read a text file and replace the -cfg entry with those
+ lines.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+index 7eaf57b..ba24802 100644
+--- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
++++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+@@ -9,16 +9,49 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.io.*;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
+ import java.util.*;
+ import java.util.jar.JarOutputStream;
+ import java.util.jar.Manifest;
++import java.util.stream.Stream;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipFile;
+ import java.util.zip.ZipOutputStream;
+ 
+ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+   @SuppressWarnings("UseOfSystemOutOrSystemErr")
+-  public static void main(String[] args) {
++  public static void main(String[] args) throws IOException {
++    List<String> params = new ArrayList<String>();
++    for (int x = 0; x < args.length; x++) {
++      if (args[x].startsWith("-cfg")) {
++        String path = null;
++        if (args[x].startsWith("-cfg=")) {
++          path = args[x].substring(5);
++        }
++        else if (args.length > x+1) {
++          path = args[++x];
++        }
++        else {
++          System.out.println("Must specify a file when using -cfg argument.");
++          return;
++        }
++        Path file = Paths.get(path);
++        if (!Files.exists(file)) {
++          System.out.println("error: missing config '" + path + "'");
++          return;
++        }
++        try (Stream<String> stream = Files.lines(file)) {
++          stream.forEach(params::add);
++        }
++      }
++      else {
++        params.add(args[x]);
++      }
++    }
++    args = params.toArray(new String[params.size()]);
++
+     if (args.length < 2) {
+       System.out.println(
+         "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
+@@ -265,4 +298,4 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+       DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN);
+     }
+   }
+-}
+\ No newline at end of file
++}
+-- 
+2.14.1.windows.1
+
