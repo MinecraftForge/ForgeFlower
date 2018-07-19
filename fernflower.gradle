@@ -1,10 +1,23 @@
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 
-version = '1.5.380-SNAPSHOT' // OurVersion.FernFlowerCommitNumber-SNAPSHOT
+version = gitVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
+def gitVersion() {
+    def desc = grgit.describe(longDescr: true).split('-') as List
+    def hash = desc.remove(desc.size() - 1)
+    def offset = desc.remove(desc.size() - 1)
+    def tag = desc.join('-')
+    def branch = grgit.branch.current().name 
+    return "${tag}.${offset}${t -> if (branch != 'master' && branch != 'HEAD') t << '-' + branch}"
+}
+
 group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
 archivesBaseName = 'forgeflower'
+ext {
+    CHANGELOG = rootProject.file('build/changelog.txt')
+}
 
 sourceCompatibility = targetCompatibility = 8
  
@@ -63,54 +76,58 @@ jar {
     }
     manifest {
         attributes(
-                'Main-Class' : 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler',
-                'Multi-Release': 'true'
+            'Main-Class' : 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler',
+            'Multi-Release': 'true'
         )
     }
 }
 
-uploadArchives {
-    repositories {
-        add getProject().repositories.mavenLocal()
-    }
-    repositories.mavenDeployer {
-        
-        if (project.hasProperty('forgeMavenPass')) {
-            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
-                authentication(userName: "forge", password: project.getProperty('forgeMavenPass'))
-            }
-        } else {
-            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
-        }
-
-        pom {
-            groupId = project.group
-            version = project.version
-            artifactId = project.archivesBaseName
-            project {
-                name project.archivesBaseName
-                packaging 'jar'
-                description 'Fernflower from https://github.com/JetBrains/intellij-community as standalone library, With Forges Modifications'
-                url 'https://github.com/MinecraftForge/ForgeFlower'
-
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            if (CHANGELOG.exists())
+                artifact source: CHANGELOG, classifier: 'changelog'
+                
+            pom {
+                groupId = project.group
+                version = project.version
+                artifactId = project.archivesBaseName
+                name = project.archivesBaseName
+                packaging = 'jar'
+                description = 'Fernflower from https://github.com/JetBrains/intellij-community as standalone library, With Forges Modifications'
+                url = 'https://github.com/MinecraftForge/ForgeFlower'
+                
                 scm {
-                    url 'https://github.com/MinecraftForge/ForgeFlower'
-                    connection 'scm:git:git://github.com/MinecraftForge/ForgeFlower.git'
-                    developerConnection 'scm:git:git@github.com:MinecraftForge/ForgeFlower.git'
+                    url = 'https://github.com/MinecraftForge/ForgeFlower'
+                    connection = 'scm:git:git://github.com/MinecraftForge/ForgeFlower.git'
+                    developerConnection = 'scm:git:git@github.com:MinecraftForge/ForgeFlower.git'
                 }
-
                 issueManagement {
-                    system 'github'
-                    url 'https://github.com/MinecraftForge/ForgeFlower/issues'
+                    system = 'github'
+                    url = 'https://github.com/MinecraftForge/ForgeFlower/issues'
                 }
 
                 licenses {
                     license {
-                        name 'Apache License 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0'
-                        distribution 'repo'
+                        name = 'Apache License 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0'
+                        distribution = 'repo'
                     }
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            if (project.hasProperty('mavenPassword')) {
+                credentials {
+                    username = project.properties.mavenUser
+                    password = project.properties.mavenPassword 
+                }
+                url 'http://files.minecraftforge.net/maven/manage/upload'
+            } else {
+                url 'file://' + rootProject.file('repo').getAbsolutePath()
             }
         }
     }
