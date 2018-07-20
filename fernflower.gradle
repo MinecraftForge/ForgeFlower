@@ -3,17 +3,6 @@ apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 
-version = gitVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
-def gitVersion() {
-    def desc = grgit.describe(longDescr: true).split('-') as List
-    def hash = desc.remove(desc.size() - 1)
-    def offset = desc.remove(desc.size() - 1)
-    def tag = desc.join('-')
-    def branch = grgit.branch.current().name 
-    return "${tag}.${offset}${t -> if (branch != 'master' && branch != 'HEAD') t << '-' + branch}"
-}
-
-group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
 archivesBaseName = 'forgeflower'
 ext {
     CHANGELOG = rootProject.file('build/changelog.txt')
