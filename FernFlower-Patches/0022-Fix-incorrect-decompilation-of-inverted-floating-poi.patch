@@ -1,4 +1,4 @@
-From 76dfa9f180041fac7daeba51680a1465426de53d Mon Sep 17 00:00:00 2001
+From d0d1f231f23130fd9a73abcc4bde6f61f7629b53 Mon Sep 17 00:00:00 2001
 From: malte0811 <malte0811@web.de>
 Date: Mon, 23 Jul 2018 15:53:01 +0200
 Subject: [PATCH] Fix incorrect decompilation of inverted floating point
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix incorrect decompilation of inverted floating point
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index a7c804b..149c7ed 100644
+index a7c804b..859f2cb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 @@ -168,8 +168,18 @@ public class SecondaryFunctionsHelper {
@@ -29,17 +29,41 @@ index a7c804b..149c7ed 100644
                  return new FunctionExprent(desttype, funcexpr.getLstOperands(), funcexpr.bytecode);
                }
              }
-@@ -394,10 +404,6 @@ public class SecondaryFunctionsHelper {
+@@ -378,6 +388,7 @@ public class SecondaryFunctionsHelper {
+           FunctionExprent fparam = (FunctionExprent)param;
+ 
+           int ftype = fparam.getFuncType();
++          boolean canSimplify = false;
+           switch (ftype) {
+             case FunctionExprent.FUNCTION_BOOL_NOT:
+               Exprent newexpr = fparam.getLstOperands().get(0);
+@@ -394,12 +405,24 @@ public class SecondaryFunctionsHelper {
                }
              case FunctionExprent.FUNCTION_EQ:
              case FunctionExprent.FUNCTION_NE:
--            case FunctionExprent.FUNCTION_LT:
--            case FunctionExprent.FUNCTION_GE:
--            case FunctionExprent.FUNCTION_GT:
--            case FunctionExprent.FUNCTION_LE:
-               fparam.setFuncType(funcsnot[ftype - FunctionExprent.FUNCTION_EQ]);
-               return fparam;
++              canSimplify = true;
+             case FunctionExprent.FUNCTION_LT:
+             case FunctionExprent.FUNCTION_GE:
+             case FunctionExprent.FUNCTION_GT:
+             case FunctionExprent.FUNCTION_LE:
+-              fparam.setFuncType(funcsnot[ftype - FunctionExprent.FUNCTION_EQ]);
+-              return fparam;
++              if (!canSimplify) {
++                operands = fparam.getLstOperands();
++                VarType left = operands.get(0).getExprType();
++                VarType right = operands.get(1).getExprType();
++                VarType commonSupertype = VarType.getCommonSupertype(left, right);
++                if (commonSupertype != null) {
++                  canSimplify = commonSupertype.type != CodeConstants.TYPE_FLOAT && commonSupertype.type != CodeConstants.TYPE_DOUBLE;
++                }
++              }
++              if (canSimplify) {
++                fparam.setFuncType(funcsnot[ftype - FunctionExprent.FUNCTION_EQ]);
++                return fparam;
++              }
            }
+         }
+       }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 index d7e814c..eb86822 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
