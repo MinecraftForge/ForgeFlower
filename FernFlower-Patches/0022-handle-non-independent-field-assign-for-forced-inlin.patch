@@ -1,0 +1,99 @@
+From 2893039d737775fc41b24d317b29f93624b53d52 Mon Sep 17 00:00:00 2001
+From: Thiakil <xander@thiakil.com>
+Date: Tue, 24 Jul 2018 08:57:58 +0800
+Subject: [PATCH] handle non-independent field assign for forced inline
+ initialisers
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+index cc8b0b9..373ccea 100644
+--- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+@@ -19,9 +20,12 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.Iterator;
++import java.util.LinkedList;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Set;
+ 
+ public class InitializerProcessor {
+@@ -150,7 +154,8 @@ public class InitializerProcessor {
+     Statement firstData = Statements.findFirstData(root);
+     if (firstData != null) {
+       boolean inlineInitializers = cl.hasModifier(CodeConstants.ACC_INTERFACE) || cl.hasModifier(CodeConstants.ACC_ENUM);
+-
++      List<AssignmentExprent> exprentsToRemove = new LinkedList<>();//when we loop back through the list, stores ones we need to remove outside iterator loop
++      Map<Integer, AssignmentExprent> nonFieldAssigns = new HashMap<>();
+       Iterator<Exprent> itr = firstData.getExprents().iterator();
+       while (itr.hasNext()) {
+         Exprent exprent = itr.next();
+@@ -164,17 +169,49 @@ public class InitializerProcessor {
+ 
+               // interfaces fields should always be initialized inline
+               String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
+-              if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method, cl, whitelist, cl.getFields().getIndexByKey(keyField))) {
++              boolean exprentIndependent = isExprentIndependent(assignExpr.getRight(), method, cl, whitelist, cl.getFields().getIndexByKey(keyField));
++              if (inlineInitializers || exprentIndependent) {
+                 if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
+-                  wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
+-                  whitelist.add(keyField);
+-                  itr.remove();
++                  if (exprentIndependent) {
++                    wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
++                    whitelist.add(keyField);
++                    itr.remove();
++                  } else { //inlineInitializers
++                    if (assignExpr.getRight() instanceof NewExprent){
++                      NewExprent newExprent = (NewExprent) assignExpr.getRight();
++                      Exprent instance = newExprent.getConstructor().getInstance();
++                      if (instance instanceof VarExprent && nonFieldAssigns.containsKey(((VarExprent) instance).getIndex())){
++                        AssignmentExprent nonFieldAssignment = nonFieldAssigns.remove(((VarExprent) instance).getIndex());
++                        newExprent.getConstructor().setInstance(nonFieldAssignment.getRight());
++                        exprentsToRemove.add(nonFieldAssignment);
++                        wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
++                        whitelist.add(keyField);
++                        itr.remove();
++                      } else {
++                        DecompilerContext.getLogger().writeMessage("Don't know how to handle non independent "+assignExpr.getRight().getClass().getName(), IFernflowerLogger.Severity.ERROR);
++                      }
++                    } else {
++                      DecompilerContext.getLogger().writeMessage("Don't know how to handle non independent "+assignExpr.getRight().getClass().getName(), IFernflowerLogger.Severity.ERROR);
++                    }
++                  }
+                 }
+               }
+             }
++          } else if (inlineInitializers){
++            DecompilerContext.getLogger().writeMessage("Found non field assignment when needing to force inline: "+assignExpr.toString(), IFernflowerLogger.Severity.TRACE);
++            if (assignExpr.getLeft() instanceof VarExprent) {
++              nonFieldAssigns.put(((VarExprent) assignExpr.getLeft()).getIndex(), assignExpr);
++            } else {
++              DecompilerContext.getLogger().writeMessage("Left isnt VarExprent :(", IFernflowerLogger.Severity.ERROR);
++            }
+           }
++        } else if (inlineInitializers && cl.hasModifier(CodeConstants.ACC_INTERFACE)){
++          DecompilerContext.getLogger().writeMessage("Non assignment found in initialiser when we're needing to inline all", IFernflowerLogger.Severity.ERROR);
+         }
+       }
++      if (exprentsToRemove.size() > 0){
++        firstData.getExprents().removeAll(exprentsToRemove);
++      }
+     }
+   }
+ 
+-- 
+2.16.1.windows.1
+
