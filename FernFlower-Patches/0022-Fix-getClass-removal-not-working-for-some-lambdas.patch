@@ -1,0 +1,35 @@
+From 048c1fab82a216d2eff2499255d69537e7e6dcf2 Mon Sep 17 00:00:00 2001
+From: JDLogic <jrd2558@gmail.com>
+Date: Wed, 25 Jul 2018 20:51:39 -0700
+Subject: [PATCH] Fix getClass removal not working for some lambdas
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+index b71a264..d6e972e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+@@ -473,8 +473,8 @@ public class SimplifyExprentsHelper {
+     if (first.type == Exprent.EXPRENT_INVOCATION) {
+       InvocationExprent invocation = (InvocationExprent)first;
+ 
+-      if (!invocation.isStatic() && invocation.getInstance().type == Exprent.EXPRENT_VAR && invocation.getName().equals("getClass") &&
+-          invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
++      if (!invocation.isStatic() && (invocation.getInstance().type == Exprent.EXPRENT_VAR || invocation.getInstance().type == Exprent.EXPRENT_FIELD)
++        && invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
+ 
+         List<Exprent> lstExprents = second.getAllExprents();
+         lstExprents.add(second);
+@@ -483,7 +483,9 @@ public class SimplifyExprentsHelper {
+           if (expr.type == Exprent.EXPRENT_NEW) {
+             NewExprent newExpr = (NewExprent)expr;
+             if (newExpr.getConstructor() != null && !newExpr.getConstructor().getLstParameters().isEmpty() &&
+-                newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance())) {
++              (newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance()) ||
++                (invocation.getInstance().type == Exprent.EXPRENT_FIELD &&
++                  newExpr.getConstructor().getLstParameters().get(0).getExprType().equals(invocation.getInstance().getExprType())))) {
+ 
+               String classname = newExpr.getNewType().value;
+               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
+-- 
+2.15.2 (Apple Git-101.1)
+
