@@ -1,4 +1,4 @@
-From 344200cc5a2ac3ffa9398b875cdbd9d70c30f9c5 Mon Sep 17 00:00:00 2001
+From 6f2288b2521a030173ec51b88cd24ee67901c9f3 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -144,7 +144,7 @@ index 9f047d4..8ac1d92 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index af07983..313b473 100644
+index af07983..451238c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
@@ -171,9 +171,18 @@ index af07983..313b473 100644
                  }
                }
                else {
-@@ -281,6 +284,18 @@ public class NestedClassProcessor {
+@@ -279,8 +282,26 @@ public class NestedClassProcessor {
+     method.setOuterVarNames.addAll(setNewOuterNames);
+ 
      for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
-       method.varproc.setVarName(entry.getKey(), entry.getValue());
+-      method.varproc.setVarName(entry.getKey(), entry.getValue());
++      VarVersionPair pair = entry.getKey();
++      LocalVariable lvt = lvts.get(pair);
++
++      method.varproc.setVarName(pair, entry.getValue());
++      if (lvt != null) {
++        method.varproc.setVarLVT(pair, lvt);
++      }
      }
 +
 +    method.getOrBuildGraph().iterateExprentsDeep(exp -> {
@@ -190,7 +199,7 @@ index af07983..313b473 100644
    }
  
    private static void checkNotFoundClasses(ClassNode root, ClassNode node) {
-@@ -519,6 +534,7 @@ public class NestedClassProcessor {
+@@ -519,6 +540,7 @@ public class NestedClassProcessor {
        if (method.root != null) { // neither abstract nor native
          Map<VarVersionPair, String> mapNewNames = new HashMap<>();  // local var names
          Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
@@ -198,7 +207,7 @@ index af07983..313b473 100644
  
          Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
          if (method.synthParameters != null) {
-@@ -533,15 +549,17 @@ public class NestedClassProcessor {
+@@ -533,15 +555,17 @@ public class NestedClassProcessor {
  
                String varName = null;
                VarType varType = null;
@@ -217,7 +226,7 @@ index af07983..313b473 100644
                  if (parent.simpleName == null) {
                    // anonymous enclosing class, no access to this
                    varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
-@@ -549,11 +567,15 @@ public class NestedClassProcessor {
+@@ -549,11 +573,15 @@ public class NestedClassProcessor {
                  else {
                    varName = parent.simpleName + ".this";
                  }
@@ -233,7 +242,7 @@ index af07983..313b473 100644
              }
  
              varIndex += md.params[index++].stackSize;
-@@ -569,17 +591,19 @@ public class NestedClassProcessor {
+@@ -569,17 +597,19 @@ public class NestedClassProcessor {
  
              String varName = null;
              VarType varType = null;
@@ -254,7 +263,7 @@ index af07983..313b473 100644
                if (classNode.parent.simpleName == null) {
                  // anonymous enclosing class, no access to this
                  varName = VarExprent.VAR_NAMELESS_ENCLOSURE;
-@@ -587,11 +611,15 @@ public class NestedClassProcessor {
+@@ -587,11 +617,15 @@ public class NestedClassProcessor {
                else {
                  varName = classNode.parent.simpleName + ".this";
                }
@@ -270,7 +279,7 @@ index af07983..313b473 100644
  
              // hide synthetic field
              if (classNode == child) { // fields higher up the chain were already handled with their classes
-@@ -610,16 +638,20 @@ public class NestedClassProcessor {
+@@ -610,16 +644,20 @@ public class NestedClassProcessor {
          for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
            VarVersionPair pair = entry.getKey();
            VarType type = mapNewTypes.get(pair);
@@ -293,7 +302,7 @@ index af07983..313b473 100644
              if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
                AssignmentExprent assignExpr = (AssignmentExprent)exprent;
                if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-@@ -627,7 +659,7 @@ public class NestedClassProcessor {
+@@ -627,7 +665,7 @@ public class NestedClassProcessor {
                  String qName = child.classStruct.qualifiedName;
                  if (fExpr.getClassname().equals(qName) &&  // process this class only
                      mapFieldsToNewVars.containsKey(InterpreterUtil.makeUniqueKey(qName, fExpr.getName(), fExpr.getDescriptor().descriptorString))) {
@@ -302,7 +311,7 @@ index af07983..313b473 100644
                  }
                }
              }
-@@ -639,13 +671,13 @@ public class NestedClassProcessor {
+@@ -639,13 +677,13 @@ public class NestedClassProcessor {
                if (invokeExpr.getFunctype() == InvocationExprent.TYP_INIT) {
                  // invocation of the super constructor in an anonymous class
                  child.superInvocation = invokeExpr; // FIXME: save original names of parameters
@@ -319,7 +328,7 @@ index af07983..313b473 100644
            }
  
            private Exprent replaceExprent(Exprent exprent) {
-@@ -654,7 +686,12 @@ public class NestedClassProcessor {
+@@ -654,7 +692,12 @@ public class NestedClassProcessor {
                if (mapParamsToNewVars.containsKey(varIndex)) {
                  VarVersionPair newVar = mapParamsToNewVars.get(varIndex);
                  method.varproc.getExternalVars().add(newVar);
@@ -333,7 +342,7 @@ index af07983..313b473 100644
                }
              }
              else if (exprent.type == Exprent.EXPRENT_FIELD) {
-@@ -662,10 +699,15 @@ public class NestedClassProcessor {
+@@ -662,10 +705,15 @@ public class NestedClassProcessor {
                String key = InterpreterUtil.makeUniqueKey(fExpr.getClassname(), fExpr.getName(), fExpr.getDescriptor().descriptorString);
                if (mapFieldsToNewVars.containsKey(key)) {
                  //if(fExpr.getClassname().equals(child.classStruct.qualifiedName) &&
@@ -351,7 +360,7 @@ index af07983..313b473 100644
                }
              }
  
-@@ -1047,4 +1089,41 @@ public class NestedClassProcessor {
+@@ -1047,4 +1095,41 @@ public class NestedClassProcessor {
        return fieldKey.hashCode() + varPair.hashCode();
      }
    }

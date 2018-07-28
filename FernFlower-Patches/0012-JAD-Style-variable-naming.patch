@@ -1,4 +1,4 @@
-From a784cedac27f10a1feb24ffc316c78fd941730d0 Mon Sep 17 00:00:00 2001
+From f17984c65607e089ef40cf2e6118fa9847e2ab60 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -256,10 +256,10 @@ index 0000000..fc1d7d6
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 4ca0748..32e77e4 100644
+index 10ae1b1..4b4c3e9 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -536,7 +536,11 @@ public class NestedClassProcessor {
+@@ -542,7 +542,11 @@ public class NestedClassProcessor {
          Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
          Map<VarVersionPair, LocalVariable> mapNewLVTs = new HashMap<>(); // local var table entries
  
