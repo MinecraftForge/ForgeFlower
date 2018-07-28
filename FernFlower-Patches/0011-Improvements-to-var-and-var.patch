@@ -1,14 +1,14 @@
-From dee1a1b037d5c751c670ebb87290675ff53796f4 Mon Sep 17 00:00:00 2001
+From 397301fa2f659be631343ceee5c276655796adb6 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 10:13:01 -0700
 Subject: [PATCH] Improvements to var++ and var--
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 313b473..4ca0748 100644
+index 451238c..10ae1b1 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -1045,7 +1045,7 @@ public class NestedClassProcessor {
+@@ -1051,7 +1051,7 @@ public class NestedClassProcessor {
            res = classname.equals(((InvocationExprent)expr).getClassname());
            break;
          case Exprent.EXPRENT_NEW:
