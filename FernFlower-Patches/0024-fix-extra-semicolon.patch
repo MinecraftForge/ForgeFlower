@@ -1,0 +1,25 @@
+From 0bc480185ebcc1e18bfb9cff7ca15141bbc4a8fc Mon Sep 17 00:00:00 2001
+From: temp1011 <34900092+temp1011@users.noreply.github.com>
+Date: Mon, 30 Jul 2018 11:50:09 +0100
+Subject: [PATCH] fixing extra line
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index a3170fd..15f82d8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -778,11 +778,6 @@ public class ExprProcessor implements CodeConstants {
+       }
+     }
+ 
+-    if (buf.length() == 0 && semicolon) {
+-      buf.appendIndent(indent).append(";").appendLineSeparator();
+-      tracer.incrementCurrentSourceLine();
+-    }
+-
+     return buf;
+   }
+ 
+-- 
+2.17.1
+
