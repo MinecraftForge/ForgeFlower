@@ -67,6 +67,5 @@ task eclipse() {
 }
 
 if (!JavaVersion.current().java9Compatible) {
-    println("You must build this with JDK 9")
-    System.exit(1)
+    throw new RuntimeException("You must build this with JDK 9")
 }
