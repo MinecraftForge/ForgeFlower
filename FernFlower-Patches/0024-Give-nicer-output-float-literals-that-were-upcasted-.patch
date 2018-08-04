@@ -1,0 +1,34 @@
+From aaa97e37ac34c30ff794283124eebcbad3dec409 Mon Sep 17 00:00:00 2001
+From: Pokechu22 <Pokechu022@gmail.com>
+Date: Fri, 3 Aug 2018 14:15:46 -0700
+Subject: [PATCH] Give nicer output float literals that were upcasted to
+ doubles
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index cd08934..06a4abf 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -206,6 +206,19 @@ public class ConstExprent extends Exprent {
+           else if (doubleVal == Double.MIN_VALUE) {
+             return new FieldExprent("MIN_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+           }
++
++          // Check for cases where a float literal has been upcasted to a double.
++          // (for instance, double d = .01F results in 0.009999999776482582D without this)
++          float nearestFloatVal = (float)doubleVal;
++          if (doubleVal == (double)nearestFloatVal) {
++            // Value can be represented precisely as both a float and a double.
++            // Now check if the string representation as a float is nicer/shorter.
++            // If they're the same, there's no point in the cast and such (e.g. don't decompile 1.0D as (double)1.0F).
++            if (Float.toString(nearestFloatVal).length() < Double.toString(doubleVal).length()) {
++              // Include a cast to prevent using the wrong method call in ambiguous cases.
++              return new TextBuffer().append("(double)").append(trimZeros(Float.toString(nearestFloatVal))).append('F');
++            }
++          }
+         }
+         else if (Double.isNaN(doubleVal)) {
+           return new TextBuffer("0.0D / 0.0D");
+-- 
+2.17.0
+
