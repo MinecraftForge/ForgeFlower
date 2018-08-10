@@ -1,4 +1,4 @@
-From 6f2288b2521a030173ec51b88cd24ee67901c9f3 Mon Sep 17 00:00:00 2001
+From ddfa385e35cc8b30dd97ae5243059a3be8b842ce Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -1000,7 +1000,7 @@ index 0000000..c62c74d
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index efc1891..ad1575d 100644
+index efc1891..49862b5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1042,7 +1042,67 @@ index efc1891..ad1575d 100644
      }
  
      return (stat.getLooptype() != oldloop);
-@@ -325,6 +333,8 @@ public class MergeHelper {
+@@ -142,13 +150,45 @@ public class MergeHelper {
+         if (firstif.iftype == IfStatement.IFTYPE_IF) {
+           if (firstif.getIfstat() == null) {
+             StatEdge ifedge = firstif.getIfEdge();
+-            if (isDirectPath(stat, ifedge.getDestination())) {
++            boolean infinite = false;
++
++            // there are some special cases where we can fix this
++            // FIXME do these result from an error somewhere else?
++            if (!isDirectPath(stat, ifedge.getDestination())) {
++              // bad infinite loop needs special handling
++              infinite = ifedge.getType() == StatEdge.TYPE_CONTINUE && stat.getFirst().equals(firstif) && stat.equals(ifedge.getDestination());
++
++              // inside a switch or loop and we need to add a break after the current loop
++              Statement parent = stat.getParent();
++              if (!infinite && parent != null) {
++                if (parent.type != Statement.TYPE_SEQUENCE || parent.getStats().getLast().equals(stat)) {
++                  Statement outer = parent.getParent();
++                  while (outer != null && outer.type != Statement.TYPE_SWITCH && outer.type != Statement.TYPE_DO) {
++                    outer = outer.getParent();
++                  }
++
++                  if (outer != null) {
++                    List<StatEdge> edges = outer.getAllSuccessorEdges();
++                    if (!edges.isEmpty()) {
++                      StatEdge edge = edges.get(0);
++                      if (edge.getDestination().equals(ifedge.getDestination())) {
++                        stat.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, stat, ifedge.getDestination(), outer));
++                      }
++                    }
++                  }
++                }
++              }
++            }
++
++            if (infinite || isDirectPath(stat, ifedge.getDestination())) {
+               // exit condition identified
+               stat.setLooptype(DoStatement.LOOP_WHILE);
+ 
+               // negate condition (while header)
+               IfExprent ifexpr = (IfExprent)firstif.getHeadexprent().copy();
+-              ifexpr.negateIf();
++              if (!infinite) {
++                ifexpr.negateIf();
++              }
+ 
+               if (stat.getConditionExprent() != null) {
+                 ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
+@@ -159,6 +199,11 @@ public class MergeHelper {
+ 
+               // remove edges
+               firstif.getFirst().removeSuccessor(ifedge);
++
++              if (infinite) {
++                ifedge = firstif.getAllSuccessorEdges().get(0);
++              }
++
+               firstif.removeSuccessor(firstif.getAllSuccessorEdges().get(0));
+ 
+               if (stat.getAllSuccessorEdges().isEmpty()) {
+@@ -325,6 +370,8 @@ public class MergeHelper {
          }
          else {
            preData = current.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).get(0);
@@ -1051,7 +1111,7 @@ index efc1891..ad1575d 100644
            preData = getLastDirectData(preData);
            if (preData != null && !preData.getExprents().isEmpty()) {
              initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
-@@ -363,12 +373,16 @@ public class MergeHelper {
+@@ -363,12 +410,16 @@ public class MergeHelper {
        stat.setIncExprent(exp);
      }
  
@@ -1072,7 +1132,7 @@ index efc1891..ad1575d 100644
      }
    }
  
-@@ -401,15 +415,296 @@ public class MergeHelper {
+@@ -401,15 +452,296 @@ public class MergeHelper {
        return stat;
      }
  
@@ -1122,9 +1182,9 @@ index efc1891..ad1575d 100644
 +                 }
 +              }
 +            }
-+          }
+           }
 +          break;
-+        }
+         }
 +      }
 +      else {
 +        break;
@@ -1199,8 +1259,8 @@ index efc1891..ad1575d 100644
 +            initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.setIncExprent(initExprents[1].getRight());
-           }
-         }
++          }
++        }
 +
 +        return true;
 +      }
@@ -4596,5 +4656,5 @@ index 0000000..15e2171
 +  }
 +}
 -- 
-2.17.0
+2.15.2 (Apple Git-101.1)
 
