@@ -1,4 +1,4 @@
-From e7f97804d33f94828df08331d7042c0747adddff Mon Sep 17 00:00:00 2001
+From 4b3d5a3cd47ca89fa4b2594ad5dbf06006c95f28 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -54,33 +54,43 @@ index 9025746..bf30fd0 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 740b37c..a2906b1 100644
+index 740b37c..807bdb3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -481,6 +481,22 @@ public class InvocationExprent extends Exprent {
+@@ -481,6 +481,32 @@ public class InvocationExprent extends Exprent {
  
      }
  
-+    if (instance != null && !genArgs.isEmpty()) {
-+        StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
-+        StructMethod me = stClass.getMethodRecursive(getName(), getStringDescriptor());
-+        if (me != null && me.getSignature() != null) {
-+            for (int x = 0; x < types.length; x++) {
-+                VarType type = me.getSignature().parameterTypes.get(x);
-+                if (type.isGeneric()) {
-+                    VarType _new = type.remap(genArgs);
-+                    if (_new != type) {
-+                        types[x] = _new;
-+                    }
-+                }
++    if (!genericArgs.isEmpty() || !genArgs.isEmpty()) {
++      StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
++      StructMethod me = stClass.getMethodRecursive(getName(), getStringDescriptor());
++      if (me != null && me.getSignature() != null) {
++        if (instance == null) {
++          for (int x = 0; x < genericArgs.size(); x++) {
++            VarType from = GenericType.parse("T" + me.getSignature().typeParameters.get(x) + ";");
++            if (from != null)  {
++              genArgs.put(from, genericArgs.get(x));
 +            }
++          }
 +        }
-+    }
 +
++        for (int x = 0; x < types.length; x++) {
++          VarType type = me.getSignature().parameterTypes.get(x);
++          if (type.isGeneric()) {
++            if (!genArgs.isEmpty()) {
++              VarType _new = type.remap(genArgs);
++              if (_new != type) {
++                types[x] = _new;
++              }
++            }
++          }
++        }
++      }
++    }
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -646,24 +662,62 @@ public class InvocationExprent extends Exprent {
+@@ -646,24 +672,62 @@ public class InvocationExprent extends Exprent {
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null) return matches;
  
