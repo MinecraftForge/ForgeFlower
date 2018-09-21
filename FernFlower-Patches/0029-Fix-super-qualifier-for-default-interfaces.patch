@@ -1,0 +1,44 @@
+From 19f0588a95a93bbf6706cb76c2091d2b296e3111 Mon Sep 17 00:00:00 2001
+From: Justin <jrd2558@gmail.com>
+Date: Wed, 19 Sep 2018 23:09:10 -0700
+Subject: [PATCH] Fix super qualifier for default interfaces
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index a2906b1d..50b86264 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -299,7 +299,9 @@ public class InvocationExprent extends Exprent {
+ 
+           if (invocationTyp == INVOKE_SPECIAL) {
+             if (!classname.equals(this_classname)) { // TODO: direct comparison to the super class?
+-              super_qualifier = this_classname;
++              StructClass cl = DecompilerContext.getStructContext().getClass(classname);
++              boolean isInterface = cl != null && cl.hasModifier(CodeConstants.ACC_INTERFACE);
++              super_qualifier = !isInterface ? this_classname : classname;
+             }
+           }
+         }
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+index 89bab11f..e5e3db65 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+@@ -88,6 +88,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testPop2OneLongPop2() { doTest("pkg/TestPop2OneLongPop2"); }
+   @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
+   @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
++  @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
+ 
+   // TODO: fix all below
+   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
+@@ -95,7 +96,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+-  //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
+ 
+   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
+   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+-- 
+2.17.1 (Apple Git-112)
+
