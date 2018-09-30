@@ -1,11 +1,11 @@
-From 58107d2c58db4b01be8d259287c33f57095a8c75 Mon Sep 17 00:00:00 2001
+From 22ed255131d9594e619d9de1149ee3b7fcb4c813 Mon Sep 17 00:00:00 2001
 From: Pokechu22 <Pokechu022@gmail.com>
 Date: Fri, 3 Aug 2018 14:15:46 -0700
 Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index cd08934..c72dde1 100644
+index cd08934..7960445 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -33,6 +33,67 @@ public class ConstExprent extends Exprent {
@@ -112,7 +112,7 @@ index cd08934..c72dde1 100644
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -203,9 +237,32 @@ public class ConstExprent extends Exprent {
+@@ -203,9 +237,41 @@ public class ConstExprent extends Exprent {
            else if (doubleVal == Double.MAX_VALUE) {
              return new FieldExprent("MAX_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
            }
@@ -122,6 +122,15 @@ index cd08934..c72dde1 100644
            else if (doubleVal == Double.MIN_VALUE) {
              return new FieldExprent("MIN_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
            }
++          else if (doubleVal == -Double.MAX_VALUE) {
++            return new FieldExprent("MAX_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++          }
++          else if (doubleVal == -Double.MIN_NORMAL) {
++            return new FieldExprent("MIN_NORMAL", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++          }
++          else if (doubleVal == -Double.MIN_VALUE) {
++            return new FieldExprent("MIN_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++          }
 +          else if (doubleVal == Math.E) {
 +            return new FieldExprent("E", "java/lang/Math", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
 +          }
@@ -145,7 +154,7 @@ index cd08934..c72dde1 100644
          }
          else if (Double.isNaN(doubleVal)) {
            return new TextBuffer("0.0D / 0.0D");
-@@ -234,7 +291,62 @@ public class ConstExprent extends Exprent {
+@@ -234,7 +300,71 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }
@@ -171,6 +180,15 @@ index cd08934..c72dde1 100644
 +      }
 +      else if (floatVal == Float.MIN_VALUE) {
 +        return new FieldExprent("MIN_VALUE", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == -Float.MAX_VALUE) {
++        return new FieldExprent("MAX_VALUE", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++      }
++      else if (floatVal == -Float.MIN_NORMAL) {
++        return new FieldExprent("MIN_NORMAL", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++      }
++      else if (floatVal == -Float.MIN_VALUE) {
++        return new FieldExprent("MIN_VALUE", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
 +      }
 +      // Math constants
 +      else if (floatVal == (float)Math.E) {
