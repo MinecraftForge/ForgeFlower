@@ -1,11 +1,11 @@
-From 19f0588a95a93bbf6706cb76c2091d2b296e3111 Mon Sep 17 00:00:00 2001
+From aa0004a612d6aedcc101ab420247cd99b0ab6279 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Wed, 19 Sep 2018 23:09:10 -0700
 Subject: [PATCH] Fix super qualifier for default interfaces
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a2906b1d..50b86264 100644
+index dc536d7..f5ec40d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -299,7 +299,9 @@ public class InvocationExprent extends Exprent {
@@ -20,7 +20,7 @@ index a2906b1d..50b86264 100644
            }
          }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 89bab11f..e5e3db65 100644
+index 89bab11..e5e3db6 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -88,6 +88,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -40,5 +40,5 @@ index 89bab11f..e5e3db65 100644
    @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
    @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
 -- 
-2.17.1 (Apple Git-112)
+2.17.0
 
