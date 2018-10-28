@@ -71,13 +71,24 @@ jar {
     }
 }
 
+task sourceJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+}
+
+artifacts {
+    archives sourceJar
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
-            if (CHANGELOG.exists())
+            if (CHANGELOG.exists()) {
                 artifact source: CHANGELOG, classifier: 'changelog'
-                
+            }
+            artifact tasks.sourceJar
+
             pom {
                 groupId = project.group
                 version = project.version
