@@ -1,4 +1,4 @@
-From a58e98e0778336cbf8a2ed29bf5cfa698b5b3181 Mon Sep 17 00:00:00 2001
+From d58eb2723ff1a2b9ec73c75ac72316d370e9a541 Mon Sep 17 00:00:00 2001
 From: malte0811 <malte0811@web.de>
 Date: Mon, 23 Jul 2018 15:53:01 +0200
 Subject: [PATCH] Fix incorrect decompilation of inverted floating point
@@ -65,13 +65,13 @@ index a7c804b..859f2cb 100644
          }
        }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index d7e814c..eb86822 100644
+index 7b8d444..06800ca 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -100,4 +100,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
+@@ -101,4 +101,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
    @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
    @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+   @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
 +  @Test public void testInvertedFloatComparison() { doTest("pkg/TestInvertedFloatComparison"); }
  }
 \ No newline at end of file

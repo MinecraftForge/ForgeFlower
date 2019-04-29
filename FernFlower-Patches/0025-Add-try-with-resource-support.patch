@@ -1,4 +1,4 @@
-From 70d6cd9291f773e0d907df5fa51c858552cfab61 Mon Sep 17 00:00:00 2001
+From e4ef985e06dff402922dd92a62e91854ca718c47 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Mon, 6 Aug 2018 20:26:59 -0700
 Subject: [PATCH] Add try with resource support
@@ -21,10 +21,10 @@ index 8ac1d92..7212a0a 100644
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 new file mode 100644
-index 0000000..2d8910a
+index 0000000..6484ee0
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
-@@ -0,0 +1,260 @@
+@@ -0,0 +1,263 @@
 +package org.jetbrains.java.decompiler.modules.decompiler;
 +
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -174,20 +174,20 @@ index 0000000..2d8910a
 +      if (toRemove.getTryType() == CatchStatement.RESORCES) {
 +        catchStat.setTryType(CatchStatement.RESORCES);
 +        catchStat.getResources().addAll(toRemove.getResources());
-+      }
 +
-+      catchStat.getVarDefinitions().addAll(toRemove.getVarDefinitions());
-+      parent.replaceStatement(toRemove, toRemove.getFirst());
++        catchStat.getVarDefinitions().addAll(toRemove.getVarDefinitions());
++        parent.replaceStatement(toRemove, toRemove.getFirst());
 +
-+      if (!toRemove.getVars().isEmpty()) {
-+        for (int i = 0; i < toRemove.getVars().size(); ++i) {
-+          catchStat.getVars().add(i, toRemove.getVars().get(i));
-+          catchStat.getExctStrings().add(i, toRemove.getExctStrings().get(i));
++        if (!toRemove.getVars().isEmpty()) {
++          for (int i = 0; i < toRemove.getVars().size(); ++i) {
++            catchStat.getVars().add(i, toRemove.getVars().get(i));
++            catchStat.getExctStrings().add(i, toRemove.getExctStrings().get(i));
 +
-+          catchStat.getStats().add(i + 1, catchStat.getStats().get(i + 1));
++            catchStat.getStats().add(i + 1, catchStat.getStats().get(i + 1));
++          }
 +        }
++        return true;
 +      }
-+      return true;
 +    }
 +    return false;
 +  }
@@ -196,8 +196,11 @@ index 0000000..2d8910a
 +    for (Exprent exp : prevStatement.getExprents()) {
 +      if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
 +        AssignmentExprent ass = (AssignmentExprent)exp;
-+        if (ass.getLeft().equals(var)) {
-+          return ass;
++        if (ass.getLeft().type == Exprent.EXPRENT_VAR) { // cannot use equals as var's varType may be unknown and not match
++          VarExprent left = (VarExprent)ass.getLeft();
++          if (left.getVarVersionPair().equals(var.getVarVersionPair())) {
++            return ass;
++          }
 +        }
 +      }
 +    }
@@ -285,8 +288,26 @@ index 0000000..2d8910a
 +    return false;
 +  }
 +}
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
+index 0724aef..86c40a9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
+@@ -126,6 +126,13 @@ public class FlattenStatementsHelper {
+           case Statement.TYPE_TRYCATCH:
+             DirectNode firstnd = new DirectNode(DirectNode.NODE_TRY, stat, stat.id + "_try");
+ 
++            if (stat.type == Statement.TYPE_TRYCATCH) {
++              CatchStatement catchStat = (CatchStatement)stat;
++              if (catchStat.getTryType() == CatchStatement.RESORCES) {
++                firstnd.exprents = catchStat.getResources();
++              }
++            }
++
+             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
+             graph.nodes.putWithKey(firstnd, firstnd.id);
+ 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index f74fe84..08bc8c8 100644
+index f74fe84..a028e9f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -6,6 +6,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
@@ -325,7 +346,7 @@ index f74fe84..08bc8c8 100644
    }
  
    private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
-@@ -142,8 +151,26 @@ public class CatchStatement extends Statement {
+@@ -142,8 +151,25 @@ public class CatchStatement extends Statement {
        tracer.incrementCurrentSourceLine();
      }
  
@@ -337,7 +358,6 @@ index f74fe84..08bc8c8 100644
 +    }
 +    else {
 +      buf.appendIndent(indent).append("try (");
-+      tracer.incrementCurrentSourceLine();
 +
 +      if (resources.size() > 1) {
 +        buf.appendLineSeparator();
@@ -354,7 +374,7 @@ index f74fe84..08bc8c8 100644
  
      buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
      buf.appendIndent(indent).append("}");
-@@ -193,11 +220,35 @@ public class CatchStatement extends Statement {
+@@ -193,11 +219,35 @@ public class CatchStatement extends Statement {
      return cs;
    }
  
@@ -486,6 +506,275 @@ index 054abbb..adb62d7 100644
            if (isVarReadFirst(var, (Statement)obj, 0, whitelist)) {
              return true;
            }
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+index d7e814c..7b8d444 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+@@ -100,4 +100,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
+   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
++  @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
+ }
+\ No newline at end of file
+diff --git a/testData/classes/pkg/TestTryWithResources.class b/testData/classes/pkg/TestTryWithResources.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..dba49d9ec1c81714d3b6d7debe6db5697fc5a9bc
+GIT binary patch
+literal 2427
+zcmc&#-%nd*7=BJ^d&;4Ou53yN9fLWAwzLB_b?tufW8EtKfwY4V7n1^KPzG(&9^AMv
+zOEi%S6TL9;lAFbGVZ0zwoW{u=i8C=#{}2BJ@%he=wwNth%o0gB?|I+v{hsfApXdEf
+zpZ@*h&j8M2R>3QHUB(+O3@8{xP(cV`1w)9q5S4Mxg<%&)6pZ4$cwCV2rUDP%lJT~T
+zi!x#g;<%*XGOmaR*RRUBCc$~BSSo5)B(w|+&PuRPl$TTq9jRhT&1|eMsMUO7VT}=o
+zrq;A!37(u*SiGAqRP?xvF&;!LGhsx=xcNHDV<jlL@<w%0O%w%&KTnK&b#tz$t<0!3
+zeWeyzEqqXL<5hG?=&IaZjy@}i<z=#Y853?y;<}848#i!MM$(OUFvYT`$MQENcm-B;
+ztx#Hy=Co?Dv@F4v&vH4DOmWwk8!4pS$cVE#8@c(FYWbdM(~T^qC3NdcB~^>wnn~t1
+zOIqRn_4|uzMJtv|*2ZEvn#?vuyNo>y-(j!OY(*_)^$jxKbz=rOGUG-bw=4j?$|iuO
+z+OrF*>Y_$Ej$#TDbDK3yUAHhq5v9t8#%9$5qaBT&Ce{kInuNAxRkNs;&_9rBWEc#^
+z2aS-?Z7MFoZJeripAur0$pX0@IFgxUrvG{M@n8=RZZ0@z9&NH(Kh`3wkxO8io2Luf
+ziiG$xDt_<zO;~7RGjSY?YvmdT&r?`h%579CRkc=Amq=_gYF+)fxB$jjlq?`o7Q1OL
+zsrQaBov_-m67>_!%IdotQ(*PW^d=mZXs2?lh_^3^KG=B6#h)FLxDkB%=>=#dT1W7E
+zNV|NIaFS1_9&AG^x~){{B%=<lm3=l}%O31|a6E={N=gNNvf~L{^DVyC+`QeV<o3`u
+z7d*gZ=m4F;J-BypF&zr;p?wGE41X{kPKEa~ObRgRgc0<`>>)p4nI?<K(EbkWQ@fD)
+zDH`U7$^$RX@{$@h$x>!8i+TE!ysE+nR<Vu_(|XynXyz0Vpzmtu{tg`>NxMqC5{{vV
+ztCyi1@(7!ZfXodNAFc!+ll(tquH9U)7L}Gmog$3O=mmK?UFYd9^3+PmUtff$mM1v&
+z7{0WWAwQjS;R8$!kq|n^cW^CcA2JEKU_>G@yWgJi+xKG*rUn|RzL;~!?=-j*seZ>k
+z$xSpAh+7Jb7-WZZ1!D5QC2)oOu7(7D+0?+zPyAJklf?*s0`jK4%{K4ooO>91AHv_l
+zr}#`~`vJC1`;hT(u#0c$Z{sTnA2`4-x>mwkT1C*tmE-hJAWR$K)Q)mq^L)QeyG{F$
+z_JDLh<pc}uK7{X(rI`}R=&Oq)6uhA;=!Mfz&|I#kP)A!`c4QcD(%lP}sk^B6=pF_v
+z?fWh5ZQZ8!fBw(f@4%Jj<w?KP8EAju8Svr(KB9)genKTb#~1igpM@<vGVRwS@H_l~
+zpXfj0bO;~#4ZrI%A*?kMF|>1~hkk(baEkNL%XtWJ9(sx2$CFOuW7;kB6RC$t{lqzg
+dKk%A9AFSYI%?A}fGa+vLe;E{s^?=iM_8)B@@HPMd
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/results/TestTryWithResources.dec b/testData/results/TestTryWithResources.dec
+new file mode 100644
+index 0000000..419b0df
+--- /dev/null
++++ b/testData/results/TestTryWithResources.dec
+@@ -0,0 +1,176 @@
++package pkg;
++
++import java.io.IOException;
++import java.io.InputStream;
++import java.net.URISyntaxException;
++import java.nio.file.FileSystem;
++import java.nio.file.FileSystems;
++import java.nio.file.Files;
++
++public class TestTryWithResources {
++   public static void test1() {
++      try (FileSystem var0 = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI())) {// 13
++         var0.getPath("PATH", "TO", "FILE");// 14
++      } catch (IOException | URISyntaxException var13) {// 16
++         ;
++      }
++
++   }// 17
++
++   public static void test2() {
++      try (
++         FileSystem var0 = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI());// 20
++         InputStream var2 = Files.newInputStream(var0.getPath("PATH", "TO", "FILE"));// 21
++      ) {
++         var2.read();// 22
++      } catch (IOException | URISyntaxException var32) {// 24
++         ;
++      }
++
++   }// 25
++
++   public static void test3() {
++      try (FileSystem var0 = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI())) {// 28
++         try (InputStream var2 = Files.newInputStream(var0.getPath("PATH", "TO", "FILE"))) {// 29
++            var2.read();// 30
++         } catch (IOException var34) {// 32
++            ;
++         } catch (Exception var35) {// 33
++            ;
++         }
++      } catch (IOException | URISyntaxException var38) {// 35
++         ;
++      }
++
++   }// 36
++}
++
++class 'pkg/TestTryWithResources' {
++   method 'test1 ()V' {
++      0      11
++      1      11
++      2      11
++      3      11
++      4      11
++      5      11
++      6      11
++      7      11
++      8      11
++      9      11
++      a      11
++      b      11
++      c      11
++      d      11
++      10      12
++      11      12
++      12      12
++      19      12
++      1a      12
++      1e      12
++      1f      12
++      21      12
++      22      12
++      23      12
++      6d      13
++      6e      17
++   }
++
++   method 'test2 ()V' {
++      0      21
++      1      21
++      2      21
++      3      21
++      4      21
++      5      21
++      6      21
++      7      21
++      8      21
++      9      21
++      a      21
++      b      21
++      c      21
++      d      21
++      10      22
++      11      22
++      12      22
++      19      22
++      1a      22
++      1e      22
++      1f      22
++      21      22
++      22      22
++      23      22
++      28      22
++      29      22
++      2a      22
++      2b      22
++      2e      24
++      2f      24
++      30      24
++      31      24
++      c9      25
++      ca      29
++   }
++
++   method 'test3 ()V' {
++      0      32
++      1      32
++      2      32
++      3      32
++      4      32
++      5      32
++      6      32
++      7      32
++      8      32
++      9      32
++      a      32
++      b      32
++      c      32
++      d      32
++      10      33
++      11      33
++      12      33
++      19      33
++      1a      33
++      1e      33
++      1f      33
++      21      33
++      22      33
++      23      33
++      28      33
++      29      33
++      2a      33
++      2b      33
++      2e      34
++      2f      34
++      30      34
++      31      34
++      82      35
++      86      37
++      d1      40
++      d2      44
++   }
++}
++
++Lines mapping:
++13 <-> 12
++14 <-> 13
++16 <-> 14
++17 <-> 18
++20 <-> 22
++21 <-> 23
++22 <-> 25
++24 <-> 26
++25 <-> 30
++28 <-> 33
++29 <-> 34
++30 <-> 35
++32 <-> 36
++33 <-> 38
++35 <-> 41
++36 <-> 45
++Not mapped:
++15
++23
++31
++34
+diff --git a/testData/src/pkg/TestTryWithResources.java b/testData/src/pkg/TestTryWithResources.java
+new file mode 100644
+index 0000000..0c217fe
+--- /dev/null
++++ b/testData/src/pkg/TestTryWithResources.java
+@@ -0,0 +1,37 @@
++package pkg;
++
++import java.io.IOException;
++import java.io.InputStream;
++import java.net.URISyntaxException;
++import java.nio.file.FileSystem;
++import java.nio.file.FileSystems;
++import java.nio.file.Files;
++import java.nio.file.Path;
++
++public class TestTryWithResources {
++  public static void test1() {
++     try(FileSystem fileSystem = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI())) {
++       fileSystem.getPath("PATH", "TO", "FILE");
++     }
++     catch (URISyntaxException | IOException e) {}
++  }
++
++  public static void test2() {
++    try(FileSystem fileSystem = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI());
++        InputStream stream = Files.newInputStream(fileSystem.getPath("PATH", "TO", "FILE"))) {
++      stream.read();
++    }
++    catch (URISyntaxException | IOException e) {}
++  }
++
++  public static void test3() {
++    try(FileSystem fileSystem = FileSystems.getFileSystem(TestTryWithResources.class.getResource("NOT").toURI())) {
++      try (InputStream stream = Files.newInputStream(fileSystem.getPath("PATH", "TO", "FILE"))) {
++        stream.read();
++      }
++      catch (IOException e) {}
++      catch (Exception e) {}
++    }
++    catch (URISyntaxException | IOException e) {}
++  }
++}
+\ No newline at end of file
 -- 
-2.15.2 (Apple Git-101.1)
+2.17.2 (Apple Git-113)
 
