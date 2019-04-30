@@ -1,4 +1,4 @@
-From c426d9cc56f33aba618191f816bab42bef20ee2f Mon Sep 17 00:00:00 2001
+From 59f2748467fc8f1611f9d26a4028987985e2f21e Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sun, 19 Aug 2018 00:25:48 -0700
 Subject: [PATCH] Fix lambdas adding unneeded imports.
@@ -18,12 +18,12 @@ index 4c8bcf1..ad5bcbb 100644
  
          if (!lambda && constructor != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index eb86822..89bab11 100644
+index 06800ca..c979356 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -101,4 +101,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+@@ -102,4 +102,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
    @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+   @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
    @Test public void testInvertedFloatComparison() { doTest("pkg/TestInvertedFloatComparison"); }
 +  @Test public void testLambdaImports() { doTest("pkg/TestLambdaImports"); }
  }
@@ -127,5 +127,5 @@ index 0000000..e1c1fb1
 +  }
 +}
 -- 
-2.16.1.windows.1
+2.17.2 (Apple Git-113)
 

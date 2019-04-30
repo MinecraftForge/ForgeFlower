@@ -1,0 +1,133 @@
+From 1c094fe69d4841c2d4cb3807a5a244affda47336 Mon Sep 17 00:00:00 2001
+From: Justin <jrd2558@gmail.com>
+Date: Thu, 26 Jul 2018 13:28:40 -0700
+Subject: [PATCH] Synthetic getClass cleanup
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index a3170fd..12cf86d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -620,6 +620,20 @@ public class ExprProcessor implements CodeConstants {
+           break;
+         case opc_pop:
+           stack.pop();
++          // check for synthetic getClass calls added by the compiler
++          // see https://stackoverflow.com/a/20130641
++          if (i > 0) {
++            Exprent last = exprlist.get(exprlist.size() - 1);
++            if (last.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)last).getRight().type == Exprent.EXPRENT_INVOCATION) {
++              InvocationExprent invocation = (InvocationExprent)((AssignmentExprent)last).getRight();
++              if (i + 1 < seq.length() && !invocation.isStatic() && invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
++                int nextOpc = seq.getInstr(i + 1).opcode;
++                if (nextOpc >= opc_aconst_null && nextOpc <= opc_ldc2_w) {
++                  invocation.setSyntheticGetClass();
++                }
++              }
++            }
++          }
+           break;
+         case opc_pop2:
+           if (stack.getByOffset(-1).getExprType().stackSize == 1) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+index b71a264..0b0fb48 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+@@ -78,6 +78,10 @@ public class SimplifyExprentsHelper {
+           if (processClass14 && (changed = collapseInlinedClass14(st))) {
+             break;
+           }
++
++          if (!st.getStats().isEmpty() && hasQualifiedNewGetClass(st, st.getStats().get(0))) {
++            break;
++          }
+         }
+ 
+         res |= changed;
+@@ -469,21 +473,43 @@ public class SimplifyExprentsHelper {
+     return false;
+   }
+ 
++  private static boolean hasQualifiedNewGetClass(Statement parent, Statement child) {
++    if (child.type == Statement.TYPE_BASICBLOCK && child.getExprents() != null && !child.getExprents().isEmpty()) {
++      Exprent firstExpr = child.getExprents().get(child.getExprents().size() - 1);
++
++      if (parent.type == Statement.TYPE_IF) {
++        if (isQualifiedNewGetClass(firstExpr, ((IfStatement)parent).getHeadexprent().getCondition())) {
++          child.getExprents().remove(firstExpr);
++          return true;
++        }
++      }
++      // TODO DoStatements ?
++    }
++    return false;
++  }
++
+   private static boolean isQualifiedNewGetClass(Exprent first, Exprent second) {
+     if (first.type == Exprent.EXPRENT_INVOCATION) {
+       InvocationExprent invocation = (InvocationExprent)first;
+ 
+-      if (!invocation.isStatic() && invocation.getInstance().type == Exprent.EXPRENT_VAR && invocation.getName().equals("getClass") &&
+-          invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
++      if (!invocation.isStatic() &&
++           invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
++
++        if (invocation.isSyntheticGetClass()) {
++          return true;
++        }
+ 
+-        List<Exprent> lstExprents = second.getAllExprents();
++        LinkedList<Exprent> lstExprents = new LinkedList<>();
+         lstExprents.add(second);
+ 
+-        for (Exprent expr : lstExprents) {
++        while (!lstExprents.isEmpty()){
++          Exprent expr = lstExprents.removeFirst();
++          lstExprents.addAll(expr.getAllExprents());
+           if (expr.type == Exprent.EXPRENT_NEW) {
+             NewExprent newExpr = (NewExprent)expr;
+             if (newExpr.getConstructor() != null && !newExpr.getConstructor().getLstParameters().isEmpty() &&
+-                newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance())) {
++              (newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance()) ||
++                newExpr.getConstructor().getLstParameters().get(0).getExprType().equals(invocation.getInstance().getExprType()))) {
+ 
+               String classname = newExpr.getNewType().value;
+               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index a2906b1..6a35ad4 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
+   private List<PooledConstant> bootstrapArguments;
+   private List<VarType> genericArgs = new ArrayList<>();
+   private boolean forceBoxing = false;
++  private boolean isSyntheticGetClass = false;
+ 
+   public InvocationExprent() {
+     super(EXPRENT_INVOCATION);
+@@ -161,6 +162,7 @@ public class InvocationExprent extends Exprent {
+ 
+     addBytecodeOffsets(expr.bytecode);
+     bootstrapArguments = expr.getBootstrapArguments();
++    isSyntheticGetClass = expr.isSyntheticGetClass();
+   }
+ 
+   @Override
+@@ -898,6 +900,14 @@ public class InvocationExprent extends Exprent {
+     return bootstrapArguments;
+   }
+ 
++  public void setSyntheticGetClass() {
++    isSyntheticGetClass = true;
++  }
++
++  public boolean isSyntheticGetClass() {
++    return isSyntheticGetClass;
++  }
++
+   @Override
+   public void getBytecodeRange(BitSet values) {
+     measureBytecode(values, lstParameters);
+-- 
+2.17.2 (Apple Git-113)
+

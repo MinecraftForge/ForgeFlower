@@ -1,11 +1,11 @@
-From 860df9f7d9f9323402cb45cc1f08b1750c4a99b3 Mon Sep 17 00:00:00 2001
+From 3b6e2adffec41380331b6e4fd964771ece52d06f Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
-Date: Tue, 11 Sep 2018 21:15:18 -0700
+Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
-index d6b1b50c..a10438a3 100644
+index d6b1b50..a10438a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 @@ -44,6 +44,17 @@ public class ArrayExprent extends Exprent {
@@ -27,7 +27,7 @@ index d6b1b50c..a10438a3 100644
      return array.getExprentUse() & index.getExprentUse() & Exprent.MULTIPLE_USES;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index c72dde1b..6572f870 100644
+index 7960445..861d9f1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -5,6 +5,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -52,7 +52,7 @@ index c72dde1b..6572f870 100644
  
    private static VarType guessType(int val, boolean boolPermitted) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 05d9d695..34d6e3a9 100644
+index 05d9d69..34d6e3a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -54,6 +54,8 @@ public abstract class Exprent implements IMatchable {
@@ -161,7 +161,7 @@ index 05d9d695..34d6e3a9 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index bf30fd08..1da5acf6 100644
+index bf30fd0..1da5acf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -335,6 +335,11 @@ public class FunctionExprent extends Exprent {
@@ -194,7 +194,7 @@ index bf30fd08..1da5acf6 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index f5ec40d0..05eb8d11 100644
+index 2ed9539..596a8d9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -53,6 +53,7 @@ public class InvocationExprent extends Exprent {
@@ -212,9 +212,9 @@ index f5ec40d0..05eb8d11 100644
 +  private Map<VarType, VarType> genericsMap = new HashMap<>();
 +  private boolean isInvocationInstance = false;
    private boolean forceBoxing = false;
+   private boolean isSyntheticGetClass = false;
  
-   public InvocationExprent() {
-@@ -171,45 +174,244 @@ public class InvocationExprent extends Exprent {
+@@ -173,45 +176,244 @@ public class InvocationExprent extends Exprent {
  
    @Override
    public VarType getInferredExprType(VarType upperBound) {
@@ -481,7 +481,7 @@ index f5ec40d0..05eb8d11 100644
        }
      }
  
-@@ -312,6 +514,19 @@ public class InvocationExprent extends Exprent {
+@@ -314,6 +516,19 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
@@ -501,7 +501,7 @@ index f5ec40d0..05eb8d11 100644
            if (isUnboxingCall()) {
              // we don't print the unboxing call - no need to bother with the instance wrapping / casting
              if (instance.type == Exprent.EXPRENT_FUNCTION) {
-@@ -330,8 +545,8 @@ public class InvocationExprent extends Exprent {
+@@ -332,8 +547,8 @@ public class InvocationExprent extends Exprent {
  
            TextBuffer res = instance.toJava(indent, tracer);
  
@@ -512,7 +512,7 @@ index f5ec40d0..05eb8d11 100644
  
            if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
              buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
-@@ -341,7 +556,7 @@ public class InvocationExprent extends Exprent {
+@@ -343,7 +558,7 @@ public class InvocationExprent extends Exprent {
              }
              buf.append(res).append(")");
            }
@@ -521,7 +521,7 @@ index f5ec40d0..05eb8d11 100644
              buf.append("(").append(res).append(")");
            }
            else {
-@@ -387,6 +602,12 @@ public class InvocationExprent extends Exprent {
+@@ -389,6 +604,12 @@ public class InvocationExprent extends Exprent {
          }
      }
  
@@ -534,7 +534,7 @@ index f5ec40d0..05eb8d11 100644
      List<VarVersionPair> mask = null;
      boolean isEnum = false;
      if (functype == TYP_INIT) {
-@@ -398,28 +619,6 @@ public class InvocationExprent extends Exprent {
+@@ -400,28 +621,6 @@ public class InvocationExprent extends Exprent {
      }
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
@@ -563,7 +563,7 @@ index f5ec40d0..05eb8d11 100644
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -483,20 +682,33 @@ public class InvocationExprent extends Exprent {
+@@ -485,20 +684,33 @@ public class InvocationExprent extends Exprent {
  
      }
  
@@ -610,7 +610,7 @@ index f5ec40d0..05eb8d11 100644
      }
  
  
-@@ -535,6 +747,11 @@ public class InvocationExprent extends Exprent {
+@@ -537,6 +749,11 @@ public class InvocationExprent extends Exprent {
          */
  
          Exprent param = unboxIfNeeded(lstParameters.get(i));
@@ -622,7 +622,7 @@ index f5ec40d0..05eb8d11 100644
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(param, types[i], buff, indent, true, ambiguous, true, tracer);
  
-@@ -550,8 +767,6 @@ public class InvocationExprent extends Exprent {
+@@ -552,8 +769,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -631,7 +631,7 @@ index f5ec40d0..05eb8d11 100644
      return buf;
    }
  
-@@ -812,6 +1027,155 @@ public class InvocationExprent extends Exprent {
+@@ -814,6 +1029,155 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -787,8 +787,8 @@ index f5ec40d0..05eb8d11 100644
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -916,6 +1280,18 @@ public class InvocationExprent extends Exprent {
-     return bootstrapArguments;
+@@ -926,6 +1290,18 @@ public class InvocationExprent extends Exprent {
+     return isSyntheticGetClass;
    }
  
 +  public List<VarType> getGenericArgs() {
@@ -807,7 +807,7 @@ index f5ec40d0..05eb8d11 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstParameters);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 2c8a5dc8..0bb72efd 100644
+index 2c8a5dc..0bb72ef 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -7,7 +7,16 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -1256,7 +1256,7 @@ index 2c8a5dc8..0bb72efd 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index fbd2e430..247263c2 100644
+index fbd2e43..247263c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -241,7 +241,8 @@ public class VarExprent extends Exprent {
@@ -1270,7 +1270,7 @@ index fbd2e430..247263c2 100644
  
      if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index e7e1e4e2..180bb4a8 100644
+index e7e1e4e..180bb4a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -18,9 +18,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -1315,7 +1315,7 @@ index e7e1e4e2..180bb4a8 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 8df9d841..1d28e410 100644
+index 8df9d84..1d28e41 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -210,6 +210,24 @@ public class StructContext {
@@ -1344,7 +1344,7 @@ index 8df9d841..1d28e410 100644
      for (String line : string.split("\n")) {
        String[] pts = line.split(" ");
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index 48d49e61..e419603c 100644
+index 48d49e6..e419603 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -423,8 +423,10 @@ public class VarType {  // TODO: optimize switch
@@ -1361,7 +1361,7 @@ index 48d49e61..e419603c 100644
      return this;
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index 9dc9d81d..57a170c5 100644
+index 9dc9d81..57a170c 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -4,12 +4,16 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
@@ -1529,5 +1529,5 @@ index 9dc9d81d..57a170c5 100644
 +  }
  }
 -- 
-2.17.1 (Apple Git-112)
+2.17.2 (Apple Git-113)
 
