@@ -1,11 +1,11 @@
-From f87451bc08a6643fda4b41ca96d57f8bdc6de288 Mon Sep 17 00:00:00 2001
+From f48c05695cf79a0bef35babfc670c557441dca4d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index bec95a5..94ec37f 100644
+index bec95a5..03bcc50 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -181,7 +181,7 @@ index bec95a5..94ec37f 100644
          case Exprent.EXPRENT_FIELD:
 -          return false;
 +          FieldExprent fexpr = (FieldExprent)expr;
-+          if (cl.qualifiedName.equals(fexpr.getClassname())) {
++          if (cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) {
 +            String key = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
 +            if (!whitelist.contains(key)) {
 +              return false;
@@ -189,7 +189,7 @@ index bec95a5..94ec37f 100644
 +                return false;
 +            }
 +          }
-+          else if (!fexpr.isStatic()) {
++          else if (!fexpr.isStatic() && fexpr.getInstance() == null) {
 +            return false;
 +          }
        }
