@@ -1,14 +1,14 @@
-From e279651cd223af9a9a2ab8a8dcb339eeb94580a4 Mon Sep 17 00:00:00 2001
+From 29a38693b8e7ea989fab718306dc8a7e97cf430f Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Wed, 19 Sep 2018 22:51:00 -0700
 Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index a3170fd9..b23f562b 100644
+index 12cf86d..1759538 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -883,6 +883,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -897,6 +897,9 @@ public class ExprProcessor implements CodeConstants {
        (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
        (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
  
@@ -18,7 +18,7 @@ index a3170fd9..b23f562b 100644
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
      // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-@@ -897,6 +900,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -911,6 +914,8 @@ public class ExprProcessor implements CodeConstants {
  
      if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
  
@@ -27,7 +27,7 @@ index a3170fd9..b23f562b 100644
      if (quote) buffer.append('(');
  
      if (exprent.type == Exprent.EXPRENT_CONST) {
-@@ -929,4 +934,12 @@ public class ExprProcessor implements CodeConstants {
+@@ -943,4 +948,12 @@ public class ExprProcessor implements CodeConstants {
      return VarType.VARTYPE_INT.isStrictSuperset(type) ||
             type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
    }
@@ -41,10 +41,10 @@ index a3170fd9..b23f562b 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a2906b1d..dc536d75 100644
+index 6a35ad4..5e8bfcc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -733,7 +733,8 @@ public class InvocationExprent extends Exprent {
+@@ -735,7 +735,8 @@ public class InvocationExprent extends Exprent {
        if (md.params.length == lstParameters.size()) {
          boolean exact = true;
          for (int i = 0; i < md.params.length; i++) {
@@ -54,7 +54,7 @@ index a2906b1d..dc536d75 100644
              exact = false;
              missed.set(i);
            }
-@@ -747,7 +748,8 @@ public class InvocationExprent extends Exprent {
+@@ -749,7 +750,8 @@ public class InvocationExprent extends Exprent {
        boolean failed = false;
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
        for (int i = 0; i < lstParameters.size(); i++) {
@@ -64,7 +64,7 @@ index a2906b1d..dc536d75 100644
          if (!missed.get(i)) {
            if (!md.params[i].equals(ptype)) {
              failed = true;
-@@ -755,6 +757,17 @@ public class InvocationExprent extends Exprent {
+@@ -757,6 +759,17 @@ public class InvocationExprent extends Exprent {
            }
          }
          else {
@@ -82,7 +82,7 @@ index a2906b1d..dc536d75 100644
            if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
              if (ptype.type != CodeConstants.TYPE_NULL) {
                if (!DecompilerContext.getStructContext().instanceOf(ptype.value, md.params[i].value)) {
-@@ -781,7 +794,10 @@ public class InvocationExprent extends Exprent {
+@@ -783,7 +796,10 @@ public class InvocationExprent extends Exprent {
        for (StructMethod mtt : mtds) {
  
          if (mtt.getSignature() != null && mtt.getSignature().parameterTypes.get(i).isGeneric()) {
@@ -95,7 +95,7 @@ index a2906b1d..dc536d75 100644
  
          MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index ad5bcbb5..2c8a5dc8 100644
+index ad5bcbb..2c8a5dc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -141,5 +141,5 @@ index ad5bcbb5..2c8a5dc8 100644
 +  }
  }
 -- 
-2.17.1 (Apple Git-112)
+2.19.1.windows.1
 

@@ -1,4 +1,4 @@
-From ddfa385e35cc8b30dd97ae5243059a3be8b842ce Mon Sep 17 00:00:00 2001
+From 3e8e3ac0e1fd7d17240d6cf9aac0b23a6d09dbd2 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -1000,7 +1000,7 @@ index 0000000..c62c74d
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index efc1891..49862b5 100644
+index efc1891..0bbd0a5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1150,7 +1150,7 @@ index efc1891..49862b5 100644
 +    }
 +    return null;
 +  }
-+  
++
 +  private static boolean matchForEach(DoStatement stat) {
 +    AssignmentExprent firstDoExprent = null;
 +    AssignmentExprent[] initExprents = new AssignmentExprent[3];
@@ -1182,9 +1182,9 @@ index efc1891..49862b5 100644
 +                 }
 +              }
 +            }
-           }
++          }
 +          break;
-         }
++        }
 +      }
 +      else {
 +        break;
@@ -1259,8 +1259,8 @@ index efc1891..49862b5 100644
 +            initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.setIncExprent(initExprents[1].getRight());
-+          }
-+        }
+           }
+         }
 +
 +        return true;
 +      }
@@ -1268,11 +1268,11 @@ index efc1891..49862b5 100644
 +        if (firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
 +          return false;
 +        }
-+  
++
 +        if (lastExprent == null || lastExprent.type != Exprent.EXPRENT_FUNCTION) {
 +          return false;
 +        }
-+  
++
 +        if (initExprents[0].getRight().type != Exprent.EXPRENT_CONST ||
 +            initExprents[1].getRight().type != Exprent.EXPRENT_FUNCTION ||
 +            stat.getConditionExprent().type != Exprent.EXPRENT_FUNCTION) {
@@ -1284,18 +1284,18 @@ index efc1891..49862b5 100644
 +        FunctionExprent funcInc   = (FunctionExprent)lastExprent;
 +        ArrayExprent    arr       = (ArrayExprent)firstDoExprent.getRight();
 +        int incType = funcInc.getFuncType();
-+  
++
 +        if (funcRight.getFuncType() != FunctionExprent.FUNCTION_ARRAY_LENGTH ||
 +            (incType != FunctionExprent.FUNCTION_PPI && incType != FunctionExprent.FUNCTION_IPP) ||
 +            arr.getIndex().type != Exprent.EXPRENT_VAR ||
 +            arr.getArray().type != Exprent.EXPRENT_VAR) {
 +            return false;
 +        }
-+  
++
 +        VarExprent index = (VarExprent)arr.getIndex();
 +        VarExprent array = (VarExprent)arr.getArray();
 +        VarExprent counter = (VarExprent)funcInc.getLstOperands().get(0);
-+  
++
 +        if (counter.getIndex() != index.getIndex() ||
 +            counter.getVersion() != index.getVersion()) {
 +          return false;
@@ -1304,13 +1304,13 @@ index efc1891..49862b5 100644
 +        if (counter.isVarReferenced(stat.getFirst(), index)) {
 +          return false;
 +        }
-+  
++
 +        funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[0].bytecode);
 +        funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[1].bytecode);
 +        funcRight.getLstOperands().get(0).addBytecodeOffsets(lastExprent.bytecode);
 +        firstDoExprent.getLeft().addBytecodeOffsets(firstDoExprent.bytecode);
 +        firstDoExprent.getLeft().addBytecodeOffsets(initExprents[0].bytecode);
-+  
++
 +        stat.setLooptype(DoStatement.LOOP_FOREACH);
 +        stat.setInitExprent(firstDoExprent.getLeft());
 +        stat.setIncExprent(funcRight.getLstOperands().get(0));
@@ -1318,7 +1318,7 @@ index efc1891..49862b5 100644
 +        preData.getExprents().remove(initExprents[1]);
 +        firstData.getExprents().remove(firstDoExprent);
 +        lastData.getExprents().remove(lastExprent);
-+  
++
 +        if (initExprents[2] != null && initExprents[2].getLeft().type == Exprent.EXPRENT_VAR) {
 +          VarExprent copy = (VarExprent)initExprents[2].getLeft();
 +          if (copy.getIndex() == array.getIndex() && copy.getVersion() == array.getVersion()) {
@@ -1328,7 +1328,7 @@ index efc1891..49862b5 100644
 +            stat.setIncExprent(initExprents[2].getRight());
 +          }
 +        }
-+  
++
 +        return true;
 +      }
 +    }
@@ -1350,11 +1350,11 @@ index efc1891..49862b5 100644
 +          return fun.getLstOperands().get(0);
 +        }
 +        else {
-+          return null;
++          return exp;
 +        }
 +      }
 +      else {
-+        return null;
++        return exp;
 +      }
 +    }
 +  }
@@ -4656,5 +4656,5 @@ index 0000000..15e2171
 +  }
 +}
 -- 
-2.15.2 (Apple Git-101.1)
+2.19.1.windows.1
 
