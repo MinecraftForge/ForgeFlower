@@ -1,4 +1,4 @@
-From 60cb9f888b66430d2506cf1500c492b2f7a6dcbd Mon Sep 17 00:00:00 2001
+From 8aa5ed9c8c1091f28e4980c097cf3a448cb70b28 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 19 Jul 2018 22:57:52 -0700
 Subject: [PATCH] Add support for destination to be a zip file if there is only
@@ -6,10 +6,10 @@ Subject: [PATCH] Add support for destination to be a zip file if there is only
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index ba24802..b1e86bf 100644
+index 3c83409..54d0aba 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-@@ -96,7 +96,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -99,7 +99,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
      }
  
      File destination = new File(args[args.length - 1]);
@@ -18,7 +18,7 @@ index ba24802..b1e86bf 100644
        System.out.println("error: destination '" + destination + "' is not a directory");
        return;
      }
-@@ -136,7 +136,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -140,7 +140,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
  
    protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
      root = destination;
@@ -152,5 +152,5 @@ index 0000000..8775e47
 +  }
 +}
 -- 
-2.16.1.windows.1
+2.19.1.windows.1
 

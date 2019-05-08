@@ -1,4 +1,4 @@
-From 0b0f21b27053e13ce5576f4cce7cf8ba8cd8855a Mon Sep 17 00:00:00 2001
+From 33f504b00606e4fcf21256af2949ec21450f0bab Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 20 Jul 2018 01:37:36 -0700
 Subject: [PATCH] Add a metadata file named
@@ -68,7 +68,7 @@ index f7b253b..fde5881 100644
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 4b691f4..8df9d84 100644
+index 4c3ff5b..bfa3c7a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -98,12 +98,10 @@ index 4b691f4..8df9d84 100644
  
    public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
      this.saver = saver;
-@@ -204,4 +209,26 @@ public class StructContext {
+@@ -206,4 +211,24 @@ public class StructContext {
  
      return false;
    }
--}
-\ No newline at end of file
 +
 +  public void loadAbstractMetadata(String string) {
 +    for (String line : string.split("\n")) {
@@ -121,12 +119,10 @@ index 4b691f4..8df9d84 100644
 +  }
 +
 +  public String renameAbstractParameter(String className, String methodName, String descriptor, int index, String _default) {
-+      if (className.contains("IPixelTransformer"))
-+          System.currentTimeMillis();
 +    List<String> params = this.abstractNames.get(className + ' ' + methodName + ' ' + descriptor);
 +    return params != null && index < params.size() ? params.get(index) : _default;
 +  }
-+}
+ }
 -- 
-2.16.1.windows.1
+2.19.1.windows.1
 
