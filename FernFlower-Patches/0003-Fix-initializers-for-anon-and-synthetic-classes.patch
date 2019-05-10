@@ -1,4 +1,4 @@
-From 75126ab3b7d40a1b9d9ca8cf639ba41a16b79cf7 Mon Sep 17 00:00:00 2001
+From 76c5c1b88061426f7c4e50099c4c3a2d1899ed6c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 13:21:00 -0700
 Subject: [PATCH] Fix initializers for anon and synthetic classes
@@ -61,7 +61,7 @@ index 86b7194..97d726f 100644
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index b929d0d..bec95a5 100644
+index b929d0d..ba039e6 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -74,27 +74,33 @@ index b929d0d..bec95a5 100644
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
-@@ -90,8 +93,46 @@ public class InitializerProcessor {
+@@ -90,8 +93,52 @@ public class InitializerProcessor {
          Exprent exprent = firstData.getExprents().get(0);
          if (exprent.type == Exprent.EXPRENT_INVOCATION) {
            InvocationExprent invExpr = (InvocationExprent)exprent;
 -          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getLstParameters().isEmpty()) {
 -            firstData.getExprents().remove(0);
 +          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false)) {
-+            boolean invalidArguments = invExpr.getLstParameters().isEmpty();
++            List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(invExpr.getClassname(), invExpr.getStringDescriptor(), invExpr.getLstParameters().size());
++            boolean hideSuper = true;
 +
-+            for (VarType type : invExpr.getDescriptor().params) {
++            //searching for non-synthetic params
++            for (int i = 0; i < invExpr.getDescriptor().params.length; ++i) {
++              if (mask != null && mask.get(i) != null) {
++                continue;
++              }
++              VarType type = invExpr.getDescriptor().params[i];
 +              if (type.type == CodeConstants.TYPE_OBJECT) {
 +                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
-+                //TODO? Instead of nuking entire thing, just nuke the one parameter?
 +                if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
-+                  invalidArguments = true;
-+                  break;
++                  break; // Should be last
 +                }
 +              }
++              hideSuper = false; // found non-synthetic param so we keep the call
++              break;
 +            }
 +
-+            if (invalidArguments) {
++            if (hideSuper) {
 +              firstData.getExprents().remove(0);
 +            }
 +          }
@@ -123,7 +129,7 @@ index b929d0d..bec95a5 100644
            }
          }
        }
-@@ -248,4 +289,4 @@ public class InitializerProcessor {
+@@ -248,4 +295,4 @@ public class InitializerProcessor {
  
      return true;
    }
@@ -131,5 +137,5 @@ index b929d0d..bec95a5 100644
 \ No newline at end of file
 +}
 -- 
-2.14.1.windows.1
+2.17.2 (Apple Git-113)
 

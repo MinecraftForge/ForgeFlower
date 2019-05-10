@@ -1,11 +1,11 @@
-From f48c05695cf79a0bef35babfc670c557441dca4d Mon Sep 17 00:00:00 2001
+From 27cb747e43944ebd0760791624ae926f642e359b Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index bec95a5..03bcc50 100644
+index ba039e6..fbb0a15 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -30,7 +30,7 @@ index bec95a5..03bcc50 100644
  
  public class InitializerProcessor {
    public static void extractInitializers(ClassWrapper wrapper) {
-@@ -142,14 +149,16 @@ public class InitializerProcessor {
+@@ -148,14 +155,16 @@ public class InitializerProcessor {
    private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
      RootStatement root = method.root;
      StructClass cl = wrapper.getClassStruct();
@@ -52,7 +52,7 @@ index bec95a5..03bcc50 100644
  
          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
            AssignmentExprent assignExpr = (AssignmentExprent)exprent;
-@@ -159,21 +168,49 @@ public class InitializerProcessor {
+@@ -165,21 +174,49 @@ public class InitializerProcessor {
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
  
                // interfaces fields should always be initialized inline
@@ -111,7 +111,7 @@ index bec95a5..03bcc50 100644
        }
      }
    }
-@@ -190,25 +227,28 @@ public class InitializerProcessor {
+@@ -196,25 +233,28 @@ public class InitializerProcessor {
        if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
          Statement firstData = Statements.findFirstData(method.root);
          if (firstData == null || firstData.getExprents().isEmpty()) {
@@ -145,7 +145,7 @@ index bec95a5..03bcc50 100644
      while (true) {
        String fieldWithDescr = null;
        Exprent value = null;
-@@ -231,8 +271,10 @@ public class InitializerProcessor {
+@@ -237,8 +277,10 @@ public class InitializerProcessor {
              if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
  
@@ -158,7 +158,7 @@ index bec95a5..03bcc50 100644
                  if (fieldWithDescr == null) {
                    fieldWithDescr = fieldKey;
                    value = assignExpr.getRight();
-@@ -256,6 +298,7 @@ public class InitializerProcessor {
+@@ -262,6 +304,7 @@ public class InitializerProcessor {
  
        if (!wrapper.getDynamicFieldInitializers().containsKey(fieldWithDescr)) {
          wrapper.getDynamicFieldInitializers().addWithKey(value, fieldWithDescr);
@@ -166,7 +166,7 @@ index bec95a5..03bcc50 100644
  
          for (List<Exprent> lst : lstFirst) {
            lst.remove(isAnonymous ? 0 : 1);
-@@ -267,7 +310,7 @@ public class InitializerProcessor {
+@@ -273,7 +316,7 @@ public class InitializerProcessor {
      }
    }
  
@@ -175,7 +175,7 @@ index bec95a5..03bcc50 100644
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
  
-@@ -283,7 +326,18 @@ public class InitializerProcessor {
+@@ -289,7 +332,18 @@ public class InitializerProcessor {
            }
            break;
          case Exprent.EXPRENT_FIELD:
@@ -429,5 +429,5 @@ index 8a77fe0..6e31d5c 100644
  }
 \ No newline at end of file
 -- 
-2.17.1 (Apple Git-112)
+2.17.2 (Apple Git-113)
 
