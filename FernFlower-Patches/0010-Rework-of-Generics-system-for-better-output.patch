@@ -1,4 +1,4 @@
-From 6efbc3b4e49b8915bc86e68a4c4b2103b35b0df8 Mon Sep 17 00:00:00 2001
+From d47b2e0eb06c6aaf79b8c8606d32e02888d6d15f Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -385,7 +385,7 @@ index f75d751..9c706f7 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index 1ad0080..f1cb1d2 100644
+index 1ad0080..5ba8d13 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -6,6 +6,7 @@ package org.jetbrains.java.decompiler.main;
@@ -409,10 +409,15 @@ index 1ad0080..f1cb1d2 100644
  
  public class Fernflower implements IDecompiledData {
    private final StructContext structContext;
-@@ -35,6 +40,10 @@ public class Fernflower implements IDecompiledData {
+@@ -35,6 +40,15 @@ public class Fernflower implements IDecompiledData {
      }
  
      DecompilerContext.initContext(options, logger, structContext, classProcessor, interceptor);
++
++    String vendor = System.getProperty("java.vendor", "missing vendor");
++    String javaVersion = System.getProperty("java.version", "missing java version");
++    String jvmVersion = System.getProperty("java.vm.version", "missing jvm version");
++    logger.writeMessage(String.format("JVM info: %s - %s - %s", vendor, javaVersion, jvmVersion), IFernflowerLogger.Severity.INFO);
 +
 +    if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
 +      ClasspathScanner.addAllClasspath(structContext);
@@ -2941,5 +2946,5 @@ index 0000000..c45ac50
 +  }
 +}
 -- 
-2.14.1.windows.1
+2.17.2 (Apple Git-113)
 
