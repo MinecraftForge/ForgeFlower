@@ -1,4 +1,4 @@
-From 1f7788bf874ec8f2e188df45ecc3bc77e0f1d879 Mon Sep 17 00:00:00 2001
+From c633c6509923b9608f10179d02b71301a3cd449a Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -194,7 +194,7 @@ index bf30fd0..1da5acf 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 2ed9539..596a8d9 100644
+index 2ed9539..6700268 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -53,6 +53,7 @@ public class InvocationExprent extends Exprent {
@@ -285,13 +285,13 @@ index 2ed9539..596a8d9 100644
 +          Map<String, Map<VarType, VarType>> hierarchy = mthCls.getAllGenerics();
 +          if (hierarchy.containsKey(desc.getClassStruct().qualifiedName)) {
 +            hierarchy.get(desc.getClassStruct().qualifiedName).forEach((from, to) -> {
-+              if (!genericsMap.containsKey(from) && !VarType.VARTYPE_OBJECT.equals(to) && !to.equals(from)) {
-+                if (to.type == CodeConstants.TYPE_GENVAR && !named.containsKey(to)) {
++              if (!genericsMap.containsKey(from) && !to.equals(from)) {
++                if (to.type == CodeConstants.TYPE_GENVAR) {
 +                  if (genericsMap.containsKey(to)) {
 +                    genericsMap.put(from, to.remap(genericsMap));
 +                  }
 +                }
-+                else if (!named.containsKey(from) && !bounds.containsKey(from)) {
++                else if (!bounds.containsKey(from)) {
 +                  genericsMap.put(from, to);
                  }
                }
@@ -1529,5 +1529,5 @@ index 9dc9d81..57a170c 100644
 +  }
  }
 -- 
-2.19.1.windows.1
+2.17.2 (Apple Git-113)
 
