@@ -1,4 +1,4 @@
-From e7f97804d33f94828df08331d7042c0747adddff Mon Sep 17 00:00:00 2001
+From fbf3ef737adc8d748dfdb693ce67bf2438240115 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -54,10 +54,27 @@ index 9025746..bf30fd0 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 740b37c..a2906b1 100644
+index 740b37c..8e798b0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -481,6 +481,22 @@ public class InvocationExprent extends Exprent {
+@@ -394,6 +394,7 @@ public class InvocationExprent extends Exprent {
+         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
+       }
+     }
++    StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
+     List<StructMethod> matches = getMatchedDescriptors();
+     BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
+     StructMethod desc = null;
+@@ -454,7 +455,7 @@ public class InvocationExprent extends Exprent {
+         if (stClass != null) {
+           nextMethod:
+           for (StructMethod mt : stClass.getMethods()) {
+-            if (name.equals(mt.getName())) {
++            if (name.equals(mt.getName()) && canAccess(currCls, mt)) {
+               MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+               if (md.params.length == descriptor.params.length) {
+                 for (int x = 0; x < md.params.length; x++) {
+@@ -481,6 +482,22 @@ public class InvocationExprent extends Exprent {
  
      }
  
@@ -80,7 +97,11 @@ index 740b37c..a2906b1 100644
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -646,24 +662,62 @@ public class InvocationExprent extends Exprent {
+@@ -643,27 +660,98 @@ public class InvocationExprent extends Exprent {
+ 
+   private List<StructMethod> getMatchedDescriptors() {
+     List<StructMethod> matches = new ArrayList<>();
++    StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null) return matches;
  
@@ -105,7 +126,7 @@ index 740b37c..a2906b1 100644
 +      for (StructMethod mt : cls.getMethods()) {
 +        if (name.equals(mt.getName())) {
 +          MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-+          if (matches(md.params, descriptor.params)) {
++          if (matches(md.params, descriptor.params) && canAccess(currCls, mt)) {
 +            matches.add(mt);
 +          }
 +        }
@@ -150,6 +171,38 @@ index 740b37c..a2906b1 100644
 +    return false;
 +  }
 +
++  private boolean canAccess(StructClass currCls, StructMethod mt) {
++    if (mt.hasModifier(CodeConstants.ACC_PUBLIC)) {
++      return true;
++    }
++    else if (mt.hasModifier(CodeConstants.ACC_PRIVATE)) {
++      return mt.getClassStruct().qualifiedName.equals(currCls.qualifiedName);
++    }
++    else if (mt.hasModifier(CodeConstants.ACC_PROTECTED)) {
++      boolean samePackage = isInSamePackage(currCls.qualifiedName, mt.getClassStruct().qualifiedName);
++      return samePackage || DecompilerContext.getStructContext().instanceOf(currCls.qualifiedName, mt.getClassStruct().qualifiedName);
++    }
++    else {
++      return isInSamePackage(currCls.qualifiedName, mt.getClassStruct().qualifiedName);
++    }
++  }
++
++  private boolean isInSamePackage(String class1, String class2) {
++    int pos1 = class1.lastIndexOf('/');
++    int pos2 = class2.lastIndexOf('/');
++    if (pos1 != pos2) {
++      return false;
++    }
++
++    if (pos1 == -1) {
++      return true;
++    }
++
++    String pkg1 = class1.substring(0, pos1);
++    String pkg2 = class2.substring(0, pos2);
++    return pkg1.equals(pkg2);
++  }
++
    private BitSet getAmbiguousParameters(List<StructMethod> matches) {
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
@@ -190,5 +243,5 @@ index 39fe8a6..e7e1e4e 100644
      return interfaceNames[i];
    }
 -- 
-2.14.1.windows.1
+2.17.2 (Apple Git-113)
 

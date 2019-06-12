@@ -1,4 +1,4 @@
-From c633c6509923b9608f10179d02b71301a3cd449a Mon Sep 17 00:00:00 2001
+From dac609fc379ccd535ddb5ebcd3b7fd2d004dc4e3 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -194,7 +194,7 @@ index bf30fd0..1da5acf 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 2ed9539..6700268 100644
+index 5c66d04..469fdac 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -53,6 +53,7 @@ public class InvocationExprent extends Exprent {
@@ -534,8 +534,8 @@ index 2ed9539..6700268 100644
      List<VarVersionPair> mask = null;
      boolean isEnum = false;
      if (functype == TYP_INIT) {
-@@ -400,28 +621,6 @@ public class InvocationExprent extends Exprent {
-     }
+@@ -401,28 +622,6 @@ public class InvocationExprent extends Exprent {
+     StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
 -    StructMethod desc = null;
@@ -563,7 +563,7 @@ index 2ed9539..6700268 100644
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -485,20 +684,33 @@ public class InvocationExprent extends Exprent {
+@@ -486,20 +685,33 @@ public class InvocationExprent extends Exprent {
  
      }
  
@@ -610,7 +610,7 @@ index 2ed9539..6700268 100644
      }
  
  
-@@ -537,6 +749,11 @@ public class InvocationExprent extends Exprent {
+@@ -538,6 +750,11 @@ public class InvocationExprent extends Exprent {
          */
  
          Exprent param = unboxIfNeeded(lstParameters.get(i));
@@ -622,7 +622,7 @@ index 2ed9539..6700268 100644
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(param, types[i], buff, indent, true, ambiguous, true, tracer);
  
-@@ -552,8 +769,6 @@ public class InvocationExprent extends Exprent {
+@@ -553,8 +770,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -631,7 +631,7 @@ index 2ed9539..6700268 100644
      return buf;
    }
  
-@@ -814,6 +1029,155 @@ public class InvocationExprent extends Exprent {
+@@ -848,6 +1063,155 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -787,7 +787,7 @@ index 2ed9539..6700268 100644
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -926,6 +1290,18 @@ public class InvocationExprent extends Exprent {
+@@ -960,6 +1324,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticGetClass;
    }
  
