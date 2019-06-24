@@ -1,0 +1,22 @@
+From 16d98ecd7d946b5cff00f779ac5b1a27ee00f6a0 Mon Sep 17 00:00:00 2001
+From: Thiakil <xander@thiakil.com>
+Date: Sat, 19 May 2018 19:56:27 +0800
+Subject: [PATCH] Prevent leading dot for unpackaged classes
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
+index 5e2d064..7100c63 100644
+--- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
++++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
+@@ -115,7 +115,7 @@ public class ImportCollector {
+     if (existsDefaultClass ||
+         (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
+       //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
+-      return result == null ? fullName : (packageName + "." + result);
++      return result == null ? fullName : ((!packageName.isEmpty() ? (packageName + ".") : "") + result);
+     }
+     else if (!mapSimpleNames.containsKey(shortName)) {
+       mapSimpleNames.put(shortName, packageName);
+-- 
+2.16.1.windows.1
+
