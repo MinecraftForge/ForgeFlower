@@ -1,0 +1,606 @@
+From a9abfd12c30309863924bffc7a2564f587c04276 Mon Sep 17 00:00:00 2001
+From: Justin <jrd2558@gmail.com>
+Date: Sun, 25 Aug 2019 18:02:16 -0700
+Subject: [PATCH] Improve stack var processor output
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index 7212a0a..ea89b9e 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -159,14 +159,14 @@ public class MethodProcessorRunnable implements Runnable {
+       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
+         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
+           SequenceHelper.condenseSequences(root);
+-
+-          StackVarsProcessor stackProc = new StackVarsProcessor();
+-          stackProc.simplifyStackVars(root, mt, cl);
+-
+-          varProc.setVarVersions(root);
+         }
+       }
+ 
++      StackVarsProcessor stackProc = new StackVarsProcessor();
++      stackProc.simplifyStackVars(root, mt, cl);
++
++      varProc.setVarVersions(root);
++
+       LabelHelper.identifyLabels(root);
+ 
+       if (TryHelper.enhanceTryStats(root)) {
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 4b4c3e9..de37717 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -259,6 +259,9 @@ public class NestedClassProcessor {
+                 if (param.type == Exprent.EXPRENT_VAR) {
+                   mapNewNames.put(varVersion, enclosingMethod.varproc.getVarName(new VarVersionPair((VarExprent)param)));
+                   lvts.put(varVersion, ((VarExprent)param).getLVT());
++                  if (enclosingMethod.varproc.getVarFinal((new VarVersionPair((VarExprent)param))) == VarTypeProcessor.VAR_NON_FINAL) {
++                    //DecompilerContext.getLogger().writeMessage("Lambda in " + parent.simpleName + "." + enclosingMethod.methodStruct.getName() + " given non-final var " + ((VarExprent)param).getName() + "!", IFernflowerLogger.Severity.ERROR);
++                  }
+                 }
+               }
+               else {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
+index c235387..24a29d9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
+@@ -2,6 +2,8 @@
+ package org.jetbrains.java.decompiler.modules.decompiler;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
++import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
+ import org.jetbrains.java.decompiler.modules.decompiler.sforms.*;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+@@ -13,12 +15,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
+ 
+ import java.util.*;
+ import java.util.Map.Entry;
++import java.util.stream.Collectors;
+ 
+ public class StackVarsProcessor {
+   public void simplifyStackVars(RootStatement root, StructMethod mt, StructClass cl) {
+@@ -27,11 +32,12 @@ public class StackVarsProcessor {
+ 
+     while (true) {
+       boolean found = false;
++      boolean first = ssau == null;
+ 
+       SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
+       ssa.splitVariables(root, mt);
+ 
+-      SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(ssau == null);
++      SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(first);
+       while (sehelper.simplifyStackVarsStatement(root, setReorderedIfs, ssa, cl)) {
+         found = true;
+       }
+@@ -43,6 +49,10 @@ public class StackVarsProcessor {
+       ssau = new SSAUConstructorSparseEx();
+       ssau.splitVariables(root, mt);
+ 
++      if (first) {
++        setEffectivelyFinalVars(root, ssau, new HashMap<>());
++      }
++
+       if (iterateStatements(root, ssau)) {
+         found = true;
+       }
+@@ -265,7 +275,7 @@ public class StackVarsProcessor {
+       }
+     }
+ 
+-    if (left == null) {
++    if (left == null || left.isEffectivelyFinal()) {
+       return new int[]{-1, changed};
+     }
+ 
+@@ -443,7 +453,7 @@ public class StackVarsProcessor {
+       }
+     }
+ 
+-    if (left == null) {
++    if (left == null || left.isEffectivelyFinal()) {
+       return new Object[]{null, changed, false};
+     }
+ 
+@@ -663,4 +673,163 @@ public class StackVarsProcessor {
+ 
+     return map;
+   }
++
++  private static void setEffectivelyFinalVars(Statement stat, SSAUConstructorSparseEx ssau, Map<VarVersionPair, VarExprent> varLookupMap) {
++    if (stat.getExprents() != null && !stat.getExprents().isEmpty()) {
++      for (int i = 0; i < stat.getExprents().size(); ++i) {
++        setEffectivelyFinalVars(stat.getExprents().get(i), ssau, i, stat.getExprents(), varLookupMap);
++      }
++    }
++
++    for (Statement st : stat.getStats()) {
++      setEffectivelyFinalVars(st, ssau, varLookupMap);
++    }
++  }
++
++  private static void setEffectivelyFinalVars(Exprent exprent, SSAUConstructorSparseEx ssau, int index, List<Exprent> list, Map<VarVersionPair, VarExprent> varLookupMap) {
++    if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
++      AssignmentExprent assign = (AssignmentExprent)exprent;
++      if (assign.getLeft().type == Exprent.EXPRENT_VAR) {
++        VarExprent var = (VarExprent)assign.getLeft();
++        varLookupMap.put(var.getVarVersionPair(), var);
++      }
++    }
++    else if (exprent.type == Exprent.EXPRENT_NEW) {
++      NewExprent newExpr = (NewExprent)exprent;
++      if (newExpr.isAnonymous()) {
++        ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newExpr.getNewType().value);
++
++        if (node != null) {
++          if (!newExpr.isLambda()) {
++            for (StructMethod mt : node.classStruct.getMethods()) {
++              if (mt.getName().equals(CodeConstants.INIT_NAME)) {
++                List<VarType> paramTypes = Arrays.asList(MethodDescriptor.parseDescriptor(mt.getDescriptor()).params);
++
++                for (int i = Math.max(0, index - paramTypes.size()); i < index; ++i) {
++                  Exprent temp = list.get(i);
++                  if (temp.type == Exprent.EXPRENT_ASSIGNMENT) {
++                    Exprent left = ((AssignmentExprent)temp).getLeft();
++                    if (left.type == Exprent.EXPRENT_VAR) {
++                      VarExprent leftVar = (VarExprent)left;
++                      if (leftVar.getLVT() != null && paramTypes.contains(leftVar.getLVT().getVarType())) {
++                        leftVar.setEffectivelyFinal(true);
++                      }
++                    }
++                  }
++                }
++                break;
++              }
++            }
++          }
++          else if (!newExpr.isMethodReference()) {
++            MethodDescriptor mdLambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
++            MethodDescriptor mdContent = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
++            int paramOffset = node.lambdaInformation.is_content_method_static ? 0 : 1;
++            int varsCount = mdContent.params.length - mdLambda.params.length;
++
++            for (int i = 0; i < varsCount; ++i) {
++              Exprent param = newExpr.getConstructor().getLstParameters().get(paramOffset + i);
++              if (param.type == Exprent.EXPRENT_VAR) {
++                VarExprent paramVar = (VarExprent)param;
++                VarVersionPair vvp = paramVar.getVarVersionPair();
++                VarVersionNode vvnode = ssau.getSsuversions().nodes.getWithKey(vvp);
++
++                while (true) {
++                  VarVersionNode next = null;
++                  if (vvnode.var >= VarExprent.STACK_BASE) {
++                    vvnode = vvnode.preds.iterator().next().source;
++                    VarVersionPair nextVVP = ssau.getVarAssignmentMap().get(new VarVersionPair(vvnode.var, vvnode.version));
++                    next = ssau.getSsuversions().nodes.getWithKey(nextVVP);
++
++                    if (nextVVP != null && nextVVP.var < 0) { // TODO check if field is final?
++                      vvp = nextVVP;
++                      break;
++                    }
++                  }
++                  else {
++                    final int j = i;
++                    final int varIndex = vvnode.var;
++                    List<VarVersionNode> roots = getRoots(vvnode);
++                    List<VarVersionNode> allRoots = ssau.getSsuversions().nodes.stream()
++                                                          .distinct()
++                                                          .filter(n -> n.var == varIndex && n.preds.isEmpty())
++                                                          .filter(n -> {
++                                                            if (n.lvt != null) {
++                                                              return mdContent.params[j].equals(new VarType(n.lvt.getDescriptor()));
++                                                            }
++                                                            return true;
++                                                          })
++                                                          .collect(Collectors.toList());
++
++                    if (roots.size() == allRoots.size()) {
++                      if (roots.size() == 1) {
++                        vvnode = roots.get(0);
++                        vvp = new VarVersionPair(vvnode.var, vvnode.version);
++                        VarVersionPair nextVVP = ssau.getVarAssignmentMap().get(vvp);
++                        next = ssau.getSsuversions().nodes.getWithKey(nextVVP);
++                        if (nextVVP != null && nextVVP.var < 0) {
++                          vvp = nextVVP;
++                          break;
++                        }
++                      }
++                      else if (roots.size() == 2) {
++                        VarVersionNode first = roots.get(0);
++                        VarVersionNode second = roots.get(1);
++
++                        // check for an if-else var definition
++                        if (first.lvt != null && second.lvt != null && first.lvt.getVersion().equals(second.lvt.getVersion())) {
++                          vvp = first.lvt.getVersion();
++                          break;
++                        }
++                      }
++                    }
++                  }
++
++                  if (next == null) {
++                    break;
++                  }
++                  vvnode = next;
++                }
++
++                VarExprent var = varLookupMap.get(vvp);
++                if (var != null) {
++                  var.setEffectivelyFinal(true);
++                }
++              }
++            }
++          }
++        }
++      }
++    }
++
++    for (Exprent ex : exprent.getAllExprents()) {
++      setEffectivelyFinalVars(ex, ssau, index, list, varLookupMap);
++    }
++  }
++
++  private static List<VarVersionNode> getRoots(VarVersionNode vvnode) {
++    List<VarVersionNode> ret = new ArrayList<>();
++    Set<VarVersionNode> visited = new HashSet<>();
++    LinkedList<VarVersionNode> queue = new LinkedList<>();
++
++    queue.add(vvnode);
++    visited.add(vvnode);
++
++    while (!queue.isEmpty()) {
++      VarVersionNode next = queue.removeFirst();
++
++      if (next.preds.isEmpty()) {
++        ret.add(next);
++      }
++      else {
++        next.preds.forEach(vvn -> {
++          if (visited.add(vvn.source)) {
++            queue.add(vvn.source);
++          }
++        });
++      }
++    }
++
++    return ret;
++  }
+ }
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 469fdac..7ac01fd 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -166,6 +166,11 @@ public class InvocationExprent extends Exprent {
+     addBytecodeOffsets(expr.bytecode);
+     bootstrapArguments = expr.getBootstrapArguments();
+     isSyntheticGetClass = expr.isSyntheticGetClass();
++
++    if (invocationTyp == INVOKE_DYNAMIC && !isStatic && instance != null && !lstParameters.isEmpty()) {
++      // method reference, instance and first param are expected to be the same var object
++      instance = lstParameters.get(0);
++    }
+   }
+ 
+   @Override
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 247263c..20b237b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -50,6 +50,7 @@ public class VarExprent extends Exprent {
+   private boolean classDef = false;
+   private boolean stack = false;
+   private LocalVariable lvt = null;
++  private boolean isEffectivelyFinal = false;
+ 
+   public VarExprent(int index, VarType varType, VarProcessor processor) {
+     this(index, varType, processor, null);
+@@ -102,6 +103,7 @@ public class VarExprent extends Exprent {
+     var.setClassDef(classDef);
+     var.setStack(stack);
+     var.setLVT(lvt);
++    var.setEffectivelyFinal(isEffectivelyFinal);
+     return var;
+   }
+ 
+@@ -303,6 +305,14 @@ public class VarExprent extends Exprent {
+     return lvt;
+   }
+ 
++  public void setEffectivelyFinal(boolean isEffectivelyFinal) {
++    this.isEffectivelyFinal = isEffectivelyFinal;
++  }
++
++  public boolean isEffectivelyFinal() {
++    return this.isEffectivelyFinal;
++  }
++
+   public String getName() {
+     VarVersionPair pair = getVarVersionPair();
+     if (lvt != null)
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+index 8e57cd7..db92712 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+@@ -238,7 +238,7 @@ public class SSAConstructorSparseEx {
+       Integer varindex = vardest.getIndex();
+       FastSparseSet<Integer> vers = varmap.get(varindex);
+ 
+-      int cardinality = vers.getCardinality();
++      int cardinality = vers != null ? vers.getCardinality() : 0;
+       if (cardinality == 1) { // == 1
+         // set version
+         Integer it = vers.iterator().next();
+@@ -263,7 +263,17 @@ public class SSAConstructorSparseEx {
+           // create new phi node
+           phi.put(new VarVersionPair(varindex, nextver), vers);
+         }
+-      } // 0 means uninitialized variable, which is impossible
++      } // 0 means uninitialized variable
++      else if (cardinality == 0) {
++        if (vardest.getVersion() != 0) {
++          setCurrentVar(varmap, varindex, vardest.getVersion());
++        }
++        else {
++          Integer nextver = getNextFreeVersion(varindex);
++          vardest.setVersion(nextver);
++          setCurrentVar(varmap, varindex, nextver);
++        }
++      }
+     }
+   }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+index 3607a8d..58169c2 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+@@ -67,6 +67,9 @@ public class SSAUConstructorSparseEx {
+   // set factory
+   private FastSparseSetFactory<Integer> factory;
+ 
++  // track assignments for finding effectively final vars (left var, right var)
++  private HashMap<VarVersionPair, VarVersionPair> varAssignmentMap = new HashMap<>();
++
+   public void splitVariables(RootStatement root, StructMethod mt) {
+ 
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+@@ -291,7 +294,7 @@ public class SSAUConstructorSparseEx {
+         varassign.setVersion(nextver);
+ 
+         // ssu graph
+-        ssuversions.createNode(new VarVersionPair(varindex, nextver));
++        ssuversions.createNode(new VarVersionPair(varindex, nextver), varassign.getLVT());
+ 
+         setCurrentVar(varmap, varindex, nextver);
+       }
+@@ -301,6 +304,17 @@ public class SSAUConstructorSparseEx {
+         }
+         setCurrentVar(varmap, varindex, varassign.getVersion());
+       }
++
++      AssignmentExprent assexpr = (AssignmentExprent)expr;
++      if (assexpr.getRight().type == Exprent.EXPRENT_VAR) {
++        VarVersionPair rightpaar = ((VarExprent)assexpr.getRight()).getVarVersionPair();
++        varAssignmentMap.put(varassign.getVarVersionPair(), rightpaar);
++      }
++      else if (assexpr.getRight().type == Exprent.EXPRENT_FIELD) {
++        int index = mapFieldVars.get(((FieldExprent)assexpr.getRight()).id);
++        VarVersionPair rightpaar = new VarVersionPair(index, 0);
++        varAssignmentMap.put(varassign.getVarVersionPair(), rightpaar);
++      }
+     }
+     else if (expr.type == Exprent.EXPRENT_FUNCTION) { // MM or PP function
+       FunctionExprent func = (FunctionExprent)expr;
+@@ -356,7 +370,7 @@ public class SSAUConstructorSparseEx {
+ 
+       FastSparseSet<Integer> vers = varmap.get(varindex);
+ 
+-      int cardinality = vers.getCardinality();
++      int cardinality = vers != null ? vers.getCardinality() : 0;
+       if (cardinality == 1) { // size == 1
+         if (current_vers != 0) {
+           if (calcLiveVars) {
+@@ -404,7 +418,21 @@ public class SSAUConstructorSparseEx {
+         }
+ 
+         createOrUpdatePhiNode(new VarVersionPair(varindex, current_vers), vers, stat);
+-      } // vers.size() == 0 means uninitialized variable, which is impossible
++      } // vers.size() == 0 means uninitialized variable
++      else if (cardinality == 0) {
++        if (current_vers != 0) {
++          if (calcLiveVars) {
++            varMapToGraph(new VarVersionPair(varindex.intValue(), vardest.getVersion()), varmap);
++          }
++          setCurrentVar(varmap, varindex, vardest.getVersion());
++        }
++        else {
++          Integer usever = getNextFreeVersion(varindex, stat);
++          vardest.setVersion(usever);
++          ssuversions.createNode(new VarVersionPair(varindex, usever), vardest.getLVT());
++          setCurrentVar(varmap, varindex, usever);
++        }
++      }
+     }
+   }
+ 
+@@ -819,4 +847,8 @@ public class SSAUConstructorSparseEx {
+   public HashMap<Integer, Integer> getMapFieldVars() {
+     return mapFieldVars;
+   }
++
++  public HashMap<VarVersionPair, VarVersionPair> getVarAssignmentMap() {
++    return varAssignmentMap;
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 85791fe..be945ca 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph.ExprentIterator;
+@@ -223,6 +224,7 @@ public class VarDefinitionHelper {
+ 
+     mergeVars(root);
+     propogateLVTs(root);
++    setNonFinal(root, new HashSet<>());
+   }
+ 
+ 
+@@ -1022,4 +1024,79 @@ public class VarDefinitionHelper {
+     }
+     return false;
+   }
++
++  private void setNonFinal(Statement stat, Set<VarVersionPair> unInitialized) {
++    if (stat.getExprents() != null && !stat.getExprents().isEmpty()) {
++      for (Exprent exp : stat.getExprents()) {
++        if (exp.type == Exprent.EXPRENT_VAR) {
++          unInitialized.add(new VarVersionPair((VarExprent)exp));
++        }
++        else {
++          setNonFinal(exp, unInitialized);
++        }
++      }
++    }
++
++    if (!stat.getVarDefinitions().isEmpty()) {
++      if (stat.type != Statement.TYPE_DO) {
++        for (Exprent var : stat.getVarDefinitions()) {
++          unInitialized.add(new VarVersionPair((VarExprent)var));
++        }
++      }
++    }
++
++    if (stat.type == Statement.TYPE_DO) {
++      DoStatement dostat = (DoStatement)stat;
++      if (dostat.getInitExprentList() != null) {
++        setNonFinal(dostat.getInitExprent(), unInitialized);
++      }
++      if (dostat.getIncExprentList() != null) {
++        setNonFinal(dostat.getIncExprent(), unInitialized);
++      }
++    }
++    else if (stat.type == Statement.TYPE_IF) {
++      IfStatement ifstat = (IfStatement)stat;
++      if (ifstat.getIfstat() != null && ifstat.getElsestat() != null) {
++        setNonFinal(ifstat.getFirst(), unInitialized);
++        setNonFinal(ifstat.getIfstat(), new HashSet<>(unInitialized));
++        setNonFinal(ifstat.getElsestat(), unInitialized);
++        return;
++      }
++    }
++
++    for (Statement st : stat.getStats()) {
++      setNonFinal(st, unInitialized);
++    }
++  }
++
++  private void setNonFinal(Exprent exp, Set<VarVersionPair> unInitialized) {
++    VarExprent var = null;
++
++    if (exp == null) {
++      return;
++    }
++
++    if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
++      AssignmentExprent assign = (AssignmentExprent)exp;
++      if (assign.getLeft().type == Exprent.EXPRENT_VAR) {
++        var = (VarExprent)assign.getLeft();
++      }
++    }
++    else if (exp.type == Exprent.EXPRENT_FUNCTION) {
++      FunctionExprent func = (FunctionExprent)exp;
++      if (func.getFuncType() >= FunctionExprent.FUNCTION_IMM && func.getFuncType() <= FunctionExprent.FUNCTION_PPI) {
++        if (func.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
++          var = (VarExprent)func.getLstOperands().get(0);
++        }
++      }
++    }
++
++    if (var != null && !var.isDefinition() && !unInitialized.remove(var.getVarVersionPair())) {
++      var.getProcessor().setVarFinal(var.getVarVersionPair(), VarTypeProcessor.VAR_NON_FINAL);
++    }
++
++    for (Exprent ex : exp.getAllExprents()) {
++      setNonFinal(ex, unInitialized);
++    }
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java
+index 6c7ae33..3c92430 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java
+@@ -2,6 +2,7 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.vars;
+ 
+ import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
++import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
+ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
+ 
+ import java.util.ArrayList;
+@@ -25,12 +26,18 @@ public class VarVersionNode implements IGraphNode {
+ 
+   public SFormsFastMapDirect live = new SFormsFastMapDirect();
+ 
++  public LocalVariable lvt = null;
+ 
+   public VarVersionNode(int var, int version) {
+     this.var = var;
+     this.version = version;
+   }
+ 
++  public VarVersionNode(int var, int version, LocalVariable lvt) {
++    this(var, version);
++    this.lvt = lvt;
++  }
++
+   public List<IGraphNode> getPredecessors() {
+     List<IGraphNode> lst = new ArrayList<>(preds.size());
+     for (VarVersionEdge edge : preds) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java
+index ef0fc4b..39e42ac 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java
+@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
+ import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
+ import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraph;
+ import org.jetbrains.java.decompiler.modules.decompiler.decompose.IGraphNode;
++import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
+ import org.jetbrains.java.decompiler.util.VBStyleCollection;
+ 
+ import java.util.*;
+@@ -14,8 +15,12 @@ public class VarVersionsGraph {
+   private GenericDominatorEngine engine;
+ 
+   public VarVersionNode createNode(VarVersionPair ver) {
++    return createNode(ver, null);
++  }
++
++  public VarVersionNode createNode(VarVersionPair ver, LocalVariable lvt) {
+     VarVersionNode node;
+-    nodes.addWithKey(node = new VarVersionNode(ver.var, ver.version), ver);
++    nodes.addWithKey(node = new VarVersionNode(ver.var, ver.version, lvt), ver);
+     return node;
+   }
+ 
+-- 
+2.17.2 (Apple Git-113)
+
