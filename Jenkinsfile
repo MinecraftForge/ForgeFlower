@@ -3,7 +3,7 @@
 pipeline {
     agent {
         docker {
-            image 'gradlewrapper:latest'
+            image 'gradlewrapper:j10'
             args '-v gradlecache:/gradlecache'
         }
     }
