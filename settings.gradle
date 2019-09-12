@@ -1,3 +1,4 @@
+rootProject.name = 'forgeflower'
 include 'ForgeFlower'
 include 'ForgeFlower9'
 
