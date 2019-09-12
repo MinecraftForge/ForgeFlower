@@ -23,9 +23,13 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -34,6 +38,39 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
+
+    List<String> params = new ArrayList<String>();
+    for (int x = 0; x < args.length; x++) {
+      if (args[x].startsWith("-cfg")) {
+        String path = null;
+        if (args[x].startsWith("-cfg=")) {
+          path = args[x].substring(5);
+        }
+        else if (args.length > x+1) {
+          path = args[++x];
+        }
+        else {
+          System.out.println("Must specify a file when using -cfg argument.");
+          return;
+        }
+        Path file = Paths.get(path);
+        if (!Files.exists(file)) {
+          System.out.println("error: missing config '" + path + "'");
+          return;
+        }
+        try (Stream<String> stream = Files.lines(file)) {
+          stream.forEach(params::add);
+        } catch (IOException e) {
+          System.out.println("error: Failed to read config file '" + path + "'");
+          throw new RuntimeException(e);
+        }
+      }
+      else {
+        params.add(args[x]);
+      }
+    }
+    args = params.toArray(new String[params.size()]);
+
     if (args.length < 2) {
       System.out.println(
         "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
@@ -86,11 +123,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     PrintStreamLogger logger = new PrintStreamLogger(System.out);
     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
 
-    for (File source : lstSources) {
-      decompiler.addSpace(source, true);
-    }
     for (File library : lstLibraries) {
       decompiler.addSpace(library, false);
+    }
+    for (File source : lstSources) {
+      decompiler.addSpace(source, true);
     }
 
     decompiler.decompileContext();
