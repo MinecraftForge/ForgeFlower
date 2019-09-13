@@ -21,12 +21,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader.Link;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.zip.ZipFile;
 
 public class ContextUnit {
 
@@ -68,6 +72,24 @@ public class ContextUnit {
   }
 
   public void addOtherEntry(String fullPath, String entry) {
+    if ("fernflower_abstract_parameter_names.txt".equals(entry)) {
+      byte[] data;
+      try {
+        if (type == TYPE_JAR || type == TYPE_ZIP) {
+          try (ZipFile archive = new ZipFile(fullPath)) {
+            data = InterpreterUtil.getBytes(archive, archive.getEntry(entry));
+          }
+        } else {
+          data = InterpreterUtil.getBytes(new File(fullPath));
+        }
+        DecompilerContext.getStructContext().loadAbstractMetadata(new String(data, StandardCharsets.UTF_8));
+      }
+      catch (IOException e) {
+        String message = "Cannot read fernflower_abstract_parameter_names.txt from " + fullPath;
+        DecompilerContext.getLogger().writeMessage(message, e);
+      }
+      return;
+    }
     otherEntries.add(new String[]{fullPath, entry});
   }
 
