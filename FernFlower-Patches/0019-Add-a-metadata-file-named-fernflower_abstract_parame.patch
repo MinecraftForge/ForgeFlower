@@ -1,4 +1,4 @@
-From a337e448a64e4803a83623f1b9496aef26887c7f Mon Sep 17 00:00:00 2001
+From 64fde16efe2f961082cabcf79ea8ab1df999ff46 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 12 Sep 2019 18:31:01 -0700
 Subject: [PATCH] Add a metadata file named
@@ -27,6 +27,18 @@ index 561679a..8df18a3 100644
 -}
 \ No newline at end of file
 +}
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index 3003c67..b0797ec 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -42,6 +42,7 @@ public class Fernflower implements IDecompiledData {
+   public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
+     structContext = new StructContext(saver, this, new LazyLoader(provider));
+     DecompilerContext.initContext(options, logger);
++    DecompilerContext.setStructContext(structContext);
+     DecompilerContext.setCounterContainer(new CounterContainer());
+ 
+     if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 index 38c9487..a7311f6 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
