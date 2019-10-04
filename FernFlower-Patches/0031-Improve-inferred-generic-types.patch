@@ -1,4 +1,4 @@
-From dac609fc379ccd535ddb5ebcd3b7fd2d004dc4e3 Mon Sep 17 00:00:00 2001
+From 1020ec0690c8d8ef291bb6c5107b2fa0e013d411 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -1270,7 +1270,7 @@ index fbd2e43..247263c 100644
  
      if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index e7e1e4e..180bb4a 100644
+index ea13f3a..4fe9e46 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -18,9 +18,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -1285,7 +1285,7 @@ index e7e1e4e..180bb4a 100644
  import java.util.Map;
  import java.util.Map.Entry;
  import java.util.Set;
-@@ -337,4 +339,28 @@ public class StructClass extends StructMember {
+@@ -341,4 +343,28 @@ public class StructClass extends StructMember {
      this.genericHiarachy = ret.isEmpty() ? Collections.emptyMap() : ret;
      return this.genericHiarachy;
    }
@@ -1529,5 +1529,5 @@ index 9dc9d81..57a170c 100644
 +  }
  }
 -- 
-2.17.2 (Apple Git-113)
+2.19.1.windows.1
 

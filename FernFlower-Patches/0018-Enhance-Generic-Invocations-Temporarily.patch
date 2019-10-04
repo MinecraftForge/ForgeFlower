@@ -1,4 +1,4 @@
-From fbf3ef737adc8d748dfdb693ce67bf2438240115 Mon Sep 17 00:00:00 2001
+From 232edea31be4a285e6c02f0e0054d770047423b6 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -207,10 +207,10 @@ index 740b37c..8e798b0 100644
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 39fe8a6..e7e1e4e 100644
+index 39fe8a6..ea13f3a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-@@ -130,6 +130,31 @@ public class StructClass extends StructMember {
+@@ -130,6 +130,35 @@ public class StructClass extends StructMember {
      return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
    }
  
@@ -223,17 +223,21 @@ index 39fe8a6..e7e1e4e 100644
 +
 +    if (superClass != null) {
 +      StructClass cls = DecompilerContext.getStructContext().getClass((String)superClass.value);
-+      ret = cls.getMethodRecursive(name, descriptor);
-+      if (ret != null) {
-+        return ret;
++      if (cls != null) {
++        ret = cls.getMethodRecursive(name, descriptor);
++        if (ret != null) {
++          return ret;
++        }
 +      }
 +    }
 +
 +    for (String intf : getInterfaceNames()) {
 +      StructClass cls = DecompilerContext.getStructContext().getClass(intf);
-+      ret = cls.getMethodRecursive(name, descriptor);
-+      if (ret != null) {
-+        return ret;
++      if (cls != null) {
++        ret = cls.getMethodRecursive(name, descriptor);
++        if (ret != null) {
++          return ret;
++        }
 +      }
 +    }
 +    return null;
@@ -243,5 +247,5 @@ index 39fe8a6..e7e1e4e 100644
      return interfaceNames[i];
    }
 -- 
-2.17.2 (Apple Git-113)
+2.19.1.windows.1
 
