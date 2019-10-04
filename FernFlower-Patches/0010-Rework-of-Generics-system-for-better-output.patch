@@ -1,4 +1,4 @@
-From d47b2e0eb06c6aaf79b8c8606d32e02888d6d15f Mon Sep 17 00:00:00 2001
+From 2d27f5bd16112a79fb39d6ffc793f5754b45c7f6 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -969,18 +969,19 @@ index eb35f03..9025746 100644
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 97a820c..f2f7b4d 100644
+index 97a820c..1b141aa 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+@@ -21,6 +21,8 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
  import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 +import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-@@ -58,6 +59,7 @@ public class InvocationExprent extends Exprent {
+@@ -58,6 +60,7 @@ public class InvocationExprent extends Exprent {
    private int invocationTyp = INVOKE_VIRTUAL;
    private List<Exprent> lstParameters = new ArrayList<>();
    private List<PooledConstant> bootstrapArguments;
@@ -988,7 +989,7 @@ index 97a820c..f2f7b4d 100644
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -165,6 +167,55 @@ public class InvocationExprent extends Exprent {
+@@ -165,6 +168,55 @@ public class InvocationExprent extends Exprent {
      return descriptor.ret;
    }
  
@@ -1044,7 +1045,7 @@ index 97a820c..f2f7b4d 100644
    @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
-@@ -295,6 +346,7 @@ public class InvocationExprent extends Exprent {
+@@ -295,6 +347,7 @@ public class InvocationExprent extends Exprent {
  
          if (buf.length() > 0) {
            buf.append(".");
@@ -1052,7 +1053,7 @@ index 97a820c..f2f7b4d 100644
          }
  
          buf.append(name);
-@@ -331,8 +383,30 @@ public class InvocationExprent extends Exprent {
+@@ -331,8 +384,30 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -1084,7 +1085,7 @@ index 97a820c..f2f7b4d 100644
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -348,6 +422,34 @@ public class InvocationExprent extends Exprent {
+@@ -348,6 +423,34 @@ public class InvocationExprent extends Exprent {
        if (mask == null || mask.get(i) == null) {
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
@@ -1119,7 +1120,7 @@ index 97a820c..f2f7b4d 100644
  
          Exprent param = unboxIfNeeded(lstParameters.get(i));
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
-@@ -471,12 +573,11 @@ public class InvocationExprent extends Exprent {
+@@ -471,12 +574,11 @@ public class InvocationExprent extends Exprent {
      return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));
    }
  
@@ -1135,7 +1136,7 @@ index 97a820c..f2f7b4d 100644
      nextMethod:
      for (StructMethod mt : cl.getMethods()) {
        if (name.equals(mt.getName())) {
-@@ -487,11 +588,19 @@ public class InvocationExprent extends Exprent {
+@@ -487,11 +589,19 @@ public class InvocationExprent extends Exprent {
                continue nextMethod;
              }
            }
@@ -1157,14 +1158,15 @@ index 97a820c..f2f7b4d 100644
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -513,7 +622,13 @@ public class InvocationExprent extends Exprent {
+@@ -513,7 +623,14 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];
 -      for (MethodDescriptor md : matches) {
 +      for (StructMethod mtt : matches) {
 +
-+        if (mtt.getSignature() != null && mtt.getSignature().parameterTypes.get(i).isGeneric()) {
++        GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
++        if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
 +          break;
 +        }
 +
@@ -2946,5 +2948,5 @@ index 0000000..c45ac50
 +  }
 +}
 -- 
-2.17.2 (Apple Git-113)
+2.19.1.windows.1
 

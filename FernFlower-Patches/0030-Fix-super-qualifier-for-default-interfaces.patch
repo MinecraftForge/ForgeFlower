@@ -1,14 +1,14 @@
-From eea86a7039714a70e50fac6c1c59a9b5af2a6a16 Mon Sep 17 00:00:00 2001
+From 7ad82b74de6e8e57c184a91cee9516d2cb9b243b Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Wed, 19 Sep 2018 23:09:10 -0700
 Subject: [PATCH] Fix super qualifier for default interfaces
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 12b2483..5c66d04 100644
+index f54a4f6..7eca7d2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -301,7 +301,9 @@ public class InvocationExprent extends Exprent {
+@@ -302,7 +302,9 @@ public class InvocationExprent extends Exprent {
  
            if (invocationTyp == INVOKE_SPECIAL) {
              if (!classname.equals(this_classname)) { // TODO: direct comparison to the super class?
@@ -40,5 +40,5 @@ index c979356..00c61db 100644
    @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
    @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
 -- 
-2.17.2 (Apple Git-113)
+2.19.1.windows.1
 

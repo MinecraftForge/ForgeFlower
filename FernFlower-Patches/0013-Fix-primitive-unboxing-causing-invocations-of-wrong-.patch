@@ -1,4 +1,4 @@
-From c15dbb31dc5cbfabcc8620f53361306e146331a9 Mon Sep 17 00:00:00 2001
+From 8c1eb370254b7328b9f4fde9a766d6183ea9ce4f Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,10 +6,10 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index f2f7b4d..740b37c 100644
+index 1b141aa..6f5ff0b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -60,6 +60,7 @@ public class InvocationExprent extends Exprent {
+@@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
    private List<Exprent> lstParameters = new ArrayList<>();
    private List<PooledConstant> bootstrapArguments;
    private List<VarType> genericArgs = new ArrayList<>();
@@ -17,7 +17,7 @@ index f2f7b4d..740b37c 100644
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -262,7 +263,7 @@ public class InvocationExprent extends Exprent {
+@@ -263,7 +264,7 @@ public class InvocationExprent extends Exprent {
      }
  
      if (isStatic) {
@@ -26,7 +26,7 @@ index f2f7b4d..740b37c 100644
          // process general "boxing" calls, e.g. 'Object[] data = { true }' or 'Byte b = 123'
          // here 'byte' and 'short' values do not need an explicit narrowing type cast
          ExprProcessor.getCastedExprent(lstParameters.get(0), descriptor.params[0], buf, indent, false, false, false, tracer);
-@@ -309,14 +310,24 @@ public class InvocationExprent extends Exprent {
+@@ -310,14 +311,24 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
@@ -54,7 +54,7 @@ index f2f7b4d..740b37c 100644
            VarType rightType = instance.getExprType();
            VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
  
-@@ -416,8 +427,62 @@ public class InvocationExprent extends Exprent {
+@@ -417,8 +428,62 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -118,7 +118,7 @@ index f2f7b4d..740b37c 100644
      for (int i = start; i < lstParameters.size(); i++) {
        if (mask == null || mask.get(i) == null) {
          TextBuffer buff = new TextBuffer();
-@@ -453,7 +518,7 @@ public class InvocationExprent extends Exprent {
+@@ -454,7 +519,7 @@ public class InvocationExprent extends Exprent {
  
          Exprent param = unboxIfNeeded(lstParameters.get(i));
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
@@ -127,7 +127,7 @@ index f2f7b4d..740b37c 100644
  
          // the last "new Object[0]" in the vararg call is not printed
          if (buff.length() > 0) {
-@@ -474,8 +539,11 @@ public class InvocationExprent extends Exprent {
+@@ -475,8 +540,11 @@ public class InvocationExprent extends Exprent {
  
    public static Exprent unboxIfNeeded(Exprent param) {
      // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
@@ -141,7 +141,7 @@ index f2f7b4d..740b37c 100644
      }
      return param;
    }
-@@ -514,7 +582,7 @@ public class InvocationExprent extends Exprent {
+@@ -515,7 +583,7 @@ public class InvocationExprent extends Exprent {
          }
  
          if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
@@ -150,7 +150,7 @@ index f2f7b4d..740b37c 100644
              return true;
            }
          }
-@@ -602,6 +670,8 @@ public class InvocationExprent extends Exprent {
+@@ -603,6 +671,8 @@ public class InvocationExprent extends Exprent {
        return EMPTY_BIT_SET;
      }
  
@@ -159,7 +159,7 @@ index f2f7b4d..740b37c 100644
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
      if (mt != null) {
-@@ -611,18 +681,50 @@ public class InvocationExprent extends Exprent {
+@@ -612,18 +682,50 @@ public class InvocationExprent extends Exprent {
          for (int i = 0; i < md.params.length; i++) {
            if (!md.params[i].equals(lstParameters.get(i).getExprType())) {
              exact = false;
@@ -210,8 +210,8 @@ index f2f7b4d..740b37c 100644
 -      for (StructMethod mtt : matches) {
 +      for (StructMethod mtt : mtds) {
  
-         if (mtt.getSignature() != null && mtt.getSignature().parameterTypes.get(i).isGeneric()) {
-           break;
+         GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
+         if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
 diff --git a/testData/classes/pkg/TestPrimitives.class b/testData/classes/pkg/TestPrimitives.class
 index 1dad0d2fa50e49c17bf63e6886a417c2e77226d6..f269699406b09523d3e2d9d5af3b9407a6668ec8 100644
 GIT binary patch
@@ -2138,5 +2138,5 @@ index 55bd806..5f244ba 100644
    public void printAll() {
      printBoolean(true);
 -- 
-2.14.1.windows.1
+2.19.1.windows.1
 

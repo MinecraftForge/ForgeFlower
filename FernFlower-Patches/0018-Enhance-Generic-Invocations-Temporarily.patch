@@ -1,4 +1,4 @@
-From 232edea31be4a285e6c02f0e0054d770047423b6 Mon Sep 17 00:00:00 2001
+From 977fa4249d3f583c53d25a78ceabb459a364cc71 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -54,10 +54,10 @@ index 9025746..bf30fd0 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 740b37c..8e798b0 100644
+index 6f5ff0b..1177789 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -394,6 +394,7 @@ public class InvocationExprent extends Exprent {
+@@ -395,6 +395,7 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -65,7 +65,7 @@ index 740b37c..8e798b0 100644
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
      StructMethod desc = null;
-@@ -454,7 +455,7 @@ public class InvocationExprent extends Exprent {
+@@ -455,7 +456,7 @@ public class InvocationExprent extends Exprent {
          if (stClass != null) {
            nextMethod:
            for (StructMethod mt : stClass.getMethods()) {
@@ -74,7 +74,7 @@ index 740b37c..8e798b0 100644
                MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
                if (md.params.length == descriptor.params.length) {
                  for (int x = 0; x < md.params.length; x++) {
-@@ -481,6 +482,22 @@ public class InvocationExprent extends Exprent {
+@@ -482,6 +483,22 @@ public class InvocationExprent extends Exprent {
  
      }
  
@@ -97,7 +97,7 @@ index 740b37c..8e798b0 100644
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -643,27 +660,98 @@ public class InvocationExprent extends Exprent {
+@@ -644,27 +661,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();

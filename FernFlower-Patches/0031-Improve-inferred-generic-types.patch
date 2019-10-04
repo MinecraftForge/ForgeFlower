@@ -1,4 +1,4 @@
-From 1020ec0690c8d8ef291bb6c5107b2fa0e013d411 Mon Sep 17 00:00:00 2001
+From dad25d80774ba83048c2251ae7bfcaa8b243db30 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -194,10 +194,10 @@ index bf30fd0..1da5acf 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 5c66d04..469fdac 100644
+index 7eca7d2..fc978b1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -53,6 +53,7 @@ public class InvocationExprent extends Exprent {
+@@ -54,6 +54,7 @@ public class InvocationExprent extends Exprent {
    private boolean canIgnoreBoxing = true;
    private int functype = TYP_GENERAL;
    private Exprent instance;
@@ -205,7 +205,7 @@ index 5c66d04..469fdac 100644
    private MethodDescriptor descriptor;
    private String stringDescriptor;
    private String invokeDynamicClassSuffix;
-@@ -60,6 +61,8 @@ public class InvocationExprent extends Exprent {
+@@ -61,6 +62,8 @@ public class InvocationExprent extends Exprent {
    private List<Exprent> lstParameters = new ArrayList<>();
    private List<PooledConstant> bootstrapArguments;
    private List<VarType> genericArgs = new ArrayList<>();
@@ -214,7 +214,7 @@ index 5c66d04..469fdac 100644
    private boolean forceBoxing = false;
    private boolean isSyntheticGetClass = false;
  
-@@ -173,45 +176,244 @@ public class InvocationExprent extends Exprent {
+@@ -174,45 +177,244 @@ public class InvocationExprent extends Exprent {
  
    @Override
    public VarType getInferredExprType(VarType upperBound) {
@@ -481,7 +481,7 @@ index 5c66d04..469fdac 100644
        }
      }
  
-@@ -314,6 +516,19 @@ public class InvocationExprent extends Exprent {
+@@ -315,6 +517,19 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
@@ -501,7 +501,7 @@ index 5c66d04..469fdac 100644
            if (isUnboxingCall()) {
              // we don't print the unboxing call - no need to bother with the instance wrapping / casting
              if (instance.type == Exprent.EXPRENT_FUNCTION) {
-@@ -332,8 +547,8 @@ public class InvocationExprent extends Exprent {
+@@ -333,8 +548,8 @@ public class InvocationExprent extends Exprent {
  
            TextBuffer res = instance.toJava(indent, tracer);
  
@@ -512,7 +512,7 @@ index 5c66d04..469fdac 100644
  
            if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
              buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
-@@ -343,7 +558,7 @@ public class InvocationExprent extends Exprent {
+@@ -344,7 +559,7 @@ public class InvocationExprent extends Exprent {
              }
              buf.append(res).append(")");
            }
@@ -521,7 +521,7 @@ index 5c66d04..469fdac 100644
              buf.append("(").append(res).append(")");
            }
            else {
-@@ -389,6 +604,12 @@ public class InvocationExprent extends Exprent {
+@@ -390,6 +605,12 @@ public class InvocationExprent extends Exprent {
          }
      }
  
@@ -534,7 +534,7 @@ index 5c66d04..469fdac 100644
      List<VarVersionPair> mask = null;
      boolean isEnum = false;
      if (functype == TYP_INIT) {
-@@ -401,28 +622,6 @@ public class InvocationExprent extends Exprent {
+@@ -402,28 +623,6 @@ public class InvocationExprent extends Exprent {
      StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
@@ -563,7 +563,7 @@ index 5c66d04..469fdac 100644
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -486,20 +685,33 @@ public class InvocationExprent extends Exprent {
+@@ -487,20 +686,33 @@ public class InvocationExprent extends Exprent {
  
      }
  
@@ -610,7 +610,7 @@ index 5c66d04..469fdac 100644
      }
  
  
-@@ -538,6 +750,11 @@ public class InvocationExprent extends Exprent {
+@@ -539,6 +751,11 @@ public class InvocationExprent extends Exprent {
          */
  
          Exprent param = unboxIfNeeded(lstParameters.get(i));
@@ -622,7 +622,7 @@ index 5c66d04..469fdac 100644
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(param, types[i], buff, indent, true, ambiguous, true, tracer);
  
-@@ -553,8 +770,6 @@ public class InvocationExprent extends Exprent {
+@@ -554,8 +771,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -631,7 +631,7 @@ index 5c66d04..469fdac 100644
      return buf;
    }
  
-@@ -848,6 +1063,155 @@ public class InvocationExprent extends Exprent {
+@@ -850,6 +1065,155 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -787,7 +787,7 @@ index 5c66d04..469fdac 100644
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -960,6 +1324,18 @@ public class InvocationExprent extends Exprent {
+@@ -962,6 +1326,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticGetClass;
    }
  
