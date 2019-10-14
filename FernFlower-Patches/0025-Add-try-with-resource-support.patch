@@ -1,4 +1,4 @@
-From e4ef985e06dff402922dd92a62e91854ca718c47 Mon Sep 17 00:00:00 2001
+From 58710ee1949da831b6575ae566b7d3de78c59f37 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Mon, 6 Aug 2018 20:26:59 -0700
 Subject: [PATCH] Add try with resource support
@@ -307,7 +307,7 @@ index 0724aef..86c40a9 100644
              graph.nodes.putWithKey(firstnd, firstnd.id);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index f74fe84..a028e9f 100644
+index f74fe84..b3ee8da 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -6,6 +6,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
@@ -374,7 +374,22 @@ index f74fe84..a028e9f 100644
  
      buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
      buf.appendIndent(indent).append("}");
-@@ -193,11 +219,35 @@ public class CatchStatement extends Statement {
+@@ -180,6 +206,14 @@ public class CatchStatement extends Statement {
+     return buf;
+   }
+ 
++  public List<Object> getSequentialObjects() {
++
++    List<Object> lst = new ArrayList<>(resources);
++    lst.addAll(stats);
++
++    return lst;
++  }
++
+   public Statement getSimpleCopy() {
+     CatchStatement cs = new CatchStatement();
+ 
+@@ -193,11 +227,35 @@ public class CatchStatement extends Statement {
      return cs;
    }
  
@@ -412,7 +427,7 @@ index f74fe84..a028e9f 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 054abbb..adb62d7 100644
+index 054abbb..85791fe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -107,7 +107,11 @@ public class VarDefinitionHelper {
@@ -428,84 +443,6 @@ index 054abbb..adb62d7 100644
        }
  
        if (lstVars != null) {
-@@ -230,6 +234,14 @@ public class VarDefinitionHelper {
-     if (stat.getExprents() == null) {
-       for (Object obj : stat.getSequentialObjects()) {
-         if (obj instanceof Statement) {
-+          if (((Statement)obj).type == Statement.TYPE_TRYCATCH) {
-+            for (Exprent exp : ((CatchStatement)obj).getResources()) {
-+              LocalVariable lvt = findLVT(index, exp);
-+              if (lvt != null) {
-+                return lvt;
-+              }
-+            }
-+          }
-           LocalVariable lvt = findLVT(index, (Statement)obj);
-           if (lvt != null) {
-             return lvt;
-@@ -341,6 +353,9 @@ public class VarDefinitionHelper {
-               currVars.add(fin.getMonitor());
-             }
-           }
-+          else if (st.type == Statement.TYPE_TRYCATCH) {
-+            currVars.addAll(((CatchStatement)st).getResources());
-+          }
-         }
-         else if (obj instanceof Exprent) {
-           currVars.add((Exprent)obj);
-@@ -596,6 +611,14 @@ public class VarDefinitionHelper {
-     if (stat.getExprents() == null) {
-       for (Object obj : stat.getSequentialObjects()) {
-         if (obj instanceof Statement) {
-+          if (((Statement)obj).type == Statement.TYPE_TRYCATCH) {
-+            CatchStatement catchStat = (CatchStatement)obj;
-+            boolean remapped = false;
-+            for (int x = 0; x < catchStat.getResources().size(); x++) {
-+              remapped |= remapVar(catchStat.getResources().get(x), from, to);
-+            }
-+            success |= remapped;
-+          }
-           success |= remapVar((Statement)obj, from, to);
-         }
-         else if (obj instanceof Exprent) {
-@@ -841,6 +864,11 @@ public class VarDefinitionHelper {
-       for (Object obj : stat.getSequentialObjects()) {
-         if (obj instanceof Statement) {
-           findTypes((Statement)obj, types);
-+          if (((Statement)obj).type == Statement.TYPE_TRYCATCH) {
-+            for (Exprent exp : ((CatchStatement)obj).getResources()) {
-+              findTypes(exp, types);
-+            }
-+          }
-         }
-         else if (obj instanceof Exprent) {
-           findTypes((Exprent)obj, types);
-@@ -885,6 +913,11 @@ public class VarDefinitionHelper {
-       for (Object obj : stat.getSequentialObjects()) {
-         if (obj instanceof Statement) {
-           applyTypes((Statement)obj, types);
-+          if (((Statement)obj).type == Statement.TYPE_TRYCATCH) {
-+            for (Exprent exp : ((CatchStatement)obj).getResources()) {
-+              applyTypes(exp, types);
-+            }
-+          }
-         }
-         else if (obj instanceof Exprent) {
-           applyTypes((Exprent)obj, types);
-@@ -970,6 +1003,13 @@ public class VarDefinitionHelper {
-       for (int x = index; x < objs.size(); x++) {
-         Object obj = objs.get(x);
-         if (obj instanceof Statement) {
-+          if (((Statement)obj).type == Statement.TYPE_TRYCATCH) {
-+            for (Exprent exp : ((CatchStatement)obj).getResources()) {
-+              if (isVarReadFirst(var, exp, whitelist)) {
-+                return true;
-+              }
-+            }
-+          }
-           if (isVarReadFirst(var, (Statement)obj, 0, whitelist)) {
-             return true;
-           }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 index d7e814c..7b8d444 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
