@@ -1,4 +1,4 @@
-From a9abfd12c30309863924bffc7a2564f587c04276 Mon Sep 17 00:00:00 2001
+From c9f742769e56277200efb08aacada1ff8dc5474d Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Sun, 25 Aug 2019 18:02:16 -0700
 Subject: [PATCH] Improve stack var processor output
@@ -280,10 +280,10 @@ index c235387..24a29d9 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 469fdac..7ac01fd 100644
+index fc978b1..8f09409 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -166,6 +166,11 @@ public class InvocationExprent extends Exprent {
+@@ -167,6 +167,11 @@ public class InvocationExprent extends Exprent {
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
      isSyntheticGetClass = expr.isSyntheticGetClass();
@@ -602,5 +602,5 @@ index ef0fc4b..39e42ac 100644
    }
  
 -- 
-2.17.2 (Apple Git-113)
+2.19.1.windows.1
 
