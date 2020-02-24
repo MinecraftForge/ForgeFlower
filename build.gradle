@@ -1,6 +1,7 @@
 plugins {
     id 'net.minecrell.gitpatcher' version '0.9.0'
-    id 'org.ajoberstar.grgit' version '2.3.0'
+    id 'org.ajoberstar.grgit' version '4.0.1'
+    id 'com.github.ben-manes.versions' version '0.28.0'
 }
 
 allprojects {
@@ -8,7 +9,8 @@ allprojects {
     version = gitVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
 }
 def gitVersion() {
-    def desc = grgit.describe(longDescr: true).split('-') as List
+	def raw = grgit.describe(longDescr: true, tags:true)
+	def desc = (raw == null ? '0.0-0-unknown' : grgit.describe(longDescr: true, tags:true)).split('-') as List
     def hash = desc.remove(desc.size() - 1)
     def offset = desc.remove(desc.size() - 1)
     def tag = desc.join('-')
@@ -22,7 +24,7 @@ patches {
     target = file('ForgeFlower')
     patches = file('FernFlower-Patches')
 }
-applyPatches.dependsOn.remove('updateSubmodules') // We don't want to update the submodule without asking. 
+//applyPatches.dependsOn.remove('updateSubmodules') // We don't want to update the submodule without asking. 
 
 project(':ForgeFlower') {
     apply from: rootProject.file('fernflower.gradle')
@@ -60,10 +62,6 @@ project(':ForgeFlower9') {
             options.compilerArgs.addAll(['--release', '9'])
         }
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.8.1'
 }
 
 if (!JavaVersion.current().java9Compatible) {
