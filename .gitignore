@@ -203,3 +203,5 @@ gradle-app.setting
 ### ForgeFlower ###
 ForgeFlower/
 /log.txt
+/ForgeFlower9/.classpath
+/ForgeFlower9/.project

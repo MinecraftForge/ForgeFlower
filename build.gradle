@@ -1,19 +1,32 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven { url = 'https://files.minecraftforge.net/maven/'}
+    }
+    dependencies {
+        classpath 'net.minecraftforge:gitpatcher:0.10.+'
+    }
+}
+
 plugins {
-    id 'net.minecrell.gitpatcher' version '0.9.0'
     id 'org.ajoberstar.grgit' version '2.3.0'
 }
+
+apply plugin: 'net.minecraftforge.gitpatcher'
 
 patches {
     submodule = 'FernFlower'
     target = file('ForgeFlower')
     patches = file('FernFlower-Patches')
 }
-applyPatches.dependsOn.remove('updateSubmodules') // We don't want to update the submodule without asking. 
 
 allprojects {
     group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
     version = gitVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
 }
+
 def gitVersion() {
     def desc = grgit.describe(longDescr: true).split('-') as List
     def hash = desc.remove(desc.size() - 1)
@@ -56,10 +69,6 @@ project(':ForgeFlower9') {
         targetCompatibility = 9
         options.compilerArgs.addAll(['--release', '9'])
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.8.1'
 }
 
 task eclipse() {
