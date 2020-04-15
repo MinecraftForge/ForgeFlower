@@ -1,11 +1,11 @@
-From 5f77febddcd59e5466cab0d133da6d0dacbaae24 Mon Sep 17 00:00:00 2001
+From 16e84ce5b26388180881dd934a939b934da71a48 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 20 Dec 2019 08:35:30 -0700
-Subject: [PATCH] Simple lambda syntax support
+Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index fbb9661..69aac2e 100644
+index fbb9661..16f5eea 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -31,7 +31,7 @@ index fbb9661..69aac2e 100644
            buffer.append(") ->");
 +
 +          RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
-+          if (!methodWrapper.decompiledWithErrors && root != null) {
++          if (DecompilerContext.getOption(IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS) && !methodWrapper.decompiledWithErrors && root != null) {
 +            Statement firstStat = root.getFirst();
 +            if (firstStat.type == Statement.TYPE_BASICBLOCK && firstStat.getExprents() != null && firstStat.getExprents().size() == 1) {
 +              Exprent firstExpr = firstStat.getExprents().get(0);
@@ -91,6 +91,26 @@ index fbb9661..69aac2e 100644
        }
      }
      finally {
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 4038554..a879d19 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -32,6 +32,7 @@ public interface IFernflowerPreferences {
+   String BYTECODE_SOURCE_MAPPING = "bsm";
+ 
+   String INCLUDE_ENTIRE_CLASSPATH = "iec";
++  String INLINE_SIMPLE_LAMBDAS = "isl";
+ 
+   String LOG_LEVEL = "log";
+   String MAX_PROCESSING_METHOD = "mpm";
+@@ -80,6 +81,7 @@ public interface IFernflowerPreferences {
+     defaults.put(BYTECODE_SOURCE_MAPPING, "0");
+ 
+     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
++    defaults.put(INLINE_SIMPLE_LAMBDAS, "1");
+ 
+     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
+     defaults.put(MAX_PROCESSING_METHOD, "0");
 -- 
-2.17.2 (Apple Git-113)
+2.25.0.windows.1
 
