@@ -1,4 +1,4 @@
-From 21e90ef9af6f932249915e5d7fcd96af2c2bda74 Mon Sep 17 00:00:00 2001
+From 7b5a663d6ff3f36b80c0b5f4f3b839e731d7d352 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 14 Apr 2020 19:25:41 -0700
 Subject: [PATCH] Add explicit cast to invocations of java/nio/Buffer
@@ -9,7 +9,7 @@ Subject: [PATCH] Add explicit cast to invocations of java/nio/Buffer
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 8f09409..bc8b1ce 100644
+index 1231844..032ce91 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -48,6 +48,8 @@ public class InvocationExprent extends Exprent {
@@ -21,7 +21,7 @@ index 8f09409..bc8b1ce 100644
    private String name;
    private String classname;
    private boolean isStatic;
-@@ -567,6 +569,12 @@ public class InvocationExprent extends Exprent {
+@@ -569,6 +571,12 @@ public class InvocationExprent extends Exprent {
            else if (instance.getPrecedence() > getPrecedence() && !skippedCast) {
              buf.append("(").append(res).append(")");
            }
