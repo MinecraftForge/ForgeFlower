@@ -1,4 +1,4 @@
-From 7b5a663d6ff3f36b80c0b5f4f3b839e731d7d352 Mon Sep 17 00:00:00 2001
+From eaacbe6c845d0c899a115093666e58ba9bef3489 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 14 Apr 2020 19:25:41 -0700
 Subject: [PATCH] Add explicit cast to invocations of java/nio/Buffer
@@ -9,7 +9,7 @@ Subject: [PATCH] Add explicit cast to invocations of java/nio/Buffer
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 1231844..032ce91 100644
+index a5f2b2e..81491fa 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -48,6 +48,8 @@ public class InvocationExprent extends Exprent {

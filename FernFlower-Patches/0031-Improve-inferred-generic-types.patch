@@ -1,4 +1,4 @@
-From adf126629aa01d6b4532fc85b32c11cd84c59b44 Mon Sep 17 00:00:00 2001
+From 61c2d369454c5d0bc720eba70ffd24908ec743fc Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -194,7 +194,7 @@ index bf30fd0..1da5acf 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 7eca7d2..bb70ec9 100644
+index 7eca7d2..7c2df1a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -54,6 +54,7 @@ public class InvocationExprent extends Exprent {
@@ -633,7 +633,7 @@ index 7eca7d2..bb70ec9 100644
      return buf;
    }
  
-@@ -850,6 +1067,162 @@ public class InvocationExprent extends Exprent {
+@@ -850,6 +1067,163 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -699,8 +699,9 @@ index 7eca7d2..bb70ec9 100644
 +      return bounds.get(from).get(0).equals(VarType.VARTYPE_OBJECT);
 +    }
 +
++    VarType oldTo = to;
 +    if (to.type == CodeConstants.TYPE_GENVAR) {
-+      return isMappingInBounds(from, named.get(to).get(0), named, bounds);
++      to = named.get(to).get(0);
 +    }
 +
 +    VarType bound = bounds.get(from).get(0);
@@ -760,7 +761,7 @@ index 7eca7d2..bb70ec9 100644
 +
 +        if (!boundArg.equals(newArg)) {
 +          // T extends Comparable<T>
-+          if (boundArg.equals(from) && newArg.equals(to)) {
++          if (boundArg.equals(from) && newArg.equals(oldTo)) {
 +            continue;
 +          }
 +
@@ -796,7 +797,7 @@ index 7eca7d2..bb70ec9 100644
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -962,6 +1335,18 @@ public class InvocationExprent extends Exprent {
+@@ -962,6 +1336,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticGetClass;
    }
  
