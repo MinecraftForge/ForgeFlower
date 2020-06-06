@@ -1,11 +1,11 @@
-From 27cb747e43944ebd0760791624ae926f642e359b Mon Sep 17 00:00:00 2001
+From cdb8e3c8e5aa5e8923080f18c01b6e72666a14c3 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index ba039e6..fbb0a15 100644
+index ba039e6..ca0a3d6 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -175,7 +175,7 @@ index ba039e6..fbb0a15 100644
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
  
-@@ -289,7 +332,18 @@ public class InitializerProcessor {
+@@ -289,10 +332,62 @@ public class InitializerProcessor {
            }
            break;
          case Exprent.EXPRENT_FIELD:
@@ -192,9 +192,53 @@ index ba039e6..fbb0a15 100644
 +          else if (!fexpr.isStatic() && fexpr.getInstance() == null) {
 +            return false;
 +          }
++          break;
++        case Exprent.EXPRENT_NEW:
++          if (!isNewExprentIndependent((NewExprent)expr, cl, fidx)) {
++            return false;
++          }
        }
      }
  
+     return true;
+   }
++
++  // Verifies that a lambda used to initialize a static field does not reference
++  // another static field defined later in the class
++  private static boolean isNewExprentIndependent(NewExprent nexpr, StructClass cl, int fidx) {
++    boolean isStatic = cl.getFields().get(fidx).hasModifier(CodeConstants.ACC_STATIC);
++    if (isStatic && nexpr.isLambda() && !nexpr.isMethodReference()) {
++      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(nexpr.getNewType().value);
++      MethodWrapper wrapper = child.parent.getWrapper().getMethods().getWithKey(child.lambdaInformation.content_method_key);
++
++      Set<Exprent> s = new HashSet<>();
++      wrapper.getOrBuildGraph().iterateExprentsDeep(e -> {
++        if (e.type == Exprent.EXPRENT_FIELD || e.type == Exprent.EXPRENT_NEW)
++          s.add(e);
++        return 0;
++      });
++      return s.stream().allMatch(e -> {
++        switch (e.type) {
++          case Exprent.EXPRENT_FIELD:
++            FieldExprent fe = (FieldExprent)e;
++            if (fe.isStatic() && cl.hasField(fe.getName(), fe.getDescriptor().descriptorString)) {
++              String key = InterpreterUtil.makeUniqueKey(fe.getName(), fe.getDescriptor().descriptorString);
++              if (fe.getInstance() == null && cl.getFields().getIndexByKey(key) > fidx) {
++                return false;
++              }
++            }
++            break;
++          case Exprent.EXPRENT_NEW:
++            return isNewExprentIndependent((NewExprent)e, cl, fidx);
++        }
++
++        return true;
++      });
++    }
++
++    return true;
++  }
+ }
 diff --git a/testData/classes/pkg/TestClassFields$Inner.class b/testData/classes/pkg/TestClassFields$Inner.class
 index 1c16a7e3b3a72a2d00987cd024702775f328a0ae..996ad8e2d4dcbd470e913ca7707356a1f5b0664b 100644
 GIT binary patch
