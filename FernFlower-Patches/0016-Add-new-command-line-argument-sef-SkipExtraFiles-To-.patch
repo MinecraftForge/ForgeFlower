@@ -1,4 +1,4 @@
-From 36412ce96b7379314f0cfd5bcd95ac9429cf69ef Mon Sep 17 00:00:00 2001
+From dfab249a426d2d3b23fcce79938854260b7f951a Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 12 Dec 2017 00:18:19 -0800
 Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip
@@ -6,10 +6,10 @@ Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 863bf3d..4038554 100644
+index 206f6276..d91d9fae 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -49,6 +49,8 @@ public interface IFernflowerPreferences {
+@@ -53,6 +53,8 @@ public interface IFernflowerPreferences {
  
    String USE_JAD_VARNAMING = "jvn";
  
@@ -18,7 +18,7 @@ index 863bf3d..4038554 100644
    Map<String, Object> DEFAULTS = getDefaults();
  
    static Map<String, Object> getDefaults() {
-@@ -88,6 +90,7 @@ public interface IFernflowerPreferences {
+@@ -96,6 +98,7 @@ public interface IFernflowerPreferences {
      defaults.put(UNIT_TEST_MODE, "0");
      defaults.put(DUMP_ORIGINAL_LINES, "0");
      defaults.put(USE_JAD_VARNAMING, "0");
@@ -27,7 +27,7 @@ index 863bf3d..4038554 100644
      return Collections.unmodifiableMap(defaults);
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f9cd2af..f7b253b 100644
+index f9cd2af9..f7b253bc 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -54,6 +54,8 @@ public class ContextUnit {
@@ -47,5 +47,5 @@ index f9cd2af..f7b253b 100644
 \ No newline at end of file
 +}
 -- 
-2.14.1.windows.1
+2.26.2
 

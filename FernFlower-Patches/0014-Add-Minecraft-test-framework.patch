@@ -1,4 +1,4 @@
-From fba9cd7bcf334afe2f73b94ef3f825c714334d7b Mon Sep 17 00:00:00 2001
+From 1fb45ad3b85bb98666b353514fc40a4fc3df9ec4 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 19 Apr 2017 01:59:28 -0700
 Subject: [PATCH] Add Minecraft test framework
@@ -6,7 +6,7 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000..97c3e2c
+index 00000000..8ec8c362
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 @@ -0,0 +1,140 @@
@@ -109,10 +109,10 @@ index 0000000..97c3e2c
 +    if (MC_JAR.isDirectory()) {
 +      //decompiler.addSpace(new File(MC_JAR, "jars\\libraries"), false);
 +      gatherLibraries(decompiler);
-+      decompiler.addSpace(new File(MC_JAR, "temp\\minecraft_ff_in.jar"), true);
++      decompiler.addSource(new File(MC_JAR, "temp\\minecraft_ff_in.jar"));
 +    }
 +    else {
-+      decompiler.addSpace(MC_JAR, true);
++      decompiler.addSource(MC_JAR);
 +    }
 +    decompiler.decompileContext();
 +
@@ -140,7 +140,7 @@ index 0000000..97c3e2c
 +      for (Map<String, Object> e : libs) {
 +        String path = ((Map<String, Map<String, String>>)e.get("downloads")).get("artifact").get("path");
 +        File lib = new File(MC_PATH, "jars/libraries/" + path);
-+        decompiler.addSpace(lib, false);
++        decompiler.addLibrary(lib);
 +      }
 +    } catch (Exception e) {
 +      throw new RuntimeException(e);
@@ -151,5 +151,5 @@ index 0000000..97c3e2c
 +  @Test public void testEntityPlayer() { doTest("net/minecraft/command/impl/SeedCommand"); }
 +}
 -- 
-2.14.1.windows.1
+2.26.2
 

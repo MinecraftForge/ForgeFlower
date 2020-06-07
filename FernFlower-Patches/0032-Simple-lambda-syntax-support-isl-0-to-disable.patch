@@ -1,14 +1,14 @@
-From 16e84ce5b26388180881dd934a939b934da71a48 Mon Sep 17 00:00:00 2001
+From c4509a03289b79a33a2c8229f40a71a3b73783dd Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 20 Dec 2019 08:35:30 -0700
 Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index fbb9661..16f5eea 100644
+index 69b1dc49..232ea1d9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
@@ -16,7 +16,7 @@ index fbb9661..16f5eea 100644
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-@@ -99,6 +100,8 @@ public class ClassWriter {
+@@ -97,6 +98,8 @@ public class ClassWriter {
          MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
          MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
  
@@ -25,7 +25,7 @@ index fbb9661..16f5eea 100644
          if (!lambdaToAnonymous) {
            buffer.append('(');
  
-@@ -122,16 +125,60 @@ public class ClassWriter {
+@@ -120,16 +123,60 @@ public class ClassWriter {
            }
  
            buffer.append(") ->");
@@ -92,19 +92,19 @@ index fbb9661..16f5eea 100644
      }
      finally {
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 4038554..a879d19 100644
+index d91d9fae..e1052f92 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -32,6 +32,7 @@ public interface IFernflowerPreferences {
-   String BYTECODE_SOURCE_MAPPING = "bsm";
+@@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
+   String VERIFY_ANONYMOUS_CLASSES = "vac";
  
    String INCLUDE_ENTIRE_CLASSPATH = "iec";
 +  String INLINE_SIMPLE_LAMBDAS = "isl";
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -80,6 +81,7 @@ public interface IFernflowerPreferences {
-     defaults.put(BYTECODE_SOURCE_MAPPING, "0");
+@@ -88,6 +89,7 @@ public interface IFernflowerPreferences {
+     defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
  
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
 +    defaults.put(INLINE_SIMPLE_LAMBDAS, "1");
@@ -112,5 +112,5 @@ index 4038554..a879d19 100644
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 -- 
-2.25.0.windows.1
+2.26.2
 

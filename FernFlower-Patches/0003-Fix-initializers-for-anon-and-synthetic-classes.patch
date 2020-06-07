@@ -1,14 +1,14 @@
-From 76c5c1b88061426f7c4e50099c4c3a2d1899ed6c Mon Sep 17 00:00:00 2001
+From 7d9f5ea6687c4219f1e56cbce38ae6aedc7531fd Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 13:21:00 -0700
 Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 210529f..3096d56 100644
+index 72fefe4c..1182bd19 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -43,6 +43,7 @@ public class ClassWriter {
+@@ -41,6 +41,7 @@ public class ClassWriter {
      StructClass cl = wrapper.getClassStruct();
  
      InitializerProcessor.extractInitializers(wrapper);
@@ -17,18 +17,10 @@ index 210529f..3096d56 100644
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersionGE_1_5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 86b7194..97d726f 100644
+index 1ee22f21..0041f13d 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -18,6 +18,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
- import org.jetbrains.java.decompiler.struct.StructClass;
- import org.jetbrains.java.decompiler.struct.StructContext;
- import org.jetbrains.java.decompiler.struct.StructMethod;
-+import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
- import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
- import org.jetbrains.java.decompiler.struct.gen.VarType;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -83,6 +84,31 @@ public class ClassesProcessor {
+@@ -87,6 +87,31 @@ public class ClassesProcessor implements CodeConstants {
                rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
                rec.accessFlags = entry.accessFlags;
  
@@ -43,7 +35,7 @@ index 86b7194..97d726f 100644
 +                      rec.type = ClassNode.CLASS_MEMBER;
 +                  }
 +                  else {
-+                    StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttribute("EnclosingMethod");
++                    StructEnclosingMethodAttribute attr = in.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
 +                    if (attr != null && attr.getMethodName() != null) {
 +                      rec.type = ClassNode.CLASS_LOCAL;
 +                    }
@@ -61,7 +53,7 @@ index 86b7194..97d726f 100644
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index b929d0d..ba039e6 100644
+index b929d0d1..ba039e6c 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -137,5 +129,5 @@ index b929d0d..ba039e6 100644
 \ No newline at end of file
 +}
 -- 
-2.17.2 (Apple Git-113)
+2.26.2
 

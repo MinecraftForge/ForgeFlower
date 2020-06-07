@@ -1,4 +1,4 @@
-From 18cef967beea4f03ee3c905cfbcc89a4b9f00dba Mon Sep 17 00:00:00 2001
+From d62e05b5bcfbd5e5b4f30b500670c57fd642b8f2 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 27 Jul 2018 14:02:27 -0700
 Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
@@ -6,22 +6,18 @@ Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-index 5e2d064..47748cd 100644
+index 7b8c3b45..30db0cdb 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-@@ -108,10 +108,35 @@ public class ImportCollector {
-     // check for another class which could 'shadow' this one. Two cases:
-     // 1) class with the same short name in the current package
-     // 2) class with the same short name in the default package
-+    // 3) inner class with the same short name in the current class
-+    // 4) inner class with the same short name in a super class
+@@ -132,8 +132,28 @@ public class ImportCollector {
+     // 3) inner class with the same short name in the current class, a super class, or an implemented interface
      boolean existsDefaultClass =
        (context.getClass(currentPackageSlash + shortName) != null && !packageName.equals(currentPackagePoint)) || // current package
-       (context.getClass(shortName) != null && !currentPackagePoint.isEmpty());  // default package
- 
-+    ClassNode cl = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+-      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty()) || // default package
+-      setInnerClassNames.contains(shortName); // inner class
++      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty());
 +
-+    if (!existsDefaultClass && isSuperInnerClass(cl, shortName)) {
++    if (!existsDefaultClass && setInnerClassNames.contains(shortName)) {
 +      // if the class being accessed is also an inner class
 +      // attempt to import the outer class and reference OuterClass.InnerClass
 +      if (context.getClass(packageName.replace('.', '/') + "$" + shortName) != null) {
@@ -31,7 +27,7 @@ index 5e2d064..47748cd 100644
 +          shortName = packageName.substring(lastDot + 1);
 +          packageName = packageName.substring(0, lastDot);
 +
-+          if (isSuperInnerClass(cl, result.replace('.', '$'))) {
++          if (setInnerClassNames.contains(result.replace('.', '$'))) {
 +            existsDefaultClass = true;
 +            result = null;
 +          }
@@ -41,32 +37,9 @@ index 5e2d064..47748cd 100644
 +        existsDefaultClass = true;
 +      }
 +    }
-+
+ 
      if (existsDefaultClass ||
          (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
-       //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
-@@ -127,6 +152,21 @@ public class ImportCollector {
-     return result == null ? shortName : result;
-   }
- 
-+  private boolean isSuperInnerClass(ClassNode cl, String className) {
-+    StructContext context = DecompilerContext.getStructContext();
-+
-+    while (cl != null) {
-+      if (context.getClass(cl.classStruct.qualifiedName + "$" + className) != null) {
-+        return true;
-+      }
-+
-+      String qualifiedName = cl.classStruct.superClass.getString();
-+      cl = DecompilerContext.getClassProcessor().getMapRootClasses().get(qualifiedName);
-+    }
-+
-+    return false;
-+  }
-+
-   public int writeImports(TextBuffer buffer) {
-     int importLinesWritten = 0;
- 
 -- 
-2.15.2 (Apple Git-101.1)
+2.26.2
 

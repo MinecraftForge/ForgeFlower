@@ -1,14 +1,14 @@
-From 467bd7187e3b1a232b3f746e859872f0399a4b59 Mon Sep 17 00:00:00 2001
+From db57786f4d32d0154e2c86a2a342ac199438cac6 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Wed, 19 Sep 2018 22:51:00 -0700
 Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 12cf86d..1759538 100644
+index 4933b5c1..cc67f34a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -897,6 +897,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -910,6 +910,9 @@ public class ExprProcessor implements CodeConstants {
        (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
        (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
  
@@ -18,7 +18,7 @@ index 12cf86d..1759538 100644
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
      // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-@@ -911,6 +914,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -924,6 +927,8 @@ public class ExprProcessor implements CodeConstants {
  
      if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
  
@@ -27,7 +27,7 @@ index 12cf86d..1759538 100644
      if (quote) buffer.append('(');
  
      if (exprent.type == Exprent.EXPRENT_CONST) {
-@@ -943,4 +948,12 @@ public class ExprProcessor implements CodeConstants {
+@@ -956,4 +961,12 @@ public class ExprProcessor implements CodeConstants {
      return VarType.VARTYPE_INT.isStrictSuperset(type) ||
             type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
    }
@@ -41,10 +41,10 @@ index 12cf86d..1759538 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 9832bff..f54a4f6 100644
+index 8ebcb69f..cac37d5a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -770,7 +770,8 @@ public class InvocationExprent extends Exprent {
+@@ -762,7 +762,8 @@ public class InvocationExprent extends Exprent {
        if (md.params.length == lstParameters.size()) {
          boolean exact = true;
          for (int i = 0; i < md.params.length; i++) {
@@ -54,7 +54,7 @@ index 9832bff..f54a4f6 100644
              exact = false;
              missed.set(i);
            }
-@@ -784,7 +785,8 @@ public class InvocationExprent extends Exprent {
+@@ -776,7 +777,8 @@ public class InvocationExprent extends Exprent {
        boolean failed = false;
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
        for (int i = 0; i < lstParameters.size(); i++) {
@@ -64,7 +64,7 @@ index 9832bff..f54a4f6 100644
          if (!missed.get(i)) {
            if (!md.params[i].equals(ptype)) {
              failed = true;
-@@ -792,6 +794,17 @@ public class InvocationExprent extends Exprent {
+@@ -784,6 +786,17 @@ public class InvocationExprent extends Exprent {
            }
          }
          else {
@@ -82,7 +82,7 @@ index 9832bff..f54a4f6 100644
            if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
              if (ptype.type != CodeConstants.TYPE_NULL) {
                if (!DecompilerContext.getStructContext().instanceOf(ptype.value, md.params[i].value)) {
-@@ -819,7 +832,10 @@ public class InvocationExprent extends Exprent {
+@@ -811,7 +824,10 @@ public class InvocationExprent extends Exprent {
  
          GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
          if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
@@ -95,18 +95,19 @@ index 9832bff..f54a4f6 100644
  
          MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index ad5bcbb..2c8a5dc 100644
+index f99fdc49..bf254b8d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
+@@ -5,6 +5,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
  import org.jetbrains.java.decompiler.main.ClassWriter;
  import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
- import org.jetbrains.java.decompiler.util.TextBuffer;
++import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-@@ -34,6 +35,7 @@ public class NewExprent extends Exprent {
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+@@ -32,6 +34,7 @@ public class NewExprent extends Exprent {
    private boolean isVarArgParam;
    private boolean anonymous;
    private boolean lambda;
@@ -114,7 +115,7 @@ index ad5bcbb..2c8a5dc 100644
    private boolean enumConst;
    private List<VarType> genericArgs = new ArrayList<>();
  
-@@ -54,6 +56,7 @@ public class NewExprent extends Exprent {
+@@ -52,6 +55,7 @@ public class NewExprent extends Exprent {
          anonymous = true;
          if (node.type == ClassNode.CLASS_LAMBDA) {
            lambda = true;
@@ -122,7 +123,7 @@ index ad5bcbb..2c8a5dc 100644
          }
        }
      }
-@@ -509,4 +512,17 @@ public class NewExprent extends Exprent {
+@@ -514,4 +518,17 @@ public class NewExprent extends Exprent {
    public void setEnumConst(boolean enumConst) {
      this.enumConst = enumConst;
    }
@@ -141,5 +142,5 @@ index ad5bcbb..2c8a5dc 100644
 +  }
  }
 -- 
-2.19.1.windows.1
+2.26.2
 

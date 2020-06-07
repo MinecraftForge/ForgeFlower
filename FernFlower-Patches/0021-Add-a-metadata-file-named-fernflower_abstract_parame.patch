@@ -1,4 +1,4 @@
-From 33f504b00606e4fcf21256af2949ec21450f0bab Mon Sep 17 00:00:00 2001
+From 1a214c4704cc7ff0a8fe5f72453d88368bbc561b Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 20 Jul 2018 01:37:36 -0700
 Subject: [PATCH] Add a metadata file named
@@ -7,11 +7,11 @@ Subject: [PATCH] Add a metadata file named
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index d74198a..6c6cd24 100644
+index 4817f055..615b7a37 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -690,7 +690,9 @@ public class ClassWriter {
-             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+@@ -703,7 +703,9 @@ public class ClassWriter {
+             }
  
              if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {
 -              parameterName = methodWrapper.methodStruct.getVariableNamer().renameAbstractParameter(parameterName, index);
@@ -22,7 +22,7 @@ index d74198a..6c6cd24 100644
  
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f7b253b..fde5881 100644
+index f7b253bc..fde58817 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -7,12 +7,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -68,7 +68,7 @@ index f7b253b..fde5881 100644
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 4c3ff5b..bfa3c7a 100644
+index cc4e357f..68cf2592 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -98,7 +98,7 @@ index 4c3ff5b..bfa3c7a 100644
  
    public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
      this.saver = saver;
-@@ -206,4 +211,24 @@ public class StructContext {
+@@ -204,4 +209,24 @@ public class StructContext {
  
      return false;
    }
@@ -124,5 +124,5 @@ index 4c3ff5b..bfa3c7a 100644
 +  }
  }
 -- 
-2.19.1.windows.1
+2.26.2
 

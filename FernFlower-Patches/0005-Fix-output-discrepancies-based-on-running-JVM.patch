@@ -1,14 +1,14 @@
-From 119fa9ca155905c16c633ffe82a062649d2b2f14 Mon Sep 17 00:00:00 2001
+From ed9ce07c045a67916e118e93aeb89d08882b5344 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:08:10 -0700
 Subject: [PATCH] Fix output discrepancies based on running JVM
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 97d726f..1c5b8e8 100644
+index 0041f13d..a3475894 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -227,6 +227,7 @@ public class ClassesProcessor {
+@@ -229,6 +229,7 @@ public class ClassesProcessor implements CodeConstants {
                  stack.add(nestedClass);
                }
              }
@@ -16,7 +16,7 @@ index 97d726f..1c5b8e8 100644
            }
          }
        }
-@@ -336,7 +337,7 @@ public class ClassesProcessor {
+@@ -424,7 +425,7 @@ public class ClassesProcessor implements CodeConstants {
    }
  
  
@@ -25,7 +25,7 @@ index 97d726f..1c5b8e8 100644
      public static final int CLASS_ROOT = 0;
      public static final int CLASS_MEMBER = 1;
      public static final int CLASS_ANONYMOUS = 2;
-@@ -418,6 +419,12 @@ public class ClassesProcessor {
+@@ -506,6 +507,12 @@ public class ClassesProcessor implements CodeConstants {
        return node.wrapper;
      }
  
@@ -39,7 +39,7 @@ index 97d726f..1c5b8e8 100644
        public String method_name;
        public String method_descriptor;
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-index 26f3565..767a5ab 100644
+index fd0f261c..36156fe9 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 @@ -108,6 +108,8 @@ public class LambdaProcessor {
@@ -60,10 +60,10 @@ index 26f3565..767a5ab 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 649520c..fa9ed31 100644
+index da175324..3625c482 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -214,6 +214,7 @@ public class NestedClassProcessor {
+@@ -217,6 +217,7 @@ public class NestedClassProcessor {
        if (setEnclosing.contains(node.classStruct.qualifiedName)) {
          node.nested.add(child);
          child.parent = node;
@@ -72,7 +72,7 @@ index 649520c..fa9ed31 100644
          return true;
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index 2c5e3eb..bc3cb33 100644
+index 2c5e3eb4..bc3cb331 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -193,7 +193,7 @@ public class DomHelper {
@@ -117,10 +117,10 @@ index 2c5e3eb..bc3cb33 100644
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index c52ac08..d1259ad 100644
+index 966cd442..010566ba 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -800,6 +800,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -797,6 +797,7 @@ public class ExprProcessor implements CodeConstants {
      }
  
      TextBuffer buf = new TextBuffer();
@@ -129,10 +129,10 @@ index c52ac08..d1259ad 100644
      for (Exprent expr : lst) {
        if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 3e213da..8574432 100644
+index 240ee3e4..bcd6a6c5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-@@ -483,10 +483,17 @@ public class FinallyProcessor {
+@@ -486,10 +486,17 @@ public class FinallyProcessor {
      // so remove dummy exit
      startBlocks.remove(graph.getLast());
      startBlocks.removeAll(tryBlocks);
@@ -151,7 +151,7 @@ index 3e213da..8574432 100644
  
        Area arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
        if (arr == null) {
-@@ -509,8 +516,17 @@ public class FinallyProcessor {
+@@ -512,8 +519,17 @@ public class FinallyProcessor {
      //			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
      //		} catch(Exception ex){ex.printStackTrace();}
  
@@ -171,7 +171,7 @@ index 3e213da..8574432 100644
  
        if (entry.getValue()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-index 9c150b5..017218b 100644
+index 9c150b51..017218b7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 @@ -19,7 +19,7 @@ public class LabelHelper {
@@ -193,7 +193,7 @@ index 9c150b5..017218b 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-index 89babeb..84d9931 100644
+index d8b587ff..318d95cd 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 @@ -13,10 +13,10 @@ public class DominatorTreeExceptionFilter {
@@ -227,17 +227,8 @@ index 89babeb..84d9931 100644
  
          for (Statement st : lstPreds) {
            set.add(st.id);
-@@ -135,7 +135,7 @@ public class DominatorTreeExceptionFilter {
-             }
-             else {
-               // exit = map.containsKey(handler)?-1:mapChild.get(handler); FIXME: Eclipse bug?
--              exit = map.containsKey(handler) ? -1 : mapChild.get(handler);
-+              exit = map.containsKey(handler) ? Integer.valueOf(-1) : mapChild.get(handler);
-             }
- 
-             if (exit != null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-index 71ef24b..e8568f4 100644
+index 71ef24b4..e8568f4a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 @@ -14,9 +14,9 @@ public class FastExtendedPostdominanceHelper {
@@ -273,10 +264,10 @@ index 71ef24b..e8568f4 100644
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 1b3d7af..fedfaa7 100644
+index 9fa58125..691d6130 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -178,15 +178,15 @@ public class ConstExprent extends Exprent {
+@@ -177,15 +177,15 @@ public class ConstExprent extends Exprent {
            }
          }
          else if (Float.isNaN(floatVal)) {
@@ -296,7 +287,7 @@ index 1b3d7af..fedfaa7 100644
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -208,15 +208,15 @@ public class ConstExprent extends Exprent {
+@@ -207,15 +207,15 @@ public class ConstExprent extends Exprent {
            }
          }
          else if (Double.isNaN(doubleVal)) {
@@ -316,7 +307,7 @@ index 1b3d7af..fedfaa7 100644
  
        case CodeConstants.TYPE_NULL:
          return new TextBuffer("null");
-@@ -234,6 +234,18 @@ public class ConstExprent extends Exprent {
+@@ -233,6 +233,18 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }
@@ -336,7 +327,7 @@ index 1b3d7af..fedfaa7 100644
    public boolean isNull() {
      return CodeConstants.TYPE_NULL == constType.type;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index bb303e8..618d786 100644
+index bb303e84..e55b0ab6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -15,7 +15,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -354,7 +345,7 @@ index bb303e8..618d786 100644
      }
    }
  
-+  public static List<Exprent> sortIndexed(List<Exprent> lst) {
++  public static List<? extends Exprent> sortIndexed(List<? extends Exprent> lst) {
 +      List<Exprent> ret = new ArrayList<Exprent>();
 +      List<VarExprent> defs = new ArrayList<VarExprent>();
 +
@@ -390,7 +381,7 @@ index bb303e8..618d786 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 29e7030..6efce5e 100644
+index 29e7030a..6efce5e4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
@@ -411,7 +402,7 @@ index 29e7030..6efce5e 100644
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 4edec05..f5719d1 100644
+index 4edec058..f5719d1a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -71,7 +71,7 @@ public class SSAUConstructorSparseEx {
@@ -424,11 +415,11 @@ index 4edec05..f5719d1 100644
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index fffd34d..2682957 100644
+index 0891a475..c098f3be 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-@@ -7,7 +7,8 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -5,7 +5,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.Collection;
 -import java.util.HashSet;
@@ -437,7 +428,7 @@ index fffd34d..2682957 100644
  
  
  public class GeneralStatement extends Statement {
-@@ -27,7 +28,7 @@ public class GeneralStatement extends Statement {
+@@ -25,7 +26,7 @@ public class GeneralStatement extends Statement {
      first = head;
      stats.addWithKey(head, head.id);
  
@@ -447,10 +438,10 @@ index fffd34d..2682957 100644
  
      for (Statement st : set) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index ae41af7..1f612ed 100644
+index ab48eccf..e1464819 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -65,7 +65,15 @@ public class SwitchStatement extends Statement {
+@@ -63,7 +63,15 @@ public class SwitchStatement extends Statement {
  
      default_edge = head.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
  
@@ -468,7 +459,7 @@ index ae41af7..1f612ed 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index adbb6fd..c211d68 100644
+index adbb6fd3..c211d680 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -215,7 +215,10 @@ public class VarVersionsProcessor {
@@ -484,7 +475,7 @@ index adbb6fd..c211d68 100644
        if (pair.version >= 0) {
          int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
 diff --git a/testData/results/MoreAnnotations.dec b/testData/results/MoreAnnotations.dec
-index 37302cc..069c033 100644
+index 37302cc3..069c0334 100644
 --- a/testData/results/MoreAnnotations.dec
 +++ b/testData/results/MoreAnnotations.dec
 @@ -34,8 +34,8 @@ public @interface MoreAnnotations {
@@ -541,7 +532,7 @@ index 37302cc..069c033 100644
  }
  
 diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
-index 924b764..14c92f9 100644
+index 924b7641..14c92f96 100644
 --- a/testData/results/TestAnonymousClass.dec
 +++ b/testData/results/TestAnonymousClass.dec
 @@ -67,15 +67,8 @@ public abstract class TestAnonymousClass {
@@ -645,7 +636,7 @@ index 924b764..14c92f9 100644
  18
  104
 diff --git a/testData/results/TestAnonymousClassConstructor.dec b/testData/results/TestAnonymousClassConstructor.dec
-index 66960ce..63abd4a 100644
+index 66960ce4..63abd4ac 100644
 --- a/testData/results/TestAnonymousClassConstructor.dec
 +++ b/testData/results/TestAnonymousClassConstructor.dec
 @@ -65,16 +65,16 @@ class TestAnonymousClassConstructor {
@@ -789,7 +780,7 @@ index 66960ce..63abd4a 100644
  57
  63
 diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
-index 8883fab..d5f7070 100644
+index 8883fab6..d5f7070f 100644
 --- a/testData/results/TestClassSimpleBytecodeMapping.dec
 +++ b/testData/results/TestClassSimpleBytecodeMapping.dec
 @@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
@@ -851,7 +842,7 @@ index 8883fab..d5f7070 100644
  Not mapped:
  39
 diff --git a/testData/results/TestConstants.dec b/testData/results/TestConstants.dec
-index 28df2c2..1170f1a 100644
+index 28df2c29..1170f1a5 100644
 --- a/testData/results/TestConstants.dec
 +++ b/testData/results/TestConstants.dec
 @@ -16,14 +16,14 @@ public class TestConstants {
@@ -876,7 +867,7 @@ index 28df2c2..1170f1a 100644
     static final double DMax = 1.7976931348623157E308D;
  
 diff --git a/testData/results/TestExtendingSubclass.dec b/testData/results/TestExtendingSubclass.dec
-index 5e13985..2caf740 100644
+index 5e139858..2caf7401 100644
 --- a/testData/results/TestExtendingSubclass.dec
 +++ b/testData/results/TestExtendingSubclass.dec
 @@ -1,35 +1,35 @@
@@ -929,12 +920,12 @@ index 5e13985..2caf740 100644
  8
  13
 diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
-index 6ca3a7e..e5aba7d 100644
+index af4fb304..f728ad7e 100644
 --- a/testData/results/TestInnerLocal.dec
 +++ b/testData/results/TestInnerLocal.dec
-@@ -28,6 +28,14 @@ public class TestInnerLocal {
-       new TestInnerLocal.Inner1Static.Inner2Static("test");// 40
-    }// 41
+@@ -30,6 +30,14 @@ public class TestInnerLocal {
+       new TestInnerLocal.Inner1Static.Inner2Static("test");// 26
+    }// 27
  
 +   class Inner1 {
 +      final String x;
@@ -947,29 +938,29 @@ index 6ca3a7e..e5aba7d 100644
     static class Inner1Static {
        final String x;
  
-@@ -43,14 +51,6 @@ public class TestInnerLocal {
-          }// 60
+@@ -45,14 +53,6 @@ public class TestInnerLocal {
+          }// 46
        }
     }
 -
 -   class Inner1 {
 -      final String x;
 -
--      public Inner1(String var2) {
--         this.x = var2;// 46
--      }// 47
+-      public Inner1(@Deprecated String x) {
+-         this.x = x;// 32
+-      }// 33
 -   }
  }
  
- class 'TestInnerLocal$1Inner' {
-@@ -84,24 +84,24 @@ class 'TestInnerLocal$2Inner' {
+ class 'pkg/TestInnerLocal$1Inner' {
+@@ -86,47 +86,47 @@ class 'pkg/TestInnerLocal$2Inner' {
     }
  }
  
--class 'TestInnerLocal$Inner1Static' {
+-class 'pkg/TestInnerLocal$Inner1Static' {
 -   method '<init> (Ljava/lang/String;)V' {
--      6      34
--      9      35
+-      6      36
+-      9      37
 +class 'TestInnerLocal$Inner1' {
 +   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
 +      b      34
@@ -977,37 +968,60 @@ index 6ca3a7e..e5aba7d 100644
     }
  }
  
--class 'TestInnerLocal$Inner1Static$Inner2Static' {
+-class 'pkg/TestInnerLocal$Inner1Static$Inner2Static' {
 +class 'TestInnerLocal$Inner1Static' {
     method '<init> (Ljava/lang/String;)V' {
--      6      41
--      9      42
+-      6      43
+-      9      44
 +      6      42
 +      9      43
     }
  }
  
--class 'TestInnerLocal$Inner1' {
--   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
--      b      50
--      e      51
-+class 'TestInnerLocal$Inner1Static$Inner2Static' {
+-class 'pkg/TestInnerLocal$Inner1' {
+-   method '<init> (Lpkg/TestInnerLocal;Ljava/lang/String;)V' {
+-      b      52
+-      e      53
++class 'pkg/TestInnerLocal$Inner1Static$Inner2Static' {
 +   method '<init> (Ljava/lang/String;)V' {
 +      6      49
 +      9      50
     }
  }
  
-@@ -119,12 +119,12 @@ Lines mapping:
- 39 <-> 27
- 40 <-> 28
- 41 <-> 29
--46 <-> 51
--47 <-> 52
--53 <-> 35
--54 <-> 36
--59 <-> 42
--60 <-> 43
+ Lines mapping:
+-8 <-> 9
+-9 <-> 10
+-11 <-> 13
+-12 <-> 14
+-13 <-> 15
+-14 <-> 16
+-20 <-> 23
+-21 <-> 24
+-23 <-> 27
+-24 <-> 28
+-25 <-> 29
+-26 <-> 30
+-27 <-> 31
+-32 <-> 53
+-33 <-> 54
+-39 <-> 37
+-40 <-> 38
+-45 <-> 44
+-46 <-> 45
++22 <-> 7
++23 <-> 8
++25 <-> 11
++26 <-> 12
++27 <-> 13
++28 <-> 14
++34 <-> 21
++35 <-> 22
++37 <-> 25
++38 <-> 26
++39 <-> 27
++40 <-> 28
++41 <-> 29
 +46 <-> 35
 +47 <-> 36
 +53 <-> 43
@@ -1015,123 +1029,34 @@ index 6ca3a7e..e5aba7d 100644
 +59 <-> 50
 +60 <-> 51
  Not mapped:
- 21
- 33
-diff --git a/testData/results/TestInnerLocalPkg.dec b/testData/results/TestInnerLocalPkg.dec
-index 7cafa41..7ddb0ce 100644
---- a/testData/results/TestInnerLocalPkg.dec
-+++ b/testData/results/TestInnerLocalPkg.dec
-@@ -30,6 +30,14 @@ public class TestInnerLocalPkg {
-       new TestInnerLocalPkg.Inner1Static.Inner2Static("test");// 42
-    }// 43
- 
-+   class Inner1 {
-+      final String x;
-+
-+      public Inner1(String var2) {
-+         this.x = var2;// 48
-+      }// 49
-+   }
-+
-    static class Inner1Static {
-       final String x;
- 
-@@ -45,14 +53,6 @@ public class TestInnerLocalPkg {
-          }// 62
-       }
-    }
--
--   class Inner1 {
--      final String x;
--
--      public Inner1(String var2) {
--         this.x = var2;// 48
--      }// 49
--   }
- }
- 
- class 'pkg/TestInnerLocalPkg$1Inner' {
-@@ -86,24 +86,24 @@ class 'pkg/TestInnerLocalPkg$2Inner' {
-    }
- }
- 
--class 'pkg/TestInnerLocalPkg$Inner1Static' {
--   method '<init> (Ljava/lang/String;)V' {
--      6      36
--      9      37
-+class 'pkg/TestInnerLocalPkg$Inner1' {
-+   method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
-+      b      36
-+      e      37
-    }
- }
- 
--class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
-+class 'pkg/TestInnerLocalPkg$Inner1Static' {
-    method '<init> (Ljava/lang/String;)V' {
--      6      43
--      9      44
-+      6      44
-+      9      45
-    }
- }
- 
--class 'pkg/TestInnerLocalPkg$Inner1' {
--   method '<init> (Lpkg/TestInnerLocalPkg;Ljava/lang/String;)V' {
--      b      52
--      e      53
-+class 'pkg/TestInnerLocalPkg$Inner1Static$Inner2Static' {
-+   method '<init> (Ljava/lang/String;)V' {
-+      6      51
-+      9      52
-    }
- }
- 
-@@ -121,12 +121,12 @@ Lines mapping:
- 41 <-> 29
- 42 <-> 30
- 43 <-> 31
--48 <-> 53
--49 <-> 54
--55 <-> 37
--56 <-> 38
--61 <-> 44
--62 <-> 45
-+48 <-> 37
-+49 <-> 38
-+55 <-> 45
-+56 <-> 46
-+61 <-> 52
-+62 <-> 53
- Not mapped:
- 23
- 35
+ 7
+ 19
 diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
-index bb18d0d..9acbef8 100644
+index b2e4d0f7..8aab3c2b 100644
 --- a/testData/results/TestInnerSignature.dec
 +++ b/testData/results/TestInnerSignature.dec
-@@ -9,18 +9,6 @@ public class TestInnerSignature<A, B, C> {
-       this.c = var3;// 25
-    }// 26
+@@ -11,18 +11,6 @@ public class TestInnerSignature<A, B, C> {
+       this.c = c;// 11
+    }// 12
  
 -   public static class InnerStatic<A, B, C> {
 -      A a;
 -      B b;
 -      C c;
 -
--      public InnerStatic(A var1, B var2, C var3) {
--         this.a = var1;// 46
--         this.b = var2;// 47
--         this.c = var3;// 48
--      }// 49
+-      public InnerStatic(A a, @Deprecated B b, C c) {
+-         this.a = a;// 32
+-         this.b = b;// 33
+-         this.c = c;// 34
+-      }// 35
 -   }
 -
     public class Inner {
        A a;
        B b;
-@@ -32,6 +20,18 @@ public class TestInnerSignature<A, B, C> {
-          this.c = var4;// 36
-       }// 37
+@@ -34,6 +22,18 @@ public class TestInnerSignature<A, B, C> {
+          this.c = c;// 22
+       }// 23
     }
 +
 +   public static class InnerStatic<A, B, C> {
@@ -1147,17 +1072,17 @@ index bb18d0d..9acbef8 100644
 +   }
  }
  
- class 'TestInnerSignature' {
-@@ -43,21 +43,21 @@ class 'TestInnerSignature' {
+ class 'pkg/TestInnerSignature' {
+@@ -45,37 +45,37 @@ class 'pkg/TestInnerSignature' {
     }
  }
  
--class 'TestInnerSignature$InnerStatic' {
+-class 'pkg/TestInnerSignature$InnerStatic' {
 -   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
--      6      17
--      b      18
--      10      19
--      13      20
+-      6      19
+-      b      20
+-      10      21
+-      13      22
 +class 'TestInnerSignature$Inner' {
 +   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
 +      b      17
@@ -1167,12 +1092,12 @@ index bb18d0d..9acbef8 100644
     }
  }
  
--class 'TestInnerSignature$Inner' {
--   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
--      b      29
--      10      30
--      16      31
--      19      32
+-class 'pkg/TestInnerSignature$Inner' {
+-   method '<init> (Lpkg/TestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+-      b      31
+-      10      32
+-      16      33
+-      19      34
 +class 'TestInnerSignature$InnerStatic' {
 +   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
 +      6      29
@@ -1182,18 +1107,23 @@ index bb18d0d..9acbef8 100644
     }
  }
  
-@@ -66,14 +66,14 @@ Lines mapping:
- 24 <-> 8
- 25 <-> 9
- 26 <-> 10
--34 <-> 30
--35 <-> 31
--36 <-> 32
--37 <-> 33
--46 <-> 18
--47 <-> 19
--48 <-> 20
--49 <-> 21
+ Lines mapping:
+-9 <-> 9
+-10 <-> 10
+-11 <-> 11
+-12 <-> 12
+-20 <-> 32
+-21 <-> 33
+-22 <-> 34
+-23 <-> 35
+-32 <-> 20
+-33 <-> 21
+-34 <-> 22
+-35 <-> 23
++23 <-> 7
++24 <-> 8
++25 <-> 9
++26 <-> 10
 +34 <-> 18
 +35 <-> 19
 +36 <-> 20
@@ -1203,10 +1133,10 @@ index bb18d0d..9acbef8 100644
 +48 <-> 32
 +49 <-> 33
  Not mapped:
- 22
- 33
+ 8
+ 19
 diff --git a/testData/results/TestMethodParameters.dec b/testData/results/TestMethodParameters.dec
-index 21f0f12..af7ce86 100644
+index 21f0f129..af7ce865 100644
 --- a/testData/results/TestMethodParameters.dec
 +++ b/testData/results/TestMethodParameters.dec
 @@ -21,6 +21,14 @@ public class TestMethodParameters {
@@ -1295,7 +1225,7 @@ index 21f0f12..af7ce86 100644
  37 <-> 19
  39 <-> 22
 diff --git a/testData/results/TestSwitchOnEnum.dec b/testData/results/TestSwitchOnEnum.dec
-index b6984c3..3406481 100644
+index b6984c39..34064819 100644
 --- a/testData/results/TestSwitchOnEnum.dec
 +++ b/testData/results/TestSwitchOnEnum.dec
 @@ -36,15 +36,15 @@ public class TestSwitchOnEnum {
@@ -1320,5 +1250,5 @@ index b6984c3..3406481 100644
  }
  
 -- 
-2.14.1.windows.1
+2.26.2
 

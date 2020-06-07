@@ -1,4 +1,4 @@
-From 977fa4249d3f583c53d25a78ceabb459a364cc71 Mon Sep 17 00:00:00 2001
+From 4010f01befa2c3809111c3fb364daf2762052db9 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -6,7 +6,7 @@ Subject: [PATCH] Enhance Generic Invocations Temporarily.
 This is a temp separate patch until I get some time to merge it to patch 10/13.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 9025746..bf30fd0 100644
+index 161f55c4..e82bdf53 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -7,6 +7,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -18,7 +18,7 @@ index 9025746..bf30fd0 100644
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
-@@ -325,6 +327,9 @@ public class FunctionExprent extends Exprent {
+@@ -326,6 +328,9 @@ public class FunctionExprent extends Exprent {
              this.needsCast = false;
            }
          }
@@ -28,7 +28,7 @@ index 9025746..bf30fd0 100644
        }
        else { //TODO: Capture generics to make cast better?
          this.needsCast = right.type == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.value, cast.value);
-@@ -569,7 +574,7 @@ public class FunctionExprent extends Exprent {
+@@ -570,7 +575,7 @@ public class FunctionExprent extends Exprent {
          TYPES[funcType - FUNCTION_I2L]) + ")");
      }
  
@@ -37,7 +37,7 @@ index 9025746..bf30fd0 100644
      throw new RuntimeException("invalid function");
    }
  
-@@ -650,7 +655,7 @@ public class FunctionExprent extends Exprent {
+@@ -651,7 +656,7 @@ public class FunctionExprent extends Exprent {
      measureBytecode(values, lstOperands);
      measureBytecode(values);
    }
@@ -46,7 +46,7 @@ index 9025746..bf30fd0 100644
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************
-@@ -664,4 +669,4 @@ public class FunctionExprent extends Exprent {
+@@ -665,4 +670,4 @@ public class FunctionExprent extends Exprent {
      Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
      return type == null || this.funcType == type;
    }
@@ -54,7 +54,7 @@ index 9025746..bf30fd0 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 6f5ff0b..1177789 100644
+index 3c13e140..6e4ee197 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -395,6 +395,7 @@ public class InvocationExprent extends Exprent {
@@ -97,7 +97,7 @@ index 6f5ff0b..1177789 100644
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -644,27 +661,98 @@ public class InvocationExprent extends Exprent {
+@@ -636,27 +653,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();
@@ -207,7 +207,7 @@ index 6f5ff0b..1177789 100644
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 39fe8a6..ea13f3a 100644
+index c9bfe7be..6729ac6f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -130,6 +130,35 @@ public class StructClass extends StructMember {
@@ -247,5 +247,5 @@ index 39fe8a6..ea13f3a 100644
      return interfaceNames[i];
    }
 -- 
-2.19.1.windows.1
+2.26.2
 

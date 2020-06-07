@@ -1,17 +1,17 @@
-From f17984c65607e089ef40cf2e6118fa9847e2ab60 Mon Sep 17 00:00:00 2001
+From c6e63b5354e8ee8b7f923526ffecde4d5711297c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 89a865f..d74198a 100644
+index 2fcabdcd..4817f055 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -688,6 +688,11 @@ public class ClassWriter {
- 
-             buffer.append(' ');
-             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+@@ -701,6 +701,11 @@ public class ClassWriter {
+             else {
+               parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+             }
 +
 +            if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {
 +              parameterName = methodWrapper.methodStruct.getVariableNamer().renameAbstractParameter(parameterName, index);
@@ -21,7 +21,7 @@ index 89a865f..d74198a 100644
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 1c5b8e8..9af622c 100644
+index a3475894..6b6e38f7 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -32,7 +32,7 @@ index 1c5b8e8..9af622c 100644
  import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
  import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-@@ -326,6 +327,7 @@ public class ClassesProcessor {
+@@ -414,6 +415,7 @@ public class ClassesProcessor implements CodeConstants {
    private static void destroyWrappers(ClassNode node) {
      node.wrapper = null;
      node.classStruct.releaseResources();
@@ -40,7 +40,7 @@ index 1c5b8e8..9af622c 100644
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -384,7 +386,7 @@ public class ClassesProcessor {
+@@ -472,7 +474,7 @@ public class ClassesProcessor implements CodeConstants {
  
        anonymousClassType = new VarType(lambda_class_name, true);
  
@@ -49,7 +49,7 @@ index 1c5b8e8..9af622c 100644
        if (!is_method_reference) { // content method in the same class, check synthetic flag
          StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
          is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
-@@ -439,4 +441,4 @@ public class ClassesProcessor {
+@@ -527,4 +529,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
    }
@@ -57,73 +57,102 @@ index 1c5b8e8..9af622c 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index 9c706f7..ba256e8 100644
+index bf0fe47e..95baa7df 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-@@ -7,8 +7,10 @@ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
+@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 +import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
  import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
  import org.jetbrains.java.decompiler.struct.StructContext;
-+import org.jetbrains.java.decompiler.util.JADNameProvider;
  
- import java.util.HashMap;
- import java.util.Locale;
-@@ -21,6 +23,7 @@ public class DecompilerContext {
+@@ -19,12 +20,14 @@ public class DecompilerContext {
    public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
    public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
    public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
 +  public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
  
-   private static volatile DecompilerContext currentContext = null;
- 
-@@ -33,6 +36,7 @@ public class DecompilerContext {
+   private final Map<String, Object> properties;
+   private final IFernflowerLogger logger;
+   private final StructContext structContext;
+   private final ClassesProcessor classProcessor;
+   private final PoolInterceptor poolInterceptor;
++  private final IVariableNamingFactory renamerFactory;
+   private ImportCollector importCollector;
    private VarProcessor varProcessor;
    private CounterContainer counterContainer;
-   private BytecodeSourceMapper bytecodeSourceMapper;
-+  private IVariableNamingFactory renamerFactory;
- 
-   private DecompilerContext(Map<String, Object> properties,
-                             IFernflowerLogger logger,
-@@ -74,6 +78,22 @@ public class DecompilerContext {
-     }
- 
-     currentContext = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor);
-+
-+    if (DecompilerContext.getProperty(RENAMER_FACTORY) != null) {
-+      try {
-+        currentContext.renamerFactory = Class.forName((String) DecompilerContext.getProperty(RENAMER_FACTORY)).asSubclass(IVariableNamingFactory.class).newInstance();
-+      } catch (Exception e) {
-+        if (getLogger() != null)
-+          getLogger().writeMessage("Error loading renamer factory class", e);
-+      }
-+    }
-+    if (DecompilerContext.getNamingFactory() == null) {
-+      if (DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_VARNAMING)) {
-+        currentContext.renamerFactory = new JADNameProvider.JADNameProviderFactory();
-+      } else {
-+        currentContext.renamerFactory = new IdentityRenamerFactory();
-+      }
-+    }
+@@ -34,7 +37,8 @@ public class DecompilerContext {
+                            IFernflowerLogger logger,
+                            StructContext structContext,
+                            ClassesProcessor classProcessor,
+-                           PoolInterceptor interceptor) {
++                           PoolInterceptor interceptor,
++                           IVariableNamingFactory renamerFactory) {
+     Objects.requireNonNull(properties);
+     Objects.requireNonNull(logger);
+     Objects.requireNonNull(structContext);
+@@ -45,6 +49,7 @@ public class DecompilerContext {
+     this.structContext = structContext;
+     this.classProcessor = classProcessor;
+     this.poolInterceptor = interceptor;
++    this.renamerFactory = renamerFactory;
+     this.counterContainer = new CounterContainer();
    }
  
-   public static void clearContext() {
-@@ -140,6 +160,10 @@ public class DecompilerContext {
-     return currentContext.counterContainer;
+@@ -112,6 +117,10 @@ public class DecompilerContext {
+     return getCurrentContext().poolInterceptor;
    }
  
 +  public static IVariableNamingFactory getNamingFactory() {
-+    return currentContext.renamerFactory;
++    return getCurrentContext().renamerFactory;
 +  }
 +
-   public static BytecodeSourceMapper getBytecodeSourceMapper() {
-     return currentContext.bytecodeSourceMapper;
+   public static ImportCollector getImportCollector() {
+     return getCurrentContext().importCollector;
    }
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index f8c413c7..ab8c1a60 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
++import org.jetbrains.java.decompiler.util.JADNameProvider;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
+ import org.jetbrains.java.decompiler.util.ClasspathScanner;
+ 
+@@ -52,7 +53,24 @@ public class Fernflower implements IDecompiledData {
+       converter = null;
+     }
+ 
+-    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor);
++    IVariableNamingFactory renamerFactory = null;
++    String factoryClazz = (String) properties.get(DecompilerContext.RENAMER_FACTORY);
++    if (factoryClazz != null) {
++      try {
++        renamerFactory = Class.forName(factoryClazz).asSubclass(IVariableNamingFactory.class).getDeclaredConstructor().newInstance();
++      } catch (Exception e) {
++        logger.writeMessage("Error loading renamer factory class: " + factoryClazz, e);
++      }
++    }
++    if (renamerFactory == null) {
++      if("1".equals(properties.get(IFernflowerPreferences.USE_JAD_VARNAMING))) {
++        renamerFactory = new JADNameProvider.JADNameProviderFactory();
++      } else {
++        renamerFactory = new IdentityRenamerFactory();
++      }
++    }
++
++    DecompilerContext context = new DecompilerContext(properties, logger, structContext, classProcessor, interceptor, renamerFactory);
+     DecompilerContext.setCurrentContext(context);
+ 
+     String vendor = System.getProperty("java.vendor", "missing vendor");
 diff --git a/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 new file mode 100644
-index 0000000..4b62af8
+index 00000000..4b62af8a
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 @@ -0,0 +1,44 @@
@@ -172,10 +201,10 @@ index 0000000..4b62af8
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index f385024..863bf3d 100644
+index bdd34f03..206f6276 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -47,6 +47,8 @@ public interface IFernflowerPreferences {
+@@ -51,6 +51,8 @@ public interface IFernflowerPreferences {
    String LINE_SEPARATOR_WIN = "\r\n";
    String LINE_SEPARATOR_UNX = "\n";
  
@@ -184,7 +213,7 @@ index f385024..863bf3d 100644
    Map<String, Object> DEFAULTS = getDefaults();
  
    static Map<String, Object> getDefaults() {
-@@ -85,7 +87,8 @@ public interface IFernflowerPreferences {
+@@ -93,7 +95,8 @@ public interface IFernflowerPreferences {
      defaults.put(BANNER, "");
      defaults.put(UNIT_TEST_MODE, "0");
      defaults.put(DUMP_ORIGINAL_LINES, "0");
@@ -197,7 +226,7 @@ index f385024..863bf3d 100644
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 new file mode 100644
-index 0000000..8e6ab2b
+index 00000000..8e6ab2bf
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 @@ -0,0 +1,26 @@
@@ -229,7 +258,7 @@ index 0000000..8e6ab2b
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
 new file mode 100644
-index 0000000..fc1d7d6
+index 00000000..fc1d7d67
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
 @@ -0,0 +1,22 @@
@@ -256,10 +285,10 @@ index 0000000..fc1d7d6
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 10ae1b1..4b4c3e9 100644
+index 58bf5152..9942e125 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -542,7 +542,11 @@ public class NestedClassProcessor {
+@@ -545,7 +545,11 @@ public class NestedClassProcessor {
          Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
          Map<VarVersionPair, LocalVariable> mapNewLVTs = new HashMap<>(); // local var table entries
  
@@ -273,7 +302,7 @@ index 10ae1b1..4b4c3e9 100644
            int index = 0, varIndex = 1;
            MethodDescriptor md = MethodDescriptor.parseDescriptor(method.methodStruct.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index ec2bb02..054abbb 100644
+index ec2bb023..054abbbf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,13 +2,16 @@
@@ -391,7 +420,7 @@ index ec2bb02..054abbb 100644
        else if (lvt != null) {
          cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 1952109..0791632 100644
+index cd9ac7ed..195e8d55 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -426,11 +455,11 @@ index 1952109..0791632 100644
 +  }
 +
    public StructLocalVariableTableAttribute getLocalVariableAttr() {
-     return (StructLocalVariableTableAttribute)getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+     return getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
    }
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000..b29e693
+index 00000000..b29e693b
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 @@ -0,0 +1,212 @@
@@ -648,7 +677,7 @@ index 0000000..b29e693
 +}
 diff --git a/src/org/jetbrains/java/decompiler/util/StatementIterator.java b/src/org/jetbrains/java/decompiler/util/StatementIterator.java
 new file mode 100644
-index 0000000..a41c910
+index 00000000..a41c910e
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/StatementIterator.java
 @@ -0,0 +1,58 @@
@@ -712,7 +741,7 @@ index 0000000..a41c910
 +}
 diff --git a/test/org/jetbrains/java/decompiler/JADTest.java b/test/org/jetbrains/java/decompiler/JADTest.java
 new file mode 100644
-index 0000000..176b850
+index 00000000..176b850d
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/JADTest.java
 @@ -0,0 +1,34 @@
@@ -767,7 +796,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestJADNaming.dec b/testData/results/TestJADNaming.dec
 new file mode 100644
-index 0000000..b5d7ed5
+index 00000000..b5d7ed54
 --- /dev/null
 +++ b/testData/results/TestJADNaming.dec
 @@ -0,0 +1,81 @@
@@ -854,7 +883,7 @@ index 0000000..b5d7ed5
 +11 <-> 21
 diff --git a/testData/src/pkg/TestJADNaming.java b/testData/src/pkg/TestJADNaming.java
 new file mode 100644
-index 0000000..87e1c03
+index 00000000..87e1c035
 --- /dev/null
 +++ b/testData/src/pkg/TestJADNaming.java
 @@ -0,0 +1,12 @@
@@ -872,5 +901,5 @@ index 0000000..87e1c03
 +}
 \ No newline at end of file
 -- 
-2.14.1.windows.1
+2.26.2
 

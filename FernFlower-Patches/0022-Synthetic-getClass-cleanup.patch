@@ -1,14 +1,14 @@
-From 5ad29a2836d73be9f834616574a5d996c839c188 Mon Sep 17 00:00:00 2001
+From d609b2853dc786ea3414837f786e8326875bff6d Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Thu, 26 Jul 2018 13:28:40 -0700
 Subject: [PATCH] Synthetic getClass cleanup
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index a3170fd..12cf86d 100644
+index 474ffda1..4933b5c1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -620,6 +620,20 @@ public class ExprProcessor implements CodeConstants {
+@@ -617,6 +617,20 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_pop:
            stack.pop();
@@ -30,11 +30,11 @@ index a3170fd..12cf86d 100644
          case opc_pop2:
            if (stack.getByOffset(-1).getExprType().stackSize == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index b71a264..0b0fb48 100644
+index 986a8a72..767f6bdb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-@@ -78,6 +78,10 @@ public class SimplifyExprentsHelper {
-           if (processClass14 && (changed = collapseInlinedClass14(st))) {
+@@ -71,6 +71,10 @@ public class SimplifyExprentsHelper {
+           if (changed) {
              break;
            }
 +
@@ -44,7 +44,7 @@ index b71a264..0b0fb48 100644
          }
  
          res |= changed;
-@@ -469,21 +473,43 @@ public class SimplifyExprentsHelper {
+@@ -505,21 +509,43 @@ public class SimplifyExprentsHelper {
      return false;
    }
  
@@ -94,10 +94,10 @@ index b71a264..0b0fb48 100644
                String classname = newExpr.getNewType().value;
                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 1177789..9832bff 100644
+index 6e4ee197..8ebcb69f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -62,6 +62,7 @@ public class InvocationExprent extends Exprent {
+@@ -60,6 +60,7 @@ public class InvocationExprent extends Exprent {
    private List<PooledConstant> bootstrapArguments;
    private List<VarType> genericArgs = new ArrayList<>();
    private boolean forceBoxing = false;
@@ -105,7 +105,7 @@ index 1177789..9832bff 100644
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -162,6 +163,7 @@ public class InvocationExprent extends Exprent {
+@@ -160,6 +161,7 @@ public class InvocationExprent extends Exprent {
  
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
@@ -113,7 +113,7 @@ index 1177789..9832bff 100644
    }
  
    @Override
-@@ -934,6 +936,14 @@ public class InvocationExprent extends Exprent {
+@@ -926,6 +928,14 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  
@@ -129,5 +129,5 @@ index 1177789..9832bff 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstParameters);
 -- 
-2.19.1.windows.1
+2.26.2
 

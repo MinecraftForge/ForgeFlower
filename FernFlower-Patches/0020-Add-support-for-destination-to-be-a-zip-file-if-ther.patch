@@ -1,4 +1,4 @@
-From 8aa5ed9c8c1091f28e4980c097cf3a448cb70b28 Mon Sep 17 00:00:00 2001
+From 784985a02395f1808c4207da6d722c4729760e1a Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 19 Jul 2018 22:57:52 -0700
 Subject: [PATCH] Add support for destination to be a zip file if there is only
@@ -6,15 +6,15 @@ Subject: [PATCH] Add support for destination to be a zip file if there is only
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 3c83409..54d0aba 100644
+index 06e36298..5393ddec 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-@@ -99,7 +99,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -100,7 +100,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
      }
  
      File destination = new File(args[args.length - 1]);
 -    if (!destination.isDirectory()) {
-+    if (!destination.isDirectory() && (lstSources.size() > 1 || !lstSources.get(0).isFile())) {
++    if (!destination.isDirectory() && (sources.size() > 1 || !sources.get(0).isFile())) {
        System.out.println("error: destination '" + destination + "' is not a directory");
        return;
      }
@@ -22,14 +22,14 @@ index 3c83409..54d0aba 100644
  
    protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
      root = destination;
--    fernflower = new Fernflower(this, this, options, logger);
-+    fernflower = new Fernflower(this, root.isDirectory() ? this : new SingleFileSaver(destination), options, logger);
+-    engine = new Fernflower(this, this, options, logger);
++    engine = new Fernflower(this, root.isDirectory() ? this : new SingleFileSaver(destination), options, logger);
    }
  
-   public void addSpace(File file, boolean isOwn) {
+   public void addSource(File source) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 new file mode 100644
-index 0000000..8775e47
+index 00000000..8775e478
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 @@ -0,0 +1,118 @@
@@ -152,5 +152,5 @@ index 0000000..8775e47
 +  }
 +}
 -- 
-2.19.1.windows.1
+2.26.2
 

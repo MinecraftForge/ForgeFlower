@@ -1,4 +1,4 @@
-From 7475da98617992687840025e09a06a87b53410eb Mon Sep 17 00:00:00 2001
+From d734d4274ac63a8a84a90741045c6e5189eeeca6 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 6 Apr 2018 20:45:33 -0700
 Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
@@ -8,13 +8,13 @@ Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 7eaf57b..3c83409 100644
+index 75d4d093..06e36298 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-@@ -9,9 +9,13 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -10,9 +10,13 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.io.*;
+ import java.nio.charset.StandardCharsets;
 +import java.nio.file.Files;
 +import java.nio.file.Path;
 +import java.nio.file.Paths;
@@ -25,7 +25,7 @@ index 7eaf57b..3c83409 100644
  import java.util.zip.ZipEntry;
  import java.util.zip.ZipFile;
  import java.util.zip.ZipOutputStream;
-@@ -19,6 +23,38 @@ import java.util.zip.ZipOutputStream;
+@@ -20,6 +24,38 @@ import java.util.zip.ZipOutputStream;
  public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
    @SuppressWarnings("UseOfSystemOutOrSystemErr")
    public static void main(String[] args) {
@@ -64,25 +64,7 @@ index 7eaf57b..3c83409 100644
      if (args.length < 2) {
        System.out.println(
          "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
-@@ -71,13 +107,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
-     PrintStreamLogger logger = new PrintStreamLogger(System.out);
-     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
- 
--    for (File source : lstSources) {
--      decompiler.addSpace(source, true);
--    }
-     for (File library : lstLibraries) {
-       decompiler.addSpace(library, false);
-     }
- 
-+    for (File source : lstSources) {
-+      decompiler.addSpace(source, true);
-+    }
-+
-     decompiler.decompileContext();
-   }
- 
-@@ -265,4 +302,4 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -269,4 +305,4 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
        DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN);
      }
    }
@@ -90,7 +72,7 @@ index 7eaf57b..3c83409 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 4b691f4..4c3ff5b 100644
+index 68402637..cc4e357f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -94,6 +94,7 @@ public class StructContext {
@@ -109,7 +91,7 @@ index 4b691f4..4c3ff5b 100644
          }
        }
        else {
-@@ -204,4 +206,4 @@ public class StructContext {
+@@ -202,4 +204,4 @@ public class StructContext {
  
      return false;
    }
@@ -117,5 +99,5 @@ index 4b691f4..4c3ff5b 100644
 \ No newline at end of file
 +}
 -- 
-2.19.1.windows.1
+2.26.2
 

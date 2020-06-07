@@ -1,22 +1,22 @@
-From db2fc662ea2cabda8a0161004f2d98a4b37f85c0 Mon Sep 17 00:00:00 2001
+From bad6247053e6ff2cb202c60e95beb0ad07d2ce77 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 18:37:18 -0700
 Subject: [PATCH] Reintroduce DotExporter for debugging purposes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index e121ed5..af07983 100644
+index 983298ea..5c7be12a 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
- import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
+@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
 +import org.jetbrains.java.decompiler.util.DotExporter;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.*;
-@@ -380,6 +381,7 @@ public class NestedClassProcessor {
+@@ -383,6 +384,7 @@ public class NestedClassProcessor {
        // iterate enclosing class
        for (MethodWrapper method : node.getWrapper().getMethods()) {
          if (method.root != null) { // neither abstract, nor native
@@ -25,7 +25,7 @@ index e121ed5..af07983 100644
              List<Exprent> lst = exprent.getAllExprents(true);
              lst.add(exprent);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 6efce5e..8e57cd7 100644
+index 6efce5e4..8e57cd72 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -73,7 +73,7 @@ index 6efce5e..8e57cd7 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index f5719d1..3607a8d 100644
+index f5719d1a..3607a8dc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -126,7 +126,7 @@ index f5719d1..3607a8d 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index c211d68..eca0d0f 100644
+index c211d680..eca0d0fb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
@@ -148,7 +148,7 @@ index c211d68..eca0d0f 100644
      typeProcessor.calculateVarTypes(root, graph);
 diff --git a/src/org/jetbrains/java/decompiler/util/DotExporter.java b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 new file mode 100644
-index 0000000..d3c6f92
+index 00000000..d3c6f92f
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 @@ -0,0 +1,238 @@
@@ -392,5 +392,5 @@ index 0000000..d3c6f92
 +}
 \ No newline at end of file
 -- 
-2.14.1.windows.1
+2.26.2
 

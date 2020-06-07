@@ -1,4 +1,4 @@
-From c304b6a3e38e69faf88add043fc173df502c6825 Mon Sep 17 00:00:00 2001
+From 2af4eadac852d181d2003c16f3c9c4c264c63c30 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 25 Sep 2017 13:46:14 -0700
 Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
@@ -6,18 +6,18 @@ Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/code/CodeConstants.java b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
-index 4ff5daa..3166c6e 100644
+index 720d2a7e..240a3e97 100644
 --- a/src/org/jetbrains/java/decompiler/code/CodeConstants.java
 +++ b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
-@@ -70,6 +70,7 @@ public interface CodeConstants {
-   int ACC_SYNTHETIC = 0x1000;
+@@ -75,6 +75,7 @@ public interface CodeConstants {
    int ACC_ANNOTATION = 0x2000;
    int ACC_ENUM = 0x4000;
+   int ACC_MANDATED = 0x8000;
 +  int ACC_MODULE = 0x8000; // class v53/J9
  
    // ----------------------------------------------------------------------
    // CLASS FLAGS
-@@ -107,6 +108,8 @@ public interface CodeConstants {
+@@ -112,6 +113,8 @@ public interface CodeConstants {
    int CONSTANT_MethodHandle = 15;
    int CONSTANT_MethodType = 16;
    int CONSTANT_InvokeDynamic = 18;
@@ -27,7 +27,7 @@ index 4ff5daa..3166c6e 100644
    // ----------------------------------------------------------------------
    // MethodHandle reference_kind values
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 0efca3f..4b691f4 100644
+index 87afc93a..68402637 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -38,15 +38,15 @@ index 0efca3f..4b691f4 100644
  import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -124,6 +125,7 @@ public class StructContext {
+@@ -123,6 +124,7 @@ public class StructContext {
+   }
  
    private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
-     //noinspection IOResourceOpenedButNotSafelyClosed
 +    DecompilerContext.getLogger().writeMessage("Adding Archive: " + file.getAbsolutePath(), Severity.INFO);
      try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
        Enumeration<? extends ZipEntry> entries = archive.entries();
        while (entries.hasMoreElements()) {
-@@ -142,6 +144,7 @@ public class StructContext {
+@@ -141,6 +143,7 @@ public class StructContext {
          if (!entry.isDirectory()) {
            if (name.endsWith(".class")) {
              byte[] bytes = InterpreterUtil.getBytes(archive, entry);
@@ -55,7 +55,7 @@ index 0efca3f..4b691f4 100644
              classes.put(cl.qualifiedName, cl);
              unit.addClass(cl, name);
 diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
-index 0ea6e01..ba5342e 100644
+index 0ea6e015..ba5342ee 100644
 --- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 +++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 @@ -64,6 +64,8 @@ public class ConstantPool implements NewClassNameBuilder {
@@ -106,5 +106,5 @@ index 0ea6e01..ba5342e 100644
      }
    }
 -- 
-2.14.1.windows.1
+2.26.2
 

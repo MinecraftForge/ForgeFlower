@@ -1,11 +1,11 @@
-From cdb8e3c8e5aa5e8923080f18c01b6e72666a14c3 Mon Sep 17 00:00:00 2001
+From 4a4919b41b7a8b5ad83926527ae999d4d892d545 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index ba039e6..ca0a3d6 100644
+index ba039e6c..217a73b7 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -35,7 +35,7 @@ index ba039e6..ca0a3d6 100644
      RootStatement root = method.root;
      StructClass cl = wrapper.getClassStruct();
 +    Set<String> whitelist = new HashSet<String>();
-+    
++
      Statement firstData = Statements.findFirstData(root);
      if (firstData != null) {
        boolean inlineInitializers = cl.hasModifier(CodeConstants.ACC_INTERFACE) || cl.hasModifier(CodeConstants.ACC_ENUM);
@@ -52,7 +52,7 @@ index ba039e6..ca0a3d6 100644
  
          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
            AssignmentExprent assignExpr = (AssignmentExprent)exprent;
-@@ -165,21 +174,49 @@ public class InitializerProcessor {
+@@ -165,22 +174,50 @@ public class InitializerProcessor {
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
  
                // interfaces fields should always be initialized inline
@@ -98,20 +98,21 @@ index ba039e6..ca0a3d6 100644
 +              DecompilerContext.getLogger().writeMessage("Left isnt VarExprent :(", IFernflowerLogger.Severity.ERROR);
 +            }
            }
-+        } else if (inlineInitializers && cl.hasModifier(CodeConstants.ACC_INTERFACE)){
-+          DecompilerContext.getLogger().writeMessage("Non assignment found in initialiser when we're needing to inline all", IFernflowerLogger.Severity.ERROR);
-         }
+-        }
 -
 -        if (!found) {
 -          break;
--        }
-+      }
++        } else if (inlineInitializers && cl.hasModifier(CodeConstants.ACC_INTERFACE)){
++          DecompilerContext.getLogger().writeMessage("Non assignment found in initialiser when we're needing to inline all", IFernflowerLogger.Severity.ERROR);
+         }
+       }
 +      if (exprentsToRemove.size() > 0){
 +        firstData.getExprents().removeAll(exprentsToRemove);
-       }
++      }
      }
    }
-@@ -196,25 +233,28 @@ public class InitializerProcessor {
+ 
+@@ -196,18 +233,18 @@ public class InitializerProcessor {
        if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
          Statement firstData = Statements.findFirstData(method.root);
          if (firstData == null || firstData.getExprents().isEmpty()) {
@@ -134,14 +135,13 @@ index ba039e6..ca0a3d6 100644
        }
      }
  
-     if (lstFirst.isEmpty()) {
+@@ -215,6 +252,9 @@ public class InitializerProcessor {
        return;
      }
--
-+    
+ 
 +    Set<String> whitelist = new HashSet<String>(wrapper.getStaticFieldInitializers().getLstKeys());
 +    int prev_fidx = 0;
-+    
++
      while (true) {
        String fieldWithDescr = null;
        Exprent value = null;
@@ -270,7 +270,7 @@ z<BWBrM`IJ2QGxr6yLz()p0~umT@n;j{=*u$vbHW9HKC}}7M?_C9O+7)J(-o9N<PN2
 GhW!C-@ghk8
 
 diff --git a/testData/results/TestClashName.dec b/testData/results/TestClashName.dec
-index 2a9a731..43348ea 100644
+index 2a9a7315..43348ea6 100644
 --- a/testData/results/TestClashName.dec
 +++ b/testData/results/TestClashName.dec
 @@ -7,25 +7,14 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
@@ -397,10 +397,10 @@ index 2a9a731..43348ea 100644
 +78 <-> 26
 +82 <-> 30
 diff --git a/testData/results/TestClassFields.dec b/testData/results/TestClassFields.dec
-index 6917171..852ae47 100644
+index ea272ead..852ae473 100644
 --- a/testData/results/TestClassFields.dec
 +++ b/testData/results/TestClassFields.dec
-@@ -3,35 +3,29 @@ package pkg;
+@@ -3,16 +3,14 @@ package pkg;
  public class TestClassFields {
     private static int[] sizes;
     private static String[] names = new String[]{"name1", "name2"};
@@ -410,7 +410,7 @@ index 6917171..852ae47 100644
     static {
 -      sizes = new int[names.length];// 15
 -      TestClassFields.Inner.staticMutable = 3;// 17
--      SIZE = TestClassFields.Inner.staticMutable;// 14 18
+-      SIZE = TestClassFields.Inner.staticMutable;// 18
 -   }// 19
 +      sizes = new int[names.length];// 14
 +   }// 17
@@ -421,14 +421,12 @@ index 6917171..852ae47 100644
     }
  }
  
- class 'pkg/TestClassFields' {
-    method '<clinit> ()V' {
--      0      10
--      2      9
+@@ -21,17 +19,13 @@ class 'pkg/TestClassFields' {
        11      8
        14      8
        17      8
--      1a      9
+-      1b      9
+-      1f      10
 -      22      10
 -      25      11
 +      20      9
@@ -436,17 +434,17 @@ index 6917171..852ae47 100644
  }
  
  Lines mapping:
--14 <-> 11
 -15 <-> 9
 +14 <-> 9
  17 <-> 10
 -18 <-> 11
 -19 <-> 12
-+Not mapped:
+ Not mapped:
+-14
 +9
 +16
 diff --git a/testData/src/pkg/TestClassFields.java b/testData/src/pkg/TestClassFields.java
-index 8a77fe0..6e31d5c 100644
+index 8a77fe00..6e31d5c7 100644
 --- a/testData/src/pkg/TestClassFields.java
 +++ b/testData/src/pkg/TestClassFields.java
 @@ -2,19 +2,17 @@ package pkg;
@@ -473,5 +471,5 @@ index 8a77fe0..6e31d5c 100644
  }
 \ No newline at end of file
 -- 
-2.17.2 (Apple Git-113)
+2.26.2
 

@@ -1,4 +1,4 @@
-From e82006e6380c81d02338e720839953672f992433 Mon Sep 17 00:00:00 2001
+From e05a8fbd988b9c6c5b27c52870e8fa7e61af8169 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 21 Feb 2018 18:27:17 -0800
 Subject: [PATCH] Bugfix: Fix invalid logic in ExprUtils.
@@ -16,12 +16,12 @@ public interface Test {
 }
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
-index 712845f..8d1ba14 100644
+index 302d62fd..195d3655 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
-@@ -5,6 +5,9 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
- import org.jetbrains.java.decompiler.main.DecompilerContext;
+@@ -8,6 +8,9 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 +import org.jetbrains.java.decompiler.struct.StructClass;
 +import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -29,16 +29,16 @@ index 712845f..8d1ba14 100644
  
  import java.util.ArrayList;
  import java.util.Collections;
-@@ -24,7 +27,7 @@ public class ExprUtil {
-       // own class
-       mask = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, descriptor).synthParameters;
+@@ -34,7 +37,7 @@ public class ExprUtil {
+       }
+       mask = methodWrapper.synthParameters;
      }
--    else if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && node.classStruct.hasModifier(CodeConstants.ACC_STATIC)) {
+-    else if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && (node.access & CodeConstants.ACC_STATIC) == 0) {
 +    else if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && !isStatic(node.classStruct)) {
        // non-static member class
        mask = new ArrayList<>(Collections.nCopies(parameters, null));
        mask.set(0, new VarVersionPair(-1, 0));
-@@ -32,4 +35,18 @@ public class ExprUtil {
+@@ -42,4 +45,18 @@ public class ExprUtil {
  
      return mask;
    }
@@ -60,5 +60,5 @@ index 712845f..8d1ba14 100644
 +  }
 +}
 -- 
-2.14.1.windows.1
+2.26.2
 

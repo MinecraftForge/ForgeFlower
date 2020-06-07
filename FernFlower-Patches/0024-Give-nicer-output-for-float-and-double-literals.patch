@@ -1,15 +1,15 @@
-From 22ed255131d9594e619d9de1149ee3b7fcb4c813 Mon Sep 17 00:00:00 2001
+From 91f077f1cfdaec6d1555350dcc07898c936df3f2 Mon Sep 17 00:00:00 2001
 From: Pokechu22 <Pokechu022@gmail.com>
 Date: Fri, 3 Aug 2018 14:15:46 -0700
 Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index cd08934..7960445 100644
+index 71f2ad84..4bd94d9f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -33,6 +33,67 @@ public class ConstExprent extends Exprent {
-     CHAR_ESCAPES.put(0x27, "\\\'"); /* \u0027: single quote ' */
+@@ -31,6 +31,67 @@ public class ConstExprent extends Exprent {
+     CHAR_ESCAPES.put(0x27, "\\'"); /* \u0027: single quote ' */
      CHAR_ESCAPES.put(0x5C, "\\\\"); /* \u005c: backslash \ */
    }
 +  private static final Map<Double, String[]> PI_DOUBLES = new HashMap<>();
@@ -76,7 +76,7 @@ index cd08934..7960445 100644
  
    private VarType constType;
    private final Object value;
-@@ -159,34 +220,7 @@ public class ConstExprent extends Exprent {
+@@ -158,34 +219,7 @@ public class ConstExprent extends Exprent {
          return new TextBuffer(value.toString()).append('L');
  
        case CodeConstants.TYPE_FLOAT:
@@ -112,7 +112,7 @@ index cd08934..7960445 100644
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -203,9 +237,41 @@ public class ConstExprent extends Exprent {
+@@ -202,9 +236,41 @@ public class ConstExprent extends Exprent {
            else if (doubleVal == Double.MAX_VALUE) {
              return new FieldExprent("MAX_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
            }
@@ -154,7 +154,7 @@ index cd08934..7960445 100644
          }
          else if (Double.isNaN(doubleVal)) {
            return new TextBuffer("0.0D / 0.0D");
-@@ -234,7 +300,71 @@ public class ConstExprent extends Exprent {
+@@ -233,7 +299,71 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }
@@ -228,5 +228,5 @@ index cd08934..7960445 100644
    // This trims them all down to only the necessary amount.
    private static String trimZeros(String value) {
 -- 
-2.17.0
+2.26.2
 

@@ -1,14 +1,14 @@
-From 58710ee1949da831b6575ae566b7d3de78c59f37 Mon Sep 17 00:00:00 2001
+From 999526e5b92a4c71d548f3ef5d52a811ada9cf15 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Mon, 6 Aug 2018 20:26:59 -0700
 Subject: [PATCH] Add try with resource support
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 8ac1d92..7212a0a 100644
+index 447780c1..b77dfec4 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -169,6 +169,10 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -174,6 +174,10 @@ public class MethodProcessorRunnable implements Runnable {
  
        LabelHelper.identifyLabels(root);
  
@@ -21,7 +21,7 @@ index 8ac1d92..7212a0a 100644
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 new file mode 100644
-index 0000000..6484ee0
+index 00000000..6484ee0b
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 @@ -0,0 +1,263 @@
@@ -289,7 +289,7 @@ index 0000000..6484ee0
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index 0724aef..86c40a9 100644
+index 23713c94..bdafd774 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -126,6 +126,13 @@ public class FlattenStatementsHelper {
@@ -307,19 +307,20 @@ index 0724aef..86c40a9 100644
              graph.nodes.putWithKey(firstnd, firstnd.id);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index f74fe84..b3ee8da 100644
+index 5582b378..de81bdce 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-@@ -6,6 +6,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
+@@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
  import org.jetbrains.java.decompiler.code.CodeConstants;
  import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
- import org.jetbrains.java.decompiler.util.TextBuffer;
++import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-@@ -16,12 +17,19 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
- import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
+@@ -14,12 +16,19 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.ArrayList;
 +import java.util.BitSet;
@@ -338,7 +339,7 @@ index f74fe84..b3ee8da 100644
  
    // *****************************************************************************
    // constructors
-@@ -29,6 +37,7 @@ public class CatchStatement extends Statement {
+@@ -27,6 +36,7 @@ public class CatchStatement extends Statement {
  
    private CatchStatement() {
      type = TYPE_TRYCATCH;
@@ -346,7 +347,7 @@ index f74fe84..b3ee8da 100644
    }
  
    private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
-@@ -142,8 +151,25 @@ public class CatchStatement extends Statement {
+@@ -141,8 +151,25 @@ public class CatchStatement extends Statement {
        tracer.incrementCurrentSourceLine();
      }
  
@@ -374,7 +375,7 @@ index f74fe84..b3ee8da 100644
  
      buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
      buf.appendIndent(indent).append("}");
-@@ -180,6 +206,14 @@ public class CatchStatement extends Statement {
+@@ -179,6 +206,14 @@ public class CatchStatement extends Statement {
      return buf;
    }
  
@@ -386,10 +387,10 @@ index f74fe84..b3ee8da 100644
 +    return lst;
 +  }
 +
+   @Override
    public Statement getSimpleCopy() {
      CatchStatement cs = new CatchStatement();
- 
-@@ -193,11 +227,35 @@ public class CatchStatement extends Statement {
+@@ -193,11 +228,35 @@ public class CatchStatement extends Statement {
      return cs;
    }
  
@@ -427,7 +428,7 @@ index f74fe84..b3ee8da 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 054abbb..85791fe 100644
+index 054abbbf..85791fe7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -107,7 +107,11 @@ public class VarDefinitionHelper {
@@ -444,13 +445,13 @@ index 054abbb..85791fe 100644
  
        if (lstVars != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index d7e814c..7b8d444 100644
+index f8ba1241..d9ac0365 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -100,4 +100,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
-   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
-   @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+@@ -114,4 +114,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
+   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
+   @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
 +  @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
  }
 \ No newline at end of file
@@ -488,7 +489,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestTryWithResources.dec b/testData/results/TestTryWithResources.dec
 new file mode 100644
-index 0000000..419b0df
+index 00000000..419b0df6
 --- /dev/null
 +++ b/testData/results/TestTryWithResources.dec
 @@ -0,0 +1,176 @@
@@ -670,7 +671,7 @@ index 0000000..419b0df
 +34
 diff --git a/testData/src/pkg/TestTryWithResources.java b/testData/src/pkg/TestTryWithResources.java
 new file mode 100644
-index 0000000..0c217fe
+index 00000000..0c217fe0
 --- /dev/null
 +++ b/testData/src/pkg/TestTryWithResources.java
 @@ -0,0 +1,37 @@
@@ -713,5 +714,5 @@ index 0000000..0c217fe
 +}
 \ No newline at end of file
 -- 
-2.17.2 (Apple Git-113)
+2.26.2
 
