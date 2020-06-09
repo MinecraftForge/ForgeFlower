@@ -1,4 +1,4 @@
-From 999526e5b92a4c71d548f3ef5d52a811ada9cf15 Mon Sep 17 00:00:00 2001
+From d62e655d53145d663635f93c477e12c596d03b96 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Mon, 6 Aug 2018 20:26:59 -0700
 Subject: [PATCH] Add try with resource support
@@ -307,7 +307,7 @@ index 23713c94..bdafd774 100644
              graph.nodes.putWithKey(firstnd, firstnd.id);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 5582b378..de81bdce 100644
+index 5582b378..5ca16055 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
@@ -375,7 +375,7 @@ index 5582b378..de81bdce 100644
  
      buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
      buf.appendIndent(indent).append("}");
-@@ -179,6 +206,14 @@ public class CatchStatement extends Statement {
+@@ -179,6 +206,15 @@ public class CatchStatement extends Statement {
      return buf;
    }
  
@@ -383,6 +383,7 @@ index 5582b378..de81bdce 100644
 +
 +    List<Object> lst = new ArrayList<>(resources);
 +    lst.addAll(stats);
++    lst.addAll(vars);
 +
 +    return lst;
 +  }
@@ -390,7 +391,7 @@ index 5582b378..de81bdce 100644
    @Override
    public Statement getSimpleCopy() {
      CatchStatement cs = new CatchStatement();
-@@ -193,11 +228,35 @@ public class CatchStatement extends Statement {
+@@ -193,11 +229,35 @@ public class CatchStatement extends Statement {
      return cs;
    }
  
