@@ -1,4 +1,4 @@
-From 1a214c4704cc7ff0a8fe5f72453d88368bbc561b Mon Sep 17 00:00:00 2001
+From 602e1f5eca571d8a7faaf2b55c808da1392246ec Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 20 Jul 2018 01:37:36 -0700
 Subject: [PATCH] Add a metadata file named
@@ -7,7 +7,7 @@ Subject: [PATCH] Add a metadata file named
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 4817f055..615b7a37 100644
+index 4817f05..615b7a3 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -703,7 +703,9 @@ public class ClassWriter {
@@ -22,7 +22,7 @@ index 4817f055..615b7a37 100644
  
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f7b253bc..fde58817 100644
+index f7b253b..fde5881 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -7,12 +7,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -68,7 +68,7 @@ index f7b253bc..fde58817 100644
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index cc4e357f..68cf2592 100644
+index cc4e357..68cf259 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -124,5 +124,5 @@ index cc4e357f..68cf2592 100644
 +  }
  }
 -- 
-2.26.2
+2.27.0.windows.1
 

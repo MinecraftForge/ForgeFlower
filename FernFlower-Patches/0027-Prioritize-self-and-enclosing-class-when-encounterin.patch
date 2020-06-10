@@ -1,4 +1,4 @@
-From c41b69a870c61017932b36f29617f00d4bd22936 Mon Sep 17 00:00:00 2001
+From 4229aec08eb43808b3df46be908ab1e9989f82f8 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Sep 2018 03:01:05 -0700
 Subject: [PATCH] Prioritize self and enclosing class when encountering
@@ -9,7 +9,7 @@ Subject: [PATCH] Prioritize self and enclosing class when encountering
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 615b7a37..69b1dc49 100644
+index 615b7a3..69b1dc4 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -32,7 +32,7 @@ index 615b7a37..69b1dc49 100644
      buffer.append('<');
  
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 6b6e38f7..c5cfa74b 100644
+index 6b6e38f..c5cfa74 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -41,10 +41,20 @@ public class ClassesProcessor implements CodeConstants {
@@ -79,5 +79,5 @@ index 6b6e38f7..c5cfa74b 100644
  
                  // reference to the nested class
 -- 
-2.26.2
+2.27.0.windows.1
 

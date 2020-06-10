@@ -1,11 +1,11 @@
-From d62e655d53145d663635f93c477e12c596d03b96 Mon Sep 17 00:00:00 2001
+From 248f0b410bce2414ff62bbcf3fb78e006d461af0 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Mon, 6 Aug 2018 20:26:59 -0700
 Subject: [PATCH] Add try with resource support
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 447780c1..b77dfec4 100644
+index 447780c..b77dfec 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -174,6 +174,10 @@ public class MethodProcessorRunnable implements Runnable {
@@ -21,7 +21,7 @@ index 447780c1..b77dfec4 100644
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 new file mode 100644
-index 00000000..6484ee0b
+index 0000000..6484ee0
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 @@ -0,0 +1,263 @@
@@ -289,7 +289,7 @@ index 00000000..6484ee0b
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index 23713c94..bdafd774 100644
+index 23713c9..bdafd77 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -126,6 +126,13 @@ public class FlattenStatementsHelper {
@@ -307,7 +307,7 @@ index 23713c94..bdafd774 100644
              graph.nodes.putWithKey(firstnd, firstnd.id);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 5582b378..5ca16055 100644
+index 5582b37..5ca1605 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
@@ -429,10 +429,10 @@ index 5582b378..5ca16055 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 054abbbf..85791fe7 100644
+index 045f85d..df5b25e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -107,7 +107,11 @@ public class VarDefinitionHelper {
+@@ -110,7 +110,11 @@ public class VarDefinitionHelper {
          lstVars = ((CatchAllStatement)st).getVars();
        }
        else if (st.type == Statement.TYPE_TRYCATCH) {
@@ -446,7 +446,7 @@ index 054abbbf..85791fe7 100644
  
        if (lstVars != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index f8ba1241..d9ac0365 100644
+index f8ba124..d9ac036 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -114,4 +114,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -490,7 +490,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestTryWithResources.dec b/testData/results/TestTryWithResources.dec
 new file mode 100644
-index 00000000..419b0df6
+index 0000000..419b0df
 --- /dev/null
 +++ b/testData/results/TestTryWithResources.dec
 @@ -0,0 +1,176 @@
@@ -672,7 +672,7 @@ index 00000000..419b0df6
 +34
 diff --git a/testData/src/pkg/TestTryWithResources.java b/testData/src/pkg/TestTryWithResources.java
 new file mode 100644
-index 00000000..0c217fe0
+index 0000000..0c217fe
 --- /dev/null
 +++ b/testData/src/pkg/TestTryWithResources.java
 @@ -0,0 +1,37 @@
@@ -715,5 +715,5 @@ index 00000000..0c217fe0
 +}
 \ No newline at end of file
 -- 
-2.26.2
+2.27.0.windows.1
 

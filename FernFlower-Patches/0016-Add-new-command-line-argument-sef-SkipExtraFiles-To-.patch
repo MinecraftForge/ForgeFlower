@@ -1,4 +1,4 @@
-From dfab249a426d2d3b23fcce79938854260b7f951a Mon Sep 17 00:00:00 2001
+From 518b5a5d78cf5daa944333b6e748474b9e31e700 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 12 Dec 2017 00:18:19 -0800
 Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip
@@ -6,7 +6,7 @@ Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 206f6276..d91d9fae 100644
+index 206f627..d91d9fa 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -53,6 +53,8 @@ public interface IFernflowerPreferences {
@@ -27,7 +27,7 @@ index 206f6276..d91d9fae 100644
      return Collections.unmodifiableMap(defaults);
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f9cd2af9..f7b253bc 100644
+index f9cd2af..f7b253b 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -54,6 +54,8 @@ public class ContextUnit {
@@ -47,5 +47,5 @@ index f9cd2af9..f7b253bc 100644
 \ No newline at end of file
 +}
 -- 
-2.26.2
+2.27.0.windows.1
 

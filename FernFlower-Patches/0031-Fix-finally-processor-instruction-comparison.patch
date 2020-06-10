@@ -1,11 +1,11 @@
-From 0e3d9eca87b3ba28715c9bc7ee3379ec198d4ff0 Mon Sep 17 00:00:00 2001
+From ba2822e16daddb8e1340e18308a1d61aa09a8ce7 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Sat, 11 Jan 2020 17:00:41 -0700
 Subject: [PATCH] Fix finally processor instruction comparison
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index c3e37329..8641cbe2 100644
+index c3e3732..8641cbe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 @@ -859,13 +859,17 @@ public class FinallyProcessor {
@@ -28,5 +28,5 @@ index c3e37329..8641cbe2 100644
            return false;
          }
 -- 
-2.26.2
+2.27.0.windows.1
 

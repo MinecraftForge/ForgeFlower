@@ -1,11 +1,11 @@
-From 1e7b5b54cd90854fcd699527dde92e562f2b00c1 Mon Sep 17 00:00:00 2001
+From 656bb1413252842e232fae9013910c3562f143f0 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 23:18:58 -0700
 Subject: [PATCH] Test Framework upgrades
 
 
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index 4c5641fe..7d29c198 100644
+index 4c5641f..7d29c19 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 @@ -23,6 +23,7 @@ public class DecompilerTestFixture {
@@ -41,7 +41,7 @@ index 4c5641fe..7d29c198 100644
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 1d0dc62d..2b60ca14 100644
+index 1d0dc62..2b60ca1 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -1,37 +1,20 @@
@@ -142,7 +142,7 @@ index 1d0dc62d..2b60ca14 100644
 \ No newline at end of file
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 new file mode 100644
-index 00000000..9f073c26
+index 0000000..9f073c2
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 @@ -0,0 +1,89 @@
@@ -237,5 +237,5 @@ index 00000000..9f073c26
 +}
 \ No newline at end of file
 -- 
-2.26.2
+2.27.0.windows.1
 

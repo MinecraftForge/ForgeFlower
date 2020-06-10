@@ -1,4 +1,4 @@
-From e01876e46ba518688fbb0d627f19f2f0a5ac3835 Mon Sep 17 00:00:00 2001
+From 6394495e864972c85c74d8e11a9ce45abdbfde1c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -6,7 +6,7 @@ Subject: [PATCH] Enhance Generic Invocations Temporarily.
 This is a temp separate patch until I get some time to merge it to patch 10/13.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 95092b0e..721e4c6e 100644
+index 95092b0..721e4c6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -262,11 +262,11 @@ public abstract class Exprent implements IMatchable {
@@ -24,7 +24,7 @@ index 95092b0e..721e4c6e 100644
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 161f55c4..d15b8588 100644
+index 161f55c..d15b858 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -7,6 +7,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -92,14 +92,14 @@ index 161f55c4..d15b8588 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 3c13e140..6e4ee197 100644
+index 3c13e14..50d8799 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -395,6 +395,7 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
-+    StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
++    ClassNode currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
      StructMethod desc = null;
@@ -108,7 +108,7 @@ index 3c13e140..6e4ee197 100644
            nextMethod:
            for (StructMethod mt : stClass.getMethods()) {
 -            if (name.equals(mt.getName())) {
-+            if (name.equals(mt.getName()) && canAccess(currCls, mt)) {
++            if (name.equals(mt.getName()) && (currCls == null || canAccess(currCls.classStruct, mt))) {
                MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
                if (md.params.length == descriptor.params.length) {
                  for (int x = 0; x < md.params.length; x++) {
@@ -139,7 +139,7 @@ index 3c13e140..6e4ee197 100644
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();
-+    StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
++    ClassNode currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null) return matches;
  
@@ -164,7 +164,7 @@ index 3c13e140..6e4ee197 100644
 +      for (StructMethod mt : cls.getMethods()) {
 +        if (name.equals(mt.getName())) {
 +          MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-+          if (matches(md.params, descriptor.params) && canAccess(currCls, mt)) {
++          if (matches(md.params, descriptor.params) && (currCls == null || canAccess(currCls.classStruct, mt))) {
 +            matches.add(mt);
 +          }
 +        }
@@ -245,7 +245,7 @@ index 3c13e140..6e4ee197 100644
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index c9bfe7be..6729ac6f 100644
+index c9bfe7b..6729ac6 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -130,6 +130,35 @@ public class StructClass extends StructMember {
@@ -285,5 +285,5 @@ index c9bfe7be..6729ac6f 100644
      return interfaceNames[i];
    }
 -- 
-2.27.0
+2.27.0.windows.1
 

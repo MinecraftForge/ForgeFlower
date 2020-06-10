@@ -1,4 +1,4 @@
-From 2af4eadac852d181d2003c16f3c9c4c264c63c30 Mon Sep 17 00:00:00 2001
+From 5ca4ca36ce3e41a4a4f8d74692af36ebe1268acb Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 25 Sep 2017 13:46:14 -0700
 Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
@@ -6,7 +6,7 @@ Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/code/CodeConstants.java b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
-index 720d2a7e..240a3e97 100644
+index 720d2a7..240a3e9 100644
 --- a/src/org/jetbrains/java/decompiler/code/CodeConstants.java
 +++ b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
 @@ -75,6 +75,7 @@ public interface CodeConstants {
@@ -27,7 +27,7 @@ index 720d2a7e..240a3e97 100644
    // ----------------------------------------------------------------------
    // MethodHandle reference_kind values
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 87afc93a..68402637 100644
+index 87afc93..6840263 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -55,7 +55,7 @@ index 87afc93a..68402637 100644
              classes.put(cl.qualifiedName, cl);
              unit.addClass(cl, name);
 diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
-index 0ea6e015..ba5342ee 100644
+index 0ea6e01..ba5342e 100644
 --- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 +++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 @@ -64,6 +64,8 @@ public class ConstantPool implements NewClassNameBuilder {
@@ -106,5 +106,5 @@ index 0ea6e015..ba5342ee 100644
      }
    }
 -- 
-2.26.2
+2.27.0.windows.1
 

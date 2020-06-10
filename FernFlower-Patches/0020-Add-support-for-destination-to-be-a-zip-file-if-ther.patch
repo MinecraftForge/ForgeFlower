@@ -1,4 +1,4 @@
-From 784985a02395f1808c4207da6d722c4729760e1a Mon Sep 17 00:00:00 2001
+From d93c3e1d8d933ec25b7bac0b22c131703553976b Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 19 Jul 2018 22:57:52 -0700
 Subject: [PATCH] Add support for destination to be a zip file if there is only
@@ -6,7 +6,7 @@ Subject: [PATCH] Add support for destination to be a zip file if there is only
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 06e36298..5393ddec 100644
+index 06e3629..5393dde 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -100,7 +100,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
@@ -29,7 +29,7 @@ index 06e36298..5393ddec 100644
    public void addSource(File source) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 new file mode 100644
-index 00000000..8775e478
+index 0000000..8775e47
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 @@ -0,0 +1,118 @@
@@ -152,5 +152,5 @@ index 00000000..8775e478
 +  }
 +}
 -- 
-2.26.2
+2.27.0.windows.1
 

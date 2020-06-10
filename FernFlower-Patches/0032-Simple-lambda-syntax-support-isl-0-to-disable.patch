@@ -1,11 +1,11 @@
-From 28e3b670fb6d41b1ac17395fa310c94f549f1a05 Mon Sep 17 00:00:00 2001
+From 2eca411101f06332f440e0568684ff9e4cee11da Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 20 Dec 2019 08:35:30 -0700
 Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 69b1dc49..232ea1d9 100644
+index 69b1dc4..232ea1d 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -92,7 +92,7 @@ index 69b1dc49..232ea1d9 100644
      }
      finally {
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 01b9cef3..41f7389f 100644
+index 01b9cef..41f7389 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -37,6 +37,7 @@ public interface IFernflowerPreferences {
@@ -112,5 +112,5 @@ index 01b9cef3..41f7389f 100644
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 -- 
-2.27.0
+2.27.0.windows.1
 

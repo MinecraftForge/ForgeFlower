@@ -1,4 +1,4 @@
-From aa3256407e40470ac7afdbfa7afc7f98429cbfa0 Mon Sep 17 00:00:00 2001
+From f2e544c628b6e1558e4c59c4382ed5aade934228 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 03a59cb9..474ffda1 100644
+index 03a59cb..474ffda 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -876,12 +876,14 @@ public class ExprProcessor implements CodeConstants {
@@ -31,7 +31,7 @@ index 03a59cb9..474ffda1 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index d72870ee..3c13e140 100644
+index d72870e..3c13e14 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -59,6 +59,7 @@ public class InvocationExprent extends Exprent {
@@ -235,7 +235,7 @@ index d72870ee..3c13e140 100644
          GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
          if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
 diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
-index a7d1557e..07e818e1 100644
+index a7d1557..07e818e 100644
 --- a/testData/results/TestPrimitives.dec
 +++ b/testData/results/TestPrimitives.dec
 @@ -3,6 +3,26 @@ package pkg;
@@ -934,7 +934,7 @@ index a7d1557e..07e818e1 100644
  
     method '<init> (ZBSIJFDC)V' {
 diff --git a/testData/src/pkg/TestPrimitives.java b/testData/src/pkg/TestPrimitives.java
-index 36302524..acfe886b 100644
+index 3630252..acfe886 100644
 --- a/testData/src/pkg/TestPrimitives.java
 +++ b/testData/src/pkg/TestPrimitives.java
 @@ -3,6 +3,19 @@ package pkg;
@@ -958,5 +958,5 @@ index 36302524..acfe886b 100644
    public void printAll() {
      printBoolean(true);
 -- 
-2.26.2
+2.27.0.windows.1
 

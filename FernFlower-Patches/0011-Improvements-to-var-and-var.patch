@@ -1,11 +1,11 @@
-From 7fd4da04e55eb267774eab8a3869d2eb79ab1a7a Mon Sep 17 00:00:00 2001
+From bc4c7596f58963f24df59be9dffcaf681be0351c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 10:13:01 -0700
 Subject: [PATCH] Improvements to var++ and var--
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index fb9c7a96..58bf5152 100644
+index fb9c7a9..58bf515 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -1048,7 +1048,7 @@ public class NestedClassProcessor {
@@ -18,7 +18,7 @@ index fb9c7a96..58bf5152 100644
            break;
          case Exprent.EXPRENT_VAR:
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index 94dc0a33..806bec52 100644
+index 94dc0a3..806bec5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 @@ -13,7 +13,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
@@ -111,7 +111,7 @@ index 94dc0a33..806bec52 100644
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index e97be6c8..71f2ad84 100644
+index e97be6c..71f2ad8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -407,7 +407,12 @@ public class ConstExprent extends Exprent {
@@ -129,7 +129,7 @@ index e97be6c8..71f2ad84 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index 71d689df..76e40644 100644
+index 71d689d..76e4064 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -45,4 +45,5 @@ public class LVTTest extends SingleClassesTestBase {
@@ -160,7 +160,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestPPMM.dec b/testData/results/TestPPMM.dec
 new file mode 100644
-index 00000000..ba3a5fc1
+index 0000000..ba3a5fc
 --- /dev/null
 +++ b/testData/results/TestPPMM.dec
 @@ -0,0 +1,70 @@
@@ -236,7 +236,7 @@ index 00000000..ba3a5fc1
 +}
 diff --git a/testData/src/pkg/TestPPMM.java b/testData/src/pkg/TestPPMM.java
 new file mode 100644
-index 00000000..0a062be8
+index 0000000..0a062be
 --- /dev/null
 +++ b/testData/src/pkg/TestPPMM.java
 @@ -0,0 +1,81 @@
@@ -323,5 +323,5 @@ index 00000000..0a062be8
 +}
 \ No newline at end of file
 -- 
-2.26.2
+2.27.0.windows.1
 

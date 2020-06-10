@@ -1,11 +1,11 @@
-From 721bffcd4bab16f2032e5d60ac0687373e75e2f1 Mon Sep 17 00:00:00 2001
+From efb4e027d9b34d19833af03123bdaeac7a52501f Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index ca63ad51..fa796177 100644
+index ca63ad5..fa79617 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -8,7 +8,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -44,7 +44,7 @@ index ca63ad51..fa796177 100644
          }
        }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 726d7474..447780c1 100644
+index 726d747..447780c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -11,7 +11,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -143,7 +143,7 @@ index 726d7474..447780c1 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 5c7be12a..fb9c7a96 100644
+index 5c7be12..fb9c7a9 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -404,7 +404,7 @@ index 5c7be12a..fb9c7a96 100644
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index bc3cb331..63b4b35a 100644
+index bc3cb33..63b4b35 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -9,6 +9,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -438,7 +438,7 @@ index bc3cb331..63b4b35a 100644
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 new file mode 100644
-index 00000000..adc78392
+index 0000000..adc7839
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 @@ -0,0 +1,199 @@
@@ -642,7 +642,7 @@ index 00000000..adc78392
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
-index 3b9847f5..3d458f93 100644
+index 3b9847f..3d458f9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 @@ -171,7 +171,7 @@ public class ExitHelper {
@@ -655,7 +655,7 @@ index 3b9847f5..3d458f93 100644
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 6aa06168..f19e321d 100644
+index 6aa0616..f19e321 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -330,7 +330,9 @@ public class ExprProcessor implements CodeConstants {
@@ -690,7 +690,7 @@ index 6aa06168..f19e321d 100644
              instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
              .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null)),
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
-index f6ee600a..b7fa59c0 100644
+index f6ee600..b7fa59c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 @@ -118,6 +118,9 @@ public class InlineSingleBlockHelper {
@@ -704,7 +704,7 @@ index f6ee600a..b7fa59c0 100644
            for (int i = index; i < seq.getStats().size(); i++) {
              if (!noExitLabels(seq.getStats().get(i), seq)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
-index 82291279..545f687a 100644
+index 8229127..545f687 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 @@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -797,7 +797,7 @@ index 82291279..545f687a 100644
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LowBreakHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LowBreakHelper.java
 new file mode 100644
-index 00000000..c62c74da
+index 0000000..c62c74d
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LowBreakHelper.java
 @@ -0,0 +1,194 @@
@@ -997,7 +997,7 @@ index 00000000..c62c74da
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 3f351c1c..0bbd0a5a 100644
+index 3f351c1..0bbd0a5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1434,7 +1434,7 @@ index 3f351c1c..0bbd0a5a 100644
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index d73535f1..94dc0a33 100644
+index d73535f..94dc0a3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 @@ -5,19 +5,31 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
@@ -1548,7 +1548,7 @@ index d73535f1..94dc0a33 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
-index c481c0a3..cdbcb709 100644
+index c481c0a..cdbcb70 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
 @@ -35,6 +35,8 @@ public class StatEdge {
@@ -1561,7 +1561,7 @@ index c481c0a3..cdbcb709 100644
      this(type, source, destination);
      this.closure = closure;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 87522af3..9803a215 100644
+index 87522af..9803a21 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -458,7 +458,7 @@ public class InvocationExprent extends Exprent {
@@ -1581,7 +1581,7 @@ index 87522af3..9803a215 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index e3b253c9..2b76cf18 100644
+index e3b253c..8e3dbf6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -9,12 +9,15 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1689,7 +1689,7 @@ index e3b253c9..2b76cf18 100644
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -249,6 +272,86 @@ public class VarExprent extends Exprent {
+@@ -249,6 +272,93 @@ public class VarExprent extends Exprent {
      this.stack = stack;
    }
  
@@ -1710,7 +1710,9 @@ index e3b253c9..2b76cf18 100644
 +      return lvt.getName();
 +
 +    if (processor != null) {
-+      return processor.getVarName(pair);
++      String ret = processor.getVarName(pair);
++      if (ret != null)
++        return ret;
 +    }
 +
 +    return pair.version == 0 ? "var" + pair.var : "var" + pair.var + "_" + version;
@@ -1773,11 +1775,16 @@ index e3b253c9..2b76cf18 100644
 +    return false;
 +  }
 +
++  @Override
++  public String toString() {
++    return "VarExprent[" + index + ',' + version +"]";
++  }
++
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
-index aa2fae88..fc6fc93f 100644
+index aa2fae8..fc6fc93 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
 @@ -113,6 +113,21 @@ public class DirectGraph {
@@ -1803,7 +1810,7 @@ index aa2fae88..fc6fc93f 100644
      // 0 - success, do nothing
      // 1 - cancel iteration
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index b9abd119..23713c94 100644
+index b9abd11..23713c9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -201,6 +201,7 @@ public class FlattenStatementsHelper {
@@ -1826,7 +1833,7 @@ index b9abd119..23713c94 100644
  
                  DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index 376abe53..3cb030a9 100644
+index 376abe5..3cb030a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 @@ -2,6 +2,7 @@
@@ -1847,7 +1854,7 @@ index 376abe53..3cb030a9 100644
                              new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                              DecompilerContext.getVarProcessor()));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 652931af..5582b378 100644
+index 652931a..5582b37 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -41,7 +41,7 @@ public class CatchStatement extends Statement {
@@ -1860,7 +1867,7 @@ index 652931af..5582b378 100644
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index f9a149f3..d4ccb5ec 100644
+index f9a149f..d4ccb5e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -17,6 +17,7 @@ public class DoStatement extends Statement {
@@ -1897,7 +1904,7 @@ index f9a149f3..d4ccb5ec 100644
  
      lst.add(first);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index 46acf013..771196f7 100644
+index 46acf01..771196f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -803,6 +803,14 @@ public class Statement implements IMatchable {
@@ -1925,10 +1932,10 @@ index 46acf013..771196f7 100644
  
    //TODO: Cleanup/cache?
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 0402097b..01fd4af0 100644
+index 0402097..ab5c63b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -4,16 +4,23 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
+@@ -4,16 +4,26 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
  import org.jetbrains.java.decompiler.code.CodeConstants;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -1936,6 +1943,9 @@ index 0402097b..01fd4af0 100644
  import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
 +import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
@@ -1952,7 +1962,7 @@ index 0402097b..01fd4af0 100644
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -29,6 +36,9 @@ public class VarDefinitionHelper {
+@@ -29,6 +39,9 @@ public class VarDefinitionHelper {
  
    private final VarProcessor varproc;
  
@@ -1962,7 +1972,7 @@ index 0402097b..01fd4af0 100644
    public VarDefinitionHelper(Statement root, StructMethod mt, VarProcessor varproc) {
  
      mapVarDefStatements = new HashMap<>();
-@@ -36,6 +46,8 @@ public class VarDefinitionHelper {
+@@ -36,6 +49,8 @@ public class VarDefinitionHelper {
      implDefVars = new HashSet<>();
  
      this.varproc = varproc;
@@ -1971,7 +1981,7 @@ index 0402097b..01fd4af0 100644
  
      VarNamesCollector vc = varproc.getVarNamesCollector();
  
-@@ -49,12 +61,12 @@ public class VarDefinitionHelper {
+@@ -49,12 +64,12 @@ public class VarDefinitionHelper {
      }
      paramcount += md.params.length;
  
@@ -1986,7 +1996,7 @@ index 0402097b..01fd4af0 100644
  
        if (thisvar) {
          if (i == 0) {
-@@ -77,6 +89,8 @@ public class VarDefinitionHelper {
+@@ -77,6 +92,8 @@ public class VarDefinitionHelper {
        vc.addName("this");
      }
  
@@ -1995,7 +2005,7 @@ index 0402097b..01fd4af0 100644
      // catch variables are implicitly defined
      LinkedList<Statement> stack = new LinkedList<>();
      stack.add(root);
-@@ -106,7 +120,6 @@ public class VarDefinitionHelper {
+@@ -106,7 +123,6 @@ public class VarDefinitionHelper {
      initStatement(root);
    }
  
@@ -2003,7 +2013,7 @@ index 0402097b..01fd4af0 100644
    public void setVarDefinitions() {
      VarNamesCollector vc = varproc.getVarNamesCollector();
  
-@@ -139,9 +152,17 @@ public class VarDefinitionHelper {
+@@ -139,9 +155,17 @@ public class VarDefinitionHelper {
              }
            }
          }
@@ -2022,7 +2032,7 @@ index 0402097b..01fd4af0 100644
        Statement first = findFirstBlock(stat, index);
  
        List<Exprent> lst;
-@@ -155,7 +176,6 @@ public class VarDefinitionHelper {
+@@ -155,7 +179,6 @@ public class VarDefinitionHelper {
          lst = first.getExprents();
        }
  
@@ -2030,12 +2040,12 @@ index 0402097b..01fd4af0 100644
        boolean defset = false;
  
        // search for the first assignment to var [index]
-@@ -184,9 +204,17 @@ public class VarDefinitionHelper {
+@@ -184,9 +207,17 @@ public class VarDefinitionHelper {
          VarExprent var = new VarExprent(index, varproc.getVarType(new VarVersionPair(index.intValue(), 0)), varproc);
          var.setDefinition(true);
  
 +        LocalVariable lvt = findLVT(index.intValue(), stat);
-+        if (lvt != null) { 
++        if (lvt != null) {
 +          var.setLVT(lvt);
 +        }
 +
@@ -2048,7 +2058,7 @@ index 0402097b..01fd4af0 100644
    }
  
  
-@@ -194,6 +222,50 @@ public class VarDefinitionHelper {
+@@ -194,6 +225,50 @@ public class VarDefinitionHelper {
    // private methods
    // *****************************************************************************
  
@@ -2099,7 +2109,7 @@ index 0402097b..01fd4af0 100644
    private Statement findFirstBlock(Statement stat, Integer varindex) {
  
      LinkedList<Statement> stack = new LinkedList<>();
-@@ -254,6 +326,7 @@ public class VarDefinitionHelper {
+@@ -254,6 +329,7 @@ public class VarDefinitionHelper {
            if (st.type == DoStatement.TYPE_DO) {
              DoStatement dost = (DoStatement)st;
              if (dost.getLooptype() != DoStatement.LOOP_FOR &&
@@ -2107,7 +2117,7 @@ index 0402097b..01fd4af0 100644
                  dost.getLooptype() != DoStatement.LOOP_DO) {
                currVars.add(dost.getConditionExprent());
              }
-@@ -324,7 +397,7 @@ public class VarDefinitionHelper {
+@@ -324,7 +400,7 @@ public class VarDefinitionHelper {
      return res;
    }
  
@@ -2116,11 +2126,86 @@ index 0402097b..01fd4af0 100644
      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
        Exprent left = ((AssignmentExprent)expr).getLeft();
        if (left.type == Exprent.EXPRENT_VAR) {
-@@ -337,4 +410,561 @@ public class VarDefinitionHelper {
+@@ -337,4 +413,648 @@ public class VarDefinitionHelper {
      }
      return false;
    }
 +
++  private void populateTypeBounds(VarProcessor proc, Statement stat) {
++    Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
++    Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
++    LinkedList<Statement> stack = new LinkedList<>();
++    stack.add(root);
++
++    while (!stack.isEmpty()) {
++      Statement st = stack.removeFirst();
++
++      if (st.getExprents() != null) {
++        LinkedList<Exprent> exps = new LinkedList<>();
++        exps.addAll(st.getExprents());
++        while (!exps.isEmpty()) {
++          Exprent exp = exps.removeFirst();
++
++          switch (exp.type) {
++            case Exprent.EXPRENT_INVOCATION:
++            case Exprent.EXPRENT_FIELD:
++            case Exprent.EXPRENT_EXIT:
++              Exprent instance = null;
++              String target = null;
++              if (exp.type == Exprent.EXPRENT_INVOCATION) {
++                instance = ((InvocationExprent)exp).getInstance();
++                target = ((InvocationExprent)exp).getClassname();
++              } else if (exp.type == Exprent.EXPRENT_FIELD) {
++                instance = ((FieldExprent)exp).getInstance();
++                target = ((FieldExprent)exp).getClassname();
++              } else if (exp.type == Exprent.EXPRENT_EXIT) {
++                ExitExprent exit = (ExitExprent)exp;
++                if (exit.getExitType() == ExitExprent.EXIT_RETURN) {
++                  instance = exit.getValue();
++                  target = exit.getRetType().value;
++                }
++              }
++
++              if ("java/lang/Object".equals(target))
++                  continue; //This is dirty, but if we don't then too many things become object...
++
++              if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
++                VarVersionPair key = ((VarExprent)instance).getVarVersionPair();
++                VarType newType = new VarType(CodeConstants.TYPE_OBJECT, 0, target);
++                VarType oldMin = mapExprentMinTypes.get(key);
++                VarType oldMax = mapExprentMaxTypes.get(key);
++
++                /* Everything goes to Object with this... Need a better filter?
++                if (!newType.equals(oldMin)) {
++                  if (oldMin != null && oldMin.type == CodeConstants.TYPE_OBJECT) {
++                    // If the old min is an instanceof the new target, EXA: ArrayList -> List
++                    if (DecompilerContext.getStructContext().instanceOf(oldMin.value, newType.value))
++                      mapExprentMinTypes.put(key, newType);
++                  } else
++                    mapExprentMinTypes.put(key, newType);
++                }
++                */
++
++                if (!newType.equals(oldMax)) {
++                  if (oldMax != null && oldMax.type == CodeConstants.TYPE_OBJECT) {
++                    // If the old min is an instanceof the new target, EXA: List -> ArrayList
++                    if (DecompilerContext.getStructContext().instanceOf(newType.value, oldMax.value))
++                      mapExprentMaxTypes.put(key, newType);
++                  } else
++                    mapExprentMaxTypes.put(key, newType);
++                }
++              }
++
++              break;
++            default:
++              exps.addAll(exp.getAllExprents());
++          }
++        }
++      }
++
++      stack.addAll(st.getStats());
++    }
++  }
 +
 +  private VPPEntry mergeVars(Statement stat) {
 +    Map<Integer, VarVersionPair> parent = new HashMap<Integer, VarVersionPair>(); // Always empty dua!
@@ -2135,6 +2220,8 @@ index 0402097b..01fd4af0 100644
 +      parent.put(index, new VarVersionPair(index, 0));
 +      index += var.stackSize;
 +    }
++
++    populateTypeBounds(varproc, stat);
 +
 +    Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<VarVersionPair, VarVersionPair>();
 +    VPPEntry remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
@@ -2338,10 +2425,7 @@ index 0402097b..01fd4af0 100644
 +            itr.remove();
 +          }
 +          else if (to.var == var.getIndex() && to.version == var.getVersion()) {
-+            Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
-+            Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
-+            VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
-+                                           mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
++            VarType merged = getMergedType(from, to);
 +
 +            if (merged == null) { // Something went wrong.. This SHOULD be non-null
 +              continue;
@@ -2362,8 +2446,6 @@ index 0402097b..01fd4af0 100644
 +    }
 +    List<Exprent> lst = exprent.getAllExprents(true);
 +    lst.add(exprent);
-+    Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
-+    Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
 +
 +    boolean remapped = false;
 +
@@ -2380,9 +2462,7 @@ index 0402097b..01fd4af0 100644
 +          if (right.getConstType() == VarType.VARTYPE_NULL) {
 +            continue;
 +          }
-+          VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
-+                                         mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
-+
++          VarType merged = getMergedType(from, to);
 +          if (merged == null) { // Types incompatible, do not merge
 +            continue;
 +          }
@@ -2396,8 +2476,7 @@ index 0402097b..01fd4af0 100644
 +        if (!old.equals(from)) {
 +          continue;
 +        }
-+        VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
-+                                       mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
++        VarType merged = getMergedType(from, to);
 +        if (merged == null) { // Types incompatible, do not merge
 +          continue;
 +        }
@@ -2408,35 +2487,53 @@ index 0402097b..01fd4af0 100644
 +        if (var.isDefinition()) {
 +          var.setDefinition(false);
 +        }
-+        mapExprentMinTypes.put(to, merged);
++        varproc.setVarType(to, merged);
 +        remapped = true;
 +      }
 +    }
 +    return remapped;
 +  }
 +
-+  private VarType getMergedType(VarType firstMin, VarType secondMin, VarType firstMax, VarType secondMax) {
-+    if (firstMin != null && firstMin.equals(secondMin)) {
-+      return firstMin; // Short circuit this for simplicities sake
++  private VarType getMergedType(VarVersionPair from, VarVersionPair to) {
++    Map<VarVersionPair, VarType> minTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
++    Map<VarVersionPair, VarType> maxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
++    return getMergedType(minTypes.get(from), minTypes.get(to), maxTypes.get(from), maxTypes.get(to));
++  }
++
++  private VarType getMergedType(VarType fromMin, VarType toMin, VarType fromMax, VarType toMax) {
++    if (fromMin != null && fromMin.equals(toMin)) {
++      return fromMin; // Short circuit this for simplicities sake
 +    }
-+    VarType type = firstMin == null ? secondMin : (secondMin == null ? firstMin : VarType.getCommonSupertype(firstMin, secondMin));
-+    if (type == null || firstMin == null || secondMin == null) {
++    VarType type = fromMin == null ? toMin : (toMin == null ? fromMin : VarType.getCommonSupertype(fromMin, toMin));
++    if (type == null || fromMin == null || toMin == null) {
 +      return null; // no common supertype, skip the remapping
 +    }
-+    if (type.typeFamily == CodeConstants.TYPE_FAMILY_OBJECT) {
-+      if (firstMax != null && secondMax != null) {
-+        type = VarType.getCommonMinType(firstMax, secondMax);
-+      } else if (firstMin.arrayDim != secondMin.arrayDim) {
-+        return null; // Don't merge is arrays don't match.
-+      } else {
-+        type = VarType.getCommonMinType(firstMin, secondMin);
-+        // couldn't find a sane common supertype, we're not gonna be able to merge
-+        if (type == null || type == VarType.VARTYPE_NULL) {
-+          return null;
++    if (type.type == CodeConstants.TYPE_OBJECT) {
++      if (toMax != null) { // The target var is used in direct invocations
++        if (fromMax != null) {
++          // Max types are the highest class that this variable is used as a direct instance of without any casts.
++          // This will pull up the to var type if the from requires a higher class type.
++          // EXA: Collection -> List
++          if (DecompilerContext.getStructContext().instanceOf(fromMax.value, toMax.value))
++            return fromMax;
++        } else if (fromMin != null) {
++          // Pull to up to from: List -> ArrayList
++          if (DecompilerContext.getStructContext().instanceOf(fromMin.value, toMax.value))
++            return fromMin;
++        }
++      } else if (toMin != null) {
++        if (fromMax != null) {
++          if (DecompilerContext.getStructContext().instanceOf(fromMax.value, toMin.value))
++            return fromMax;
++        } else if (fromMin != null) {
++          if (DecompilerContext.getStructContext().instanceOf(toMin.value, fromMin.value))
++            return toMin;
 +        }
 +      }
++      return null;
++    } else {
++      return type;
 +    }
-+    return type;
 +  }
 +
 +  private void propogateLVTs(Statement stat) {
@@ -2576,7 +2673,7 @@ index 0402097b..01fd4af0 100644
 +      }
 +    }
 +  }
-+  
++
 +  //Helper classes because Java is dumb and doesn't have a Pair<K,V> class
 +  private static class SimpleEntry<K, V> implements Entry<K, V> {
 +    private K key;
@@ -2679,7 +2776,7 @@ index 0402097b..01fd4af0 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 9999b50b..ec60c001 100644
+index 9999b50..ec60c00 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -2,21 +2,26 @@
@@ -2840,7 +2937,7 @@ index 9999b50b..ec60c001 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
-index c31cfad0..78b5302c 100644
+index c31cfad..78b5302 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 @@ -96,7 +96,12 @@ public class VarTypeProcessor {
@@ -2858,7 +2955,7 @@ index c31cfad0..78b5302c 100644
          else if (expr.type == Exprent.EXPRENT_CONST) {
            ConstExprent constExpr = (ConstExprent)expr;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index eca0d0fb..47e7e0c0 100644
+index eca0d0f..47e7e0c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -22,7 +22,7 @@ import java.util.Map.Entry;
@@ -2929,7 +3026,7 @@ index eca0d0fb..47e7e0c0 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 6d070968..aea1b21a 100644
+index 6d07096..aea1b21 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -160,4 +160,30 @@ public class StructContext {
@@ -2965,7 +3062,7 @@ index 6d070968..aea1b21a 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-index a5b87f1f..7ead7d6f 100644
+index a5b87f1..7ead7d6 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
 @@ -12,6 +12,8 @@ import java.io.IOException;
@@ -2994,7 +3091,7 @@ index a5b87f1f..7ead7d6f 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 15fb317f..c72d18ad 100644
+index 15fb317..c72d18a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -1,7 +1,10 @@
@@ -3158,7 +3255,7 @@ index 15fb317f..c72d18ad 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java
-index 829c78e8..cfdda0f2 100644
+index 829c78e..cfdda0f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java
 @@ -17,7 +17,7 @@ import java.io.IOException;
@@ -3172,7 +3269,7 @@ index 829c78e8..cfdda0f2 100644
    public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
 diff --git a/src/org/jetbrains/java/decompiler/util/DebugPrinter.java b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
 new file mode 100644
-index 00000000..71d69efb
+index 0000000..71d69ef
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
 @@ -0,0 +1,94 @@
@@ -3272,7 +3369,7 @@ index 00000000..71d69efb
 +}
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
 new file mode 100644
-index 00000000..71d689df
+index 0000000..71d689d
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -0,0 +1,48 @@
@@ -3325,7 +3422,7 @@ index 00000000..71d689df
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2b60ca14..d86b673d 100644
+index 2b60ca1..d86b673 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -17,6 +17,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -3337,7 +3434,7 @@ index 2b60ca14..d86b673d 100644
    @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
    @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
 diff --git a/testData/bulk/pkg/res/Loader.java b/testData/bulk/pkg/res/Loader.java
-index cdb1db5b..5e4c2206 100644
+index cdb1db5..5e4c220 100644
 --- a/testData/bulk/pkg/res/Loader.java
 +++ b/testData/bulk/pkg/res/Loader.java
 @@ -17,8 +17,8 @@ public class Loader {
@@ -3542,7 +3639,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/testData/results/TestAmbiguousCallWithDebugInfo.dec b/testData/results/TestAmbiguousCallWithDebugInfo.dec
-index e873e7e3..18beb9a5 100644
+index e873e7e..18beb9a 100644
 --- a/testData/results/TestAmbiguousCallWithDebugInfo.dec
 +++ b/testData/results/TestAmbiguousCallWithDebugInfo.dec
 @@ -12,7 +12,7 @@ class TestAmbiguousCall {
@@ -3556,7 +3653,7 @@ index e873e7e3..18beb9a5 100644
  }
 diff --git a/testData/results/TestEnhancedForLoops.dec b/testData/results/TestEnhancedForLoops.dec
 new file mode 100644
-index 00000000..a83751cd
+index 0000000..a83751c
 --- /dev/null
 +++ b/testData/results/TestEnhancedForLoops.dec
 @@ -0,0 +1,127 @@
@@ -3688,7 +3785,7 @@ index 00000000..a83751cd
 +37
 +40
 diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
-index 0e941450..e57e91a4 100644
+index 0e94145..e57e91a 100644
 --- a/testData/results/TestKotlinConstructorKt.dec
 +++ b/testData/results/TestKotlinConstructorKt.dec
 @@ -1,6 +1,5 @@
@@ -3877,7 +3974,7 @@ index 0e941450..e57e91a4 100644
 +13 <-> 31
 diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
 new file mode 100644
-index 00000000..a78cf6ee
+index 0000000..a78cf6e
 --- /dev/null
 +++ b/testData/results/TestLVT.dec
 @@ -0,0 +1,39 @@
@@ -3922,7 +4019,7 @@ index 00000000..a78cf6ee
 +}
 diff --git a/testData/results/TestLVTComplex.dec b/testData/results/TestLVTComplex.dec
 new file mode 100644
-index 00000000..7d492ca4
+index 0000000..7d492ca
 --- /dev/null
 +++ b/testData/results/TestLVTComplex.dec
 @@ -0,0 +1,84 @@
@@ -4012,7 +4109,7 @@ index 00000000..7d492ca4
 +}
 diff --git a/testData/results/TestLVTScoping.dec b/testData/results/TestLVTScoping.dec
 new file mode 100644
-index 00000000..74941fbb
+index 0000000..74941fb
 --- /dev/null
 +++ b/testData/results/TestLVTScoping.dec
 @@ -0,0 +1,35 @@
@@ -4052,7 +4149,7 @@ index 00000000..74941fbb
 +   }
 +}
 diff --git a/testData/results/TestLocalsNames.dec b/testData/results/TestLocalsNames.dec
-index 59563dde..1041a549 100644
+index 59563dd..1041a54 100644
 --- a/testData/results/TestLocalsNames.dec
 +++ b/testData/results/TestLocalsNames.dec
 @@ -7,21 +7,18 @@ public class TestLocalsNames {
@@ -4264,7 +4361,7 @@ index 59563dde..1041a549 100644
 +34 <-> 20
 diff --git a/testData/results/TestLoopMerging.dec b/testData/results/TestLoopMerging.dec
 new file mode 100644
-index 00000000..703203a5
+index 0000000..703203a
 --- /dev/null
 +++ b/testData/results/TestLoopMerging.dec
 @@ -0,0 +1,82 @@
@@ -4351,7 +4448,7 @@ index 00000000..703203a5
 +   }
 +}
 diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
-index 20e9afb7..0caaede3 100644
+index 20e9afb..0caaede 100644
 --- a/testData/results/TestTryCatchFinally.dec
 +++ b/testData/results/TestTryCatchFinally.dec
 @@ -4,7 +4,7 @@ public class TestTryCatchFinally {
@@ -4365,7 +4462,7 @@ index 20e9afb7..0caaede3 100644
           } catch (Exception var8) {// 28
 diff --git a/testData/results/TestVarType.dec b/testData/results/TestVarType.dec
 new file mode 100644
-index 00000000..56fb4228
+index 0000000..56fb422
 --- /dev/null
 +++ b/testData/results/TestVarType.dec
 @@ -0,0 +1,9 @@
@@ -4380,7 +4477,7 @@ index 00000000..56fb4228
 +}
 diff --git a/testData/src/pkg/TestEnhancedForLoops.java b/testData/src/pkg/TestEnhancedForLoops.java
 new file mode 100644
-index 00000000..d8082183
+index 0000000..d808218
 --- /dev/null
 +++ b/testData/src/pkg/TestEnhancedForLoops.java
 @@ -0,0 +1,42 @@
@@ -4428,7 +4525,7 @@ index 00000000..d8082183
 +}
 diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
 new file mode 100644
-index 00000000..b9eed0dc
+index 0000000..b9eed0d
 --- /dev/null
 +++ b/testData/src/pkg/TestLVT.java
 @@ -0,0 +1,36 @@
@@ -4470,7 +4567,7 @@ index 00000000..b9eed0dc
 +}
 diff --git a/testData/src/pkg/TestLVTComplex.java b/testData/src/pkg/TestLVTComplex.java
 new file mode 100644
-index 00000000..548b9fd5
+index 0000000..548b9fd
 --- /dev/null
 +++ b/testData/src/pkg/TestLVTComplex.java
 @@ -0,0 +1,64 @@
@@ -4540,7 +4637,7 @@ index 00000000..548b9fd5
 +}
 diff --git a/testData/src/pkg/TestLVTScoping.java b/testData/src/pkg/TestLVTScoping.java
 new file mode 100644
-index 00000000..ab57832c
+index 0000000..ab57832
 --- /dev/null
 +++ b/testData/src/pkg/TestLVTScoping.java
 @@ -0,0 +1,34 @@
@@ -4580,7 +4677,7 @@ index 00000000..ab57832c
 +}
 diff --git a/testData/src/pkg/TestLoopMerging.java b/testData/src/pkg/TestLoopMerging.java
 new file mode 100644
-index 00000000..1643c813
+index 0000000..1643c81
 --- /dev/null
 +++ b/testData/src/pkg/TestLoopMerging.java
 @@ -0,0 +1,47 @@
@@ -4633,7 +4730,7 @@ index 00000000..1643c813
 +}
 diff --git a/testData/src/pkg/TestVarType.java b/testData/src/pkg/TestVarType.java
 new file mode 100644
-index 00000000..15e2171a
+index 0000000..15e2171
 --- /dev/null
 +++ b/testData/src/pkg/TestVarType.java
 @@ -0,0 +1,24 @@
@@ -4662,5 +4759,5 @@ index 00000000..15e2171a
 +  }
 +}
 -- 
-2.26.2
+2.27.0.windows.1
 

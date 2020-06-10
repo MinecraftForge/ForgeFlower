@@ -1,11 +1,11 @@
-From 65f303f07459e293a67de16211c0c6964b7649b1 Mon Sep 17 00:00:00 2001
+From 24cd3bf51d4dbe070edca1fcf35d78d9d81c6825 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 15 Apr 2017 17:32:28 -0700
 Subject: [PATCH] Enhance switch on enum output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 5606e91f..983298ea 100644
+index 5606e91..983298e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -2,6 +2,7 @@
@@ -155,7 +155,7 @@ index 5606e91f..983298ea 100644
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index b49bf394..23d28d7f 100644
+index b49bf39..23d28d7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 @@ -8,7 +8,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -338,7 +338,7 @@ zv~1o}$51x!tz$Hsm+A;+8*ra;_KTT}(9eDpL5$P!1+WU8T5QhnF5<-Ag%w;R9VGh%
 RF}#on(r=%hghG)*{{<v4Oc4M8
 
 diff --git a/testData/results/TestEnum.dec b/testData/results/TestEnum.dec
-index 069e4efe..ce2511cc 100644
+index 069e4ef..ce2511c 100644
 --- a/testData/results/TestEnum.dec
 +++ b/testData/results/TestEnum.dec
 @@ -21,10 +21,32 @@ public enum TestEnum {
@@ -460,7 +460,7 @@ index 069e4efe..ce2511cc 100644
 +57 <-> 45
 +59 <-> 48
 diff --git a/testData/src/pkg/TestEnum.java b/testData/src/pkg/TestEnum.java
-index e474d341..974898e7 100644
+index e474d34..974898e 100644
 --- a/testData/src/pkg/TestEnum.java
 +++ b/testData/src/pkg/TestEnum.java
 @@ -35,4 +35,26 @@ public enum TestEnum {
@@ -491,5 +491,5 @@ index e474d341..974898e7 100644
 +  }
  }
 -- 
-2.26.2
+2.27.0.windows.1
 

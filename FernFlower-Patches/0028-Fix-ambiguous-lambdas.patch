@@ -1,11 +1,11 @@
-From db57786f4d32d0154e2c86a2a342ac199438cac6 Mon Sep 17 00:00:00 2001
+From 29e27a2882f72501daf6e68019c24f78c7576ead Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Wed, 19 Sep 2018 22:51:00 -0700
 Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 4933b5c1..cc67f34a 100644
+index 4933b5c..cc67f34 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -910,6 +910,9 @@ public class ExprProcessor implements CodeConstants {
@@ -41,7 +41,7 @@ index 4933b5c1..cc67f34a 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 8ebcb69f..cac37d5a 100644
+index b38b834..fded2f8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -762,7 +762,8 @@ public class InvocationExprent extends Exprent {
@@ -95,7 +95,7 @@ index 8ebcb69f..cac37d5a 100644
  
          MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index f99fdc49..bf254b8d 100644
+index f99fdc4..bf254b8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -5,6 +5,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -142,5 +142,5 @@ index f99fdc49..bf254b8d 100644
 +  }
  }
 -- 
-2.26.2
+2.27.0.windows.1
 

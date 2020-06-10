@@ -1,4 +1,4 @@
-From 9d8bd0acae223905af70f160672b791417ea45ce Mon Sep 17 00:00:00 2001
+From fff7a1bfc7b3e565831d858ae2a5ee965cfd4f12 Mon Sep 17 00:00:00 2001
 From: malte0811 <malte0811@web.de>
 Date: Mon, 23 Jul 2018 15:53:01 +0200
 Subject: [PATCH] Fix incorrect decompilation of inverted floating point
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix incorrect decompilation of inverted floating point
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index a7c804b9..859f2cb4 100644
+index a7c804b..859f2cb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 @@ -168,8 +168,18 @@ public class SecondaryFunctionsHelper {
@@ -65,7 +65,7 @@ index a7c804b9..859f2cb4 100644
          }
        }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index d9ac0365..e57ff622 100644
+index d9ac036..e57ff62 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -115,4 +115,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -96,7 +96,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestInvertedFloatComparison.dec b/testData/results/TestInvertedFloatComparison.dec
 new file mode 100644
-index 00000000..03d684aa
+index 0000000..03d684a
 --- /dev/null
 +++ b/testData/results/TestInvertedFloatComparison.dec
 @@ -0,0 +1,199 @@
@@ -301,7 +301,7 @@ index 00000000..03d684aa
 +66 <-> 65
 diff --git a/testData/src/pkg/TestInvertedFloatComparison.java b/testData/src/pkg/TestInvertedFloatComparison.java
 new file mode 100644
-index 00000000..a660d330
+index 0000000..a660d33
 --- /dev/null
 +++ b/testData/src/pkg/TestInvertedFloatComparison.java
 @@ -0,0 +1,68 @@
@@ -375,5 +375,5 @@ index 00000000..a660d330
 +}
 \ No newline at end of file
 -- 
-2.26.2
+2.27.0.windows.1
 

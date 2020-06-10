@@ -1,11 +1,11 @@
-From 4a4919b41b7a8b5ad83926527ae999d4d892d545 Mon Sep 17 00:00:00 2001
+From be8eff3142ba99adcf0fcdfdbe37afd330402045 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index ba039e6c..217a73b7 100644
+index ba039e6..217a73b 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -270,7 +270,7 @@ z<BWBrM`IJ2QGxr6yLz()p0~umT@n;j{=*u$vbHW9HKC}}7M?_C9O+7)J(-o9N<PN2
 GhW!C-@ghk8
 
 diff --git a/testData/results/TestClashName.dec b/testData/results/TestClashName.dec
-index 2a9a7315..43348ea6 100644
+index 2a9a731..43348ea 100644
 --- a/testData/results/TestClashName.dec
 +++ b/testData/results/TestClashName.dec
 @@ -7,25 +7,14 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
@@ -397,7 +397,7 @@ index 2a9a7315..43348ea6 100644
 +78 <-> 26
 +82 <-> 30
 diff --git a/testData/results/TestClassFields.dec b/testData/results/TestClassFields.dec
-index ea272ead..852ae473 100644
+index ea272ea..852ae47 100644
 --- a/testData/results/TestClassFields.dec
 +++ b/testData/results/TestClassFields.dec
 @@ -3,16 +3,14 @@ package pkg;
@@ -444,7 +444,7 @@ index ea272ead..852ae473 100644
 +9
 +16
 diff --git a/testData/src/pkg/TestClassFields.java b/testData/src/pkg/TestClassFields.java
-index 8a77fe00..6e31d5c7 100644
+index 8a77fe0..6e31d5c 100644
 --- a/testData/src/pkg/TestClassFields.java
 +++ b/testData/src/pkg/TestClassFields.java
 @@ -2,19 +2,17 @@ package pkg;
@@ -471,5 +471,5 @@ index 8a77fe00..6e31d5c7 100644
  }
 \ No newline at end of file
 -- 
-2.26.2
+2.27.0.windows.1
 

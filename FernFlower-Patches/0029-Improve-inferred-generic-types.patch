@@ -1,11 +1,11 @@
-From b48d390e6d6b493e639e1124b08cbae6dad51120 Mon Sep 17 00:00:00 2001
+From dfae1c0707660376cdb80c8c82e8d3eb97099a6f Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index d91d9fae..01b9cef3 100644
+index d91d9fa..01b9cef 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
@@ -25,7 +25,7 @@ index d91d9fae..01b9cef3 100644
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
-index bf5ff143..9fd3f054 100644
+index bf5ff14..9fd3f05 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 @@ -42,6 +42,17 @@ public class ArrayExprent extends Exprent {
@@ -47,7 +47,7 @@ index bf5ff143..9fd3f054 100644
    public int getExprentUse() {
      return array.getExprentUse() & index.getExprentUse() & Exprent.MULTIPLE_USES;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 4bd94d9f..6ed64f77 100644
+index 4bd94d9..6ed64f7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -72,7 +72,7 @@ index 4bd94d9f..6ed64f77 100644
  
    private static VarType guessType(int val, boolean boolPermitted) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 721e4c6e..b0ba319a 100644
+index 721e4c6..b0ba319 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -54,6 +54,8 @@ public abstract class Exprent implements IMatchable {
@@ -181,7 +181,7 @@ index 721e4c6e..b0ba319a 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 8d0c8514..6cbad4a1 100644
+index 8d0c851..6cbad4a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
@@ -231,7 +231,7 @@ index 8d0c8514..6cbad4a1 100644
  
      return getExprType();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index d15b8588..f30fdf0e 100644
+index d15b858..f30fdf0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -342,6 +342,11 @@ public class FunctionExprent extends Exprent {
@@ -264,7 +264,7 @@ index d15b8588..f30fdf0e 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index cac37d5a..cf6e7a51 100644
+index fded2f8..e0c13c7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -631,7 +631,7 @@ index cac37d5a..cf6e7a51 100644
      boolean isEnum = false;
      if (functype == TYP_INIT) {
 @@ -400,28 +647,6 @@ public class InvocationExprent extends Exprent {
-     StructClass currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE)).classStruct;
+     ClassNode currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
 -    StructMethod desc = null;
@@ -908,7 +908,7 @@ index cac37d5a..cf6e7a51 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstParameters);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index bf254b8d..9290b94f 100644
+index bf254b8..9290b94 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -5,7 +5,16 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -1381,7 +1381,7 @@ index bf254b8d..9290b94f 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 1b5e6696..14cc12c4 100644
+index b681b11..e30acc8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -1418,7 +1418,7 @@ index 1b5e6696..14cc12c4 100644
  
      if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 6729ac6f..868ccb52 100644
+index 6729ac6..868ccb5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -18,9 +18,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -1463,7 +1463,7 @@ index 6729ac6f..868ccb52 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 68cf2592..9226d9d8 100644
+index 68cf259..9226d9d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -210,6 +210,24 @@ public class StructContext {
@@ -1492,7 +1492,7 @@ index 68cf2592..9226d9d8 100644
      for (String line : string.split("\n")) {
        String[] pts = line.split(" ");
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index af6b8995..88bf2ef1 100644
+index af6b899..88bf2ef 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -423,8 +423,10 @@ public class VarType {  // TODO: optimize switch
@@ -1509,7 +1509,7 @@ index af6b8995..88bf2ef1 100644
      return this;
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index 13cca790..34d03ea9 100644
+index 13cca79..34d03ea 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -4,12 +4,16 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
@@ -1842,5 +1842,5 @@ index 13cca790..34d03ea9 100644
 +  }
  }
 -- 
-2.27.0
+2.27.0.windows.1
 

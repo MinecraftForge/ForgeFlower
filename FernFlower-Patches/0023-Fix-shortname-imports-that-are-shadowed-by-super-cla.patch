@@ -1,4 +1,4 @@
-From d62e05b5bcfbd5e5b4f30b500670c57fd642b8f2 Mon Sep 17 00:00:00 2001
+From 64a148b85727f2c23da782848cc2e00e6031705a Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 27 Jul 2018 14:02:27 -0700
 Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-index 7b8c3b45..30db0cdb 100644
+index 7b8c3b4..30db0cd 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 @@ -132,8 +132,28 @@ public class ImportCollector {
@@ -41,5 +41,5 @@ index 7b8c3b45..30db0cdb 100644
      if (existsDefaultClass ||
          (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
 -- 
-2.26.2
+2.27.0.windows.1
 
