@@ -1,4 +1,4 @@
-From bdb20d5c42423d86f88612ba4629f9b00d0f36b7 Mon Sep 17 00:00:00 2001
+From fd50a735ee4cef9dacff4bd808bca4b664d2567f Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Sun, 25 Aug 2019 18:02:16 -0700
 Subject: [PATCH] Improve stack var processor output
@@ -38,7 +38,7 @@ index 9942e12..7f80109 100644
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 767f6bdb..261756b9 100644
+index 767f6bd..261756b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 @@ -132,6 +132,11 @@ public class SimplifyExprentsHelper {
@@ -641,5 +641,5 @@ index 58eda68..fc10e17 100644
    }
  
 -- 
-2.27.0.windows.1
+2.27.0
 
