@@ -1,4 +1,4 @@
-From 64a148b85727f2c23da782848cc2e00e6031705a Mon Sep 17 00:00:00 2001
+From dadd7a8d9acb144e59bf8e1d37959d159bab0939 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 27 Jul 2018 14:02:27 -0700
 Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
@@ -6,10 +6,59 @@ Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-index 7b8c3b4..30db0cd 100644
+index 7b8c3b4..4ddb755 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-@@ -132,8 +132,28 @@ public class ImportCollector {
+@@ -20,7 +20,7 @@ public class ImportCollector {
+   private final Set<String> setNotImportedNames = new HashSet<>();
+   // set of field names in this class and all its predecessors.
+   private final Set<String> setFieldNames = new HashSet<>();
+-  private final Set<String> setInnerClassNames = new HashSet<>();
++  private final Map<String, Map<String, String>> mapInnerClassNames = new HashMap<>();
+   private final String currentPackageSlash;
+   private final String currentPackagePoint;
+ 
+@@ -38,36 +38,18 @@ public class ImportCollector {
+     }
+ 
+     Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
+-    LinkedList<String> queue = new LinkedList<>();
+     StructClass currentClass = root.classStruct;
+     while (currentClass != null) {
+-      if (currentClass.superClass != null) {
+-        queue.add(currentClass.superClass.getString());
+-      }
+-
+-      Collections.addAll(queue, currentClass.getInterfaceNames());
+-
+       // all field names for the current class ..
+       for (StructField f : currentClass.getFields()) {
+         setFieldNames.add(f.getName());
+       }
+ 
+-      // .. all inner classes for the current class ..
+-      StructInnerClassesAttribute attribute = currentClass.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
+-      if (attribute != null) {
+-        for (StructInnerClassesAttribute.Entry entry : attribute.getEntries()) {
+-          if (entry.enclosingName != null && entry.enclosingName.equals(currentClass.qualifiedName)) {
+-            setInnerClassNames.add(entry.simpleName);
+-          }
+-        }
+-      }
+-
+       // .. and traverse through parent.
+-      currentClass = !queue.isEmpty() ? classes.get(queue.removeFirst()) : null;
+-      while (currentClass == null && !queue.isEmpty()) {
+-        currentClass = classes.get(queue.removeFirst());
+-      }
++      currentClass = currentClass.superClass != null ? classes.get(currentClass.superClass.getString()) : null;
+     }
++
++    collectConflictingShortNames(root, new HashMap<>());
+   }
+ 
+   /**
+@@ -132,8 +114,31 @@ public class ImportCollector {
      // 3) inner class with the same short name in the current class, a super class, or an implemented interface
      boolean existsDefaultClass =
        (context.getClass(currentPackageSlash + shortName) != null && !packageName.equals(currentPackagePoint)) || // current package
@@ -17,7 +66,10 @@ index 7b8c3b4..30db0cd 100644
 -      setInnerClassNames.contains(shortName); // inner class
 +      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty());
 +
-+    if (!existsDefaultClass && setInnerClassNames.contains(shortName)) {
++    ClassNode currCls = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
++    String mapKey = currCls == null ? "" : currCls.classStruct.qualifiedName;
++    Map<String, String> innerClassNames = mapInnerClassNames.getOrDefault(mapKey, new HashMap<>());
++    if (!existsDefaultClass && innerClassNames.containsKey(shortName) && !innerClassNames.get(shortName).equals(fullName)) {
 +      // if the class being accessed is also an inner class
 +      // attempt to import the outer class and reference OuterClass.InnerClass
 +      if (context.getClass(packageName.replace('.', '/') + "$" + shortName) != null) {
@@ -27,7 +79,7 @@ index 7b8c3b4..30db0cd 100644
 +          shortName = packageName.substring(lastDot + 1);
 +          packageName = packageName.substring(0, lastDot);
 +
-+          if (setInnerClassNames.contains(result.replace('.', '$'))) {
++          if (innerClassNames.containsKey(shortName)  && !innerClassNames.get(shortName).equals(packageName + '.' + shortName)) {
 +            existsDefaultClass = true;
 +            result = null;
 +          }
@@ -40,6 +92,51 @@ index 7b8c3b4..30db0cd 100644
  
      if (existsDefaultClass ||
          (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
+@@ -181,4 +186,43 @@ public class ImportCollector {
+       .map(ent -> ent.getValue() + "." + ent.getKey())
+       .collect(Collectors.toList());
+   }
++
++  private void collectConflictingShortNames(ClassNode root, Map<String, String> rootNames) {
++    Map<String, String> names = new HashMap<>(rootNames);
++    getSuperClassInnerClasses(root, names);
++    mapInnerClassNames.put(root.classStruct.qualifiedName, names);
++
++    for (ClassNode nested : root.nested) {
++      collectConflictingShortNames(nested, names);
++    }
++  }
++
++  private void getSuperClassInnerClasses(ClassNode node, Map<String, String> names) {
++    Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
++    LinkedList<String> queue = new LinkedList<>();
++    StructClass currentClass = node.classStruct;
++    while (currentClass != null) {
++      if (currentClass.superClass != null) {
++        queue.add(currentClass.superClass.getString());
++      }
++
++      Collections.addAll(queue, currentClass.getInterfaceNames());
++
++      // .. all inner classes for the current class ..
++      StructInnerClassesAttribute attribute = currentClass.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
++      if (attribute != null) {
++        for (StructInnerClassesAttribute.Entry entry : attribute.getEntries()) {
++          if (entry.enclosingName != null && entry.enclosingName.equals(currentClass.qualifiedName)) {
++            names.put(entry.simpleName, entry.innerName.replace('/', '.').replace('$', '.'));
++          }
++        }
++      }
++
++      // .. and traverse through parent.
++      currentClass = !queue.isEmpty() ? classes.get(queue.removeFirst()) : null;
++      while (currentClass == null && !queue.isEmpty()) {
++        currentClass = classes.get(queue.removeFirst());
++      }
++    }
++  }
+ }
+\ No newline at end of file
 -- 
-2.27.0.windows.1
+2.27.0
 

@@ -1,4 +1,4 @@
-From af242ae227560e52473f6865a72843fa7eb17447 Mon Sep 17 00:00:00 2001
+From a66ecb7e8f5e2090fe1064a4e0c593fefe6dd936 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 10 Jun 2020 09:59:19 -0700
 Subject: [PATCH] Add -only argument It will filter what classes are decompiled
@@ -125,5 +125,5 @@ index 5393dde..2b6e9ed 100644
      try {
        engine.decompileContext();
 -- 
-2.27.0.windows.1
+2.27.0
 
