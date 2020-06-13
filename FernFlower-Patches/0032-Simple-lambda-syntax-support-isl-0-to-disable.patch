@@ -1,11 +1,11 @@
-From e8c8ba2d1464345fae9c35c81f9b7261177dfdd7 Mon Sep 17 00:00:00 2001
+From 2c308e9733d2a666bdfa13e3ab7b53f9f6ab8eb0 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 20 Dec 2019 08:35:30 -0700
 Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 69b1dc4..507df08 100644
+index 69b1dc4..58aaa9d 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -16,14 +16,15 @@ index 69b1dc4..507df08 100644
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-@@ -80,7 +81,14 @@ public class ClassWriter {
+@@ -80,7 +81,15 @@ public class ClassWriter {
        if (node.lambdaInformation.is_method_reference) {
          if (!node.lambdaInformation.is_content_method_static && method_object != null) {
            // reference to a virtual method
 -          buffer.append(method_object.toJava(indent, tracer));
++          method_object.getInferredExprType(new VarType(CodeConstants.TYPE_OBJECT, 0, node.lambdaInformation.content_class_name));
 +          String instance = method_object.toJava(indent, tracer).toString();
 +          // If the instance is casted, then we need to wrap it
-+          if (!instance.isEmpty() && instance.charAt(0) == '(' && instance.charAt(instance.length() - 1) != ')') {
++          if (method_object.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent)method_object).getFuncType() == FunctionExprent.FUNCTION_CAST && ((FunctionExprent)method_object).doesCast()) {
 +            buffer.append('(').append(instance).append(')');
 +          }
 +          else {
@@ -32,7 +33,7 @@ index 69b1dc4..507df08 100644
          }
          else {
            // reference to a static method
-@@ -97,6 +105,8 @@ public class ClassWriter {
+@@ -97,6 +106,8 @@ public class ClassWriter {
          MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
          MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
  
@@ -41,7 +42,7 @@ index 69b1dc4..507df08 100644
          if (!lambdaToAnonymous) {
            buffer.append('(');
  
-@@ -120,16 +130,60 @@ public class ClassWriter {
+@@ -120,16 +131,60 @@ public class ClassWriter {
            }
  
            buffer.append(") ->");
