@@ -1,4 +1,4 @@
-From efb4e027d9b34d19833af03123bdaeac7a52501f Mon Sep 17 00:00:00 2001
+From 37c7c6b96429f8614cbec7b8e83f9e3fdb9cdf9e Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -1904,10 +1904,10 @@ index f9a149f..d4ccb5e 100644
  
      lst.add(first);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index 46acf01..771196f 100644
+index 74f44c0..b2455f2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-@@ -803,6 +803,14 @@ public class Statement implements IMatchable {
+@@ -807,6 +807,14 @@ public class Statement implements IMatchable {
      this.parent = parent;
    }
  
@@ -1922,7 +1922,7 @@ index 46acf01..771196f 100644
    public HashSet<StatEdge> getLabelEdges() {  // FIXME: why HashSet?
      return labelEdges;
    }
-@@ -829,7 +837,7 @@ public class Statement implements IMatchable {
+@@ -833,7 +841,7 @@ public class Statement implements IMatchable {
  
    // helper methods
    public String toString() {

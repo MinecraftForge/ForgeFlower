@@ -1,4 +1,4 @@
-From d52d2cd717ec0a8b04ee498e177e4c1fb2244dd6 Mon Sep 17 00:00:00 2001
+From e71c9130f4276fb341bd400e6d222df1923be6e6 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 15:18:38 -0700
 Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
@@ -611,7 +611,7 @@ index b3cc07d..61b29a8 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index e55b0ab..57160b3 100644
+index 0994d94..7183241 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -16,7 +16,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
@@ -641,7 +641,7 @@ index e55b0ab..57160b3 100644
  
    public Exprent(int type) {
      this.type = type;
-@@ -119,14 +119,31 @@ public class Exprent implements IMatchable {
+@@ -123,14 +123,31 @@ public class Exprent implements IMatchable {
  
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
  
@@ -1144,7 +1144,7 @@ index 61eca33..8649444 100644
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index b5e8213..46acf01 100644
+index b905da5..74f44c0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
@@ -1155,7 +1155,7 @@ index b5e8213..46acf01 100644
  import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
  import java.util.*;
-@@ -831,6 +832,40 @@ public class Statement implements IMatchable {
+@@ -835,6 +836,40 @@ public class Statement implements IMatchable {
      return id.toString();
    }
  

@@ -1,4 +1,4 @@
-From dfae1c0707660376cdb80c8c82e8d3eb97099a6f Mon Sep 17 00:00:00 2001
+From f4390084f7933ac9ad2dbef73b05c41260ca665a Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -72,7 +72,7 @@ index 4bd94d9..6ed64f7 100644
  
    private static VarType guessType(int val, boolean boolPermitted) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 721e4c6..b0ba319 100644
+index 58c3471..09cbfdc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -54,6 +54,8 @@ public abstract class Exprent implements IMatchable {
@@ -84,7 +84,7 @@ index 721e4c6..b0ba319 100644
    public final int type;
    public final int id;
    public BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
-@@ -194,30 +196,26 @@ public abstract class Exprent implements IMatchable {
+@@ -198,30 +200,26 @@ public abstract class Exprent implements IMatchable {
        return ret;
      }
  
@@ -131,7 +131,7 @@ index 721e4c6..b0ba319 100644
    }
  
    protected void appendParameters(TextBuffer buf, List<VarType> genericArgs) {
-@@ -240,22 +238,27 @@ public abstract class Exprent implements IMatchable {
+@@ -244,22 +242,27 @@ public abstract class Exprent implements IMatchable {
      ClassNode class_ = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
  
@@ -171,7 +171,7 @@ index 721e4c6..b0ba319 100644
      return ret;
    }
  
-@@ -307,6 +310,8 @@ public abstract class Exprent implements IMatchable {
+@@ -311,6 +314,8 @@ public abstract class Exprent implements IMatchable {
      buf.prepend("(" + ExprProcessor.getCastTypeName(left) + ")");
    }
  
@@ -264,7 +264,7 @@ index d15b858..f30fdf0 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index fded2f8..e0c13c7 100644
+index fded2f8..e855a1a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -284,7 +284,7 @@ index fded2f8..e0c13c7 100644
    private boolean forceBoxing = false;
    private boolean isSyntheticGetClass = false;
  
-@@ -172,45 +175,270 @@ public class InvocationExprent extends Exprent {
+@@ -172,45 +175,272 @@ public class InvocationExprent extends Exprent {
  
    @Override
    public VarType getInferredExprType(VarType upperBound) {
@@ -415,7 +415,7 @@ index fded2f8..e0c13c7 100644
 +              tempMap.forEach((from, to) -> {
 +                if (!fparams.contains(from.value)) {
 +                  processGenericMapping(from, to, named, bounds);
-+                }
+                 }
 +              });
 +              tempMap.clear();
 +            }
@@ -426,14 +426,16 @@ index fded2f8..e0c13c7 100644
 +        if (upperBound == null && isGenNew) {
 +          ClassNode currentCls = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
 +
-+          if (mthCls.equals(currentCls.classStruct)) {
-+            mthCls.getSignature().genericType.getAllGenericVars().forEach(var -> genericsMap.put(var, var));
-+          }
-+          else {
-+            Map<String, Map<VarType, VarType>> hierarchy = currentCls.classStruct.getAllGenerics();
-+            if (hierarchy.containsKey(mthCls.qualifiedName)) {
-+              hierarchy.get(mthCls.qualifiedName).forEach(genericsMap::put);
++          if (currentCls != null) {
++            if (mthCls.equals(currentCls.classStruct)) {
++              mthCls.getSignature().genericType.getAllGenericVars().forEach(var -> genericsMap.put(var, var));
 +            }
++            else {
++              Map<String, Map<VarType, VarType>> hierarchy = currentCls.classStruct.getAllGenerics();
++              if (hierarchy.containsKey(mthCls.qualifiedName)) {
++                hierarchy.get(mthCls.qualifiedName).forEach(genericsMap::put);
+               }
+             }
 +          }
 +        }
 +
@@ -444,7 +446,9 @@ index fded2f8..e0c13c7 100644
 +            }
 +          });
 +        }
-+
+ 
+-            if (!map.isEmpty()) {
+-              ret = ret.remap(map);
 +        Set<VarType> paramGenerics = new HashSet<>();
 +        if (!lstParameters.isEmpty() && desc.getSignature() != null) {
 +          List<VarVersionPair> mask = null;
@@ -507,20 +511,22 @@ index fded2f8..e0c13c7 100644
 +                  }
 +                  paramGenerics.add(paramType);
 +                  processGenericMapping(paramType, argtype, named, bounds);
-                 }
-               }
++                }
++              }
              }
-+          }
-+        }
-+
+           }
+         }
+-      }
+ 
+-      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
+-      if (desc.getSignature().returnType != _new) {
+-        return _new;
 +        upperBoundsMap.forEach((k, v) -> {
 +          if (fparams.contains(k.value) && !GenericType.DUMMY_VAR.equals(v)) {
 +            processGenericMapping(k, v ,named, bounds);
 +          }
 +        });
- 
--            if (!map.isEmpty()) {
--              ret = ret.remap(map);
++
 +        if (!genericsMap.isEmpty()) {
 +          VarType newRet = ret.remap(hierarchyMap);
 +
@@ -531,8 +537,8 @@ index fded2f8..e0c13c7 100644
 +                skipArgs = false;
 +                break;
 +              }
-             }
-           }
++            }
++          }
 +
 +          newRet = newRet.remap(genericsMap);
 +          if (newRet == null) {
@@ -565,19 +571,15 @@ index fded2f8..e0c13c7 100644
 +          if (newRet != ret && !(newRet.isGeneric() && ((GenericType)newRet).hasUnknownGenericType(named.keySet()))) {
 +            return newRet;
 +          }
-         }
--      }
- 
--      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
--      if (desc.getSignature().returnType != _new) {
--        return _new;
++        }
++
 +        if (ret.isGeneric() && ((GenericType)ret).getAllGenericVars().isEmpty()) {
 +          return ret;
 +        }
        }
      }
  
-@@ -313,6 +541,19 @@ public class InvocationExprent extends Exprent {
+@@ -313,6 +543,19 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
@@ -597,7 +599,7 @@ index fded2f8..e0c13c7 100644
            if (isUnboxingCall()) {
              // we don't print the unboxing call - no need to bother with the instance wrapping / casting
              if (instance.type == Exprent.EXPRENT_FUNCTION) {
-@@ -331,8 +572,8 @@ public class InvocationExprent extends Exprent {
+@@ -331,8 +574,8 @@ public class InvocationExprent extends Exprent {
  
            TextBuffer res = instance.toJava(indent, tracer);
  
@@ -608,7 +610,7 @@ index fded2f8..e0c13c7 100644
  
            if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
              buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
-@@ -342,7 +583,7 @@ public class InvocationExprent extends Exprent {
+@@ -342,7 +585,7 @@ public class InvocationExprent extends Exprent {
              }
              buf.append(res).append(")");
            }
@@ -617,7 +619,7 @@ index fded2f8..e0c13c7 100644
              buf.append("(").append(res).append(")");
            }
            else {
-@@ -388,6 +629,12 @@ public class InvocationExprent extends Exprent {
+@@ -388,6 +631,12 @@ public class InvocationExprent extends Exprent {
          }
      }
  
@@ -630,7 +632,7 @@ index fded2f8..e0c13c7 100644
      List<VarVersionPair> mask = null;
      boolean isEnum = false;
      if (functype == TYP_INIT) {
-@@ -400,28 +647,6 @@ public class InvocationExprent extends Exprent {
+@@ -400,28 +649,6 @@ public class InvocationExprent extends Exprent {
      ClassNode currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
@@ -659,7 +661,7 @@ index fded2f8..e0c13c7 100644
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -485,20 +710,32 @@ public class InvocationExprent extends Exprent {
+@@ -485,20 +712,32 @@ public class InvocationExprent extends Exprent {
  
      }
  
@@ -705,7 +707,7 @@ index fded2f8..e0c13c7 100644
      }
  
  
-@@ -536,6 +773,10 @@ public class InvocationExprent extends Exprent {
+@@ -536,6 +775,10 @@ public class InvocationExprent extends Exprent {
          }
          */
  
@@ -716,7 +718,7 @@ index fded2f8..e0c13c7 100644
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(lstParameters.get(i), types[i], buff, indent, true, ambiguous, true, true, tracer);
  
-@@ -551,8 +792,6 @@ public class InvocationExprent extends Exprent {
+@@ -551,8 +794,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -725,7 +727,7 @@ index fded2f8..e0c13c7 100644
      return buf;
    }
  
-@@ -840,6 +1079,162 @@ public class InvocationExprent extends Exprent {
+@@ -840,6 +1081,162 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -888,7 +890,7 @@ index fded2f8..e0c13c7 100644
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -952,6 +1347,18 @@ public class InvocationExprent extends Exprent {
+@@ -952,6 +1349,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticGetClass;
    }
  

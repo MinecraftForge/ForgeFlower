@@ -1,4 +1,4 @@
-From 770b9b95c5a5b89cea7dfbbc43a25404919e17c6 Mon Sep 17 00:00:00 2001
+From b915d42cb67efdb4eb5d3df09b93629cec07db28 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -642,7 +642,7 @@ index 61b29a8..996eb3c 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, value);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 57160b3..95092b0 100644
+index 7183241..4aeda0e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -3,13 +3,21 @@
@@ -690,7 +690,7 @@ index 57160b3..95092b0 100644
    public int getExprentUse() {
      return 0;
    }
-@@ -178,7 +193,120 @@ public abstract class Exprent implements IMatchable {
+@@ -182,7 +197,120 @@ public abstract class Exprent implements IMatchable {
        }
        return ret;
      }

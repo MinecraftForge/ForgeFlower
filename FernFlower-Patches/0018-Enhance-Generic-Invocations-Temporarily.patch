@@ -1,4 +1,4 @@
-From 6394495e864972c85c74d8e11a9ce45abdbfde1c Mon Sep 17 00:00:00 2001
+From 893e1e6fb3798cffacf847abec2b1617897698fa Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -6,10 +6,10 @@ Subject: [PATCH] Enhance Generic Invocations Temporarily.
 This is a temp separate patch until I get some time to merge it to patch 10/13.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 95092b0..721e4c6 100644
+index 4aeda0e..58c3471 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-@@ -262,11 +262,11 @@ public abstract class Exprent implements IMatchable {
+@@ -266,11 +266,11 @@ public abstract class Exprent implements IMatchable {
    protected void wrapInCast(VarType left, VarType right, TextBuffer buf, int precedence) {
      boolean needsCast = !left.isSuperset(right) && (right.equals(VarType.VARTYPE_OBJECT) || left.type != CodeConstants.TYPE_OBJECT);
  

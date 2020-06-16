@@ -1,9 +1,39 @@
-From 656bb1413252842e232fae9013910c3562f143f0 Mon Sep 17 00:00:00 2001
+From 8501ffc3202fcefbf1aee705eff430d4cf34b1d8 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 23:18:58 -0700
 Subject: [PATCH] Test Framework upgrades
 
 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index bb303e8..cc1f537 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -110,6 +110,10 @@ public class Exprent implements IMatchable {
+     throw new RuntimeException("not implemented");
+   }
+ 
++  public TextBuffer toJava() {
++    return toJava(0, BytecodeMappingTracer.DUMMY);
++  }
++
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+     throw new RuntimeException("not implemented");
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
+index b5e8213..b905da5 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
+@@ -469,6 +469,10 @@ public class Statement implements IMatchable {
+     return false;
+   }
+ 
++  public TextBuffer toJava() {
++    return toJava(0, BytecodeMappingTracer.DUMMY);
++  }
++
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+     throw new RuntimeException("not implemented");
+   }
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 index 4c5641f..7d29c19 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java

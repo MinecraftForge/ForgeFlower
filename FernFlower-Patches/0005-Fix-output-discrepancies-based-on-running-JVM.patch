@@ -1,4 +1,4 @@
-From 18f7aad82a2e684c309f3dd8282407a4b1ea16f8 Mon Sep 17 00:00:00 2001
+From 9196954728e53471d9914f8d4dbeac31fba9f477 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:08:10 -0700
 Subject: [PATCH] Fix output discrepancies based on running JVM
@@ -327,7 +327,7 @@ index 9fa5812..691d613 100644
    public boolean isNull() {
      return CodeConstants.TYPE_NULL == constType.type;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index bb303e8..e55b0ab 100644
+index cc1f537..0994d94 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -15,7 +15,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -341,7 +341,7 @@ index bb303e8..e55b0ab 100644
  import java.util.HashSet;
  import java.util.List;
  import java.util.Map.Entry;
-@@ -127,6 +130,38 @@ public class Exprent implements IMatchable {
+@@ -131,6 +134,38 @@ public class Exprent implements IMatchable {
      }
    }
  
