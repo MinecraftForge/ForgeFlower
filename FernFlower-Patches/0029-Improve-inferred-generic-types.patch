@@ -1,4 +1,4 @@
-From f4390084f7933ac9ad2dbef73b05c41260ca665a Mon Sep 17 00:00:00 2001
+From 1be9c093784ec082fd073bd5f61148340d68cb31 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -181,7 +181,7 @@ index 58c3471..09cbfdc 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 8d0c851..6cbad4a 100644
+index 880a5d2..5143f83 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
@@ -200,7 +200,7 @@ index 8d0c851..6cbad4a 100644
  import java.util.List;
  import java.util.Map;
  
-@@ -70,7 +72,28 @@ public class FieldExprent extends Exprent {
+@@ -76,7 +78,28 @@ public class FieldExprent extends Exprent {
      }
  
      if (ft != null && ft.getSignature() != null) {

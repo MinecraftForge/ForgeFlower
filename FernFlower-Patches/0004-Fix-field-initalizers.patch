@@ -1,11 +1,11 @@
-From be8eff3142ba99adcf0fcdfdbe37afd330402045 Mon Sep 17 00:00:00 2001
+From 89cd2b7f01d21647b587708c76fb3a20cc98587c Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index ba039e6..217a73b 100644
+index ba039e6..0bfe8ad 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -52,14 +52,14 @@ index ba039e6..217a73b 100644
  
          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
            AssignmentExprent assignExpr = (AssignmentExprent)exprent;
-@@ -165,22 +174,50 @@ public class InitializerProcessor {
+@@ -165,21 +174,49 @@ public class InitializerProcessor {
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
  
                // interfaces fields should always be initialized inline
 -              if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method)) {
 -                String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
 +              String keyField = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
-+              boolean exprentIndependent = isExprentIndependent(assignExpr.getRight(), method, cl, whitelist, cl.getFields().getIndexByKey(keyField));
++              boolean exprentIndependent = isExprentIndependent(assignExpr.getRight(), method, cl, whitelist, cl.getFields().getIndexByKey(keyField), true);
 +              if (inlineInitializers || exprentIndependent) {
                  if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
 -                  wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
@@ -98,20 +98,19 @@ index ba039e6..217a73b 100644
 +              DecompilerContext.getLogger().writeMessage("Left isnt VarExprent :(", IFernflowerLogger.Severity.ERROR);
 +            }
            }
--        }
--
--        if (!found) {
--          break;
 +        } else if (inlineInitializers && cl.hasModifier(CodeConstants.ACC_INTERFACE)){
 +          DecompilerContext.getLogger().writeMessage("Non assignment found in initialiser when we're needing to inline all", IFernflowerLogger.Severity.ERROR);
          }
-       }
+-
+-        if (!found) {
+-          break;
+-        }
++      }
 +      if (exprentsToRemove.size() > 0){
 +        firstData.getExprents().removeAll(exprentsToRemove);
-+      }
+       }
      }
    }
- 
 @@ -196,18 +233,18 @@ public class InitializerProcessor {
        if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
          Statement firstData = Statements.findFirstData(method.root);
@@ -153,7 +152,7 @@ index ba039e6..217a73b 100644
 -                String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
 +              String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
 +              int fidx = cl.getFields().getIndexByKey(fieldKey);
-+              if (prev_fidx <= fidx && isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i), cl, whitelist, fidx)) {
++              if (prev_fidx <= fidx && isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i), cl, whitelist, fidx, false)) {
 +                prev_fidx = fidx;
                  if (fieldWithDescr == null) {
                    fieldWithDescr = fieldKey;
@@ -171,11 +170,11 @@ index ba039e6..217a73b 100644
    }
  
 -  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper method) {
-+  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper method, StructClass cl, Set<String> whitelist, int fidx) {
++  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper method, StructClass cl, Set<String> whitelist, int fidx, boolean isStatic) {
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
  
-@@ -289,10 +332,62 @@ public class InitializerProcessor {
+@@ -289,10 +332,71 @@ public class InitializerProcessor {
            }
            break;
          case Exprent.EXPRENT_FIELD:
@@ -183,10 +182,19 @@ index ba039e6..217a73b 100644
 +          FieldExprent fexpr = (FieldExprent)expr;
 +          if (cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) {
 +            String key = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
-+            if (!whitelist.contains(key)) {
-+              return false;
-+            } else if (cl.getFields().getIndexByKey(key) > fidx) {
++            if (isStatic) {
++              // There is a very stupid section of the JLS
++              if (!fexpr.isStatic()) {
 +                return false;
++              } else if (cl.getFields().getIndexByKey(key) >= fidx) {
++                fexpr.forceQualified(true);
++              }
++            } else {
++              if (!whitelist.contains(key)) {
++                return false;
++              } else if (cl.getFields().getIndexByKey(key) > fidx) {
++                return false;
++              }
 +            }
 +          }
 +          else if (!fexpr.isStatic() && fexpr.getInstance() == null) {
@@ -239,6 +247,55 @@ index ba039e6..217a73b 100644
 +    return true;
 +  }
  }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+index 642a86b..c79f1a6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+@@ -31,18 +31,24 @@ public class FieldExprent extends Exprent {
+   private final boolean isStatic;
+   private Exprent instance;
+   private final FieldDescriptor descriptor;
++  private boolean forceQualified = false;
+ 
+   public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
+     this(cn.elementname, cn.classname, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
+   }
+ 
+   public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
++    this(name, classname, isStatic, instance, descriptor, bytecodeOffsets, false);
++  }
++
++  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets, boolean forceQualified) {
+     super(EXPRENT_FIELD);
+     this.name = name;
+     this.classname = classname;
+     this.isStatic = isStatic;
+     this.instance = instance;
+     this.descriptor = descriptor;
++    this.forceQualified = forceQualified;
+ 
+     addBytecodeOffsets(bytecodeOffsets);
+   }
+@@ -89,7 +95,7 @@ public class FieldExprent extends Exprent {
+ 
+     if (isStatic) {
+       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+-      if (node == null || !classname.equals(node.classStruct.qualifiedName) || isAmbiguous()) {
++      if (node == null || !classname.equals(node.classStruct.qualifiedName) || isAmbiguous() || forceQualified) {
+         buf.append(DecompilerContext.getImportCollector().getShortNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
+         buf.append(".");
+       }
+@@ -185,6 +191,10 @@ public class FieldExprent extends Exprent {
+     return name;
+   }
+ 
++  public void forceQualified(boolean value) {
++    this.forceQualified = value;
++  }
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
 diff --git a/testData/classes/pkg/TestClassFields$Inner.class b/testData/classes/pkg/TestClassFields$Inner.class
 index 1c16a7e3b3a72a2d00987cd024702775f328a0ae..996ad8e2d4dcbd470e913ca7707356a1f5b0664b 100644
 GIT binary patch

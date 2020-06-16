@@ -1,4 +1,4 @@
-From e71c9130f4276fb341bd400e6d222df1923be6e6 Mon Sep 17 00:00:00 2001
+From c1a8e1becde30b672d737f5103966bf258692fc2 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 15:18:38 -0700
 Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
@@ -680,7 +680,7 @@ index 0994d94..7183241 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 642a86b..1ea8f72 100644
+index c79f1a6..45b9f87 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -22,8 +22,8 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -693,9 +693,9 @@ index 642a86b..1ea8f72 100644
  
  public class FieldExprent extends Exprent {
    private final String name;
-@@ -32,11 +32,11 @@ public class FieldExprent extends Exprent {
-   private Exprent instance;
+@@ -33,15 +33,15 @@ public class FieldExprent extends Exprent {
    private final FieldDescriptor descriptor;
+   private boolean forceQualified = false;
  
 -  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
 +  public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
@@ -704,11 +704,16 @@ index 642a86b..1ea8f72 100644
  
 -  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
 +  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets) {
+     this(name, classname, isStatic, instance, descriptor, bytecodeOffsets, false);
+   }
+ 
+-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets, boolean forceQualified) {
++  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets, boolean forceQualified) {
      super(EXPRENT_FIELD);
      this.name = name;
      this.classname = classname;
-@@ -185,6 +185,12 @@ public class FieldExprent extends Exprent {
-     return name;
+@@ -195,6 +195,12 @@ public class FieldExprent extends Exprent {
+     this.forceQualified = value;
    }
  
 +  @Override
@@ -716,7 +721,7 @@ index 642a86b..1ea8f72 100644
 +    measureBytecode(values, instance);
 +    measureBytecode(values);
 +  }
-+  
++
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************

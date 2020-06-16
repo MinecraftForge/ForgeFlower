@@ -1,4 +1,4 @@
-From b915d42cb67efdb4eb5d3df09b93629cec07db28 Mon Sep 17 00:00:00 2001
+From a94fee2fa9065388f1dd73289c22fdb825798b17 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -813,7 +813,7 @@ index 7183241..4aeda0e 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 1ea8f72..8d0c851 100644
+index 45b9f87..880a5d2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -10,6 +10,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -835,7 +835,7 @@ index 1ea8f72..8d0c851 100644
  
  public class FieldExprent extends Exprent {
    private final String name;
-@@ -52,6 +56,26 @@ public class FieldExprent extends Exprent {
+@@ -58,6 +62,26 @@ public class FieldExprent extends Exprent {
      return descriptor.type;
    }
  
@@ -862,16 +862,7 @@ index 1ea8f72..8d0c851 100644
    @Override
    public int getExprentUse() {
      return 0; // multiple references to a field considered dangerous in a multithreaded environment, thus no Exprent.MULTIPLE_USES set here
-@@ -190,7 +214,7 @@ public class FieldExprent extends Exprent {
-     measureBytecode(values, instance);
-     measureBytecode(values);
-   }
--  
-+
-   // *****************************************************************************
-   // IMatchable implementation
-   // *****************************************************************************
-@@ -213,4 +237,4 @@ public class FieldExprent extends Exprent {
+@@ -223,4 +247,4 @@ public class FieldExprent extends Exprent {
  
      return true;
    }
