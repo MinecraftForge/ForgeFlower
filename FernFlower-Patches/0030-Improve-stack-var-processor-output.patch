@@ -1,4 +1,4 @@
-From 5468f3815f232f8e86ca7c09517c6462b845155b Mon Sep 17 00:00:00 2001
+From 63f17f4720350338c77aa4edb247e0dc23e45737 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Sun, 25 Aug 2019 18:02:16 -0700
 Subject: [PATCH] Improve stack var processor output
@@ -484,7 +484,7 @@ index 3607a8d..58169c2 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index df5b25e..6fc328f 100644
+index 8574fe2..1b1d911 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
@@ -503,7 +503,7 @@ index df5b25e..6fc328f 100644
    }
  
  
-@@ -1112,4 +1114,79 @@ public class VarDefinitionHelper {
+@@ -1124,4 +1126,79 @@ public class VarDefinitionHelper {
      }
      return false;
    }

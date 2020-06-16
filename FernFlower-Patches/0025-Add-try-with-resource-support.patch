@@ -1,4 +1,4 @@
-From 248f0b410bce2414ff62bbcf3fb78e006d461af0 Mon Sep 17 00:00:00 2001
+From dfd5ecd8afb1faafc6abd35500cb5c7f9be33e01 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Mon, 6 Aug 2018 20:26:59 -0700
 Subject: [PATCH] Add try with resource support
@@ -429,7 +429,7 @@ index 5582b37..5ca1605 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 045f85d..df5b25e 100644
+index 06d6cba..8574fe2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -110,7 +110,11 @@ public class VarDefinitionHelper {

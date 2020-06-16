@@ -1,4 +1,4 @@
-From e29bbbedb7a9240951723f8feaf6305e96f580e8 Mon Sep 17 00:00:00 2001
+From 2e58f4ec3e52394fb6d0b215e6aca449ebb22a35 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
@@ -302,7 +302,7 @@ index 58bf515..9942e12 100644
            int index = 0, varIndex = 1;
            MethodDescriptor md = MethodDescriptor.parseDescriptor(method.methodStruct.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index d5a6978..045f85d 100644
+index 89f1c97..06d6cba 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,6 +2,7 @@
@@ -333,7 +333,7 @@ index d5a6978..045f85d 100644
  import java.util.Map.Entry;
 @@ -848,6 +852,44 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-       typeNames.put(e.getKey(), e.getValue().typeName());
+       typeNames.put(e.getKey(), e.getValue().getCast());
      }
 +
 +    Map<VarVersionPair, String> renames = this.mt.getVariableNamer().rename(typeNames);
@@ -379,7 +379,7 @@ index d5a6978..045f85d 100644
 @@ -857,7 +899,16 @@ public class VarDefinitionHelper {
          continue;
        }
-       LocalVariable lvt = e.getValue().lvt;
+       LocalVariable lvt = e.getValue().getLVT();
 +      String rename = renames == null ? null : renames.get(idx);
 +
 +      if (rename != null) {
@@ -393,15 +393,15 @@ index d5a6978..045f85d 100644
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -984,7 +1035,7 @@ public class VarDefinitionHelper {
-     String cast;
+@@ -991,7 +1042,7 @@ public class VarDefinitionHelper {
+ 
      private VarInfo(LocalVariable lvt, VarType type) {
-       if (lvt != null && lvt.getSignature() != null) {
--        cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()));
-+        cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), false);
-       }
-       else if (lvt != null) {
-         cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
+       if (lvt != null && lvt.getSignature() != null)
+-        this.cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), true);
++        this.cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), false);
+       else if (lvt != null)
+         this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
+       else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 index cd9ac7e..195e8d5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java

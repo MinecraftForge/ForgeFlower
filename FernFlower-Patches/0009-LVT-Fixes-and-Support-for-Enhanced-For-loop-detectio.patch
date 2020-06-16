@@ -1,4 +1,4 @@
-From 37c7c6b96429f8614cbec7b8e83f9e3fdb9cdf9e Mon Sep 17 00:00:00 2001
+From a9be4697c9357fc04432fb0e9c82165a75721fc4 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
@@ -1932,7 +1932,7 @@ index 74f44c0..b2455f2 100644
  
    //TODO: Cleanup/cache?
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 0402097..ab5c63b 100644
+index 0402097..fa326a4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -4,16 +4,26 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -2126,7 +2126,7 @@ index 0402097..ab5c63b 100644
      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
        Exprent left = ((AssignmentExprent)expr).getLeft();
        if (left.type == Exprent.EXPRENT_VAR) {
-@@ -337,4 +413,648 @@ public class VarDefinitionHelper {
+@@ -337,4 +413,660 @@ public class VarDefinitionHelper {
      }
      return false;
    }
@@ -2563,7 +2563,7 @@ index 0402097..ab5c63b 100644
 +
 +    Map<VarVersionPair,String> typeNames = new LinkedHashMap<VarVersionPair,String>();
 +    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-+      typeNames.put(e.getKey(), e.getValue().typeName());
++      typeNames.put(e.getKey(), e.getValue().getCast());
 +    }
 +    Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
 +
@@ -2573,7 +2573,7 @@ index 0402097..ab5c63b 100644
 +      if (idx.var == 0 && !mt.hasModifier(CodeConstants.ACC_STATIC)) {
 +        continue;
 +      }
-+      LocalVariable lvt = e.getValue().lvt;
++      LocalVariable lvt = e.getValue().getLVT();
 +      if (lvt != null) {
 +        varproc.setVarLVT(idx, lvt);
 +        lvts.put(idx, lvt);
@@ -2620,9 +2620,13 @@ index 0402097..ab5c63b 100644
 +        VarVersionPair ver = new VarVersionPair(var);
 +        if (var.isDefinition()) {
 +          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
-+        }
-+        else if (!types.containsKey(ver)) {
-+          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
++        } else {
++          VarInfo existing = types.get(ver);
++          if (existing == null)
++            existing = new VarInfo(var.getLVT(), var.getVarType());
++          else if (existing.getLVT() == null && var.getLVT() != null)
++            existing = new VarInfo(var.getLVT(), existing.getType());
++          types.put(ver, existing);
 +        }
 +      }
 +    }
@@ -2696,27 +2700,35 @@ index 0402097..ab5c63b 100644
 +        super(new VarVersionPair(key), value);
 +    }
 +  }
++
 +  private static class VarInfo {
-+    LocalVariable lvt;
-+    String cast;
++    private LocalVariable lvt;
++    private String cast;
++    private VarType type;
++
 +    private VarInfo(LocalVariable lvt, VarType type) {
-+      if (lvt != null && lvt.getSignature() != null) {
-+        cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()));
-+      }
-+      else if (lvt != null) {
-+        cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
-+      }
-+      else if (type != null) {
-+        cast = ExprProcessor.getCastTypeName(type, false);
-+      }
-+      else {
-+        cast = "this";
-+      }
++      if (lvt != null && lvt.getSignature() != null)
++        this.cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()));
++      else if (lvt != null)
++        this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
++      else if (type != null)
++        this.cast = ExprProcessor.getCastTypeName(type, false);
++      else
++        this.cast = "this";
 +      this.lvt = lvt;
++      this.type = type;
 +    }
 +
-+    public String typeName() {
-+      return cast;
++    public LocalVariable getLVT() {
++      return this.lvt;
++    }
++
++    public String getCast() {
++      return this.cast;
++    }
++
++    public VarType getType() {
++      return this.type;
 +    }
 +  }
 +

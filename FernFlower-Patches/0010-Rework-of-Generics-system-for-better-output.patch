@@ -1,4 +1,4 @@
-From a94fee2fa9065388f1dd73289c22fdb825798b17 Mon Sep 17 00:00:00 2001
+From 7a29bc103392b7744e13878449205b83d85daeb5 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
@@ -1301,18 +1301,18 @@ index d4ccb5e..e35051b 100644
          tracer.incrementCurrentSourceLine();
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index ab5c63b..d5a6978 100644
+index fa326a4..89f1c97 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -984,7 +984,7 @@ public class VarDefinitionHelper {
-     String cast;
+@@ -991,7 +991,7 @@ public class VarDefinitionHelper {
+ 
      private VarInfo(LocalVariable lvt, VarType type) {
-       if (lvt != null && lvt.getSignature() != null) {
--        cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()));
-+        cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()));
-       }
-       else if (lvt != null) {
-         cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
+       if (lvt != null && lvt.getSignature() != null)
+-        this.cast = GenericMain.getGenericCastTypeName(new GenericType(lvt.getSignature()));
++        this.cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSignature()), true);
+       else if (lvt != null)
+         this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
+       else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 index 0bb370c..c9bfe7b 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
