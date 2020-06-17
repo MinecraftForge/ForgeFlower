@@ -1,4 +1,4 @@
-From 893e1e6fb3798cffacf847abec2b1617897698fa Mon Sep 17 00:00:00 2001
+From a05f3907b40a0e9deb19f31882a0b5e944e30b8d Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -24,7 +24,7 @@ index 4aeda0e..58c3471 100644
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 161f55c..d15b858 100644
+index 068e44b..8f69e43 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -7,6 +7,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -66,7 +66,7 @@ index 161f55c..d15b858 100644
        }
        else { //TODO: Capture generics to make cast better?
          this.needsCast = right.type == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.value, cast.value);
-@@ -570,7 +581,7 @@ public class FunctionExprent extends Exprent {
+@@ -583,7 +594,7 @@ public class FunctionExprent extends Exprent {
          TYPES[funcType - FUNCTION_I2L]) + ")");
      }
  
@@ -75,7 +75,7 @@ index 161f55c..d15b858 100644
      throw new RuntimeException("invalid function");
    }
  
-@@ -651,7 +662,7 @@ public class FunctionExprent extends Exprent {
+@@ -664,7 +675,7 @@ public class FunctionExprent extends Exprent {
      measureBytecode(values, lstOperands);
      measureBytecode(values);
    }
@@ -84,7 +84,7 @@ index 161f55c..d15b858 100644
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************
-@@ -665,4 +676,4 @@ public class FunctionExprent extends Exprent {
+@@ -678,4 +689,4 @@ public class FunctionExprent extends Exprent {
      Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
      return type == null || this.funcType == type;
    }
@@ -92,10 +92,10 @@ index 161f55c..d15b858 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 3c13e14..50d8799 100644
+index 1c822f3..a16aa29 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -395,6 +395,7 @@ public class InvocationExprent extends Exprent {
+@@ -406,6 +406,7 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -103,17 +103,26 @@ index 3c13e14..50d8799 100644
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
      StructMethod desc = null;
-@@ -455,7 +456,7 @@ public class InvocationExprent extends Exprent {
-         if (stClass != null) {
-           nextMethod:
+@@ -466,7 +467,7 @@ public class InvocationExprent extends Exprent {
+           if (stClass != null) {
+             nextMethod:
+             for (StructMethod mt : stClass.getMethods()) {
+-              if (name.equals(mt.getName())) {
++              if (name.equals(mt.getName()) && (currCls == null || canAccess(currCls.classStruct, mt))) {
+                 MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+                 if (md.params.length == descriptor.params.length) {
+                   for (int x = 0; x < md.params.length; x++) {
+@@ -500,7 +501,7 @@ public class InvocationExprent extends Exprent {
+         else if (inv.isUnboxingCall() && !inv.shouldForceUnboxing()) {
+           StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
            for (StructMethod mt : stClass.getMethods()) {
--            if (name.equals(mt.getName())) {
-+            if (name.equals(mt.getName()) && (currCls == null || canAccess(currCls.classStruct, mt))) {
+-            if (name.equals(mt.getName()) && !stringDescriptor.equals(mt.getDescriptor())) {
++            if (name.equals(mt.getName()) && (currCls == null || canAccess(currCls.classStruct, mt)) && !stringDescriptor.equals(mt.getDescriptor())) {
                MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
                if (md.params.length == descriptor.params.length) {
-                 for (int x = 0; x < md.params.length; x++) {
-@@ -482,6 +483,22 @@ public class InvocationExprent extends Exprent {
- 
+                 if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
+@@ -516,6 +517,22 @@ public class InvocationExprent extends Exprent {
+       }
      }
  
 +    if (instance != null && !genArgs.isEmpty()) {
@@ -135,7 +144,7 @@ index 3c13e14..50d8799 100644
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -636,27 +653,98 @@ public class InvocationExprent extends Exprent {
+@@ -678,27 +695,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();

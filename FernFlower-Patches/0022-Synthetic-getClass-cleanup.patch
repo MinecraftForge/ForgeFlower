@@ -1,4 +1,4 @@
-From f9d03a80c989001aa805f65153603bb5fb9fe907 Mon Sep 17 00:00:00 2001
+From 348a11626d2ef165fe51a9ceed8bc4ecaded8b29 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Thu, 26 Jul 2018 13:28:40 -0700
 Subject: [PATCH] Synthetic getClass cleanup
@@ -94,18 +94,18 @@ index 986a8a7..767f6bd 100644
                String classname = newExpr.getNewType().value;
                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 50d8799..b38b834 100644
+index a16aa29..593a5be 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -60,6 +60,7 @@ public class InvocationExprent extends Exprent {
-   private List<PooledConstant> bootstrapArguments;
+@@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
    private List<VarType> genericArgs = new ArrayList<>();
    private boolean forceBoxing = false;
+   private boolean forceUnboxing = false;
 +  private boolean isSyntheticGetClass = false;
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -160,6 +161,7 @@ public class InvocationExprent extends Exprent {
+@@ -161,6 +162,7 @@ public class InvocationExprent extends Exprent {
  
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
@@ -113,7 +113,7 @@ index 50d8799..b38b834 100644
    }
  
    @Override
-@@ -926,6 +928,14 @@ public class InvocationExprent extends Exprent {
+@@ -968,6 +970,14 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  

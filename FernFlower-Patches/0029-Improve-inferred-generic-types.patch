@@ -1,4 +1,4 @@
-From 1be9c093784ec082fd073bd5f61148340d68cb31 Mon Sep 17 00:00:00 2001
+From 8001cd51a44dd519547d593e1e2e79b5d1dcf7ab Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Tue, 30 Apr 2019 10:34:56 -0700
 Subject: [PATCH] Improve inferred generic types
@@ -231,7 +231,7 @@ index 880a5d2..5143f83 100644
  
      return getExprType();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index d15b858..f30fdf0 100644
+index 8f69e43..1f27ed6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -342,6 +342,11 @@ public class FunctionExprent extends Exprent {
@@ -246,7 +246,7 @@ index d15b858..f30fdf0 100644
      return getExprType();
    }
  
-@@ -657,6 +662,16 @@ public class FunctionExprent extends Exprent {
+@@ -670,6 +675,16 @@ public class FunctionExprent extends Exprent {
      this.implicitType = implicitType;
    }
  
@@ -264,7 +264,7 @@ index d15b858..f30fdf0 100644
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index fded2f8..e855a1a 100644
+index 43db4dc..25b88c3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -282,9 +282,9 @@ index fded2f8..e855a1a 100644
 +  private Map<VarType, VarType> genericsMap = new HashMap<>();
 +  private boolean isInvocationInstance = false;
    private boolean forceBoxing = false;
+   private boolean forceUnboxing = false;
    private boolean isSyntheticGetClass = false;
- 
-@@ -172,45 +175,272 @@ public class InvocationExprent extends Exprent {
+@@ -173,45 +176,272 @@ public class InvocationExprent extends Exprent {
  
    @Override
    public VarType getInferredExprType(VarType upperBound) {
@@ -415,7 +415,7 @@ index fded2f8..e855a1a 100644
 +              tempMap.forEach((from, to) -> {
 +                if (!fparams.contains(from.value)) {
 +                  processGenericMapping(from, to, named, bounds);
-                 }
++                }
 +              });
 +              tempMap.clear();
 +            }
@@ -434,8 +434,8 @@ index fded2f8..e855a1a 100644
 +              Map<String, Map<VarType, VarType>> hierarchy = currentCls.classStruct.getAllGenerics();
 +              if (hierarchy.containsKey(mthCls.qualifiedName)) {
 +                hierarchy.get(mthCls.qualifiedName).forEach(genericsMap::put);
-               }
-             }
++              }
++            }
 +          }
 +        }
 +
@@ -446,9 +446,7 @@ index fded2f8..e855a1a 100644
 +            }
 +          });
 +        }
- 
--            if (!map.isEmpty()) {
--              ret = ret.remap(map);
++
 +        Set<VarType> paramGenerics = new HashSet<>();
 +        if (!lstParameters.isEmpty() && desc.getSignature() != null) {
 +          List<VarVersionPair> mask = null;
@@ -511,16 +509,12 @@ index fded2f8..e855a1a 100644
 +                  }
 +                  paramGenerics.add(paramType);
 +                  processGenericMapping(paramType, argtype, named, bounds);
-+                }
-+              }
+                 }
+               }
              }
-           }
-         }
--      }
- 
--      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
--      if (desc.getSignature().returnType != _new) {
--        return _new;
++          }
++        }
++
 +        upperBoundsMap.forEach((k, v) -> {
 +          if (fparams.contains(k.value) && !GenericType.DUMMY_VAR.equals(v)) {
 +            processGenericMapping(k, v ,named, bounds);
@@ -529,7 +523,9 @@ index fded2f8..e855a1a 100644
 +
 +        if (!genericsMap.isEmpty()) {
 +          VarType newRet = ret.remap(hierarchyMap);
-+
+ 
+-            if (!map.isEmpty()) {
+-              ret = ret.remap(map);
 +          boolean skipArgs = true;
 +          if (!fparams.isEmpty() && newRet.isGeneric()) {
 +            for (VarType genVar : ((GenericType)newRet).getAllGenericVars()) {
@@ -537,8 +533,8 @@ index fded2f8..e855a1a 100644
 +                skipArgs = false;
 +                break;
 +              }
-+            }
-+          }
+             }
+           }
 +
 +          newRet = newRet.remap(genericsMap);
 +          if (newRet == null) {
@@ -571,21 +567,25 @@ index fded2f8..e855a1a 100644
 +          if (newRet != ret && !(newRet.isGeneric() && ((GenericType)newRet).hasUnknownGenericType(named.keySet()))) {
 +            return newRet;
 +          }
-+        }
-+
+         }
+-      }
+ 
+-      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
+-      if (desc.getSignature().returnType != _new) {
+-        return _new;
 +        if (ret.isGeneric() && ((GenericType)ret).getAllGenericVars().isEmpty()) {
 +          return ret;
 +        }
        }
      }
  
-@@ -313,6 +543,19 @@ public class InvocationExprent extends Exprent {
+@@ -314,7 +544,19 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
 +          StructClass cl = DecompilerContext.getStructContext().getClass(classname);
 +
-+          VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
+           VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
 +          if (!genericsMap.isEmpty() && cl != null && cl.getSignature() != null) {
 +            VarType _new = cl.getSignature().genericType.remap(genericsMap);
 +            if (_new != cl.getSignature().genericType) {
@@ -596,21 +596,20 @@ index fded2f8..e855a1a 100644
 +          instance.setInvocationInstance();
 +          VarType rightType = instance.getInferredExprType(leftType);
 +
-           if (isUnboxingCall()) {
+           if (isUnboxingCall() && !forceUnboxing) {
              // we don't print the unboxing call - no need to bother with the instance wrapping / casting
              if (instance.type == Exprent.EXPRENT_FUNCTION) {
-@@ -331,8 +574,8 @@ public class InvocationExprent extends Exprent {
+@@ -343,7 +585,8 @@ public class InvocationExprent extends Exprent {
  
            TextBuffer res = instance.toJava(indent, tracer);
  
 -          VarType rightType = instance.getExprType();
--          VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
 +          boolean skippedCast = instance.type == EXPRENT_FUNCTION &&
 +            ((FunctionExprent)instance).getFuncType() == FunctionExprent.FUNCTION_CAST && !((FunctionExprent)instance).doesCast();
  
            if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
              buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
-@@ -342,7 +585,7 @@ public class InvocationExprent extends Exprent {
+@@ -353,7 +596,7 @@ public class InvocationExprent extends Exprent {
              }
              buf.append(res).append(")");
            }
@@ -619,7 +618,7 @@ index fded2f8..e855a1a 100644
              buf.append("(").append(res).append(")");
            }
            else {
-@@ -388,6 +631,12 @@ public class InvocationExprent extends Exprent {
+@@ -399,6 +642,12 @@ public class InvocationExprent extends Exprent {
          }
      }
  
@@ -632,7 +631,7 @@ index fded2f8..e855a1a 100644
      List<VarVersionPair> mask = null;
      boolean isEnum = false;
      if (functype == TYP_INIT) {
-@@ -400,28 +649,6 @@ public class InvocationExprent extends Exprent {
+@@ -411,28 +660,6 @@ public class InvocationExprent extends Exprent {
      ClassNode currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
@@ -661,8 +660,8 @@ index fded2f8..e855a1a 100644
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -485,20 +712,32 @@ public class InvocationExprent extends Exprent {
- 
+@@ -519,20 +746,32 @@ public class InvocationExprent extends Exprent {
+       }
      }
  
 -    if (instance != null && !genArgs.isEmpty()) {
@@ -707,7 +706,7 @@ index fded2f8..e855a1a 100644
      }
  
  
-@@ -536,6 +775,10 @@ public class InvocationExprent extends Exprent {
+@@ -570,6 +809,10 @@ public class InvocationExprent extends Exprent {
          }
          */
  
@@ -718,7 +717,7 @@ index fded2f8..e855a1a 100644
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(lstParameters.get(i), types[i], buff, indent, true, ambiguous, true, true, tracer);
  
-@@ -551,8 +794,6 @@ public class InvocationExprent extends Exprent {
+@@ -585,8 +828,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -727,7 +726,7 @@ index fded2f8..e855a1a 100644
      return buf;
    }
  
-@@ -840,6 +1081,162 @@ public class InvocationExprent extends Exprent {
+@@ -882,6 +1123,162 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -890,7 +889,7 @@ index fded2f8..e855a1a 100644
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -952,6 +1349,18 @@ public class InvocationExprent extends Exprent {
+@@ -994,6 +1391,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticGetClass;
    }
  
