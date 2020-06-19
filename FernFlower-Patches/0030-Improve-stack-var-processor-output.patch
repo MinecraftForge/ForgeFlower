@@ -335,7 +335,7 @@ index 25b88c34b98821413c947cf597a46e1dfe16c762..9bbdb537498de8dd02f0638760e24a37
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index e30acc8a02cbfc5e95da42a7daf365a2974144a7..821062d824197b9955bbadff1af0c643f15d3d41 100644
+index eb9beb2b6e71170d5aced6432365ab33ed361bb3..4767d4c7d2923b86df789d84667a842468af7e50 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -49,6 +49,7 @@ public class VarExprent extends Exprent {
@@ -354,7 +354,7 @@ index e30acc8a02cbfc5e95da42a7daf365a2974144a7..821062d824197b9955bbadff1af0c643
      return var;
    }
  
-@@ -317,6 +319,14 @@ public class VarExprent extends Exprent {
+@@ -315,6 +317,14 @@ public class VarExprent extends Exprent {
      return lvt;
    }
  

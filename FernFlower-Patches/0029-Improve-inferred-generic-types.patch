@@ -72,14 +72,14 @@ index 4bd94d9f47c9d15ef571412a28b97a0fbbfd45ef..6ed64f77930f44a9c6bd17d2eca51de9
  
    private static VarType guessType(int val, boolean boolPermitted) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 58c3471ff26529c091a44670828d272755e75f7d..09cbfdc37b929ab03b99e16d47566331ade154a0 100644
+index 58c3471ff26529c091a44670828d272755e75f7d..8074782862f3842a95050212df0ac5d778f20091 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -54,6 +54,8 @@ public abstract class Exprent implements IMatchable {
    public static final int EXPRENT_ANNOTATION = 13;
    public static final int EXPRENT_ASSERT = 14;
  
-+  protected static Map<String, VarType> inferredLambdaTypes = new HashMap<>();
++  protected static ThreadLocal<Map<String, VarType>> inferredLambdaTypes = ThreadLocal.withInitial(HashMap::new);
 +
    public final int type;
    public final int id;
@@ -909,7 +909,7 @@ index 43db4dcfe8e32f8809a2a8743eb04a49e6942f18..25b88c34b98821413c947cf597a46e1d
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstParameters);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index bf254b8d843526d872092f4b0a000b13baef518a..9290b94f6590fa559b79b241a40da3e0f1253045 100644
+index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef8336db0c66 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -5,7 +5,16 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -1215,12 +1215,13 @@ index bf254b8d843526d872092f4b0a000b13baef518a..9290b94f6590fa559b79b241a40da3e0
      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(className);
      return node != null && node.type == ClassNode.CLASS_ANONYMOUS;
    }
-@@ -427,6 +546,154 @@ public class NewExprent extends Exprent {
+@@ -427,6 +546,155 @@ public class NewExprent extends Exprent {
      return null;
    }
  
 +  private static VarType getLambdaReturnType(ClassNode node, StructMethod desc, VarType upperBound, Map<VarType, VarType> genericsMap) {
 +    ClassWrapper wrapper = node.getWrapper();
++    Map<String, VarType> inferredLambdaTypes = Exprent.inferredLambdaTypes.get();
 +
 +    if (wrapper != null) {
 +      MethodWrapper mt = wrapper.getMethodWrapper(node.lambdaInformation.content_method_name, node.lambdaInformation.content_method_descriptor);
@@ -1370,7 +1371,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..9290b94f6590fa559b79b241a40da3e0
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == constructor) {
-@@ -531,4 +798,10 @@ public class NewExprent extends Exprent {
+@@ -531,4 +799,10 @@ public class NewExprent extends Exprent {
      }
      return "";
    }
@@ -1382,7 +1383,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..9290b94f6590fa559b79b241a40da3e0
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index b681b11cad3899d90c5f04df50b2ae021bea3021..e30acc8a02cbfc5e95da42a7daf365a2974144a7 100644
+index b681b11cad3899d90c5f04df50b2ae021bea3021..eb9beb2b6e71170d5aced6432365ab33ed361bb3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -1393,16 +1394,14 @@ index b681b11cad3899d90c5f04df50b2ae021bea3021..e30acc8a02cbfc5e95da42a7daf365a2
  import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
-@@ -239,7 +240,23 @@ public class VarExprent extends Exprent {
+@@ -239,7 +240,21 @@ public class VarExprent extends Exprent {
  
      VarType vt = null;
      if (processor != null) {
 -      vt = processor.getVarType(getVarVersionPair());
 +      String name = processor.getVarName(getVarVersionPair());
-+      if (inferredLambdaTypes.containsKey(name)) {
-+        vt = inferredLambdaTypes.get(name);
-+      }
-+      else {
++      vt = Exprent.inferredLambdaTypes.get().get(name);
++      if (vt == null) {
 +        vt = processor.getVarType(getVarVersionPair());
 +        if (processor.getThisVars().containsKey(getVarVersionPair())) {
 +          String qaulName = processor.getThisVars().get(getVarVersionPair());
