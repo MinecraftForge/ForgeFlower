@@ -1,13 +1,13 @@
-From 602e1f5eca571d8a7faaf2b55c808da1392246ec Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 20 Jul 2018 01:37:36 -0700
 Subject: [PATCH] Add a metadata file named
  'fernflower_abstract_parameter_names.txt' to rename abstract parameters.
- Format: ClassName MethodName Descriptor Param1[ Param2...]
 
+Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 4817f05..615b7a3 100644
+index 4817f055906bfa4bfa4f7bfa9b590f88e984c3a1..615b7a37610e6498e04eb971768df0ea57284383 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -703,7 +703,9 @@ public class ClassWriter {
@@ -22,7 +22,7 @@ index 4817f05..615b7a3 100644
  
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f7b253b..fde5881 100644
+index f7b253bc942cd00f64505ce1424c6d5e8d0225d8..fde588174ace52b073d205bd0fa045632a725df5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -7,12 +7,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -68,7 +68,7 @@ index f7b253b..fde5881 100644
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index cc4e357..68cf259 100644
+index cc4e357fb8b7adeeb76858813f5ee329d17497d5..68cf259230cd82298c36b391e0ea91d111fca9ab 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -123,6 +123,3 @@ index cc4e357..68cf259 100644
 +    return params != null && index < params.size() ? params.get(index) : _default;
 +  }
  }
--- 
-2.27.0.windows.1
-

@@ -1,4 +1,4 @@
-From 3aca192efe8d8cd79c5cdfeb9a5f8536121c4495 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 21 Feb 2018 18:27:17 -0800
 Subject: [PATCH] Bugfix: Fix invalid logic in ExprUtils.
@@ -16,7 +16,7 @@ public interface Test {
 }
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
-index 302d62f..195d365 100644
+index 302d62fd14906a1ba75dcb8a044e7f909054ccc3..195d3655eff47fa3dcb57f131ca2aa9a148a0cce 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 @@ -8,6 +8,9 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -59,6 +59,3 @@ index 302d62f..195d365 100644
 +    return false;
 +  }
 +}
--- 
-2.27.0.windows.1
-

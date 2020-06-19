@@ -1,4 +1,4 @@
-From dadd7a8d9acb144e59bf8e1d37959d159bab0939 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Fri, 27 Jul 2018 14:02:27 -0700
 Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-index 7b8c3b4..4ddb755 100644
+index 7b8c3b45c374a15c22b35054ff4cc78c6bbfe182..4ddb75547417339f61426ed55810966a9fabbb7d 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 @@ -20,7 +20,7 @@ public class ImportCollector {
@@ -137,6 +137,3 @@ index 7b8c3b4..4ddb755 100644
 +  }
  }
 \ No newline at end of file
--- 
-2.27.0
-

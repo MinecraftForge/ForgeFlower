@@ -1,11 +1,11 @@
-From 4d39e77afc4bfba7fd4df4370b7f5c8b1ccfc28e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Wed, 19 Sep 2018 22:51:00 -0700
 Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 4933b5c..cc67f34 100644
+index 4933b5c1d375b7beacbb521bc8770cf295e7d98c..cc67f34aeede9a41bd78aeefdf6ac4a88d79348c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -910,6 +910,9 @@ public class ExprProcessor implements CodeConstants {
@@ -41,7 +41,7 @@ index 4933b5c..cc67f34 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 593a5be..43db4dc 100644
+index 593a5bec560f71215ff23207c79a8648f84c3c0d..43db4dcfe8e32f8809a2a8743eb04a49e6942f18 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -804,7 +804,8 @@ public class InvocationExprent extends Exprent {
@@ -95,7 +95,7 @@ index 593a5be..43db4dc 100644
  
          MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index f99fdc4..bf254b8 100644
+index f99fdc492e9ca76a1f14695e832ea193b920c1e1..bf254b8d843526d872092f4b0a000b13baef518a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -5,6 +5,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -141,6 +141,3 @@ index f99fdc4..bf254b8 100644
 +    return "";
 +  }
  }
--- 
-2.27.0.windows.1
-

@@ -1,11 +1,11 @@
-From d2f6207885de9b82c2d37d87a7ee26328efb6aa1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive un/boxing issues.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 03a59cb..474ffda 100644
+index 03a59cb999d3d05d647128c96007e9743938a0ea..474ffda1b9d610968bd12160f2153713b37f2db9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -876,12 +876,14 @@ public class ExprProcessor implements CodeConstants {
@@ -30,7 +30,7 @@ index 03a59cb..474ffda 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 161f55c..068e44b 100644
+index 161f55c45a3f2c199fcc24b9fdd1bd269bafbfb8..068e44b80f9972be77bfd9fe095a5549edf40a2f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -566,6 +566,19 @@ public class FunctionExprent extends Exprent {
@@ -54,7 +54,7 @@ index 161f55c..068e44b 100644
          TYPES[funcType - FUNCTION_I2L]) + ")");
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index d72870e..1c822f3 100644
+index d72870ee498d9da075a08dc6e2afef906ba44ad2..1c822f357c117f4bc8af4ced1842421d2224af18 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -59,6 +59,8 @@ public class InvocationExprent extends Exprent {
@@ -308,7 +308,7 @@ index d72870e..1c822f3 100644
          GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
          if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
 diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
-index a7d1557..07e818e 100644
+index a7d1557e6814e071df65c610fbdae860c8ff93bc..07e818e12a3a4371d3cb76ab613b119837332525 100644
 --- a/testData/results/TestPrimitives.dec
 +++ b/testData/results/TestPrimitives.dec
 @@ -3,6 +3,26 @@ package pkg;
@@ -1007,7 +1007,7 @@ index a7d1557..07e818e 100644
  
     method '<init> (ZBSIJFDC)V' {
 diff --git a/testData/src/pkg/TestPrimitives.java b/testData/src/pkg/TestPrimitives.java
-index 3630252..acfe886 100644
+index 36302524a2ecfae64e25098eff1318b8b7d11d51..acfe886bf4578fe0cd0b1a58bf4073eb97436025 100644
 --- a/testData/src/pkg/TestPrimitives.java
 +++ b/testData/src/pkg/TestPrimitives.java
 @@ -3,6 +3,19 @@ package pkg;
@@ -1030,6 +1030,3 @@ index 3630252..acfe886 100644
  
    public void printAll() {
      printBoolean(true);
--- 
-2.27.0.windows.1
-

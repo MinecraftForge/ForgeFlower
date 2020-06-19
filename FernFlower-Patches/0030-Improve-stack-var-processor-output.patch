@@ -1,11 +1,11 @@
-From c41a9200ee52345805a1a51997d0a663966530f6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Sun, 25 Aug 2019 18:02:16 -0700
 Subject: [PATCH] Improve stack var processor output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index b77dfec..75c6037 100644
+index b77dfec43d4b5b7e11528df9ecf52f32473629b4..75c6037aa532cc62df598fe682929db1d7e9a4ee 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -167,11 +167,12 @@ public class MethodProcessorRunnable implements Runnable {
@@ -24,7 +24,7 @@ index b77dfec..75c6037 100644
  
        if (TryHelper.enhanceTryStats(root)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 9942e12..7f80109 100644
+index 9942e125766f6162506ff6418f00e8bcbe6d8072..7f80109f80ec5686fd6934504022be5135c0863a 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -263,6 +263,9 @@ public class NestedClassProcessor {
@@ -38,7 +38,7 @@ index 9942e12..7f80109 100644
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 767f6bd..261756b 100644
+index 767f6bdb92ecf0ba0bc4a437b8bf8482fa47bdea..261756b9e05f7e11d1c77e52e924cfefad988f45 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 @@ -132,6 +132,11 @@ public class SimplifyExprentsHelper {
@@ -82,7 +82,7 @@ index 767f6bd..261756b 100644
      if (first.type == Exprent.EXPRENT_ASSIGNMENT) {
        AssignmentExprent asf = (AssignmentExprent)first;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
-index 1232e64..500c5eb 100644
+index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..500c5eb514de743bf133885f7d5f41ef1e377d24 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 @@ -2,6 +2,8 @@
@@ -319,7 +319,7 @@ index 1232e64..500c5eb 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 25b88c3..9bbdb53 100644
+index 25b88c34b98821413c947cf597a46e1dfe16c762..9bbdb537498de8dd02f0638760e24a37444e26e4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -166,6 +166,11 @@ public class InvocationExprent extends Exprent {
@@ -335,7 +335,7 @@ index 25b88c3..9bbdb53 100644
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index e30acc8..821062d 100644
+index e30acc8a02cbfc5e95da42a7daf365a2974144a7..821062d824197b9955bbadff1af0c643f15d3d41 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -49,6 +49,7 @@ public class VarExprent extends Exprent {
@@ -370,7 +370,7 @@ index e30acc8..821062d 100644
      VarVersionPair pair = getVarVersionPair();
      if (lvt != null)
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 8e57cd7..db92712 100644
+index 8e57cd727302fe608f178c51ba4a7fb4c8971448..db927122415ad07666d51959debcb24d126c9545 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -238,7 +238,7 @@ public class SSAConstructorSparseEx {
@@ -402,7 +402,7 @@ index 8e57cd7..db92712 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 3607a8d..58169c2 100644
+index 3607a8dc6483775f12aa23420ffe447ec9e993bd..58169c235c1cf1d4862f3f515553bf0a9da132d5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -67,6 +67,9 @@ public class SSAUConstructorSparseEx {
@@ -484,7 +484,7 @@ index 3607a8d..58169c2 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 8574fe2..1b1d911 100644
+index 8574fe25782da90f36888186fb3d977c33eeaad1..1b1d911df7b6767a56f543980b3adbb05f7cdb5d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
@@ -584,7 +584,7 @@ index 8574fe2..1b1d911 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java
-index 914995e..17fa070 100644
+index 914995e6bb53b02680ae1c643185fcb85092944c..17fa070577c578161391a9544b478cbd8a52e4ac 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionNode.java
 @@ -2,6 +2,7 @@
@@ -615,7 +615,7 @@ index 914995e..17fa070 100644
    public List<IGraphNode> getPredecessors() {
      List<IGraphNode> lst = new ArrayList<>(preds.size());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java
-index 58eda68..fc10e17 100644
+index 58eda687c83938c8b98fe59d54ca1a1972df8ed4..fc10e17c2db45ef9beb3ccd628a22bedc2467ceb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsGraph.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -640,6 +640,3 @@ index 58eda68..fc10e17 100644
      return node;
    }
  
--- 
-2.27.0.windows.1
-

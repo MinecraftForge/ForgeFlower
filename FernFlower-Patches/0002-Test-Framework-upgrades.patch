@@ -1,11 +1,11 @@
-From 8501ffc3202fcefbf1aee705eff430d4cf34b1d8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 23:18:58 -0700
 Subject: [PATCH] Test Framework upgrades
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index bb303e8..cc1f537 100644
+index bb303e84f33161a4b4fd40a73aa48d29981d9ef2..cc1f537e71af0748b7b97d7d8489198e2a677cc9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -110,6 +110,10 @@ public class Exprent implements IMatchable {
@@ -20,7 +20,7 @@ index bb303e8..cc1f537 100644
      throw new RuntimeException("not implemented");
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index b5e8213..b905da5 100644
+index b5e82131dd20ea45a02ff62e085695417111adfe..b905da55c9b3bd7dc48123559809a1d7ed9eaf9c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -469,6 +469,10 @@ public class Statement implements IMatchable {
@@ -35,7 +35,7 @@ index b5e8213..b905da5 100644
      throw new RuntimeException("not implemented");
    }
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index 4c5641f..7d29c19 100644
+index 4c5641fec76837a51094d4a54800d5b7475446ca..7d29c198014cbfee8092fd31461208ce58e7f775 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 @@ -23,6 +23,7 @@ public class DecompilerTestFixture {
@@ -71,7 +71,7 @@ index 4c5641f..7d29c19 100644
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 1d0dc62..2b60ca1 100644
+index 1d0dc62d75e0ece79fd0af5757c202360fa800e0..2b60ca149c39b5dbe8a6191be44d1d607b9cbe18 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -1,37 +1,20 @@
@@ -172,7 +172,7 @@ index 1d0dc62..2b60ca1 100644
 \ No newline at end of file
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 new file mode 100644
-index 0000000..9f073c2
+index 0000000000000000000000000000000000000000..9f073c2625764dd865f162420264e27ac923318d
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 @@ -0,0 +1,89 @@
@@ -266,6 +266,3 @@ index 0000000..9f073c2
 +  }
 +}
 \ No newline at end of file
--- 
-2.27.0.windows.1
-

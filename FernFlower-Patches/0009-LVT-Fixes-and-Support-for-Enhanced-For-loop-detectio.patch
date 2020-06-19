@@ -1,11 +1,11 @@
-From a9be4697c9357fc04432fb0e9c82165a75721fc4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:54:20 -0700
 Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index ca63ad5..fa79617 100644
+index ca63ad5131641e1ce917afabf84700cd9121d987..fa7961777d41bc0845f741689c33143851eabf63 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -8,7 +8,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -44,7 +44,7 @@ index ca63ad5..fa79617 100644
          }
        }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 726d747..447780c 100644
+index 726d7474416cfea5c21483e06d3e8ac19f500c20..447780c1ed1316d6f30cd35150061b7946233315 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -11,7 +11,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -143,7 +143,7 @@ index 726d747..447780c 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 5c7be12..fb9c7a9 100644
+index 5c7be12a1097a6464fe674cf62823418d2644e99..fb9c7a961ec3cfc1f50c3fd902c299e097988997 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -404,7 +404,7 @@ index 5c7be12..fb9c7a9 100644
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index bc3cb33..63b4b35 100644
+index bc3cb3311e6b132f46025ed498a6fc7e6d583d02..63b4b35ab95a3ba989109c19aaec494290b4bcd9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -9,6 +9,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -438,7 +438,7 @@ index bc3cb33..63b4b35 100644
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 new file mode 100644
-index 0000000..adc7839
+index 0000000000000000000000000000000000000000..adc78392c4a82692b32a603e7c0aa90db86a800a
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 @@ -0,0 +1,199 @@
@@ -642,7 +642,7 @@ index 0000000..adc7839
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
-index 3b9847f..3d458f9 100644
+index 3b9847f569e2f820e2fe3d9648ba0cbff7f9cb30..3d458f93edaa8351fcad19f8453be6699c6f9ab0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 @@ -171,7 +171,7 @@ public class ExitHelper {
@@ -655,7 +655,7 @@ index 3b9847f..3d458f9 100644
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 6aa0616..f19e321 100644
+index 6aa061689f525158f31aee3fdcc114ac89f11ae5..f19e321da5e392eff9c87da6018aa1407411332d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -330,7 +330,9 @@ public class ExprProcessor implements CodeConstants {
@@ -690,7 +690,7 @@ index 6aa0616..f19e321 100644
              instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
              .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null)),
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
-index f6ee600..b7fa59c 100644
+index f6ee600ab9fde26b8849bb081cd04b68ed95faa7..b7fa59c05e7e403287d65d8ee3918fdf427eadf5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 @@ -118,6 +118,9 @@ public class InlineSingleBlockHelper {
@@ -704,7 +704,7 @@ index f6ee600..b7fa59c 100644
            for (int i = index; i < seq.getStats().size(); i++) {
              if (!noExitLabels(seq.getStats().get(i), seq)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
-index 8229127..545f687 100644
+index 822912795072fc94b32ffd368b8c5ebe61403e3f..545f687a7f7ac501f1447357f60c98ff12a326bb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 @@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -797,7 +797,7 @@ index 8229127..545f687 100644
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LowBreakHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LowBreakHelper.java
 new file mode 100644
-index 0000000..c62c74d
+index 0000000000000000000000000000000000000000..c62c74da3925db6820facb219ee93163610ea737
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LowBreakHelper.java
 @@ -0,0 +1,194 @@
@@ -997,7 +997,7 @@ index 0000000..c62c74d
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 3f351c1..0bbd0a5 100644
+index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e9f71d34a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1434,7 +1434,7 @@ index 3f351c1..0bbd0a5 100644
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index d73535f..94dc0a3 100644
+index d73535f1374e3ec59079fddf06ecea6480925467..94dc0a33d7eaec052c6f3ce10fbbb93eb5395025 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 @@ -5,19 +5,31 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
@@ -1548,7 +1548,7 @@ index d73535f..94dc0a3 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
-index c481c0a..cdbcb70 100644
+index c481c0a343d8ca7825989cfe289fc7d2dd793aa7..cdbcb7090acf9afb536ca003c9a685e5c209d265 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
 @@ -35,6 +35,8 @@ public class StatEdge {
@@ -1561,7 +1561,7 @@ index c481c0a..cdbcb70 100644
      this(type, source, destination);
      this.closure = closure;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 87522af..9803a21 100644
+index 87522af363670f27a69bf5dee95a954ae14ed594..9803a215b8c5bc40658c8210c10e61644b519231 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -458,7 +458,7 @@ public class InvocationExprent extends Exprent {
@@ -1581,7 +1581,7 @@ index 87522af..9803a21 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index e3b253c..8e3dbf6 100644
+index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -9,12 +9,15 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1784,7 +1784,7 @@ index e3b253c..8e3dbf6 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
-index aa2fae8..fc6fc93 100644
+index aa2fae88906858a3c8bd05508db963edbaf0de07..fc6fc93f29c8e8c9e4319d3c6777562ba3e7dc9f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/DirectGraph.java
 @@ -113,6 +113,21 @@ public class DirectGraph {
@@ -1810,7 +1810,7 @@ index aa2fae8..fc6fc93 100644
      // 0 - success, do nothing
      // 1 - cancel iteration
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index b9abd11..23713c9 100644
+index b9abd119f2e49cb5c87f8cb9c530e49a760fcbbb..23713c94c72373f76284bc7a8615f74419531651 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -201,6 +201,7 @@ public class FlattenStatementsHelper {
@@ -1833,7 +1833,7 @@ index b9abd11..23713c9 100644
  
                  DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index 376abe5..3cb030a 100644
+index 376abe530eac85cf1aaed38835afb19724262ed9..3cb030a94b2ad4c4928ecb7a7a58a32e618c7f36 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 @@ -2,6 +2,7 @@
@@ -1854,7 +1854,7 @@ index 376abe5..3cb030a 100644
                              new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                              DecompilerContext.getVarProcessor()));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 652931a..5582b37 100644
+index 652931af32774c5cf7f63e50443c4096254ae6c5..5582b3781f6ff71684d6802c11d4d361899c196e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -41,7 +41,7 @@ public class CatchStatement extends Statement {
@@ -1867,7 +1867,7 @@ index 652931a..5582b37 100644
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index f9a149f..d4ccb5e 100644
+index f9a149f3be6ac414781a988f9cc57d97ad685199..d4ccb5ecd7c9cfa2d76d9364a907f374bc1f5ba7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -17,6 +17,7 @@ public class DoStatement extends Statement {
@@ -1904,7 +1904,7 @@ index f9a149f..d4ccb5e 100644
  
      lst.add(first);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index 74f44c0..b2455f2 100644
+index 74f44c077c0985fa23145f39d617976f94571f55..b2455f278256688815f05a3b1a835726329202a8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -807,6 +807,14 @@ public class Statement implements IMatchable {
@@ -1932,7 +1932,7 @@ index 74f44c0..b2455f2 100644
  
    //TODO: Cleanup/cache?
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 0402097..fa326a4 100644
+index 0402097b50b89cd8092915db381abfb61be7f495..fa326a4a190012b9e121baa61880c172836e22db 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -4,16 +4,26 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -2788,7 +2788,7 @@ index 0402097..fa326a4 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 9999b50..ec60c00 100644
+index 9999b50b14518caeb2ab042c0826c6049885fe40..ec60c001a0c56aadf71b7badf0284ed656121153 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -2,21 +2,26 @@
@@ -2949,7 +2949,7 @@ index 9999b50..ec60c00 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
-index c31cfad..78b5302 100644
+index c31cfad036b4b2de11449c54ded7864e394d5f91..78b5302cba6fc90f7f32520f637a740d21ed7fab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 @@ -96,7 +96,12 @@ public class VarTypeProcessor {
@@ -2967,7 +2967,7 @@ index c31cfad..78b5302 100644
          else if (expr.type == Exprent.EXPRENT_CONST) {
            ConstExprent constExpr = (ConstExprent)expr;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index eca0d0f..47e7e0c 100644
+index eca0d0fb9ef15db26e9de38ebda2bf9ee19857df..47e7e0c04f6114a9d64b1d86c1e2643052ad5023 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -22,7 +22,7 @@ import java.util.Map.Entry;
@@ -3038,7 +3038,7 @@ index eca0d0f..47e7e0c 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 6d07096..aea1b21 100644
+index 6d070968a661a1fc36c4b7fe348e20e5997009a0..aea1b21ae67cc410fa514aeb079f5f58b6d0ae1a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -160,4 +160,30 @@ public class StructContext {
@@ -3074,7 +3074,7 @@ index 6d07096..aea1b21 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-index a5b87f1..7ead7d6 100644
+index a5b87f1f1d3d9eaf5646ab8a6d31efda2b9e426e..7ead7d6f93a0a60d41e1c1276bfcde7b75e9ab5f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
 @@ -12,6 +12,8 @@ import java.io.IOException;
@@ -3103,7 +3103,7 @@ index a5b87f1..7ead7d6 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 15fb317..c72d18a 100644
+index 15fb317f2693e2edc8164519af3c25e2df3e59b4..c72d18adf8c923674331178c8832f02359850700 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -1,7 +1,10 @@
@@ -3267,7 +3267,7 @@ index 15fb317..c72d18a 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java
-index 829c78e..cfdda0f 100644
+index 829c78e8a1361bb88cb700696c22af4f7d36349d..cfdda0f2830307d34dfcc3c0a0714f6e0693f3eb 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTypeTableAttribute.java
 @@ -17,7 +17,7 @@ import java.io.IOException;
@@ -3281,7 +3281,7 @@ index 829c78e..cfdda0f 100644
    public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
 diff --git a/src/org/jetbrains/java/decompiler/util/DebugPrinter.java b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
 new file mode 100644
-index 0000000..71d69ef
+index 0000000000000000000000000000000000000000..71d69efb6418e111b0a7e59e0eb4389eca207f5d
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
 @@ -0,0 +1,94 @@
@@ -3381,7 +3381,7 @@ index 0000000..71d69ef
 +}
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
 new file mode 100644
-index 0000000..71d689d
+index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f8651377c
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -0,0 +1,48 @@
@@ -3434,7 +3434,7 @@ index 0000000..71d689d
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2b60ca1..d86b673 100644
+index 2b60ca149c39b5dbe8a6191be44d1d607b9cbe18..d86b673db5f202a362063aba622c48d7dbfd6895 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -17,6 +17,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -3446,7 +3446,7 @@ index 2b60ca1..d86b673 100644
    @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
    @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
 diff --git a/testData/bulk/pkg/res/Loader.java b/testData/bulk/pkg/res/Loader.java
-index cdb1db5..5e4c220 100644
+index cdb1db5b9d381f4766555df788d5e6fefc09d059..5e4c220660b40e5ba8a7f13b5516b01724c9d2d6 100644
 --- a/testData/bulk/pkg/res/Loader.java
 +++ b/testData/bulk/pkg/res/Loader.java
 @@ -17,8 +17,8 @@ public class Loader {
@@ -3651,7 +3651,7 @@ literal 0
 HcmV?d00001
 
 diff --git a/testData/results/TestAmbiguousCallWithDebugInfo.dec b/testData/results/TestAmbiguousCallWithDebugInfo.dec
-index e873e7e..18beb9a 100644
+index e873e7e3cc488b036a46c332bd724e3fac30f720..18beb9a51b1010c58bf8058c999c1a5dc5457f57 100644
 --- a/testData/results/TestAmbiguousCallWithDebugInfo.dec
 +++ b/testData/results/TestAmbiguousCallWithDebugInfo.dec
 @@ -12,7 +12,7 @@ class TestAmbiguousCall {
@@ -3665,7 +3665,7 @@ index e873e7e..18beb9a 100644
  }
 diff --git a/testData/results/TestEnhancedForLoops.dec b/testData/results/TestEnhancedForLoops.dec
 new file mode 100644
-index 0000000..a83751c
+index 0000000000000000000000000000000000000000..a83751cd36645d1c820183d0892972544d015dbe
 --- /dev/null
 +++ b/testData/results/TestEnhancedForLoops.dec
 @@ -0,0 +1,127 @@
@@ -3797,7 +3797,7 @@ index 0000000..a83751c
 +37
 +40
 diff --git a/testData/results/TestKotlinConstructorKt.dec b/testData/results/TestKotlinConstructorKt.dec
-index 0e94145..e57e91a 100644
+index 0e941450d0dabcbec609f869f674d9cc5bdace33..e57e91a4d0f967a12d306f22b295608a08a872f1 100644
 --- a/testData/results/TestKotlinConstructorKt.dec
 +++ b/testData/results/TestKotlinConstructorKt.dec
 @@ -1,6 +1,5 @@
@@ -3986,7 +3986,7 @@ index 0e94145..e57e91a 100644
 +13 <-> 31
 diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
 new file mode 100644
-index 0000000..a78cf6e
+index 0000000000000000000000000000000000000000..a78cf6ee711a1115ed42c227a630086dd8bcff8b
 --- /dev/null
 +++ b/testData/results/TestLVT.dec
 @@ -0,0 +1,39 @@
@@ -4031,7 +4031,7 @@ index 0000000..a78cf6e
 +}
 diff --git a/testData/results/TestLVTComplex.dec b/testData/results/TestLVTComplex.dec
 new file mode 100644
-index 0000000..7d492ca
+index 0000000000000000000000000000000000000000..7d492ca4a8dcba8dae51f5d2d8f4a086022aef2a
 --- /dev/null
 +++ b/testData/results/TestLVTComplex.dec
 @@ -0,0 +1,84 @@
@@ -4121,7 +4121,7 @@ index 0000000..7d492ca
 +}
 diff --git a/testData/results/TestLVTScoping.dec b/testData/results/TestLVTScoping.dec
 new file mode 100644
-index 0000000..74941fb
+index 0000000000000000000000000000000000000000..74941fbba151492665389134b3d925e57f4801a7
 --- /dev/null
 +++ b/testData/results/TestLVTScoping.dec
 @@ -0,0 +1,35 @@
@@ -4161,7 +4161,7 @@ index 0000000..74941fb
 +   }
 +}
 diff --git a/testData/results/TestLocalsNames.dec b/testData/results/TestLocalsNames.dec
-index 59563dd..1041a54 100644
+index 59563ddeb1c2cb82405b31d9f0073a1df450c9e8..1041a5490d33ee05ccb669d924c3fac80f6e134f 100644
 --- a/testData/results/TestLocalsNames.dec
 +++ b/testData/results/TestLocalsNames.dec
 @@ -7,21 +7,18 @@ public class TestLocalsNames {
@@ -4373,7 +4373,7 @@ index 59563dd..1041a54 100644
 +34 <-> 20
 diff --git a/testData/results/TestLoopMerging.dec b/testData/results/TestLoopMerging.dec
 new file mode 100644
-index 0000000..703203a
+index 0000000000000000000000000000000000000000..703203a5dad69c818eac940996013864c2167da5
 --- /dev/null
 +++ b/testData/results/TestLoopMerging.dec
 @@ -0,0 +1,82 @@
@@ -4460,7 +4460,7 @@ index 0000000..703203a
 +   }
 +}
 diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
-index 20e9afb..0caaede 100644
+index 20e9afb72b2d2dabc76d29f6bb1f4ef2bfbc5a20..0caaede304ce41149b60846857bba24468c99675 100644
 --- a/testData/results/TestTryCatchFinally.dec
 +++ b/testData/results/TestTryCatchFinally.dec
 @@ -4,7 +4,7 @@ public class TestTryCatchFinally {
@@ -4474,7 +4474,7 @@ index 20e9afb..0caaede 100644
           } catch (Exception var8) {// 28
 diff --git a/testData/results/TestVarType.dec b/testData/results/TestVarType.dec
 new file mode 100644
-index 0000000..56fb422
+index 0000000000000000000000000000000000000000..56fb422828fe9a4985f892122d46051d3cd1f73b
 --- /dev/null
 +++ b/testData/results/TestVarType.dec
 @@ -0,0 +1,9 @@
@@ -4489,7 +4489,7 @@ index 0000000..56fb422
 +}
 diff --git a/testData/src/pkg/TestEnhancedForLoops.java b/testData/src/pkg/TestEnhancedForLoops.java
 new file mode 100644
-index 0000000..d808218
+index 0000000000000000000000000000000000000000..d808218357900a716e43edca3b7146f1a01add13
 --- /dev/null
 +++ b/testData/src/pkg/TestEnhancedForLoops.java
 @@ -0,0 +1,42 @@
@@ -4537,7 +4537,7 @@ index 0000000..d808218
 +}
 diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
 new file mode 100644
-index 0000000..b9eed0d
+index 0000000000000000000000000000000000000000..b9eed0dc1287fbabc4a400444b32b087831ffc66
 --- /dev/null
 +++ b/testData/src/pkg/TestLVT.java
 @@ -0,0 +1,36 @@
@@ -4579,7 +4579,7 @@ index 0000000..b9eed0d
 +}
 diff --git a/testData/src/pkg/TestLVTComplex.java b/testData/src/pkg/TestLVTComplex.java
 new file mode 100644
-index 0000000..548b9fd
+index 0000000000000000000000000000000000000000..548b9fd5883d6c9d2f706e8f97c93e42ace808f1
 --- /dev/null
 +++ b/testData/src/pkg/TestLVTComplex.java
 @@ -0,0 +1,64 @@
@@ -4649,7 +4649,7 @@ index 0000000..548b9fd
 +}
 diff --git a/testData/src/pkg/TestLVTScoping.java b/testData/src/pkg/TestLVTScoping.java
 new file mode 100644
-index 0000000..ab57832
+index 0000000000000000000000000000000000000000..ab57832c2f3df13a4ae9da2af193c2d6a79067ab
 --- /dev/null
 +++ b/testData/src/pkg/TestLVTScoping.java
 @@ -0,0 +1,34 @@
@@ -4689,7 +4689,7 @@ index 0000000..ab57832
 +}
 diff --git a/testData/src/pkg/TestLoopMerging.java b/testData/src/pkg/TestLoopMerging.java
 new file mode 100644
-index 0000000..1643c81
+index 0000000000000000000000000000000000000000..1643c8137282657c42f090481a16d0ed5b34e93f
 --- /dev/null
 +++ b/testData/src/pkg/TestLoopMerging.java
 @@ -0,0 +1,47 @@
@@ -4742,7 +4742,7 @@ index 0000000..1643c81
 +}
 diff --git a/testData/src/pkg/TestVarType.java b/testData/src/pkg/TestVarType.java
 new file mode 100644
-index 0000000..15e2171
+index 0000000000000000000000000000000000000000..15e2171a235562128cdb80c64f1acdacaa05c387
 --- /dev/null
 +++ b/testData/src/pkg/TestVarType.java
 @@ -0,0 +1,24 @@
@@ -4770,6 +4770,3 @@ index 0000000..15e2171
 +    i+=500;
 +  }
 +}
--- 
-2.27.0.windows.1
-

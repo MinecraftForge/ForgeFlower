@@ -1,4 +1,4 @@
-From a96a23e7315d525175a511e61b82e243e3507d25 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: covers1624 <laughlan.cov@internode.on.net>
 Date: Sun, 7 Jun 2020 16:53:49 +0930
 Subject: [PATCH] Revert change to FieldExprent#getExprentUse
@@ -7,7 +7,7 @@ Revert part of a change introduced upstream. https://github.com/MinecraftForge/F
 This upstream change causes local variables to not be inlined in many cases, and makes decomp very messy for the reason of 'thread safety'.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 5143f83..fe98a67 100644
+index 5143f83d9e4e6fdb6d4e6b54acfaed13a8fdb328..fe98a67593856bc9358faf468afcd7bde986b520 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -107,7 +107,13 @@ public class FieldExprent extends Exprent {
@@ -25,6 +25,3 @@ index 5143f83..fe98a67 100644
    }
  
    @Override
--- 
-2.27.0.windows.1
-

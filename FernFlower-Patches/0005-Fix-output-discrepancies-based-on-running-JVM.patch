@@ -1,11 +1,11 @@
-From 9196954728e53471d9914f8d4dbeac31fba9f477 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:08:10 -0700
 Subject: [PATCH] Fix output discrepancies based on running JVM
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 0041f13..a347589 100644
+index 0041f13df8b5336da5b9891df0e399cbc2de4e3c..a34758940dbce0c5bac8dff269386af752c63d91 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -229,6 +229,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -39,7 +39,7 @@ index 0041f13..a347589 100644
        public String method_name;
        public String method_descriptor;
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-index fd0f261..36156fe 100644
+index fd0f261cf8fb07c523b5a870e8a4c3a54a96f2ef..36156fe90fcde67b25a50af529eca1209cfbce55 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 @@ -108,6 +108,8 @@ public class LambdaProcessor {
@@ -60,7 +60,7 @@ index fd0f261..36156fe 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index da17532..3625c48 100644
+index da175324e5b04e7980225f97d1b30d729d5d46a2..3625c482744fe98f41fda3736355c50b7ed514e6 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -217,6 +217,7 @@ public class NestedClassProcessor {
@@ -72,7 +72,7 @@ index da17532..3625c48 100644
          return true;
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index 2c5e3eb..bc3cb33 100644
+index 2c5e3eb49c1e030cb847c803bcf984909b37e414..bc3cb3311e6b132f46025ed498a6fc7e6d583d02 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -193,7 +193,7 @@ public class DomHelper {
@@ -117,7 +117,7 @@ index 2c5e3eb..bc3cb33 100644
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 966cd44..010566b 100644
+index 966cd442c8b991aeae0055a114f01426debb59da..010566ba18cc005e72ddcbf7eea17f0f533a87d9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -797,6 +797,7 @@ public class ExprProcessor implements CodeConstants {
@@ -129,7 +129,7 @@ index 966cd44..010566b 100644
      for (Exprent expr : lst) {
        if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 240ee3e..bcd6a6c 100644
+index 240ee3e49c333d052cad169661a1e241042ee55b..bcd6a6c52620e19cf9f7cba7679dfe493ee54528 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 @@ -486,10 +486,17 @@ public class FinallyProcessor {
@@ -171,7 +171,7 @@ index 240ee3e..bcd6a6c 100644
  
        if (entry.getValue()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-index 9c150b5..017218b 100644
+index 9c150b51644beabafdf832a7fdcdbddecbfe9500..017218b7bee3fbf993b890b4e007f65c0a84f177 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 @@ -19,7 +19,7 @@ public class LabelHelper {
@@ -193,7 +193,7 @@ index 9c150b5..017218b 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-index d8b587f..318d95c 100644
+index d8b587fff8b748fd4187453c31a5b39e43bc8ecb..318d95cd5427cda3ec721797c181fe68cb95b6db 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 @@ -13,10 +13,10 @@ public class DominatorTreeExceptionFilter {
@@ -228,7 +228,7 @@ index d8b587f..318d95c 100644
          for (Statement st : lstPreds) {
            set.add(st.id);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-index 71ef24b..e8568f4 100644
+index 71ef24b4bf403112f7c5438c135ec06c7e452c80..e8568f4a93c65c6ac1f7b102ac800724531d9d05 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 @@ -14,9 +14,9 @@ public class FastExtendedPostdominanceHelper {
@@ -264,7 +264,7 @@ index 71ef24b..e8568f4 100644
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 9fa5812..691d613 100644
+index 9fa58125289555ee7a4c565574acf74afcc413d0..691d613050f89cce24136dc957a38b65cc51fc4c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -177,15 +177,15 @@ public class ConstExprent extends Exprent {
@@ -327,7 +327,7 @@ index 9fa5812..691d613 100644
    public boolean isNull() {
      return CodeConstants.TYPE_NULL == constType.type;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index cc1f537..0994d94 100644
+index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9aa0e0899 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -15,7 +15,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -381,7 +381,7 @@ index cc1f537..0994d94 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 29e7030..6efce5e 100644
+index 29e7030a24be3d75161885ae1adf38cf5a94a001..6efce5e4b043b2dcb58b4dc21f85da9ac9081a7a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
@@ -402,7 +402,7 @@ index 29e7030..6efce5e 100644
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 4edec05..f5719d1 100644
+index 4edec05872a22da324cb24961825b9d66811a5e2..f5719d1a14fc0fd41393e44fe84e0d3c9370d323 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -71,7 +71,7 @@ public class SSAUConstructorSparseEx {
@@ -415,7 +415,7 @@ index 4edec05..f5719d1 100644
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index 0891a47..c098f3b 100644
+index 0891a4758e43affe4c8f7df991a79bd9475cafc8..c098f3be7e2b67de21ea499ca5e12f120b47572e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 @@ -5,7 +5,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -438,7 +438,7 @@ index 0891a47..c098f3b 100644
  
      for (Statement st : set) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index ab48ecc..e146481 100644
+index ab48eccfcad8e5b0f58ad6bb401587b1d71bab2d..e14648190ba6e309992149b9a60105a53caacf9f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -63,7 +63,15 @@ public class SwitchStatement extends Statement {
@@ -459,7 +459,7 @@ index ab48ecc..e146481 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index adbb6fd..c211d68 100644
+index adbb6fd39f8dca8e6ef97916354e3cb4e59340c9..c211d680fe9d488b302c92e0ad1ba37f233675ec 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -215,7 +215,10 @@ public class VarVersionsProcessor {
@@ -475,7 +475,7 @@ index adbb6fd..c211d68 100644
        if (pair.version >= 0) {
          int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
 diff --git a/testData/results/MoreAnnotations.dec b/testData/results/MoreAnnotations.dec
-index 37302cc..069c033 100644
+index 37302cc3db53fe0bbcfdab2e7a9653812a320235..069c0334a1df23c17159f8f199045438559b7687 100644
 --- a/testData/results/MoreAnnotations.dec
 +++ b/testData/results/MoreAnnotations.dec
 @@ -34,8 +34,8 @@ public @interface MoreAnnotations {
@@ -532,7 +532,7 @@ index 37302cc..069c033 100644
  }
  
 diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
-index 924b764..14c92f9 100644
+index 924b7641e3454daf3ce738de750dfcfa587fa18d..14c92f960012ea63747096f9237fca7ee5e70ced 100644
 --- a/testData/results/TestAnonymousClass.dec
 +++ b/testData/results/TestAnonymousClass.dec
 @@ -67,15 +67,8 @@ public abstract class TestAnonymousClass {
@@ -636,7 +636,7 @@ index 924b764..14c92f9 100644
  18
  104
 diff --git a/testData/results/TestAnonymousClassConstructor.dec b/testData/results/TestAnonymousClassConstructor.dec
-index 66960ce..63abd4a 100644
+index 66960ce40f72703d3577549847d033f011007834..63abd4acbe8cf73eb9628724b632af1a9ca231a3 100644
 --- a/testData/results/TestAnonymousClassConstructor.dec
 +++ b/testData/results/TestAnonymousClassConstructor.dec
 @@ -65,16 +65,16 @@ class TestAnonymousClassConstructor {
@@ -780,7 +780,7 @@ index 66960ce..63abd4a 100644
  57
  63
 diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
-index 8883fab..d5f7070 100644
+index 8883fab6ffd4b5f8b8b656b96e9a5c45d0e1bfb9..d5f7070f5b6618b11ea075941af29d4278059b59 100644
 --- a/testData/results/TestClassSimpleBytecodeMapping.dec
 +++ b/testData/results/TestClassSimpleBytecodeMapping.dec
 @@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
@@ -842,7 +842,7 @@ index 8883fab..d5f7070 100644
  Not mapped:
  39
 diff --git a/testData/results/TestConstants.dec b/testData/results/TestConstants.dec
-index 28df2c2..1170f1a 100644
+index 28df2c294ca1c0818ffad43052919c61c262c16a..1170f1a5876121e55bc5c58a2d10afeac8d1527f 100644
 --- a/testData/results/TestConstants.dec
 +++ b/testData/results/TestConstants.dec
 @@ -16,14 +16,14 @@ public class TestConstants {
@@ -867,7 +867,7 @@ index 28df2c2..1170f1a 100644
     static final double DMax = 1.7976931348623157E308D;
  
 diff --git a/testData/results/TestExtendingSubclass.dec b/testData/results/TestExtendingSubclass.dec
-index 5e13985..2caf740 100644
+index 5e13985808328287c750d776eee29041bec8e3fe..2caf74011a7beee7fd2a9fdebe1873be625a8f1a 100644
 --- a/testData/results/TestExtendingSubclass.dec
 +++ b/testData/results/TestExtendingSubclass.dec
 @@ -1,35 +1,35 @@
@@ -920,7 +920,7 @@ index 5e13985..2caf740 100644
  8
  13
 diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
-index af4fb30..f728ad7 100644
+index af4fb30496706a46dcc578948b4c66ef90b6d65e..f728ad7e3493b296f88d919a028b646096f733c7 100644
 --- a/testData/results/TestInnerLocal.dec
 +++ b/testData/results/TestInnerLocal.dec
 @@ -30,6 +30,14 @@ public class TestInnerLocal {
@@ -1032,7 +1032,7 @@ index af4fb30..f728ad7 100644
  7
  19
 diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
-index b2e4d0f..8aab3c2 100644
+index b2e4d0f757e55cd9ab6bd77aa9ed0afb33989e7d..8aab3c2b9f56368f1350f1ac98262c761bf6ed19 100644
 --- a/testData/results/TestInnerSignature.dec
 +++ b/testData/results/TestInnerSignature.dec
 @@ -11,18 +11,6 @@ public class TestInnerSignature<A, B, C> {
@@ -1136,7 +1136,7 @@ index b2e4d0f..8aab3c2 100644
  8
  19
 diff --git a/testData/results/TestMethodParameters.dec b/testData/results/TestMethodParameters.dec
-index 21f0f12..af7ce86 100644
+index 21f0f129d1bc260e2dbc7ce77f07ece57711bf75..af7ce865f5d946980010ee02c3e5be384a041064 100644
 --- a/testData/results/TestMethodParameters.dec
 +++ b/testData/results/TestMethodParameters.dec
 @@ -21,6 +21,14 @@ public class TestMethodParameters {
@@ -1225,7 +1225,7 @@ index 21f0f12..af7ce86 100644
  37 <-> 19
  39 <-> 22
 diff --git a/testData/results/TestSwitchOnEnum.dec b/testData/results/TestSwitchOnEnum.dec
-index b6984c3..3406481 100644
+index b6984c399ceff5434ddf72837649389341a00ea5..34064819cc6a520a13bc3fd718a046861414ae4c 100644
 --- a/testData/results/TestSwitchOnEnum.dec
 +++ b/testData/results/TestSwitchOnEnum.dec
 @@ -36,15 +36,15 @@ public class TestSwitchOnEnum {
@@ -1249,6 +1249,3 @@ index b6984c3..3406481 100644
     }
  }
  
--- 
-2.27.0.windows.1
-
