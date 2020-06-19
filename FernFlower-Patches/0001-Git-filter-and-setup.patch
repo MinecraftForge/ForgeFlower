@@ -1,11 +1,11 @@
-From 054d91c0c439eb93af1cf54b9bdc6bca05cda0e3 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 20:44:39 -0700
 Subject: [PATCH] Git filter and setup
 
 
 diff --git a/.gitattributes b/.gitattributes
-index f1df734..972529a 100644
+index f1df734f9f0bc7080a99140482eedf28bfe6b166..972529aebd1f5daa057f1fe9606c79be1dc4f64f 100644
 --- a/.gitattributes
 +++ b/.gitattributes
 @@ -1 +1,42 @@
@@ -54,7 +54,7 @@ index f1df734..972529a 100644
 + 
 \ No newline at end of file
 diff --git a/.gitignore b/.gitignore
-index 3537b26..c52eb2e 100644
+index 3537b26a5b9d0579ae764825988f08a14d29517b..c52eb2e815432be8d1f1e6b61cffdcce68af85bb 100644
 --- a/.gitignore
 +++ b/.gitignore
 @@ -1,3 +1,231 @@
@@ -295,7 +295,7 @@ index 3537b26..c52eb2e 100644
 +!testData/classes/**
 diff --git a/build.gradle b/build.gradle
 deleted file mode 100644
-index 9694117..0000000
+index 9694117119040d9a0c060dab67d1d5a36973d040..0000000000000000000000000000000000000000
 --- a/build.gradle
 +++ /dev/null
 @@ -1,25 +0,0 @@
@@ -2302,7 +2302,7 @@ z#GlBA?SDu9eedGme!&YL*H4~~&cE@zoOb?cmheA5<1hU#KWSpS|8Gk7-@GvYsq=q)
 oE`N5K{P4N_EZYFE|K@>tBMk;v2mOd$WCD5z@VD^x{P^qt0dz#mIsgCw
 
 diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
-index 657de85..a4b4429 100644
+index 657de8507468e0ce75005e8870f2a95ae849b5ce..a4b4429748d92848a3d820c7b099fbeb941066ae 100644
 --- a/gradle/wrapper/gradle-wrapper.properties
 +++ b/gradle/wrapper/gradle-wrapper.properties
 @@ -1,6 +1,5 @@
@@ -2314,7 +2314,7 @@ index 657de85..a4b4429 100644
  zipStorePath=wrapper/dists
 -distributionUrl=https\://services.gradle.org/distributions/gradle-4.0-all.zip
 diff --git a/gradlew b/gradlew
-index cccdd3d..2fe81a7 100755
+index cccdd3d517fc5249beaefa600691cf150f2fa3e6..2fe81a7d95e4f9ad2c9b2a046707d36ceb3980b3 100755
 --- a/gradlew
 +++ b/gradlew
 @@ -1,5 +1,21 @@
@@ -2407,7 +2407,7 @@ index cccdd3d..2fe81a7 100755
 -
  exec "$JAVACMD" "$@"
 diff --git a/gradlew.bat b/gradlew.bat
-index f955316..62bd9b9 100644
+index f9553162f122c71b34635112e717c3e733b5b212..62bd9b9ccefea2b65ae41e5d9a545e2021b90a1d 100644
 --- a/gradlew.bat
 +++ b/gradlew.bat
 @@ -1,3 +1,19 @@
@@ -2443,6 +2443,3 @@ index f955316..62bd9b9 100644
  
  @rem Find java.exe
  if defined JAVA_HOME goto findJavaFromJavaHome
--- 
-2.27.0.windows.1
-

@@ -1,11 +1,11 @@
-From 7b1e12d9f6b659bf671250d3e24b1314f0129428 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 17 Jun 2020 11:08:27 -0700
 Subject: [PATCH] Add toString to MethodDescriptor
 
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 49bb8c8..4995d41 100644
+index 49bb8c809a273cfd4f268b5e01badc468f895f75..4995d41f7cca01876d8dc925fa7b02df2e24fcc2 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -19,11 +19,13 @@ import java.util.Objects;
@@ -44,6 +44,3 @@ index 49bb8c8..4995d41 100644
    @Override
    public boolean equals(Object o) {
      if (o == this) return true;
--- 
-2.27.0.windows.1
-

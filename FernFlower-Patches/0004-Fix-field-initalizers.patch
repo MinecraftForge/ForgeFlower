@@ -1,11 +1,11 @@
-From 89cd2b7f01d21647b587708c76fb3a20cc98587c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:51:55 -0700
 Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index ba039e6..0bfe8ad 100644
+index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad814c4ffc5 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -248,7 +248,7 @@ index ba039e6..0bfe8ad 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 642a86b..c79f1a6 100644
+index 642a86be9a791759e04cc74ad12ffca4436dfbf6..c79f1a6fc6d13c3e61d877624c18b117a5567ce6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -31,18 +31,24 @@ public class FieldExprent extends Exprent {
@@ -327,7 +327,7 @@ z<BWBrM`IJ2QGxr6yLz()p0~umT@n;j{=*u$vbHW9HKC}}7M?_C9O+7)J(-o9N<PN2
 GhW!C-@ghk8
 
 diff --git a/testData/results/TestClashName.dec b/testData/results/TestClashName.dec
-index 2a9a731..43348ea 100644
+index 2a9a731549e4bee8fe6ff812211e5a7930252017..43348ea674adf840021a807e16fd231a51939c1d 100644
 --- a/testData/results/TestClashName.dec
 +++ b/testData/results/TestClashName.dec
 @@ -7,25 +7,14 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
@@ -454,7 +454,7 @@ index 2a9a731..43348ea 100644
 +78 <-> 26
 +82 <-> 30
 diff --git a/testData/results/TestClassFields.dec b/testData/results/TestClassFields.dec
-index ea272ea..852ae47 100644
+index ea272ead5c52deca629cb12876748960044559e0..852ae473bdfa591e28aa9b132f9f358ee1fc6eeb 100644
 --- a/testData/results/TestClassFields.dec
 +++ b/testData/results/TestClassFields.dec
 @@ -3,16 +3,14 @@ package pkg;
@@ -501,7 +501,7 @@ index ea272ea..852ae47 100644
 +9
 +16
 diff --git a/testData/src/pkg/TestClassFields.java b/testData/src/pkg/TestClassFields.java
-index 8a77fe0..6e31d5c 100644
+index 8a77fe0038a8aad333b5004ca17c5d5d6edfa62d..6e31d5c7515e942c26821ad3320a2eb4dfead920 100644
 --- a/testData/src/pkg/TestClassFields.java
 +++ b/testData/src/pkg/TestClassFields.java
 @@ -2,19 +2,17 @@ package pkg;
@@ -527,6 +527,3 @@ index 8a77fe0..6e31d5c 100644
    }
  }
 \ No newline at end of file
--- 
-2.27.0.windows.1
-

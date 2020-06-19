@@ -1,4 +1,4 @@
-From fff7a1bfc7b3e565831d858ae2a5ee965cfd4f12 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: malte0811 <malte0811@web.de>
 Date: Mon, 23 Jul 2018 15:53:01 +0200
 Subject: [PATCH] Fix incorrect decompilation of inverted floating point
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix incorrect decompilation of inverted floating point
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index a7c804b..859f2cb 100644
+index a7c804b9485791f60f7be4ed8d9278dba29c9633..859f2cb4f7f7ce538af5e481336b3a36b9d1aa59 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 @@ -168,8 +168,18 @@ public class SecondaryFunctionsHelper {
@@ -65,7 +65,7 @@ index a7c804b..859f2cb 100644
          }
        }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index d9ac036..e57ff62 100644
+index d9ac0365a2fc8c7886feaf07674ad1640baf8a82..e57ff6220012555bedb01b6d325e98489dcdc765 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -115,4 +115,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -96,7 +96,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestInvertedFloatComparison.dec b/testData/results/TestInvertedFloatComparison.dec
 new file mode 100644
-index 0000000..03d684a
+index 0000000000000000000000000000000000000000..03d684aaf4c89cbbd1bbe3369b8ea316c38ee41d
 --- /dev/null
 +++ b/testData/results/TestInvertedFloatComparison.dec
 @@ -0,0 +1,199 @@
@@ -301,7 +301,7 @@ index 0000000..03d684a
 +66 <-> 65
 diff --git a/testData/src/pkg/TestInvertedFloatComparison.java b/testData/src/pkg/TestInvertedFloatComparison.java
 new file mode 100644
-index 0000000..a660d33
+index 0000000000000000000000000000000000000000..a660d3309284037ecda581a223c107ee92459c9d
 --- /dev/null
 +++ b/testData/src/pkg/TestInvertedFloatComparison.java
 @@ -0,0 +1,68 @@
@@ -374,6 +374,3 @@ index 0000000..a660d33
 +  }
 +}
 \ No newline at end of file
--- 
-2.27.0.windows.1
-

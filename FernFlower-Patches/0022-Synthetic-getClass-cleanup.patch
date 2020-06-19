@@ -1,11 +1,11 @@
-From 348a11626d2ef165fe51a9ceed8bc4ecaded8b29 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Thu, 26 Jul 2018 13:28:40 -0700
 Subject: [PATCH] Synthetic getClass cleanup
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 474ffda..4933b5c 100644
+index 474ffda1b9d610968bd12160f2153713b37f2db9..4933b5c1d375b7beacbb521bc8770cf295e7d98c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -617,6 +617,20 @@ public class ExprProcessor implements CodeConstants {
@@ -30,7 +30,7 @@ index 474ffda..4933b5c 100644
          case opc_pop2:
            if (stack.getByOffset(-1).getExprType().stackSize == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 986a8a7..767f6bd 100644
+index 986a8a72ec138ea637d3446ed2e823f6100c31cc..767f6bdb92ecf0ba0bc4a437b8bf8482fa47bdea 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 @@ -71,6 +71,10 @@ public class SimplifyExprentsHelper {
@@ -94,7 +94,7 @@ index 986a8a7..767f6bd 100644
                String classname = newExpr.getNewType().value;
                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a16aa29..593a5be 100644
+index a16aa2923136edd2ee5c4a4c45203bdab6e652b6..593a5bec560f71215ff23207c79a8648f84c3c0d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
@@ -128,6 +128,3 @@ index a16aa29..593a5be 100644
    @Override
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstParameters);
--- 
-2.27.0.windows.1
-

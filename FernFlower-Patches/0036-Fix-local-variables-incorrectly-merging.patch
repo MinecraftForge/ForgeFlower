@@ -1,11 +1,11 @@
-From 7a7d32438ff61b53f582f66f063ebb51cb4f7d2b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 15 Jun 2020 22:07:51 -0700
 Subject: [PATCH] Fix local variables incorrectly merging.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
-index 500c5eb..66ba9d9 100644
+index 500c5eb514de743bf133885f7d5f41ef1e377d24..66ba9d916fe6c7df79d24d88b75204b5cf638d9c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 @@ -601,7 +601,7 @@ public class StackVarsProcessor {
@@ -34,6 +34,3 @@ index 500c5eb..66ba9d9 100644
            break;
          }
        }
--- 
-2.27.0.windows.1
-

@@ -1,4 +1,4 @@
-From 88936c514f503ca5ff902c5f57e8a6e6474f4431 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 19 Apr 2017 01:59:28 -0700
 Subject: [PATCH] Add Minecraft test framework
@@ -6,7 +6,7 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000..8ec8c36
+index 0000000000000000000000000000000000000000..8ec8c36234a30e76b7f75d54220f771afe58e264
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 @@ -0,0 +1,140 @@
@@ -150,6 +150,3 @@ index 0000000..8ec8c36
 +  @Test public void testWoodlandMansionPieces() { doTest("net/minecraft/world/gen/structure/WoodlandMansionPieces"); }
 +  @Test public void testEntityPlayer() { doTest("net/minecraft/command/impl/SeedCommand"); }
 +}
--- 
-2.27.0.windows.1
-

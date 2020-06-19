@@ -1,11 +1,11 @@
-From 2e58f4ec3e52394fb6d0b215e6aca449ebb22a35 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 22:37:40 -0700
 Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 2fcabdc..4817f05 100644
+index 2fcabdcd9ce1130a778754b318bf874922f02e12..4817f055906bfa4bfa4f7bfa9b590f88e984c3a1 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -701,6 +701,11 @@ public class ClassWriter {
@@ -21,7 +21,7 @@ index 2fcabdc..4817f05 100644
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index a347589..6b6e38f 100644
+index a34758940dbce0c5bac8dff269386af752c63d91..6b6e38f72a51e3f426b812060511e71142860263 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -57,7 +57,7 @@ index a347589..6b6e38f 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index bf0fe47..95baa7d 100644
+index bf0fe47e7d48b21acd758449b67612e250f19554..95baa7dfec5a9c8dcde30a288499aa127aeffa4b 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 @@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
@@ -113,7 +113,7 @@ index bf0fe47..95baa7d 100644
      return getCurrentContext().importCollector;
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index f8c413c..ab8c1a6 100644
+index f8c413c7b7302b201a739310677d0103e2878d3e..ab8c1a60acfdef8c6ffb3082efbfbc1315d2c0bc 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
@@ -152,7 +152,7 @@ index f8c413c..ab8c1a6 100644
      String vendor = System.getProperty("java.vendor", "missing vendor");
 diff --git a/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 new file mode 100644
-index 0000000..4b62af8
+index 0000000000000000000000000000000000000000..4b62af8a0587083fedc44fc7fd5032ee32513700
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 @@ -0,0 +1,44 @@
@@ -201,7 +201,7 @@ index 0000000..4b62af8
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index bdd34f0..206f627 100644
+index bdd34f0382b06687ef7fb3237bbc96ac322bdd5c..206f62766c52572b6d5583c7822da22a25130adc 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -51,6 +51,8 @@ public interface IFernflowerPreferences {
@@ -226,7 +226,7 @@ index bdd34f0..206f627 100644
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 new file mode 100644
-index 0000000..8e6ab2b
+index 0000000000000000000000000000000000000000..8e6ab2bfc651c25b095f16f9eabc4a81ef10d605
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 @@ -0,0 +1,26 @@
@@ -258,7 +258,7 @@ index 0000000..8e6ab2b
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
 new file mode 100644
-index 0000000..fc1d7d6
+index 0000000000000000000000000000000000000000..fc1d7d67864ab12e894fcdf0ed8e1297ce057bee
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
 @@ -0,0 +1,22 @@
@@ -285,7 +285,7 @@ index 0000000..fc1d7d6
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 58bf515..9942e12 100644
+index 58bf5152299a7ca6f4d22a2e1f8b95b6393e6242..9942e125766f6162506ff6418f00e8bcbe6d8072 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -545,7 +545,11 @@ public class NestedClassProcessor {
@@ -302,7 +302,7 @@ index 58bf515..9942e12 100644
            int index = 0, varIndex = 1;
            MethodDescriptor md = MethodDescriptor.parseDescriptor(method.methodStruct.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 89f1c97..06d6cba 100644
+index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620ca51fd25c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,6 +2,7 @@
@@ -403,7 +403,7 @@ index 89f1c97..06d6cba 100644
          this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
        else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index cd9ac7e..195e8d5 100644
+index cd9ac7edea0f4c840527cc526712a8f67f2c8a95..195e8d55b6c32bb1be7acadb76dc13ba1a33e44c 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -442,7 +442,7 @@ index cd9ac7e..195e8d5 100644
    }
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000..b29e693
+index 0000000000000000000000000000000000000000..b29e693b22abb9c296a1b36fd3e050f41044f24c
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 @@ -0,0 +1,212 @@
@@ -660,7 +660,7 @@ index 0000000..b29e693
 +}
 diff --git a/src/org/jetbrains/java/decompiler/util/StatementIterator.java b/src/org/jetbrains/java/decompiler/util/StatementIterator.java
 new file mode 100644
-index 0000000..a41c910
+index 0000000000000000000000000000000000000000..a41c910e58c3c0e16e6b13a90fe9f34acea09662
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/StatementIterator.java
 @@ -0,0 +1,58 @@
@@ -724,7 +724,7 @@ index 0000000..a41c910
 +}
 diff --git a/test/org/jetbrains/java/decompiler/JADTest.java b/test/org/jetbrains/java/decompiler/JADTest.java
 new file mode 100644
-index 0000000..176b850
+index 0000000000000000000000000000000000000000..176b850d338fbfbbd65eab8405c46f35de662c7d
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/JADTest.java
 @@ -0,0 +1,34 @@
@@ -779,7 +779,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestJADNaming.dec b/testData/results/TestJADNaming.dec
 new file mode 100644
-index 0000000..b5d7ed5
+index 0000000000000000000000000000000000000000..b5d7ed54d77cc30c25688e1989a5a63eafaf863f
 --- /dev/null
 +++ b/testData/results/TestJADNaming.dec
 @@ -0,0 +1,81 @@
@@ -866,7 +866,7 @@ index 0000000..b5d7ed5
 +11 <-> 21
 diff --git a/testData/src/pkg/TestJADNaming.java b/testData/src/pkg/TestJADNaming.java
 new file mode 100644
-index 0000000..87e1c03
+index 0000000000000000000000000000000000000000..87e1c035ea3a6fd049bb95ba09935cc674afacd4
 --- /dev/null
 +++ b/testData/src/pkg/TestJADNaming.java
 @@ -0,0 +1,12 @@
@@ -883,6 +883,3 @@ index 0000000..87e1c03
 +    }
 +}
 \ No newline at end of file
--- 
-2.27.0.windows.1
-

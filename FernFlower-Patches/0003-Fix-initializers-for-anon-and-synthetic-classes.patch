@@ -1,11 +1,11 @@
-From 9bd94d6cee203cbe024f1040b84d4969897a907d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 13:21:00 -0700
 Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 72fefe4..1182bd1 100644
+index 72fefe4c1c0aa322154541d54b1ccb35cc2154d1..1182bd193cb0aef1ebacbcd8d6427dd79af9715f 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -41,6 +41,7 @@ public class ClassWriter {
@@ -17,7 +17,7 @@ index 72fefe4..1182bd1 100644
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersionGE_1_5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 1ee22f2..0041f13 100644
+index 1ee22f210c1828c5ce7adc09a468e5bd649cc637..0041f13df8b5336da5b9891df0e399cbc2de4e3c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -87,6 +87,31 @@ public class ClassesProcessor implements CodeConstants {
@@ -53,7 +53,7 @@ index 1ee22f2..0041f13 100644
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index b929d0d..ba039e6 100644
+index b929d0d142711abdcd3f67cb429c91b7260d6e2b..ba039e6c83007aca9bce0a33229b28c7b82dc398 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -128,6 +128,3 @@ index b929d0d..ba039e6 100644
 -}
 \ No newline at end of file
 +}
--- 
-2.27.0.windows.1
-

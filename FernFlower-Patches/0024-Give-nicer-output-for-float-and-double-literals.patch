@@ -1,11 +1,11 @@
-From b490b94145b6af4a68f3fbc92b59b0fd312c637a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Pokechu22 <Pokechu022@gmail.com>
 Date: Fri, 3 Aug 2018 14:15:46 -0700
 Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 71f2ad8..4bd94d9 100644
+index 71f2ad8417d51eaa564a1813fbd34e1de8b50f94..4bd94d9f47c9d15ef571412a28b97a0fbbfd45ef 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -31,6 +31,67 @@ public class ConstExprent extends Exprent {
@@ -227,6 +227,3 @@ index 71f2ad8..4bd94d9 100644
    // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
    // This trims them all down to only the necessary amount.
    private static String trimZeros(String value) {
--- 
-2.27.0.windows.1
-

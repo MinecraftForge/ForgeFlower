@@ -1,14 +1,14 @@
-From a66ecb7e8f5e2090fe1064a4e0c593fefe6dd936 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 10 Jun 2020 09:59:19 -0700
 Subject: [PATCH] Add -only argument It will filter what classes are decompiled
- from the target jar. Uses a prefix system, so -only=net/minecraft/block/ will
- decompile all classes in the block package and subpackages. Useful for
- debugging to limit scope/runtime.
+ from the target jar.
 
+Uses a prefix system, so -only=net/minecraft/block/ will decompile all classes in the block package and subpackages.
+Useful for debugging to limit scope/runtime.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index c5cfa74..eafddcc 100644
+index c5cfa74b683deb347d5733ba306628561e013cc3..eafddccc870786ee6f68412420ddd52e1b5b6992 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -36,6 +36,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -58,7 +58,7 @@ index c5cfa74..eafddcc 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index ab8c1a6..469b313 100644
+index ab8c1a60acfdef8c6ffb3082efbfbc1315d2c0bc..469b313a958cf8aca35fe98fc809880d12db671e 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -115,6 +115,10 @@ public class Fernflower implements IDecompiledData {
@@ -82,7 +82,7 @@ index ab8c1a6..469b313 100644
      }
      else if (converter != null) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 5393dde..2b6e9ed 100644
+index 5393ddec202efa7e1f6bb3f7740fa83a70ea48fd..2b6e9ed5d2cf8e3781c9b33b1489fee9447d8181 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -66,6 +66,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
@@ -124,6 +124,3 @@ index 5393dde..2b6e9ed 100644
    public void decompileContext() {
      try {
        engine.decompileContext();
--- 
-2.27.0
-

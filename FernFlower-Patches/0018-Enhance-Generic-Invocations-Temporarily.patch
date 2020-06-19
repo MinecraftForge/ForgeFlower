@@ -1,4 +1,4 @@
-From a05f3907b40a0e9deb19f31882a0b5e944e30b8d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 16 Feb 2018 22:04:00 -0800
 Subject: [PATCH] Enhance Generic Invocations Temporarily.
@@ -6,7 +6,7 @@ Subject: [PATCH] Enhance Generic Invocations Temporarily.
 This is a temp separate patch until I get some time to merge it to patch 10/13.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 4aeda0e..58c3471 100644
+index 4aeda0e0c459d4956971b3298b8a4cd6f9424e0c..58c3471ff26529c091a44670828d272755e75f7d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -266,11 +266,11 @@ public abstract class Exprent implements IMatchable {
@@ -24,7 +24,7 @@ index 4aeda0e..58c3471 100644
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 068e44b..8f69e43 100644
+index 068e44b80f9972be77bfd9fe095a5549edf40a2f..8f69e433dce5541e5f42693c67fbb9f8610821d2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -7,6 +7,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -92,7 +92,7 @@ index 068e44b..8f69e43 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 1c822f3..a16aa29 100644
+index 1c822f357c117f4bc8af4ced1842421d2224af18..a16aa2923136edd2ee5c4a4c45203bdab6e652b6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -406,6 +406,7 @@ public class InvocationExprent extends Exprent {
@@ -254,7 +254,7 @@ index 1c822f3..a16aa29 100644
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index c9bfe7b..6729ac6 100644
+index c9bfe7bea082a4acc673acf821ef20a3659065a5..6729ac6feb7d822c3786b1864dc12cf779c3d30d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -130,6 +130,35 @@ public class StructClass extends StructMember {
@@ -293,6 +293,3 @@ index c9bfe7b..6729ac6 100644
    public String getInterface(int i) {
      return interfaceNames[i];
    }
--- 
-2.27.0.windows.1
-

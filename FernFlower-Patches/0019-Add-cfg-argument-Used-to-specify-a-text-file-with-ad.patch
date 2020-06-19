@@ -1,14 +1,13 @@
-From a58bdcfc4022f1461df6b5c43861c8ac4e6849d6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 6 Apr 2018 20:45:33 -0700
 Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
- command line arguments. Our use case is specifying a ton of external
- libraries. It will read a text file and replace the -cfg entry with those
- lines.
+ command line arguments.
 
+Our use case is specifying a ton of external libraries. It will read a text file and replace the -cfg entry with those lines.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 75d4d09..06e3629 100644
+index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..06e362987a3917976627fc1f0b6aad302c4ea650 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -10,9 +10,13 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -72,7 +71,7 @@ index 75d4d09..06e3629 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 6840263..cc4e357 100644
+index 684026371c3a8314055a30ae6dafbd02f2c79240..cc4e357fb8b7adeeb76858813f5ee329d17497d5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -94,6 +94,7 @@ public class StructContext {
@@ -98,6 +97,3 @@ index 6840263..cc4e357 100644
 -}
 \ No newline at end of file
 +}
--- 
-2.27.0.windows.1
-
