@@ -5,10 +5,10 @@ Subject: [PATCH] Improve stack var processor output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index b77dfec43d4b5b7e11528df9ecf52f32473629b4..75c6037aa532cc62df598fe682929db1d7e9a4ee 100644
+index 015307bf1f17d0d52882b5d400d42437859d102c..40a82ca610313a7a82b40660792c8cf7db12216e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -167,11 +167,12 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -171,11 +171,12 @@ public class MethodProcessorRunnable implements Runnable {
        if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
          if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
            SequenceHelper.condenseSequences(root);

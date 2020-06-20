@@ -44,7 +44,7 @@ index ca63ad5131641e1ce917afabf84700cd9121d987..fa7961777d41bc0845f741689c331438
          }
        }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 726d7474416cfea5c21483e06d3e8ac19f500c20..447780c1ed1316d6f30cd35150061b7946233315 100644
+index 726d7474416cfea5c21483e06d3e8ac19f500c20..dc3c87371261c64a3a51eed449cac0c69387ff13 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -11,7 +11,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -75,7 +75,7 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..447780c1ed1316d6f30cd35150061b79
      }
  
      // remove synchronized exception handler
-@@ -141,15 +147,22 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -141,15 +147,26 @@ public class MethodProcessorRunnable implements Runnable {
        stackProc.simplifyStackVars(root, mt, cl);
        varProc.setVarVersions(root);
      }
@@ -87,11 +87,15 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..447780c1ed1316d6f30cd35150061b79
  
 -      do {
 +      while (true) {
-+        if (EliminateLoopsHelper.eliminateLoops(root, cl) || LoopExtractHelper.extractLoops(root)) {
++        if (EliminateLoopsHelper.eliminateLoops(root, cl)) {
 +          continue;
 +        }
 +
          MergeHelper.enhanceLoops(root);
++
++        if (LoopExtractHelper.extractLoops(root)) {
++          continue;
++        }
 +
 +        if (!IfHelper.mergeAllIfs(root)) {
 +          break;
@@ -101,7 +105,20 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..447780c1ed1316d6f30cd35150061b79
  
        if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
          if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
-@@ -180,6 +193,8 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -165,6 +182,12 @@ public class MethodProcessorRunnable implements Runnable {
+         continue;
+       }
+ 
++      // this has to be done last so it does not screw up the formation of for loops
++      if (MergeHelper.makeDoWhileLoops(root)) {
++        LabelHelper.cleanUpEdges(root);
++        LabelHelper.identifyLabels(root);
++      }
++
+       // initializer may have at most one return point, so no transformation of method exits permitted
+       if (isInitializer || !ExitHelper.condenseExits(root)) {
+         break;
+@@ -180,6 +203,8 @@ public class MethodProcessorRunnable implements Runnable {
  
      SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
  
@@ -110,7 +127,7 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..447780c1ed1316d6f30cd35150061b79
      varProc.setVarDefinitions(root);
  
      // must be the last invocation, because it makes the statement structure inconsistent
-@@ -200,4 +215,30 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -200,4 +225,30 @@ public class MethodProcessorRunnable implements Runnable {
    public boolean isFinished() {
      return finished;
    }
@@ -704,7 +721,7 @@ index f6ee600ab9fde26b8849bb081cd04b68ed95faa7..b7fa59c05e7e403287d65d8ee3918fdf
            for (int i = index; i < seq.getStats().size(); i++) {
              if (!noExitLabels(seq.getStats().get(i), seq)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
-index 822912795072fc94b32ffd368b8c5ebe61403e3f..545f687a7f7ac501f1447357f60c98ff12a326bb 100644
+index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce8367a2f3c7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 @@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -751,10 +768,18 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..545f687a7f7ac501f1447357f60c98ff
  
      // search for an if condition at the end of the loop
      Statement last = stat.getFirst();
-@@ -93,6 +111,11 @@ public class LoopExtractHelper {
+@@ -93,6 +111,19 @@ public class LoopExtractHelper {
  
            if (set.isEmpty()) { // no direct continues in a do{}while loop
              if (isExternStatement(stat, ifstat, ifstat)) {
++              Statement first = stat.getFirst();
++              while (first.type == Statement.TYPE_SEQUENCE) {
++                first = first.getFirst();
++              }
++              if (first.type == Statement.TYPE_DO && ((DoStatement)first).getLooptype() == DoStatement.LOOP_DO) {
++                return false;
++              }
++
 +              for (Statement s : stats) {
 +                if (!ifstat.containsStatement(s)) {
 +                  return false;
@@ -763,7 +788,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..545f687a7f7ac501f1447357f60c98ff
                extractIfBlock(stat, lastif);
                return true;
              }
-@@ -103,7 +126,7 @@ public class LoopExtractHelper {
+@@ -103,7 +134,7 @@ public class LoopExtractHelper {
      return false;
    }
  
@@ -772,7 +797,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..545f687a7f7ac501f1447357f60c98ff
  
      // search for an if condition at the entrance of the loop
      Statement first = stat.getFirst();
-@@ -121,6 +144,11 @@ public class LoopExtractHelper {
+@@ -121,6 +152,11 @@ public class LoopExtractHelper {
            Statement ifstat = firstif.getIfstat();
  
            if (isExternStatement(stat, ifstat, ifstat)) {
@@ -784,7 +809,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..545f687a7f7ac501f1447357f60c98ff
              extractIfBlock(stat, firstif);
              return true;
            }
-@@ -181,5 +209,10 @@ public class LoopExtractHelper {
+@@ -181,5 +217,10 @@ public class LoopExtractHelper {
          loop.addPredecessor(edge);
        }
      }
@@ -997,10 +1022,10 @@ index 0000000000000000000000000000000000000000..c62c74da3925db6820facb219ee93163
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e9f71d34a 100644
+index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215cf3eaec22 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-@@ -4,8 +4,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+@@ -4,11 +4,17 @@ package org.jetbrains.java.decompiler.modules.decompiler;
  import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -1014,7 +1039,11 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
  import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
  
  import java.util.ArrayList;
-@@ -42,17 +47,20 @@ public class MergeHelper {
++import java.util.BitSet;
+ import java.util.List;
+ import java.util.Set;
+ 
+@@ -42,17 +48,20 @@ public class MergeHelper {
  
          // identify a while loop
          if (matchWhile(stat)) {
@@ -1039,67 +1068,42 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
      }
  
      return (stat.getLooptype() != oldloop);
-@@ -142,13 +150,45 @@ public class MergeHelper {
+@@ -142,13 +151,14 @@ public class MergeHelper {
          if (firstif.iftype == IfStatement.IFTYPE_IF) {
            if (firstif.getIfstat() == null) {
              StatEdge ifedge = firstif.getIfEdge();
 -            if (isDirectPath(stat, ifedge.getDestination())) {
-+            boolean infinite = false;
 +
-+            // there are some special cases where we can fix this
-+            // FIXME do these result from an error somewhere else?
-+            if (!isDirectPath(stat, ifedge.getDestination())) {
-+              // bad infinite loop needs special handling
-+              infinite = ifedge.getType() == StatEdge.TYPE_CONTINUE && stat.getFirst().equals(firstif) && stat.equals(ifedge.getDestination());
-+
-+              // inside a switch or loop and we need to add a break after the current loop
-+              Statement parent = stat.getParent();
-+              if (!infinite && parent != null) {
-+                if (parent.type != Statement.TYPE_SEQUENCE || parent.getStats().getLast().equals(stat)) {
-+                  Statement outer = parent.getParent();
-+                  while (outer != null && outer.type != Statement.TYPE_SWITCH && outer.type != Statement.TYPE_DO) {
-+                    outer = outer.getParent();
-+                  }
-+
-+                  if (outer != null) {
-+                    List<StatEdge> edges = outer.getAllSuccessorEdges();
-+                    if (!edges.isEmpty()) {
-+                      StatEdge edge = edges.get(0);
-+                      if (edge.getDestination().equals(ifedge.getDestination())) {
-+                        stat.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, stat, ifedge.getDestination(), outer));
-+                      }
-+                    }
-+                  }
-+                }
-+              }
-+            }
-+
-+            if (infinite || isDirectPath(stat, ifedge.getDestination())) {
++            if (isDirectPath(stat, ifedge.getDestination()) || addContinueOrBreak(stat, ifedge)) {
                // exit condition identified
                stat.setLooptype(DoStatement.LOOP_WHILE);
  
                // negate condition (while header)
                IfExprent ifexpr = (IfExprent)firstif.getHeadexprent().copy();
 -              ifexpr.negateIf();
-+              if (!infinite) {
 +                ifexpr.negateIf();
-+              }
  
                if (stat.getConditionExprent() != null) {
                  ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-@@ -159,6 +199,11 @@ public class MergeHelper {
+@@ -186,7 +196,7 @@ public class MergeHelper {
+               return true;
+             }
+           }
+-          else {
++          //else { // fix infinite loops
+             StatEdge elseedge = firstif.getAllSuccessorEdges().get(0);
+             if (isDirectPath(stat, elseedge.getDestination())) {
+               // exit condition identified
+@@ -240,7 +250,7 @@ public class MergeHelper {
  
-               // remove edges
-               firstif.getFirst().removeSuccessor(ifedge);
-+
-+              if (infinite) {
-+                ifedge = firstif.getAllSuccessorEdges().get(0);
-+              }
-+
-               firstif.removeSuccessor(firstif.getAllSuccessorEdges().get(0));
- 
-               if (stat.getAllSuccessorEdges().isEmpty()) {
-@@ -325,6 +370,8 @@ public class MergeHelper {
+               return true;
+             }
+-          }
++          //}
+         }
+       }
+     }
+@@ -325,6 +335,8 @@ public class MergeHelper {
          }
          else {
            preData = current.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).get(0);
@@ -1108,7 +1112,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
            preData = getLastDirectData(preData);
            if (preData != null && !preData.getExprents().isEmpty()) {
              initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
-@@ -363,12 +410,16 @@ public class MergeHelper {
+@@ -363,12 +375,16 @@ public class MergeHelper {
        stat.setIncExprent(exp);
      }
  
@@ -1129,7 +1133,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
      }
    }
  
-@@ -401,14 +452,296 @@ public class MergeHelper {
+@@ -401,14 +417,346 @@ public class MergeHelper {
        return stat;
      }
  
@@ -1180,8 +1184,8 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +            }
 +          }
 +          break;
-+        }
-+      }
+         }
+       }
 +      else {
 +        break;
 +      }
@@ -1197,12 +1201,11 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +    }
 +
 +    if (stat.getLooptype() == DoStatement.LOOP_WHILE && initExprents[0] != null && firstDoExprent != null) {
-+      if (initExprents[0].type == Exprent.EXPRENT_ASSIGNMENT &&
-+          isIteratorCall(((AssignmentExprent)initExprents[0]).getRight())) {
++      if (isIteratorCall(initExprents[0].getRight())) {
 +
 +        //Streams mimic Iterable but arnt.. so explicitly disallow their enhancements
 +        //TODO: Check inheritance for Iterable instead of just names?
-+        InvocationExprent invc = (InvocationExprent)getUncast(((AssignmentExprent)initExprents[0]).getRight());
++        InvocationExprent invc = (InvocationExprent)getUncast((initExprents[0]).getRight());
 +        if (invc.getClassname().contains("java/util/stream")) {
 +          return false;
 +        }
@@ -1212,7 +1215,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +          return false;
 +        }
 +
-+        AssignmentExprent ass = (AssignmentExprent)firstDoExprent;
++        AssignmentExprent ass = firstDoExprent;
 +        if ((!isNextCall(ass.getRight()) && !isNextUnboxing(ass.getRight())) || ass.getLeft().type != Exprent.EXPRENT_VAR) {
 +          return false;
 +        }
@@ -1227,7 +1230,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +          return false;
 +        }
 +
-+        InvocationExprent holder = (InvocationExprent)((AssignmentExprent)initExprents[0]).getRight();
++        InvocationExprent holder = (InvocationExprent)(initExprents[0]).getRight();
 +
 +        initExprents[0].getBytecodeRange(holder.getInstance().bytecode);
 +        holder.getBytecodeRange(holder.getInstance().bytecode);
@@ -1250,7 +1253,8 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +            holder.getInstance().type == Exprent.EXPRENT_VAR) {
 +          VarExprent copy = (VarExprent)initExprents[1].getLeft();
 +          VarExprent inc = (VarExprent)holder.getInstance();
-+          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() && !inc.isVarReferenced(stat.getTopParent(), copy)) {
++          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() &&
++              !inc.isVarReferenced(stat.getTopParent(), copy) && !isNextCall(initExprents[1].getRight())) {
 +            preData.getExprents().remove(initExprents[1]);
 +            initExprents[1].getBytecodeRange(initExprents[1].getRight().bytecode);
 +            stat.getIncExprent().getBytecodeRange(initExprents[1].getRight().bytecode);
@@ -1260,7 +1264,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +
 +        return true;
 +      }
-+      else if (initExprents[0] != null && initExprents[1] != null && firstDoExprent != null) {
++      else if (initExprents[1] != null) {
 +        if (firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY || firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR) {
 +          return false;
 +        }
@@ -1340,7 +1344,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +        FunctionExprent fun = (FunctionExprent)exp;
 +        if (fun.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT) {
 +          exp = fun.getLstOperands().get(0);
-         }
++        }
 +        else if (fun.getFuncType() == FunctionExprent.FUNCTION_EQ ||
 +                 fun.getFuncType() == FunctionExprent.FUNCTION_NE) {
 +          return fun.getLstOperands().get(0);
@@ -1374,8 +1378,8 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +      FunctionExprent func = (FunctionExprent)exp;
 +      if (func.getFuncType() == FunctionExprent.FUNCTION_CAST) {
 +        return getUncast(func.getLstOperands().get(0));
-       }
-     }
++      }
++    }
 +    return exp;
 +  }
 +
@@ -1383,7 +1387,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +    exp = getUncast(exp);
 +    if (exp.type == Exprent.EXPRENT_INVOCATION) {
 +      return (InvocationExprent) exp;
-+    }
+     }
      return null;
    }
 -}
@@ -1431,6 +1435,56 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..0bbd0a5a5337a6a377f005be79347c7e
 +      return false;
 +    InvocationExprent inv = (InvocationExprent)exp;
 +    return inv.isUnboxingCall() && isNextCall(inv.getInstance());
++  }
++
++  public static boolean makeDoWhileLoops(RootStatement root) {
++    if (makeDoWhileRec(root)) {
++      SequenceHelper.condenseSequences(root);
++      return true;
++    }
++    return false;
++  }
++
++  private static boolean makeDoWhileRec(Statement stat) {
++    boolean ret = false;
++
++    for (Statement st : stat.getStats()) {
++      ret |= makeDoWhileRec(st);
++    }
++
++    if (stat.type == Statement.TYPE_DO) {
++      DoStatement dostat = (DoStatement)stat;
++      if (dostat.getLooptype() == DoStatement.LOOP_DO) {
++        matchDoWhile(dostat);
++        ret |= dostat.getLooptype() != DoStatement.LOOP_DO;
++      }
++    }
++
++    return ret;
++  }
++
++  private static boolean addContinueOrBreak(DoStatement stat, StatEdge ifedge) {
++    Statement outer = stat.getParent();
++    while (outer != null && outer.type != Statement.TYPE_SWITCH && outer.type != Statement.TYPE_DO) {
++      outer = outer.getParent();
++    }
++
++    if (outer != null && (outer.type == Statement.TYPE_SWITCH || ((DoStatement)outer).getLooptype() != DoStatement.LOOP_DO)) {
++      Statement parent = stat.getParent();
++      if (parent.type != Statement.TYPE_SEQUENCE || parent.getStats().getLast().equals(stat)) {
++        // need to insert a break or continue after the loop
++        if (ifedge.getDestination().equals(outer)) {
++          stat.addSuccessor(new StatEdge(StatEdge.TYPE_CONTINUE, stat, ifedge.getDestination(), outer));
++          return true;
++        }
++        else if (MergeHelper.isDirectPath(outer, ifedge.getDestination())) {
++          stat.addSuccessor(new StatEdge(StatEdge.TYPE_BREAK, stat, ifedge.getDestination(), outer));
++          return true;
++        }
++      }
++    }
++
++    return false;
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
