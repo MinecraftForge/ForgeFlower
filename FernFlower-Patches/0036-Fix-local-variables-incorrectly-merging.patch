@@ -5,7 +5,7 @@ Subject: [PATCH] Fix local variables incorrectly merging.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
-index 500c5eb514de743bf133885f7d5f41ef1e377d24..66ba9d916fe6c7df79d24d88b75204b5cf638d9c 100644
+index 1a085709ed7a120d109542e4bf7101013fdcf37d..ca38c8fe1de405dd65f6dc802189581412111fdc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 @@ -601,7 +601,7 @@ public class StackVarsProcessor {
