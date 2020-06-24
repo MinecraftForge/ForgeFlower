@@ -82,7 +82,7 @@ index 767f6bdb92ecf0ba0bc4a437b8bf8482fa47bdea..261756b9e05f7e11d1c77e52e924cfef
      if (first.type == Exprent.EXPRENT_ASSIGNMENT) {
        AssignmentExprent asf = (AssignmentExprent)first;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
-index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..500c5eb514de743bf133885f7d5f41ef1e377d24 100644
+index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..1a085709ed7a120d109542e4bf7101013fdcf37d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StackVarsProcessor.java
 @@ -2,6 +2,8 @@
@@ -153,7 +153,7 @@ index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..500c5eb514de743bf133885f7d5f41ef
        return new Object[]{null, changed, false};
      }
  
-@@ -663,4 +673,163 @@ public class StackVarsProcessor {
+@@ -663,4 +673,164 @@ public class StackVarsProcessor {
  
      return map;
    }
@@ -233,6 +233,7 @@ index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..500c5eb514de743bf133885f7d5f41ef
 +                  else {
 +                    final int j = i;
 +                    final int varIndex = vvnode.var;
++                    final int varVersion = vvnode.version;
 +                    List<VarVersionNode> roots = getRoots(vvnode);
 +                    List<VarVersionNode> allRoots = ssau.getSsuversions().nodes.stream()
 +                                                          .distinct()
@@ -241,11 +242,11 @@ index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..500c5eb514de743bf133885f7d5f41ef
 +                                                            if (n.lvt != null) {
 +                                                              return mdContent.params[j].equals(new VarType(n.lvt.getDescriptor()));
 +                                                            }
-+                                                            return true;
++                                                            return n.version > varVersion;
 +                                                          })
 +                                                          .collect(Collectors.toList());
 +
-+                    if (roots.size() == allRoots.size()) {
++                    if (roots.size() >= allRoots.size()) {
 +                      if (roots.size() == 1) {
 +                        vvnode = roots.get(0);
 +                        vvp = new VarVersionPair(vvnode.var, vvnode.version);
