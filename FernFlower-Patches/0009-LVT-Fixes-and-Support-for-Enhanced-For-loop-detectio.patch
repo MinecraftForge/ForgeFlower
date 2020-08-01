@@ -44,7 +44,7 @@ index ca63ad5131641e1ce917afabf84700cd9121d987..fa7961777d41bc0845f741689c331438
          }
        }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 726d7474416cfea5c21483e06d3e8ac19f500c20..dc3c87371261c64a3a51eed449cac0c69387ff13 100644
+index e1e382bc937ba270dc03411ba31836da32fed589..ed209679a98e90ac0fe0fcd6fdce96eaf737c1a4 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -11,7 +11,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -103,9 +103,9 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..dc3c87371261c64a3a51eed449cac0c6
        }
 -      while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
  
-       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
-         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
-@@ -165,6 +182,12 @@ public class MethodProcessorRunnable implements Runnable {
+       SwitchHelper.simplifySwitches(root);
+ 
+@@ -167,6 +184,12 @@ public class MethodProcessorRunnable implements Runnable {
          continue;
        }
  
@@ -118,7 +118,7 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..dc3c87371261c64a3a51eed449cac0c6
        // initializer may have at most one return point, so no transformation of method exits permitted
        if (isInitializer || !ExitHelper.condenseExits(root)) {
          break;
-@@ -180,6 +203,8 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -182,6 +205,8 @@ public class MethodProcessorRunnable implements Runnable {
  
      SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
  
@@ -127,7 +127,7 @@ index 726d7474416cfea5c21483e06d3e8ac19f500c20..dc3c87371261c64a3a51eed449cac0c6
      varProc.setVarDefinitions(root);
  
      // must be the last invocation, because it makes the statement structure inconsistent
-@@ -200,4 +225,30 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -202,4 +227,30 @@ public class MethodProcessorRunnable implements Runnable {
    public boolean isFinished() {
      return finished;
    }
@@ -3488,7 +3488,7 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2b60ca149c39b5dbe8a6191be44d1d607b9cbe18..d86b673db5f202a362063aba622c48d7dbfd6895 100644
+index 08ec9d424eecccf20eef8ed443a374cf7f516d70..c30d55435debfe3df8eb7821f3e53b70d89f114e 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -17,6 +17,7 @@ public class SingleClassesTest extends SingleClassesTestBase {

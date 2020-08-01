@@ -2415,7 +2415,7 @@ index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969
 +    }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index d86b673db5f202a362063aba622c48d7dbfd6895..f8ba12410a1b3d20dadf0780cae14ff8a3631446 100644
+index c30d55435debfe3df8eb7821f3e53b70d89f114e..d8d31d9731a658a692d17b27c82a7afdb9093cb9 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -14,9 +14,11 @@ public class SingleClassesTest extends SingleClassesTestBase {

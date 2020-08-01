@@ -1,9 +1,22 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 15 Apr 2017 17:32:28 -0700
-Subject: [PATCH] Enhance switch on enum output
+Subject: [PATCH] Enhance switch on enum and string output
 
 
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index 726d7474416cfea5c21483e06d3e8ac19f500c20..e1e382bc937ba270dc03411ba31836da32fed589 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -151,6 +151,8 @@ public class MethodProcessorRunnable implements Runnable {
+       }
+       while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
+ 
++      SwitchHelper.simplifySwitches(root);
++
+       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
+         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
+           SequenceHelper.condenseSequences(root);
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 index 5606e91f5ea92b921d73ea9d85360a8d924c14fc..983298ea03a14f6b1911b5e43be3538d7e768ddc 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
@@ -155,25 +168,104 @@ index 5606e91f5ea92b921d73ea9d85360a8d924c14fc..983298ea03a14f6b1911b5e43be3538d
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index b49bf394176bd007bb7aa3571370ca281ea56024..23d28d7fe91ad5c8f5ca9f9ad5d247ae69fd7b93 100644
+index b49bf394176bd007bb7aa3571370ca281ea56024..717089e282a76a49394dd1119183dbbdf7f69ccd 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-@@ -8,7 +8,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+@@ -7,15 +7,30 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
  import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 -
 +import org.jetbrains.java.decompiler.struct.StructField;
  import java.util.ArrayList;
  import java.util.HashMap;
  import java.util.List;
-@@ -67,13 +67,48 @@ public class SwitchHelper {
+ import java.util.Map;
++import java.util.stream.Collectors;
+ 
+ public class SwitchHelper {
+-  public static void simplify(SwitchStatement switchStatement) {
++  public static void simplifySwitches(Statement stat) {
++    if (stat.type == Statement.TYPE_SWITCH) {
++      simplifyString((SwitchStatement)stat);
++    }
++
++    for (int i = 0; i < stat.getStats().size(); ++i) {
++      simplifySwitches(stat.getStats().get(i));
++    }
++  }
++
++  // Simplifying switch on enum requires information that is not available when simplifySwitches is run
++  // Therefore, it is run later in SwitchStatement#toJava
++  public static void simplifyEnum(SwitchStatement switchStatement) {
+     SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadexprent();
+     Exprent value = switchExprent.getValue();
+     if (isEnumArray(value)) {
+@@ -67,14 +82,182 @@ public class SwitchHelper {
      }
    }
  
-+  static final int STATIC_FINAL_SYNTHETIC = CodeConstants.ACC_STATIC | CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNTHETIC;
++  public static void simplifyString(SwitchStatement switchStatement) {
++    SwitchStatement following = null;
++
++    List<StatEdge> edges = switchStatement.getSuccessorEdges(StatEdge.TYPE_REGULAR);
++    if (edges.size() == 1 && edges.get(0).getDestination().type == Statement.TYPE_SWITCH) {
++      following = (SwitchStatement)edges.get(0).getDestination();
++    }
++
++    if (isSwitchOnString(switchStatement, following)) {
++      Map<Integer, Exprent> caseMap = new HashMap<>();
++
++      int i = 0;
++      for (; i < switchStatement.getCaseStatements().size(); ++i) {
++
++        Statement curr = switchStatement.getCaseStatements().get(i);
++
++        while (curr != null && curr.type == Statement.TYPE_IF)  {
++          IfStatement ifStat = (IfStatement)curr;
++          Exprent condition = ifStat.getHeadexprent().getCondition();
++
++          if (condition.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent)condition).getFuncType() == FunctionExprent.FUNCTION_NE) {
++            condition = ((FunctionExprent)condition).getLstOperands().get(0);
++          }
++
++          if (condition.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)condition).getLstParameters().size() == 1) {
++            Exprent assign = ifStat.getIfstat().getExprents().get(0);
++            int caseVal = ((ConstExprent)((AssignmentExprent)assign).getRight()).getIntValue();
++            caseMap.put(caseVal, ((InvocationExprent)condition).getLstParameters().get(0));
++          }
++
++          curr = ifStat.getElsestat();
++        }
++      }
++
++      List<List<Exprent>> realCaseValues = following.getCaseValues().stream()
++                                              .map(l -> l.stream()
++                                                  .map(e -> e instanceof ConstExprent ? ((ConstExprent)e).getIntValue() : null)
++                                                  .map(caseMap::get)
++                                                  .collect(Collectors.toList()))
++                                              .collect(Collectors.toList());
++
++      following.getCaseValues().clear();
++      following.getCaseValues().addAll(realCaseValues);
++
++      Exprent value = ((SwitchExprent)switchStatement.getHeadexprent()).getValue();
++      Exprent followingVal = ((SwitchExprent)following.getHeadexprent()).getValue();
++      following.getHeadexprent().replaceExprent(followingVal, ((InvocationExprent)value).getInstance());
++
++      switchStatement.getFirst().getExprents().remove(switchStatement.getFirst().getExprents().size() - 1);
++      switchStatement.getFirst().getAllPredecessorEdges().forEach(switchStatement.getFirst()::removePredecessor);
++      switchStatement.getFirst().getAllSuccessorEdges().forEach(switchStatement.getFirst()::removeSuccessor);
++      switchStatement.getParent().replaceStatement(switchStatement, switchStatement.getFirst());
++    }
++  }
++
++  static final int STATIC_FINAL_SYNTHETIC = CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNTHETIC;
 +  /**
-+   * When Java introduced Enums they aded the ability to use them in Switch statements.
++   * When Java introduced Enums they added the ability to use them in Switch statements.
 +   * This was done in a purely syntax sugar way using the old switch on int methods.
 +   * The compiler creates a synthetic class with a static int array field.
 +   * To support enums changing post compile, It initializes this field with a length of the current enum length.
@@ -221,6 +313,118 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..23d28d7fe91ad5c8f5ca9f9ad5d247ae
      }
      return false;
    }
++
++  /**
++   * Switch on string gets compiled into two sequential switch statements.
++   *   The first is a switch on the hashcode of the string with the case statement
++   *   being the actual if equal to string literal check. Hashcode collisions result in
++   *   an else if chain. The body of the if block sets the switch variable for the
++   *   following switch.
++   *
++   *   The second switch block has the case statements of the original switch on string.
++   *
++   *   byte b1 = -1;
++   *   switch (stringVar.hashcode()) {
++   *     case -390932093:
++   *        if (stringVar.equals("foo") {
++   *          b1 = 0;
++   *        }
++   *   }
++   *
++   *   switch(b1) {
++   *     case 0 :
++   *        // code for case "foo"
++   *   }
++   */
++  private static boolean isSwitchOnString(SwitchStatement first, SwitchStatement second) {
++    if (second != null) {
++      Exprent firstValue = ((SwitchExprent)first.getHeadexprent()).getValue();
++      Exprent secondValue = ((SwitchExprent)second.getHeadexprent()).getValue();
++
++      if (firstValue.type == Exprent.EXPRENT_INVOCATION && secondValue.type == Exprent.EXPRENT_VAR && first.getCaseStatements().get(0).type == Statement.TYPE_IF) {
++        InvocationExprent invExpr = (InvocationExprent)firstValue;
++        VarExprent varExpr = (VarExprent)secondValue;
++
++        if (invExpr.getName().equals("hashCode") && invExpr.getClassname().equals("java/lang/String")) {
++          boolean matches = true;
++
++          for (int i = 0; matches && i < first.getCaseStatements().size(); ++i) {
++            if (!first.getCaseEdges().get(i).contains(first.getDefault_edge())) {
++              Statement curr = first.getCaseStatements().get(i);
++              while (matches && curr != null) {
++                if (curr.type == Statement.TYPE_IF) {
++                  IfStatement ifStat = (IfStatement)curr;
++                  Exprent condition = ifStat.getHeadexprent().getCondition();
++
++                  if (condition.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent)condition).getFuncType() == FunctionExprent.FUNCTION_NE) {
++                    condition = ((FunctionExprent)condition).getLstOperands().get(0);
++                  }
++
++                  if (condition.type == Exprent.EXPRENT_INVOCATION) {
++                    InvocationExprent condInvocation = (InvocationExprent)condition;
++
++                    if (condInvocation.getName().equals("equals") && condInvocation.getInstance().equals(invExpr.getInstance())) {
++                      List<Exprent> block = ifStat.getIfstat().getExprents();
++
++                      if (block != null && block.size() == 1 && block.get(0).type == Exprent.EXPRENT_ASSIGNMENT) {
++                        AssignmentExprent assign = (AssignmentExprent)block.get(0);
++
++                        if (assign.getRight().type == Exprent.EXPRENT_CONST && varExpr.equals(assign.getLeft())) {
++
++                          curr = ifStat.getElsestat();
++                          continue;
++                        }
++                      }
++                    }
++                  }
++                }
++
++                matches = false;
++              }
++            }
++          }
++
++          return matches;
++        }
++      }
++    }
++
++    return false;
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+index 0f12b13c14272a923540ff71f59b41b1b1295f07..69781e905ba9e18f167d5ea507c2947e9f9214d7 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+@@ -106,7 +106,7 @@ public class SwitchStatement extends Statement {
+ 
+   @Override
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+-    SwitchHelper.simplify(this);
++    SwitchHelper.simplifyEnum(this);
+ 
+     TextBuffer buf = new TextBuffer();
+     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+index 2b60ca149c39b5dbe8a6191be44d1d607b9cbe18..08ec9d424eecccf20eef8ed443a374cf7f516d70 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+@@ -81,6 +81,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
+           "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
+           "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
+   @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
++  @Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+   @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
+   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
+   @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
+@@ -100,7 +101,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
+ 
+   // TODO: fix all below
+   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
+-  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
 diff --git a/testData/classes/pkg/TestEnum$1.class b/testData/classes/pkg/TestEnum$1.class
 index fb5c29f40e2fe3fd9b19075f906072fc4b546339..cfff174c14e68acae8ae05607147141d86ade3ef 100644
 GIT binary patch
@@ -336,6 +540,31 @@ zatX_X^l|<-=><ceM7LTzCn=GKjIv1N>dv7H@a+~jL^UM>bGGvVPan2Ajrq>W5Izbt
 z@ah;+UO(eLf~x`T7z26zEJY7CFeE&~UR|$agz_~odW^BW?w9m)b&MY&&_GcBLE-K?
 zv~1o}$51x!tz$Hsm+A;+8*ra;_KTT}(9eDpL5$P!1+WU8T5QhnF5<-Ag%w;R9VGh%
 RF}#on(r=%hghG)*{{<v4Oc4M8
+
+diff --git a/testData/classes/pkg/TestSwitchOnStrings.class b/testData/classes/pkg/TestSwitchOnStrings.class
+index cd0e56e475bbb38b72506a05a32a56168d071f23..f3fd7a8c0edcbfa33d86cca5c0a306676e854ba3 100644
+GIT binary patch
+literal 1084
+zcmb`FO-~b16o%j1c0L?i!17T(S}IbZtqqN+i3!?BO-xLHE=r6NV=}FiwonVwLCek`
+zVGJ5#+?i-MZZL7-4{+zgt-ruO-~!`&?-UA+OHXpox#!HBGw*XU-~N303g9YcEm(+H
+z7{!>0aTzB}L`}p@Oqz%rIB#G|K)+FI)ZCnaKbg8G5V*bh*b(Sosx_RIohKz{d(|%0
+zSutIw=@tvc%L2p6rFHw6ovquAO19{3*BX_D)Lns4(Y4DP%l4LPF>s;VHQ&8n5wMDz
+zJKJUFPE8ITU6q5M*W7Zo(D0@;=j8k#&LYSuK};h-eXUk2h>Muvb$54{QWx!fUWG-Q
+zA)l8avb9mk{$rxRKv#32wC<GMQzh@iR9Ur~Rc{Ae2%&W6>5g4*_E38h7E)`N!Wr&a
+zS^z>SrVlZTF$zX4{TbpDF9Ln^x+?nV`!PT-U)_U`&A_8e%f4LZ0KSh*XxDgr5Z_yj
+zQHUQ87}J@s{{Vs481(1fqc0QIRHg-TG1WDxdgy55JW@hbYX{o?Hg7(qA*{Zp;XVwk
+zQT{{9KF6m6&<~L?5Edb8T>NIQz~HgUUmcb2dQ?`}Ngky#(NQ^%I9{-R>qzZQsrLGj
+z+H8OsNpz*%G?+y*VZ+OGkIVG9v|Q{12hrxdptL7=pW#XJq<J!u&}<uR{Uqlk`M^ED
+zB;6~L>|q#h5Wzmi@D>w_c?7{jWE68K6tWV6=8+E_lmG0H@Bcq?kM4-Pvxg43w+F3D
+sE(xW{f8->&q)$rnQ`95SSdWu>iqzAjo+Wik(GJ1tq4ijY+2O;;U){p8_W%F@
+
+delta 329
+zcmXYr%}#?*5QWcx1>{F7YOz>r)w*FJ8+Tp1!?>VvX>x6vijvy2Xy7rhFJOEFlO`s{
+z_yE3<iyG&mcX8&-nQtcd!+5S8fBn3F0yst2gbvTd4w?phS$7SzbnNM9mnT8njqV2`
+zy%f_#T&Kgn6v9e&lgtRs=!rb5N6@q3EQ>GBO5q2@12?)Ak0MOPcofFjG#QT=a^g%3
+z?#{)eI-+C0d<j|xR@vF;;DDg!d2ZtnM{J9tD3=d?jejSf0s^zFCU+rM;#v#dK(E!<
+zV%4fph0Wgn1K?ndJHk5Zta5oVUr?f|u;v}b>q)l3=Ygw#R=N$iOmA{phqgpl#}+xJ
+NPv4vpwmDbO_yrE&GXnqs
 
 diff --git a/testData/results/TestEnum.dec b/testData/results/TestEnum.dec
 index 069e4efe131ecd59c97e979a3ab4f1fcb8170cfc..ce2511cc9f80e7162f6d7d3e8d061757a38ba125 100644
@@ -459,6 +688,149 @@ index 069e4efe131ecd59c97e979a3ab4f1fcb8170cfc..ce2511cc9f80e7162f6d7d3e8d061757
 +55 <-> 43
 +57 <-> 45
 +59 <-> 48
+diff --git a/testData/results/TestSwitchOnStrings.dec b/testData/results/TestSwitchOnStrings.dec
+index cd120e8f6e93c1a3fe1366cac12f5b874233eae3..1b322a7f6e77eb5bc9ee16677fff9aa8b5469af1 100644
+--- a/testData/results/TestSwitchOnStrings.dec
++++ b/testData/results/TestSwitchOnStrings.dec
+@@ -1,13 +1,131 @@
+ package pkg;
+ 
+ public class TestSwitchOnStrings {
+-  public int testSOE(String s) {
+-    switch (s) {
++   public int testSOS1(String var1) {
++      switch(var1) {// 5
+       case "xxx":
+-        return 2;
++         return 2;// 7
+       case "yyy":
+-        return 1;
+-    }
+-    return 0;
+-  }
++         return 1;// 9
++      default:
++         return 0;// 11
++      }
++   }
++
++   public int testSOS2(String var1) {
++      switch(var1) {// 15
++      case "xxx":
++         return 2;// 17
++      case "yyy":
++         return 1;// 19
++      case "BBAa":
++         return 5;// 21
++      case "AaAa":
++         return 4;// 23
++      case "AaBB":
++         return 3;// 25
++      default:
++         return 0;// 27
++      }
++   }
++
++   public int testSOS3(String var1) {
++      switch(var1) {// 31
++      case "xxx":
++         return 2;// 33
++      case "yyy":
++         return 1;// 35
++      case "AaAa":
++      case "AaBB":
++      case "BBAa":
++         return 3;// 39
++      default:
++         return 0;// 41
++      }
++   }
+ }
++
++class 'pkg/TestSwitchOnStrings' {
++   method 'testSOS1 (Ljava/lang/String;)I' {
++      0      4
++      25      5
++      26      5
++      33      7
++      34      7
++      3e      4
++      58      6
++      59      6
++      5a      8
++      5b      8
++      5c      10
++      5d      10
++   }
++
++   method 'testSOS2 (Ljava/lang/String;)I' {
++      0      15
++      2d      16
++      2e      16
++      3b      18
++      3c      18
++      49      24
++      4a      24
++      57      22
++      58      22
++      65      20
++      66      20
++      70      15
++      94      17
++      95      17
++      96      19
++      97      19
++      98      21
++      99      21
++      9a      23
++      9b      23
++      9c      25
++      9d      25
++      9e      27
++      9f      27
++   }
++
++   method 'testSOS3 (Ljava/lang/String;)I' {
++      0      32
++      2d      33
++      2e      33
++      3b      35
++      3c      35
++      49      39
++      4a      39
++      57      38
++      58      38
++      65      37
++      66      37
++      70      32
++      94      34
++      95      34
++      96      36
++      97      36
++      98      40
++      99      40
++      9a      42
++      9b      42
++   }
++}
++
++Lines mapping:
++5 <-> 5
++7 <-> 7
++9 <-> 9
++11 <-> 11
++15 <-> 16
++17 <-> 18
++19 <-> 20
++21 <-> 22
++23 <-> 24
++25 <-> 26
++27 <-> 28
++31 <-> 33
++33 <-> 35
++35 <-> 37
++39 <-> 41
++41 <-> 43
 diff --git a/testData/src/pkg/TestEnum.java b/testData/src/pkg/TestEnum.java
 index e474d341d406981b924706ac065121f2a9603ed4..974898e766f59086aa471ea2ca48352478bece3a 100644
 --- a/testData/src/pkg/TestEnum.java
@@ -488,5 +860,53 @@ index e474d341d406981b924706ac065121f2a9603ed4..974898e766f59086aa471ea2ca483524
 +      case ODD:
 +        System.out.println("ODD");
 +    }
++  }
+ }
+diff --git a/testData/src/pkg/TestSwitchOnStrings.java b/testData/src/pkg/TestSwitchOnStrings.java
+index cd120e8f6e93c1a3fe1366cac12f5b874233eae3..796e2b36a3dec636af63a354aedd8631d176169a 100644
+--- a/testData/src/pkg/TestSwitchOnStrings.java
++++ b/testData/src/pkg/TestSwitchOnStrings.java
+@@ -1,7 +1,7 @@
+ package pkg;
+ 
+ public class TestSwitchOnStrings {
+-  public int testSOE(String s) {
++  public int testSOS1(String s) {
+     switch (s) {
+       case "xxx":
+         return 2;
+@@ -10,4 +10,34 @@ public class TestSwitchOnStrings {
+     }
+     return 0;
+   }
++
++  public int testSOS2(String s) {
++    switch (s) {
++      case "xxx":
++        return 2;
++      case "yyy":
++        return 1;
++      case "BBAa":
++        return 5;
++      case "AaAa":
++        return 4;
++      case "AaBB":
++        return 3;
++    }
++    return 0;
++  }
++
++  public int testSOS3(String s) {
++    switch (s) {
++      case "xxx":
++        return 2;
++      case "yyy":
++        return 1;
++      case "AaAa":
++      case "AaBB":
++      case "BBAa":
++        return 3;
++    }
++    return 0;
 +  }
  }
