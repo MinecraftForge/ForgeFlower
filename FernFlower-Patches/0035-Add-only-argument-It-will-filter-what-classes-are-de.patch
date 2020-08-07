@@ -8,10 +8,10 @@ Uses a prefix system, so -only=net/minecraft/block/ will decompile all classes i
 Useful for debugging to limit scope/runtime.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index c5cfa74b683deb347d5733ba306628561e013cc3..eafddccc870786ee6f68412420ddd52e1b5b6992 100644
+index e190689539e3270e8eb6d83f2befd8610f2132d9..ef3f17f98e3a313c0d519dbe02ffd3822642759b 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -36,6 +36,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -37,6 +37,7 @@ public class ClassesProcessor implements CodeConstants {
  
    private final StructContext context;
    private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
@@ -19,7 +19,7 @@ index c5cfa74b683deb347d5733ba306628561e013cc3..eafddccc870786ee6f68412420ddd52e
  
    private static class Inner {
      private String simpleName;
-@@ -61,6 +62,22 @@ public class ClassesProcessor implements CodeConstants {
+@@ -62,6 +63,22 @@ public class ClassesProcessor implements CodeConstants {
      this.context = context;
    }
  
@@ -42,7 +42,7 @@ index c5cfa74b683deb347d5733ba306628561e013cc3..eafddccc870786ee6f68412420ddd52e
    public void loadClasses(IIdentifierRenamer renamer) {
      Map<String, Inner> mapInnerClasses = new HashMap<>();
      Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
-@@ -160,9 +177,11 @@ public class ClassesProcessor implements CodeConstants {
+@@ -161,9 +178,11 @@ public class ClassesProcessor implements CodeConstants {
            }
          }
  

@@ -31,10 +31,10 @@ index 615b7a37610e6498e04eb971768df0ea57284383..69b1dc49a54a4f114e04dee27c019d7b
      buffer.append('<');
  
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 6b6e38f72a51e3f426b812060511e71142860263..c5cfa74b683deb347d5733ba306628561e013cc3 100644
+index fd860970374feb092ece0f93c03d056d662efe91..e190689539e3270e8eb6d83f2befd8610f2132d9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -41,10 +41,20 @@ public class ClassesProcessor implements CodeConstants {
+@@ -42,10 +42,20 @@ public class ClassesProcessor implements CodeConstants {
      private String simpleName;
      private int type;
      private int accessFlags;
@@ -55,7 +55,7 @@ index 6b6e38f72a51e3f426b812060511e71142860263..c5cfa74b683deb347d5733ba30662856
    }
  
    public ClassesProcessor(StructContext context) {
-@@ -87,6 +97,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -88,6 +98,7 @@ public class ClassesProcessor implements CodeConstants {
                rec.simpleName = simpleName;
                rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
                rec.accessFlags = entry.accessFlags;
@@ -63,7 +63,7 @@ index 6b6e38f72a51e3f426b812060511e71142860263..c5cfa74b683deb347d5733ba30662856
  
                // nested class type
                if (entry.innerName != null) {
-@@ -131,6 +142,13 @@ public class ClassesProcessor implements CodeConstants {
+@@ -132,6 +143,13 @@ public class ClassesProcessor implements CodeConstants {
                  else if (!Inner.equal(existingRec, rec)) {
                    String message = "Inconsistent inner class entries for " + innerName + "!";
                    DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);

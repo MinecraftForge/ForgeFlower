@@ -5,10 +5,10 @@ Subject: [PATCH] Add try with resource support
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index ed209679a98e90ac0fe0fcd6fdce96eaf737c1a4..e5c3fef09e633aba16b8360b4662d26fb67611bf 100644
+index 65712f684520590db2682ad8f9b67c993212662e..57498b1549f381c9af185e5a35293b25758bf585 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -180,6 +180,10 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -178,6 +178,10 @@ public class MethodProcessorRunnable implements Runnable {
  
        LabelHelper.identifyLabels(root);
  

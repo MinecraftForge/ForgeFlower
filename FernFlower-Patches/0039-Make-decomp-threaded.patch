@@ -7,10 +7,10 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index eafddccc870786ee6f68412420ddd52e1b5b6992..533714ec176abe3e3689c4722095a90888333874 100644
+index ef3f17f98e3a313c0d519dbe02ffd3822642759b..48842474f1a975761b0d0d4a1dd904dde9028250 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -35,7 +35,8 @@ public class ClassesProcessor implements CodeConstants {
+@@ -36,7 +36,8 @@ public class ClassesProcessor implements CodeConstants {
    public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
  
    private final StructContext context;
@@ -20,7 +20,7 @@ index eafddccc870786ee6f68412420ddd52e1b5b6992..533714ec176abe3e3689c4722095a908
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
-@@ -360,14 +361,13 @@ public class ClassesProcessor implements CodeConstants {
+@@ -361,14 +362,13 @@ public class ClassesProcessor implements CodeConstants {
      return true;
    }
  
@@ -38,7 +38,7 @@ index eafddccc870786ee6f68412420ddd52e1b5b6992..533714ec176abe3e3689c4722095a908
        ImportCollector importCollector = new ImportCollector(root);
        DecompilerContext.startClass(importCollector);
  
-@@ -382,7 +382,18 @@ public class ClassesProcessor implements CodeConstants {
+@@ -383,7 +383,18 @@ public class ClassesProcessor implements CodeConstants {
        new NestedClassProcessor().processClass(root, root);
  
        new NestedMemberAccess().propagateMemberAccess(root);
@@ -57,7 +57,7 @@ index eafddccc870786ee6f68412420ddd52e1b5b6992..533714ec176abe3e3689c4722095a908
        TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
        new ClassWriter().classToJava(root, classBuffer, 0, null);
  
-@@ -397,7 +408,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -398,7 +409,7 @@ public class ClassesProcessor implements CodeConstants {
          buffer.appendLineSeparator();
        }
  

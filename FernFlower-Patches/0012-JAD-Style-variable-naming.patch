@@ -21,7 +21,7 @@ index 2fcabdcd9ce1130a778754b318bf874922f02e12..4817f055906bfa4bfa4f7bfa9b590f88
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index a34758940dbce0c5bac8dff269386af752c63d91..6b6e38f72a51e3f426b812060511e71142860263 100644
+index 69bea8bea9e989e4db58e0eec1868ee06f9f2872..fd860970374feb092ece0f93c03d056d662efe91 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -31,8 +31,8 @@ index a34758940dbce0c5bac8dff269386af752c63d91..6b6e38f72a51e3f426b812060511e711
 +import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
  import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-@@ -414,6 +415,7 @@ public class ClassesProcessor implements CodeConstants {
+ import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
+@@ -434,6 +435,7 @@ public class ClassesProcessor implements CodeConstants {
    private static void destroyWrappers(ClassNode node) {
      node.wrapper = null;
      node.classStruct.releaseResources();
@@ -40,7 +40,7 @@ index a34758940dbce0c5bac8dff269386af752c63d91..6b6e38f72a51e3f426b812060511e711
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -472,7 +474,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -492,7 +494,7 @@ public class ClassesProcessor implements CodeConstants {
  
        anonymousClassType = new VarType(lambda_class_name, true);
  
@@ -49,7 +49,7 @@ index a34758940dbce0c5bac8dff269386af752c63d91..6b6e38f72a51e3f426b812060511e711
        if (!is_method_reference) { // content method in the same class, check synthetic flag
          StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
          is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
-@@ -527,4 +529,4 @@ public class ClassesProcessor implements CodeConstants {
+@@ -547,4 +549,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
    }

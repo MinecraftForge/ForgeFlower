@@ -4,19 +4,71 @@ Date: Sat, 15 Apr 2017 17:32:28 -0700
 Subject: [PATCH] Enhance switch on enum and string output
 
 
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index a34758940dbce0c5bac8dff269386af752c63d91..69bea8bea9e989e4db58e0eec1868ee06f9f2872 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+ import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
+ import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
+ import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
++import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+@@ -391,16 +392,35 @@ public class ClassesProcessor implements CodeConstants {
+       return;
+     }
+ 
++    List<ClassNode> nestedCopy = new ArrayList<>(node.nested);
++
++    for (ClassNode nd : node.nested) {
++      if (shouldInitEarly(nd)) {
++        initWrappers(nd);
++        nestedCopy.remove(nd);
++      }
++    }
++
+     ClassWrapper wrapper = new ClassWrapper(node.classStruct);
+     wrapper.init();
+ 
+     node.wrapper = wrapper;
+ 
+-    for (ClassNode nd : node.nested) {
++    for (ClassNode nd : nestedCopy) {
+       initWrappers(nd);
+     }
+   }
+ 
++  private static boolean shouldInitEarly(ClassNode node) {
++    if (node.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
++      if (node.classStruct.getMethods().size() == 1 && node.classStruct.getMethods().get(0).getName().equals(CodeConstants.CLINIT_NAME)) {
++        return node.classStruct.getFields().stream()
++          .allMatch( stField -> stField.getDescriptor().equals("[I") && stField.hasModifier(SwitchHelper.STATIC_FINAL_SYNTHETIC));
++      }
++    }
++    return false;
++  }
++
+   private static void addClassnameToImport(ClassNode node, ImportCollector imp) {
+     if (node.simpleName != null && node.simpleName.length() > 0) {
+       imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 726d7474416cfea5c21483e06d3e8ac19f500c20..e1e382bc937ba270dc03411ba31836da32fed589 100644
+index 726d7474416cfea5c21483e06d3e8ac19f500c20..a64bc6c349c8f04419056bd42c22c79757aa3fda 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -151,6 +151,8 @@ public class MethodProcessorRunnable implements Runnable {
-       }
-       while (LoopExtractHelper.extractLoops(root) || IfHelper.mergeAllIfs(root));
+@@ -176,6 +176,11 @@ public class MethodProcessorRunnable implements Runnable {
+       //}
+     }
  
-+      SwitchHelper.simplifySwitches(root);
++    // this has to be done after all inlining is done so the case values do not get reverted
++    if (SwitchHelper.simplifySwitches(root)) {
++      SequenceHelper.condenseSequences(root); // remove empty blocks
++    }
 +
-       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
-         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
-           SequenceHelper.condenseSequences(root);
+     ExitHelper.removeRedundantReturns(root);
+ 
+     SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 index 5606e91f5ea92b921d73ea9d85360a8d924c14fc..983298ea03a14f6b1911b5e43be3538d7e768ddc 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
@@ -168,10 +220,10 @@ index 5606e91f5ea92b921d73ea9d85360a8d924c14fc..983298ea03a14f6b1911b5e43be3538d
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index b49bf394176bd007bb7aa3571370ca281ea56024..717089e282a76a49394dd1119183dbbdf7f69ccd 100644
+index b49bf394176bd007bb7aa3571370ca281ea56024..fe77dd7ea6ac6c877230b0c8d4b138a5e49d60dc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-@@ -7,15 +7,30 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+@@ -7,15 +7,37 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
  import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
@@ -188,35 +240,45 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..717089e282a76a49394dd1119183dbbd
  
  public class SwitchHelper {
 -  public static void simplify(SwitchStatement switchStatement) {
-+  public static void simplifySwitches(Statement stat) {
++  public static boolean simplifySwitches(Statement stat) {
++    boolean ret = false;
 +    if (stat.type == Statement.TYPE_SWITCH) {
-+      simplifyString((SwitchStatement)stat);
++      ret = simplify((SwitchStatement)stat);
 +    }
 +
 +    for (int i = 0; i < stat.getStats().size(); ++i) {
-+      simplifySwitches(stat.getStats().get(i));
++      ret |= simplifySwitches(stat.getStats().get(i));
 +    }
++
++    return ret;
 +  }
 +
-+  // Simplifying switch on enum requires information that is not available when simplifySwitches is run
-+  // Therefore, it is run later in SwitchStatement#toJava
-+  public static void simplifyEnum(SwitchStatement switchStatement) {
-     SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadexprent();
-     Exprent value = switchExprent.getValue();
-     if (isEnumArray(value)) {
-@@ -67,14 +82,182 @@ public class SwitchHelper {
-     }
-   }
- 
-+  public static void simplifyString(SwitchStatement switchStatement) {
++  private static boolean simplify(SwitchStatement switchStatement) {
 +    SwitchStatement following = null;
-+
 +    List<StatEdge> edges = switchStatement.getSuccessorEdges(StatEdge.TYPE_REGULAR);
 +    if (edges.size() == 1 && edges.get(0).getDestination().type == Statement.TYPE_SWITCH) {
 +      following = (SwitchStatement)edges.get(0).getDestination();
 +    }
 +
-+    if (isSwitchOnString(switchStatement, following)) {
+     SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadexprent();
+     Exprent value = switchExprent.getValue();
+     if (isEnumArray(value)) {
+@@ -55,7 +77,7 @@ public class SwitchHelper {
+               DecompilerContext.getLogger()
+                 .writeMessage("Unable to simplify switch on enum: " + exprent + " not found, available: " + mapping,
+                               IFernflowerLogger.Severity.ERROR);
+-              return;
++              return false;
+             }
+             values.add(realConst.copy());
+           }
+@@ -64,17 +86,177 @@ public class SwitchHelper {
+       caseValues.clear();
+       caseValues.addAll(realCaseValues);
+       switchExprent.replaceExprent(value, ((InvocationExprent)array.getIndex()).getInstance().copy());
++      return true;
+     }
++    else if (isSwitchOnString(switchStatement, following)) {
 +      Map<Integer, Exprent> caseMap = new HashMap<>();
 +
 +      int i = 0;
@@ -243,16 +305,15 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..717089e282a76a49394dd1119183dbbd
 +      }
 +
 +      List<List<Exprent>> realCaseValues = following.getCaseValues().stream()
-+                                              .map(l -> l.stream()
-+                                                  .map(e -> e instanceof ConstExprent ? ((ConstExprent)e).getIntValue() : null)
-+                                                  .map(caseMap::get)
-+                                                  .collect(Collectors.toList()))
-+                                              .collect(Collectors.toList());
++        .map(l -> l.stream()
++          .map(e -> e instanceof ConstExprent ? ((ConstExprent)e).getIntValue() : null)
++          .map(caseMap::get)
++          .collect(Collectors.toList()))
++        .collect(Collectors.toList());
 +
 +      following.getCaseValues().clear();
 +      following.getCaseValues().addAll(realCaseValues);
 +
-+      Exprent value = ((SwitchExprent)switchStatement.getHeadexprent()).getValue();
 +      Exprent followingVal = ((SwitchExprent)following.getHeadexprent()).getValue();
 +      following.getHeadexprent().replaceExprent(followingVal, ((InvocationExprent)value).getInstance());
 +
@@ -260,10 +321,12 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..717089e282a76a49394dd1119183dbbd
 +      switchStatement.getFirst().getAllPredecessorEdges().forEach(switchStatement.getFirst()::removePredecessor);
 +      switchStatement.getFirst().getAllSuccessorEdges().forEach(switchStatement.getFirst()::removeSuccessor);
 +      switchStatement.getParent().replaceStatement(switchStatement, switchStatement.getFirst());
++      return true;
 +    }
-+  }
-+
-+  static final int STATIC_FINAL_SYNTHETIC = CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNTHETIC;
++    return false;
+   }
+ 
++  public static final int STATIC_FINAL_SYNTHETIC = CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_SYNTHETIC;
 +  /**
 +   * When Java introduced Enums they added the ability to use them in Switch statements.
 +   * This was done in a purely syntax sugar way using the old switch on int methods.
@@ -393,15 +456,14 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..717089e282a76a49394dd1119183dbbd
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 0f12b13c14272a923540ff71f59b41b1b1295f07..69781e905ba9e18f167d5ea507c2947e9f9214d7 100644
+index 0f12b13c14272a923540ff71f59b41b1b1295f07..38725c1ab2878730ffbc3680375cf29d999472e0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -106,7 +106,7 @@ public class SwitchStatement extends Statement {
+@@ -106,7 +106,6 @@ public class SwitchStatement extends Statement {
  
    @Override
    public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
 -    SwitchHelper.simplify(this);
-+    SwitchHelper.simplifyEnum(this);
  
      TextBuffer buf = new TextBuffer();
      buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
