@@ -1,0 +1,57 @@
+From 723017cb1251c8f0ff9b09e97a8800109bc5375f Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sat, 1 Aug 2015 15:52:57 -0700
+Subject: [PATCH 004/122] Fixed this calls not having arguments.
+
+---
+ .../modules/decompiler/exps/InvocationExprent.java   | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 294a115..4e73f06 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -321,7 +321,7 @@ public class InvocationExprent extends Exprent {
+     boolean firstParameter = true;
+     int start = isEnum ? 2 : 0;
+     for (int i = start; i < lstParameters.size(); i++) {
+-      if (sigFields == null) {
++      if (sigFields == null || sigFields.get(i) == null) {
+         if (!firstParameter) {
+           buf.append(", ");
+         }
+@@ -495,16 +495,16 @@ public class InvocationExprent extends Exprent {
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+ 
+     if(!super.match(matchNode, engine)) {
+       return false;
+     }
+-    
++
+     for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+       RuleValue value = rule.getValue();
+-      
++
+       switch(rule.getKey()) {
+       case EXPRENT_INVOCATION_PARAMETER:
+         if(value.isVariable()) {
+@@ -528,9 +528,9 @@ public class InvocationExprent extends Exprent {
+         }
+         break;
+       }
+-      
++
+     }
+-    
++
+     return true;
+   }
+ 
+-- 
+2.21.0.windows.1
+

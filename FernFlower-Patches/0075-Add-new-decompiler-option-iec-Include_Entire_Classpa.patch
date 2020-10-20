@@ -1,0 +1,95 @@
+From a88b1c06f60850be429ebdba20e5e6ba507936bb Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Fri, 9 Oct 2015 13:22:13 -0700
+Subject: [PATCH 075/122] Add new decompiler option -iec
+ Include_Entire_Classpath which will read the current JVM's classpath and
+ parse all libraries for metadata.
+
+---
+ .../java/decompiler/main/Fernflower.java      | 29 +++++++++++++++++++
+ .../main/extern/IFernflowerPreferences.java   |  3 ++
+ 2 files changed, 32 insertions(+)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index e355ee9..65733ac 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
+ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
+@@ -27,7 +28,10 @@ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+ 
++import java.io.File;
++import java.util.HashSet;
+ import java.util.Map;
++import java.util.Set;
+ 
+ public class Fernflower implements IDecompiledData {
+ 
+@@ -39,6 +43,10 @@ public class Fernflower implements IDecompiledData {
+     DecompilerContext.initContext(options);
+     DecompilerContext.setCounterContainer(new CounterContainer());
+     DecompilerContext.setLogger(logger);
++
++    if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
++      addAllClasspath();
++    }
+   }
+ 
+   public void decompileContext() {
+@@ -92,4 +100,25 @@ public class Fernflower implements IDecompiledData {
+       return null;
+     }
+   }
++
++  private void addAllClasspath() {
++    Set<String> found = new HashSet<String>();
++    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
++    for (String prop : props) {
++      if (prop == null)
++        continue;
++
++      for (final String path : prop.split(File.pathSeparator)) {
++        File file = new File(path);
++        if (found.contains(file.getAbsolutePath()))
++          continue;
++
++        if (file.exists()) {
++          DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
++          structContext.addSpace(file, false);
++          found.add(file.getAbsolutePath());
++        }
++      }
++    }
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 31871c5..79dd8e8 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -60,6 +60,8 @@ public interface IFernflowerPreferences {
+   String LINE_SEPARATOR_WIN = "\r\n";
+   String LINE_SEPARATOR_LIN = "\n";
+ 
++  String INCLUDE_ENTIRE_CLASSPATH = "iec";
++
+   Map<String, Object> DEFAULTS = Collections.unmodifiableMap(new HashMap<String, Object>() {{
+     put(REMOVE_BRIDGE, "1");
+     put(REMOVE_SYNTHETIC, "0");
+@@ -93,5 +95,6 @@ public interface IFernflowerPreferences {
+     put(BANNER, "");
+     put(UNIT_TEST_MODE, "0");
+     put(DUMP_ORIGINAL_LINES, "0");
++    put(INCLUDE_ENTIRE_CLASSPATH, "0");
+   }});
+ }
+-- 
+2.21.0.windows.1
+

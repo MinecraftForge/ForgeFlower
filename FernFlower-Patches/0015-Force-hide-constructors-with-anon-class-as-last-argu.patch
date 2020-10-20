@@ -1,0 +1,71 @@
+From 289fb0b9bab3589bef077b002eca23e33fcd1e16 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Mon, 3 Aug 2015 15:08:26 -0700
+Subject: [PATCH 015/122] Force hide constructors with anon class as last
+ argument. Java adds these for unknown resons.
+
+---
+ .../java/decompiler/main/ClassWriter.java     |  1 +
+ .../decompiler/main/InitializerProcessor.java | 28 +++++++++++++++++++
+ 2 files changed, 29 insertions(+)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index afa2473..3e5789d 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -60,6 +60,7 @@ public class ClassWriter {
+     StructClass cl = wrapper.getClassStruct();
+ 
+     InitializerProcessor.extractInitializers(wrapper);
++    InitializerProcessor.hideInitalizers(wrapper);
+ 
+     if (node.type == ClassNode.CLASS_ROOT && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_CLASS_1_4)) {
+       ref14processor.processClassReferences(node);
+diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+index e64feea..85d580d 100644
+--- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+@@ -25,7 +25,11 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
++import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.StructField;
++import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
+@@ -330,4 +334,28 @@ public class InitializerProcessor {
+ 
+     return false;
+   }
++
++
++  public static void hideInitalizers(ClassWrapper wrapper) {
++    // hide initializers with anon class arguments
++    for (MethodWrapper method : wrapper.getMethods()) {
++      StructMethod mt = method.methodStruct;
++      String name = mt.getName();
++      String desc = mt.getDescriptor();
++
++      if (mt.isSynthetic() && CodeConstants.INIT_NAME.equals(name)) {
++        MethodDescriptor md = MethodDescriptor.parseDescriptor(desc);
++        if (md.params.length > 0) {
++          VarType type = md.params[md.params.length - 1];
++          if (type.type == CodeConstants.TYPE_OBJECT) {
++            ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
++            if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS)) {
++              //TODO: Verify that the body is JUST a this([args]) call?
++              wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));
++            }
++          }
++        }
++      }
++    }
++  }
+ }
+-- 
+2.21.0.windows.1
+

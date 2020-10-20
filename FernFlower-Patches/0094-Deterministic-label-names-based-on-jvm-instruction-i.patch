@@ -1,0 +1,147 @@
+From 36ea9a310b443b45ecdc298060e3685f8541950a Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Sat, 17 Oct 2015 00:51:19 -0400
+Subject: [PATCH 094/122] Deterministic label names based on jvm instruction #
+ instead of ID
+
+---
+ .../java/decompiler/modules/decompiler/ExprProcessor.java     | 2 +-
+ .../modules/decompiler/stats/CatchAllStatement.java           | 2 +-
+ .../decompiler/modules/decompiler/stats/CatchStatement.java   | 2 +-
+ .../java/decompiler/modules/decompiler/stats/DoStatement.java | 2 +-
+ .../decompiler/modules/decompiler/stats/GeneralStatement.java | 2 +-
+ .../java/decompiler/modules/decompiler/stats/IfStatement.java | 4 ++--
+ .../modules/decompiler/stats/SequenceStatement.java           | 2 +-
+ .../decompiler/modules/decompiler/stats/SwitchStatement.java  | 2 +-
+ .../modules/decompiler/stats/SynchronizedStatement.java       | 2 +-
+ 9 files changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 60832d3..c832772 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -815,7 +815,7 @@ public class ExprProcessor implements CodeConstants {
+         }
+ 
+         if (edge.labeled) {
+-          buf.append(" label").append(edge.closure.id.toString());
++          buf.append(" label").append(edge.closure.getStartEndRange().start);
+         }
+         buf.append(";").appendLineSeparator();
+         tracer.incrementCurrentSourceLine();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
+index 812ed10..34dfa85 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
+@@ -120,7 +120,7 @@ public class CatchAllStatement extends Statement {
+ 
+     boolean labeled = isLabeled();
+     if (labeled) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
+index 8d56042..9359fbb 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
+@@ -157,7 +157,7 @@ public class CatchStatement extends Statement {
+     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+ 
+     if (isLabeled()) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
+index acc74a6..6636d1d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
+@@ -100,7 +100,7 @@ public class DoStatement extends Statement {
+     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+ 
+     if (isLabeled()) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+index 4f22cf7..499894a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+@@ -57,7 +57,7 @@ public class GeneralStatement extends Statement {
+     TextBuffer buf = new TextBuffer();
+ 
+     if (isLabeled()) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+     }
+ 
+     buf.appendIndent(indent).append("abstract statement {").appendLineSeparator();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
+index 8f3e467..6b0eb9a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
+@@ -213,7 +213,7 @@ public class IfStatement extends Statement {
+     buf.append(first.toJava(indent, tracer));
+ 
+     if (isLabeled()) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+@@ -234,7 +234,7 @@ public class IfStatement extends Statement {
+         }
+ 
+         if (ifedge.labeled) {
+-          buf.append(" label").append(ifedge.closure.id.toString());
++          buf.append(" label").append(ifedge.closure.getStartEndRange().start);
+         }
+       }
+       buf.append(";").appendLineSeparator();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
+index 7d2ee43..92588fe 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
+@@ -105,7 +105,7 @@ public class SequenceStatement extends Statement {
+     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
+ 
+     if (islabeled) {
+-      buf.appendIndent(indent++).append("label").append(this.id.toString()).append(": {").appendLineSeparator();
++      buf.appendIndent(indent++).append("label").append(this.getStartEndRange().start).append(": {").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+index f8eec64..2a29309 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+@@ -118,7 +118,7 @@ public class SwitchStatement extends Statement {
+     buf.append(first.toJava(indent, tracer));
+ 
+     if (isLabeled()) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java
+index b71531f..aaafab9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java
+@@ -76,7 +76,7 @@ public class SynchronizedStatement extends Statement {
+     buf.append(first.toJava(indent, tracer));
+ 
+     if (isLabeled()) {
+-      buf.appendIndent(indent).append("label").append(this.id.toString()).append(":").appendLineSeparator();
++      buf.appendIndent(indent).append("label").append(this.getStartEndRange().start).append(":").appendLineSeparator();
+       tracer.incrementCurrentSourceLine();
+     }
+ 
+-- 
+2.21.0.windows.1
+

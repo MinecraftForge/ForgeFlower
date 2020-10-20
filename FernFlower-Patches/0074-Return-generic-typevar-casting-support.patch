@@ -1,0 +1,156 @@
+From e083cb151d05afd2e06431fb24443e381c03b361 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Mon, 5 Oct 2015 00:12:38 -0400
+Subject: [PATCH 074/122] Return generic typevar casting support
+
+---
+ .../jetbrains/java/decompiler/main/ClassWriter.java  |  5 ++++-
+ .../decompiler/modules/decompiler/ExprProcessor.java |  7 +++----
+ .../modules/decompiler/exps/ExitExprent.java         | 12 +++++++++++-
+ .../java/decompiler/struct/gen/MethodDescriptor.java |  5 +++++
+ .../java/decompiler/struct/gen/VarType.java          |  7 ++++++-
+ 5 files changed, 29 insertions(+), 7 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index daf3444..404265f 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -607,6 +607,7 @@ public class ClassWriter {
+       boolean clinit = false, init = false, dinit = false;
+ 
+       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
++      DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR, md);
+ 
+       int flags = mt.getAccessFlags();
+       if ((flags & CodeConstants.ACC_NATIVE) != 0) {
+@@ -686,7 +687,9 @@ public class ClassWriter {
+           }
+         }
+       }
+-
++      if (descriptor != null) {
++          md.addGenericDescriptor(descriptor);
++      }
+       boolean throwsExceptions = false;
+       int paramCount = 0;
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 7b94e5b..1abd093 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -731,10 +731,9 @@ public class ExprProcessor implements CodeConstants {
+       return "void";
+     }
+     else if (tp == CodeConstants.TYPE_OBJECT) {
+-      //if (type.signatureDebugGens != null) {
+-      //  GenericType gen = new GenericType(type.signatureDebugGens);
+-      //  return GenericMain.getGenericCastTypeName(gen);
+-      //}
++      if (type.genericType != null) {
++        return GenericMain.getGenericCastTypeName(type.genericType);
++      }
+ 
+       String ret = buildJavaClassName(type.value);
+       if (getShort) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+index fd1491f..bbf1458 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+@@ -24,7 +24,10 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+ import org.jetbrains.java.decompiler.struct.attr.StructExceptionsAttribute;
++import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
+@@ -81,13 +84,20 @@ public class ExitExprent extends Exprent {
+   @Override
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+     tracer.addMapping(bytecode);
++    MethodDescriptor md = (MethodDescriptor) DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_DESCRIPTOR);
+ 
+     if (exitType == EXIT_RETURN) {
+       TextBuffer buffer = new TextBuffer();
+ 
+       if (retType.type != CodeConstants.TYPE_VOID) {
++        VarType ret = retType;
++        boolean force = false;
++        if (md.genericInfo != null && md.genericInfo.ret != null) {
++            ret = new VarType(md.genericInfo.ret);
++            force = true;
++        }
+         buffer.append(" ");
+-        ExprProcessor.getCastedExprent(value, retType, buffer, indent, false, tracer);
++        ExprProcessor.getCastedExprent(value, ret, buffer, indent, false, force, tracer);
+       }
+ 
+       return buffer.prepend("return");
+diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
+index 2465382..0ab555f 100644
+--- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
++++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
+@@ -16,6 +16,7 @@
+ package org.jetbrains.java.decompiler.struct.gen;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
+@@ -25,6 +26,7 @@ public class MethodDescriptor {
+ 
+   public final VarType[] params;
+   public final VarType ret;
++  public GenericMethodDescriptor genericInfo;
+ 
+   private MethodDescriptor(VarType[] params, VarType ret) {
+     this.params = params;
+@@ -78,6 +80,9 @@ public class MethodDescriptor {
+     return new MethodDescriptor(params, ret);
+   }
+ 
++  public void addGenericDescriptor(GenericMethodDescriptor desc) {
++    this.genericInfo = desc;
++  }
+   public String buildNewDescriptor(NewClassNameBuilder builder) {
+     boolean updated = false;
+ 
+diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
+index 1eb177f..45fd289 100644
+--- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
++++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
+@@ -16,6 +16,7 @@
+ package org.jetbrains.java.decompiler.struct.gen;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ public class VarType {  // TODO: optimize switch
+@@ -46,7 +47,7 @@ public class VarType {  // TODO: optimize switch
+   public final int typeFamily;
+   public final int stackSize;
+   public final boolean falseBoolean;
+-
++  public GenericType genericType;
+   public VarType(int type) {
+     this(type, 0);
+   }
+@@ -55,6 +56,10 @@ public class VarType {  // TODO: optimize switch
+     this(type, arrayDim, getChar(type));
+   }
+ 
++  public VarType(GenericType type) {
++      this(VARTYPE_OBJECT.type);
++      this.genericType = type;
++  }
+   public VarType(int type, int arrayDim, String value) {
+     this(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
+   }
+-- 
+2.21.0.windows.1
+

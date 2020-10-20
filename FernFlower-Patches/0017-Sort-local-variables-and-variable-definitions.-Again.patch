@@ -1,0 +1,150 @@
+From 0ecec99fee439f1f018c51826f4105c7753af7f2 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Mon, 3 Aug 2015 17:26:00 -0700
+Subject: [PATCH 017/122] Sort local variables and variable definitions. Again,
+ different JVMs sort hash sets differently causing different variable names.
+
+---
+ .../modules/decompiler/ExprProcessor.java     |  1 +
+ .../modules/decompiler/exps/Exprent.java      | 53 +++++++++++++++----
+ .../decompiler/vars/VarVersionsProcessor.java | 11 +++-
+ 3 files changed, 53 insertions(+), 12 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 9296bb3..205b187 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -833,6 +833,7 @@ public class ExprProcessor implements CodeConstants {
+     }
+ 
+     TextBuffer buf = new TextBuffer();
++    lst = Exprent.sortIndexed(lst);
+ 
+     for (Exprent expr : lst) {
+       TextBuffer content = expr.toJava(indent, tracer);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index fbd146e..5f2cb56 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -17,6 +17,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ 
+ import java.util.ArrayList;
+ import java.util.Collection;
++import java.util.Collections;
++import java.util.Comparator;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map.Entry;
+@@ -140,23 +142,23 @@ public class Exprent implements IMatchable {
+       }
+     }
+   }
+-  
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public IMatchable findObject(MatchNode matchNode, int index) {
+-    
++
+     if(matchNode.getType() != MatchNode.MATCHNODE_EXPRENT) {
+       return null;
+     }
+ 
+     List<Exprent> lstAllExprents = getAllExprents();
+-    
++
+     if(lstAllExprents == null || lstAllExprents.isEmpty()) {
+       return null;
+     }
+-    
++
+     String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+     if(position != null) {
+       if(position.matches("-?\\d+")) {
+@@ -170,11 +172,11 @@ public class Exprent implements IMatchable {
+   }
+ 
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+-    
++
+     if(matchNode.getType() != MatchNode.MATCHNODE_EXPRENT) {
+       return false;
+     }
+-    
++
+     for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+       switch(rule.getKey()) {
+       case EXPRENT_TYPE:
+@@ -188,10 +190,41 @@ public class Exprent implements IMatchable {
+         }
+         break;
+       }
+-      
++
+     }
+-    
++
+     return true;
+   }
+-  
++
++  public static List<Exprent> sortIndexed(List<Exprent> lst) {
++    List<Exprent> ret = new ArrayList<Exprent>();
++    List<VarExprent> defs = new ArrayList<VarExprent>();
++
++    Comparator<VarExprent> comp = new Comparator<VarExprent>() {
++      public int compare(VarExprent o1, VarExprent o2) {
++        return o1.getIndex() - o2.getIndex();
++      }
++    };
++
++    for (Exprent exp : lst) {
++      boolean isDef = exp instanceof VarExprent && ((VarExprent)exp).isDefinition();
++      if (!isDef) {
++        if (defs.size() > 0) {
++          Collections.sort(defs, comp);
++          ret.addAll(defs);
++          defs.clear();
++        }
++        ret.add(exp);
++      }
++      else {
++        defs.add((VarExprent)exp);
++      }
++    }
++
++    if (defs.size() > 0) {
++      Collections.sort(defs, comp);
++      ret.addAll(defs);
++    }
++    return ret;
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+index 31f0f86..4751052 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+@@ -235,8 +235,15 @@ public class VarVersionsProcessor {
+     Map<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();
+ 
+     // map var-version pairs on new var indexes
+-    Set<VarVersionPair> set = new HashSet<VarVersionPair>(mapExprentMinTypes.keySet());
+-    for (VarVersionPair pair : set) {
++    List<VarVersionPair> lst = new ArrayList<VarVersionPair>(mapExprentMinTypes.keySet());
++    Collections.sort(lst, new Comparator<VarVersionPair>() {
++      public int compare(VarVersionPair o1, VarVersionPair o2) {
++        if (o1.var != o2.var) return o1.var - o2.var;
++        return o1.version - o2.version;
++      }
++    });
++
++    for (VarVersionPair pair : lst) {
+ 
+       if (pair.version >= 0) {
+         int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
+-- 
+2.21.0.windows.1
+

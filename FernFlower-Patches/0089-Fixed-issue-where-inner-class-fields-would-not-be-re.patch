@@ -1,0 +1,98 @@
+From 32d7a1464e50520aa4e0c78fce84528448bca249 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 15 Oct 2015 01:10:03 -0700
+Subject: [PATCH 089/122] Fixed issue where inner class fields would not be
+ replaced by their parent method parameters.
+
+---
+ .../main/rels/NestedClassProcessor.java       | 51 ++++++++++++++++---
+ 1 file changed, 45 insertions(+), 6 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 12653a4..6d40b8a 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -706,8 +706,8 @@ public class NestedClassProcessor {
+ 
+         DirectGraph graph = meth.getOrBuildGraph();
+ 
+-        graph.iterateExprents(new DirectGraph.ExprentIterator() {
+-          public int processExprent(Exprent exprent) {
++        iterateExprents(graph, new ExprentIteratorWithReplace() {
++          public Exprent processExprent(Exprent exprent) {
+ 
+             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+               AssignmentExprent asexpr = (AssignmentExprent)exprent;
+@@ -718,7 +718,7 @@ public class NestedClassProcessor {
+                     mapFieldsToNewVars.containsKey(InterpreterUtil.makeUniqueKey(child.classStruct.qualifiedName,
+                                                                                  InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr
+                                                                                    .getDescriptor().descriptorString)))) {
+-                  return 2;
++                  return null;
+                 }
+ 
+                 //if(fexpr.getClassname().equals(child.classStruct.qualifiedName) &&
+@@ -734,13 +734,13 @@ public class NestedClassProcessor {
+               if (invexpr.getFunctype() == InvocationExprent.TYP_INIT) {
+                 // invocation of the super constructor in an anonymous class
+                 child.superInvocation = invexpr; // FIXME: save original names of parameters
+-                return 2;
++                return null;
+               }
+             }
+ 
+-            replaceExprent(exprent);
++            Exprent ret = replaceExprent(exprent);
+ 
+-            return 0;
++            return ret == null ? exprent : ret;
+           }
+ 
+           private Exprent replaceExprent(Exprent exprent) {
+@@ -1191,4 +1191,43 @@ public class NestedClassProcessor {
+       return keyfield.hashCode() + varpaar.hashCode();
+     }
+   }
++
++  private static interface ExprentIteratorWithReplace {
++    // null - remove exprent
++    // ret != exprent - replace exprent with ret
++    Exprent processExprent(Exprent exprent);
++  }
++
++
++
++  private static void iterateExprents(DirectGraph graph, ExprentIteratorWithReplace iter) {
++    LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
++    stack.add(graph.first);
++
++    HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
++
++    while (!stack.isEmpty()) {
++
++      DirectNode node = stack.removeFirst();
++
++      if (setVisited.contains(node)) {
++        continue;
++      }
++      setVisited.add(node);
++
++      for (int i = 0; i < node.exprents.size(); i++) {
++        Exprent res = iter.processExprent(node.exprents.get(i));
++
++        if (res == null) {
++          node.exprents.remove(i);
++          i--;
++        }
++        else if (res != node.exprents.get(i)) {
++          node.exprents.set(i, res);
++        }
++      }
++
++      stack.addAll(node.succs);
++    }
++  }
+ }
+-- 
+2.21.0.windows.1
+

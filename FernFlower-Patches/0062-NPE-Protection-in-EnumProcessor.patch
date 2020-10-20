@@ -1,0 +1,27 @@
+From 950b975082f6252b0b3aedf6674f6af9b2951c33 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Fri, 2 Oct 2015 01:32:57 -0700
+Subject: [PATCH 062/122] NPE Protection in EnumProcessor
+
+---
+ src/org/jetbrains/java/decompiler/main/EnumProcessor.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/EnumProcessor.java b/src/org/jetbrains/java/decompiler/main/EnumProcessor.java
+index 37a3384..8956e0e 100644
+--- a/src/org/jetbrains/java/decompiler/main/EnumProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/EnumProcessor.java
+@@ -74,7 +74,9 @@ public class EnumProcessor {
+ 
+   // FIXME: move to a util class (see also InitializerProcessor)
+   private static Statement findFirstData(Statement stat) {
+-
++    if (stat == null) {
++      return null;
++    }
+     if (stat.getExprents() != null) {
+       return stat;
+     }
+-- 
+2.21.0.windows.1
+

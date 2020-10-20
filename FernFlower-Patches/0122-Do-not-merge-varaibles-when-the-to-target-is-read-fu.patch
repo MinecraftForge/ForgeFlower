@@ -1,0 +1,163 @@
+From 114aebe82cf40075c5c4f916c409b8aebf8096d5 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Mon, 14 Dec 2015 02:09:28 -0800
+Subject: [PATCH 122/122] Do not merge varaibles when the to target is read
+ further in the method.
+
+---
+ .../decompiler/vars/VarDefinitionHelper.java  | 19 +++----
+ .../java/decompiler/util/ExprentUtil.java     | 57 +++++++++++++++++++
+ 2 files changed, 66 insertions(+), 10 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index fcd8c64..6566ca7 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -36,6 +36,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
++import org.jetbrains.java.decompiler.util.ExprentUtil;
+ import org.jetbrains.java.decompiler.util.StatementIterator;
+ 
+ import java.util.*;
+@@ -572,7 +573,6 @@ public class VarDefinitionHelper {
+     }
+   }
+ 
+-
+   private void applyTypes(Statement stat, Map<VarVersionPair, LVTVariable> types) {
+     if (stat == null || types.size() == 0) {
+       return;
+@@ -636,16 +636,12 @@ public class VarDefinitionHelper {
+ 
+     Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<VarVersionPair, VarVersionPair>();
+     VPPEntry remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
+-    VPPEntry last = remap;
+     while (remap != null) {
+       //System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
+       if (!remapVar(stat, remap.getKey(), remap.getValue())) {
+         blacklist.put(remap.getKey(), remap.getValue());
+       }
+       remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
+-      if (last.equals(remap)){
+-        System.currentTimeMillis();
+-      }
+     }
+     return null;
+   }
+@@ -681,7 +677,9 @@ public class VarDefinitionHelper {
+     }
+ 
+     if (stat.getExprents() == null) {
+-      for (Object obj : stat.getSequentialObjects()) {
++      List<Object> objs = stat.getSequentialObjects();
++      for (int i = 0; i < objs.size(); i++) {
++        Object obj = objs.get(i);
+         if (obj instanceof Statement) {
+           Statement st = (Statement)obj;
+ 
+@@ -736,16 +734,17 @@ public class VarDefinitionHelper {
+         }
+         else if (obj instanceof Exprent) {
+           VPPEntry ret = processExprent((Exprent)obj, this_vars, scoped, blacklist);
+-          if (ret != null) {
++          if (ret != null && !ExprentUtil.isVarReadFirst(ret.getValue(), stat, i + 1)) {
+             return ret;
+           }
+         }
+       }
+     }
+     else {
+-      for (Exprent exp : stat.getExprents()) {
+-        VPPEntry ret = processExprent(exp, this_vars, scoped, blacklist);
+-        if (ret != null) {
++      List<Exprent> exps = stat.getExprents();
++      for (int i = 0; i < exps.size(); i++) {
++        VPPEntry ret = processExprent(exps.get(i), this_vars, scoped, blacklist);
++        if (ret != null && !ExprentUtil.isVarReadFirst(ret.getValue(), stat, i + 1)) {
+           return ret;
+         }
+       }
+diff --git a/src/org/jetbrains/java/decompiler/util/ExprentUtil.java b/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
+index 39ce7ff..cadf983 100644
+--- a/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
++++ b/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
+@@ -17,9 +17,11 @@ package org.jetbrains.java.decompiler.util;
+ 
+ import java.util.List;
+ 
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ 
+ public class ExprentUtil {
+   public static boolean isVarReferenced(VarExprent var, Statement stat, VarExprent... whitelist) {
+@@ -59,7 +61,62 @@ public class ExprentUtil {
+             if (var == white) {
+               allowed = true;
+             }
++          }
++          if (!allowed) {
++            return true;
++          }
++        }
++      }
++    }
++    return false;
++  }
++
++  public static boolean isVarReadFirst(VarVersionPair var, Statement stat, int index, VarExprent... whitelist) {
++    if (stat.getExprents() == null) {
++      List<Object> objs = stat.getSequentialObjects();
++      for (int x = index; x < objs.size(); x++) {
++        Object obj = objs.get(x);
++        if (obj instanceof Statement) {
++          if (isVarReadFirst(var, (Statement)obj, 0, whitelist)) {
++            return true;
++          }
++        }
++        else if (obj instanceof Exprent) {
++          if (isVarReadFirst(var, (Exprent)obj, whitelist)) {
++            return true;
++          }
++        }
++      }
++    }
++    else {
++      for (int x = index; x < stat.getExprents().size(); x++) {
++        if (isVarReadFirst(var, stat.getExprents().get(x), whitelist)) {
++          return true;
++        }
++      }
++    }
++    return false;
++  }
++
++  private static boolean isVarReadFirst(VarVersionPair target, Exprent exp, VarExprent... whitelist) {
++    AssignmentExprent ass = exp.type == Exprent.EXPRENT_ASSIGNMENT ? (AssignmentExprent)exp : null;
++    List<Exprent> lst = exp.getAllExprents(true);
++    lst.add(exp);
++    for (Exprent ex : lst) {
++      if (ex.type == Exprent.EXPRENT_VAR) {
++        VarExprent var = (VarExprent)ex;
++        if (var.getIndex() == target.var && var.getVersion() == target.version) {
++          boolean allowed = false;
++          if (ass != null) {
++            if (var == ass.getLeft()) {
++              allowed = true;
++            }
++          }
++          for (VarExprent white : whitelist) {
++            if (var == white) {
++              allowed = true;
+             }
++          }
+           if (!allowed) {
+             return true;
+           }
+-- 
+2.21.0.windows.1
+

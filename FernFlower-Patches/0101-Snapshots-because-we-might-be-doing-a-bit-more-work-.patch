@@ -1,0 +1,26 @@
+From 15a7d35628a5db31cbdf2f0ac8fc3b0686107d23 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Tue, 20 Oct 2015 19:20:44 -0400
+Subject: [PATCH 101/122] Snapshots because we might be doing a bit more work
+ yet
+
+---
+ build.gradle | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build.gradle b/build.gradle
+index 5e14c25..bc211f2 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -3,7 +3,7 @@ apply plugin: 'idea'
+ apply plugin: 'maven'
+ apply plugin: 'java'
+ 
+-version = "2.0"
++version = "2.0-SNAPSHOT"
+ group = "net.minecraftforge" //not sure if we shoulkd publish under this name, but it's our fork so meh
+ archivesBaseName = "fernflower"
+ 
+-- 
+2.21.0.windows.1
+

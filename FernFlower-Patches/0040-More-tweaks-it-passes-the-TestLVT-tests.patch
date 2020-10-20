@@ -1,0 +1,160 @@
+From d828cac2aee189062bac3731431f33e2a6ba30ca Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Fri, 11 Sep 2015 23:42:09 -0400
+Subject: [PATCH 040/122] More tweaks, it passes the TestLVT tests
+
+---
+ .../modules/decompiler/stats/Statement.java   | 20 ++++++++------
+ .../decompiler/vars/VarDefinitionHelper.java  | 27 ++++++++++++-------
+ 2 files changed, 29 insertions(+), 18 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
+index 5a44fcf..c126050 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
+@@ -868,11 +868,11 @@ public class Statement implements IMatchable {
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public IMatchable findObject(MatchNode matchNode, int index) {
+-    
++
+     int node_type = matchNode.getType();
+-    
++
+     if (node_type == MatchNode.MATCHNODE_STATEMENT && !this.stats.isEmpty()) {
+       String position = (String)matchNode.getRuleValue(MatchProperties.STATEMENT_POSITION);
+       if(position != null) {
+@@ -897,11 +897,11 @@ public class Statement implements IMatchable {
+   }
+ 
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+-    
++
+     if(matchNode.getType() != MatchNode.MATCHNODE_STATEMENT) {
+       return false;
+     }
+-    
++
+     for(Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
+       switch(rule.getKey()) {
+       case STATEMENT_TYPE:
+@@ -932,14 +932,18 @@ public class Statement implements IMatchable {
+         }
+         break;
+       }
+-      
++
+     }
+-    
++
+     return true;
+   }
+ 
++  private SequenceStatement parentSeqStat;
+ public SequenceStatement getParentSequenceStat() {
+-    return (SequenceStatement) (getParent()!=null && getParent().type == TYPE_SEQUENCE ? getParent() : null);
++    if (parentSeqStat == null) {
++        parentSeqStat = (getParent()!=null && getParent().type == TYPE_SEQUENCE) ? (SequenceStatement)getParent() : new SequenceStatement(Arrays.asList(this));
++    }
++    return parentSeqStat;
+ }
+ 
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index d68ee36..db41fb8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -30,6 +30,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatemen
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+@@ -53,6 +54,8 @@ public class VarDefinitionHelper {
+   private final CounterContainer counters = DecompilerContext.getCounterContainer();
+ 
+   private final Map<SequenceStatement,List<VarVersionPair>> scopedVVPs;
++
++private RootStatement rootStmt;
+   public VarDefinitionHelper(Statement root, StructMethod mt, VarProcessor varproc) {
+ 
+     mapVarDefStatements = new HashMap<Integer, Statement>();
+@@ -60,6 +63,7 @@ public class VarDefinitionHelper {
+     implDefVars = new HashSet<Integer>();
+     scopedVVPs = new HashMap<SequenceStatement,List<VarVersionPair>>();
+     this.varproc = varproc;
++    this.rootStmt = (RootStatement) root;
+ 
+     VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
+ 
+@@ -145,19 +149,17 @@ public class VarDefinitionHelper {
+   }
+ 
+   public void setVarDefinitions() {
+-    FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
+-    DirectGraph graph = flattenHelper.buildDirectGraph(root);
+-
+     VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
+ 
++    Map<SequenceStatement,Map<Integer,VarExprent>> trackingMap = new HashMap<SequenceStatement,Map<Integer,VarExprent>>();
+     for (Entry<Integer, Statement> en : mapVarDefStatements.entrySet()) {
+       Statement stat = en.getValue();
++      if (!trackingMap.containsKey(stat.getParentSequenceStat())) {
++          trackingMap.put(stat.getParentSequenceStat(), new HashMap<Integer,VarExprent>());
++      }
++      Map<Integer, VarExprent> scopedMap = trackingMap.get(stat.getParentSequenceStat());
+       Integer index = en.getKey();
+       int newindex = varproc.getRemapped(index);
+-      if (index.intValue() != newindex) {
+-          // remerge
+-      }
+-
+       setupLVTs(stat);
+ 
+       if (implDefVars.contains(index)) {
+@@ -172,7 +174,7 @@ public class VarDefinitionHelper {
+         DoStatement dstat = (DoStatement)stat;
+         if (dstat.getLooptype() == DoStatement.LOOP_FOR) {
+ 
+-          if (dstat.getInitExprent() != null && setDefinition(dstat.getInitExprent(), index)) {
++          if (dstat.getInitExprent() != null && setDefinition(dstat.getInitExprent(), index, scopedMap)) {
+             continue;
+           }
+           else {
+@@ -215,7 +217,11 @@ public class VarDefinitionHelper {
+       int addindex = 0;
+       for (Exprent expr : lst) {
+ 
+-        if (setDefinition(expr, index)) {
++        if (scopedMap.containsKey(newindex)) {
++            defset = true;
++            break;
++        }
++        if (setDefinition(expr, index, scopedMap)) {
+           defset = true;
+           break;
+         }
+@@ -386,13 +392,14 @@ public class VarDefinitionHelper {
+     return res;
+   }
+ 
+-  private static boolean setDefinition(Exprent expr, Integer index) {
++  private static boolean setDefinition(Exprent expr, Integer index, Map<Integer,VarExprent> stats) {
+     if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
+       Exprent left = ((AssignmentExprent)expr).getLeft();
+       if (left.type == Exprent.EXPRENT_VAR) {
+         VarExprent var = (VarExprent)left;
+         if (var.getIndex() == index.intValue()) {
+           var.setDefinition(true);
++          stats.put(index, var);
+           return true;
+         }
+       }
+-- 
+2.21.0.windows.1
+

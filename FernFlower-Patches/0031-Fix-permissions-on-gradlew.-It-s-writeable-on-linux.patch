@@ -1,0 +1,16 @@
+From 1326398474ddba2211b73412ca7be68ba9c32342 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Thu, 13 Aug 2015 17:06:24 -0700
+Subject: [PATCH 031/122] Fix permissions on gradlew. It's writeable on linux.
+
+---
+ gradlew | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ mode change 100644 => 100755 gradlew
+
+diff --git a/gradlew b/gradlew
+old mode 100644
+new mode 100755
+-- 
+2.21.0.windows.1
+

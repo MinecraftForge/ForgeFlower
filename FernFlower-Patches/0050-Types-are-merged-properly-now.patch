@@ -1,0 +1,167 @@
+From 38305edba97b6b5ae23d451ffb9d5dee9dc4bcf4 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Mon, 14 Sep 2015 00:42:17 -0400
+Subject: [PATCH 050/122] Types are merged properly now
+
+---
+ .../modules/decompiler/exps/VarExprent.java       |   3 +++
+ .../modules/decompiler/vars/LVTVariable.java      |   6 ++++++
+ .../decompiler/vars/VarDefinitionHelper.java      |  11 +++++++++--
+ .../modules/decompiler/vars/VarProcessor.java     |   4 ++++
+ .../decompiler/vars/VarVersionsProcessor.java     |   3 +++
+ testData/classes/pkg/TestVarType.class            | Bin 0 -> 375 bytes
+ testData/src/pkg/TestVarType.java                 |   9 +++++++++
+ 7 files changed, 34 insertions(+), 2 deletions(-)
+ create mode 100644 testData/classes/pkg/TestVarType.class
+ create mode 100644 testData/src/pkg/TestVarType.java
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 6c973af..3d5f03b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -231,6 +231,9 @@ public class VarExprent extends Exprent {
+ 
+   public void setLVT(LVTVariable lvt) {
+     this.lvt = lvt;
++    if (processor != null) {
++        processor.setVarType(new VarVersionPair(this),lvt.getVarType());
++    }
+   }
+ 
+   @Override
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
+index 59dee69..209d3e0 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
+@@ -5,6 +5,8 @@ import java.util.HashSet;
+ import java.util.Map;
+ import java.util.Set;
+ 
++import org.jetbrains.java.decompiler.struct.gen.VarType;
++
+ public class LVTVariable implements Comparable<LVTVariable> {
+   public static final Comparator<LVTVariable> INDEX_SORTER = new Comparator<LVTVariable>() {
+     @Override
+@@ -80,4 +82,8 @@ public class LVTVariable implements Comparable<LVTVariable> {
+   public String getSig() {
+     return sig;
+   }
++
++public VarType getVarType() {
++    return new VarType(desc);
++}
+ }
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 56061fe..7abcec8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -24,11 +24,13 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
+ 
+ import java.util.*;
+ import java.util.Map.Entry;
+@@ -483,7 +485,7 @@ public class VarDefinitionHelper {
+     }
+   }
+ 
+-  private static void remapVar(Map<VarVersionPair, VarVersionPair> remap, Statement stat) {
++  private void remapVar(Map<VarVersionPair, VarVersionPair> remap, Statement stat) {
+     if (remap == null || stat == null) {
+       return;
+     }
+@@ -505,12 +507,13 @@ public class VarDefinitionHelper {
+     }
+   }
+ 
+-  private static void remapVar(Map<VarVersionPair, VarVersionPair> remap, Exprent exprent) {
++  private void remapVar(Map<VarVersionPair, VarVersionPair> remap, Exprent exprent) {
+     if (exprent == null) {
+       return;
+     }
+     List<Exprent> lst = exprent.getAllExprents(true);
+     lst.add(exprent);
++    Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
+ 
+     for (Exprent expr : lst) {
+       if (expr.type == Exprent.EXPRENT_VAR) {
+@@ -518,8 +521,12 @@ public class VarDefinitionHelper {
+         VarVersionPair old = new VarVersionPair(var);
+         VarVersionPair new_ = remap.get(old);
+         if (new_ != null) {
++          VarType firstMinType = mapExprentMinTypes.get(old);
++          VarType secondMinType = mapExprentMinTypes.get(new_);
+           var.setIndex(new_.var);
+           var.setVersion(new_.version);
++          VarType type = VarType.getCommonSupertype(firstMinType, secondMinType);
++          mapExprentMinTypes.put(new_, type);
+         }
+       }
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+index a8ad019..691797e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+@@ -176,4 +176,8 @@ public class VarProcessor {
+     setVarType(to, getVarType(from));
+     varVersions.getMapOriginalVarIndices().put(to.var, varVersions.getMapOriginalVarIndices().get(from.var));
+   }
++
++  public VarVersionsProcessor getVarVersions() {
++    return varVersions;
++}
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+index d56c778..d201157 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+@@ -321,4 +321,7 @@ public class VarVersionsProcessor {
+   public Map<Integer, VarVersionPair> getMapOriginalVarIndices() {
+     return mapOriginalVarIndices;
+   }
++  public VarTypeProcessor getTypeProcessor() {
++    return typeProcessor;
++}
+ }
+diff --git a/testData/classes/pkg/TestVarType.class b/testData/classes/pkg/TestVarType.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..de04ad7bc6fc7b7c1c7489d444a9e6e97f89ab09
+GIT binary patch
+literal 375
+zcmZ9HKTpFz48@=Gw}h64AhELn1Cdy%Sdfqq0S2P(mvAaqLQ<tEQulr#CL{(XCO!`{
+z;-#$sq0`y-&i2pt$Jgr{fMe|Vumt_d!zfPmv>B>8olmq6M-YzHlZp#fj^dkatn)_T
+z4NPg8Q-QsIFcdgv)twGtW1|Zf9yy6A_4VvA({-w{LJOj#%2h$EY4!TkY3|Kbu$}yC
+zdm`|&d819qUSfDJ1i@`Jt8;yBT3q;N$fI^X?19s86~N+)Q_%WUF}={chcD<nFT(+C
+z8wLwDX}hZg`W}^F>!<jN%Hm%yyc{gVeP2N2^A{4qVbCSU<M9dTEP=bLqBYP)fIdQ^
+JxGM84MBh+NKNkQ1
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/src/pkg/TestVarType.java b/testData/src/pkg/TestVarType.java
+new file mode 100644
+index 0000000..1847aa2
+--- /dev/null
++++ b/testData/src/pkg/TestVarType.java
+@@ -0,0 +1,9 @@
++package pkg;
++
++public class TestVarType {
++    public void byteint() {
++        int i = 75;
++        i+=5;
++        i+=500;
++    }
++}
+-- 
+2.21.0.windows.1
+

@@ -1,0 +1,123 @@
+From 3be7e213dcd0be08189ca0207b54c600a0ff4602 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sun, 4 Oct 2015 02:10:44 -0700
+Subject: [PATCH 068/122] Hack to prevent extracted ifs from being inlined
+ again in infinite loop. MC decompiles much better!
+
+---
+ .../main/rels/MethodProcessorRunnable.java        |  2 --
+ .../decompiler/modules/decompiler/ExitHelper.java |  2 +-
+ .../decompiler/InlineSingleBlockHelper.java       |  5 ++++-
+ .../modules/decompiler/LoopExtractHelper.java     | 15 +++++++++++++--
+ .../decompiler/modules/decompiler/StatEdge.java   |  2 ++
+ .../decompiler/stats/SequenceStatement.java       |  1 -
+ 6 files changed, 20 insertions(+), 7 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index eca3413..62d5297 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -33,14 +33,12 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DummyExitStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+-import org.jetbrains.java.decompiler.modules.decompiler.vars.LVTVariable;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+ 
+ import java.io.IOException;
+ import java.util.BitSet;
+-import java.util.List;
+ 
+ public class MethodProcessorRunnable implements Runnable {
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
+index d467cdc..df2cb4a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
+@@ -206,7 +206,7 @@ public class ExitHelper {
+     Statement dest = edge.getDestination();
+ 
+     if (edge.getType() == StatEdge.TYPE_BREAK && dest.type == Statement.TYPE_BASICBLOCK
+-        && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
++        && edge.explicit && (edge.labeled || isOnlyEdge(edge)) && edge.canInline) {
+       List<Exprent> data = dest.getExprents();
+ 
+       if (data != null && data.size() == 1) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
+index adeda02..1c468c8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
+@@ -132,7 +132,10 @@ public class InlineSingleBlockHelper {
+       StatEdge edge = lst.get(0);
+ 
+       if (sameCatchRanges(edge)) {
+-        if (edge.explicit) {
++        if (!edge.canInline) {
++          return false; //Dirty hack, but lets do it!
++        }
++        else if (edge.explicit) {
+           return true;
+         }
+         else {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
+index 93bc21d..f09dd3c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
+@@ -92,8 +92,14 @@ public class LoopExtractHelper {
+       }
+     }
+ 
+-    if (!extractLastIf(stat, stats)) {
+-      return extractFirstIf(stat, stats);
++    if (stats.size() > 0) { // In this case prioritize first to help the Loop enhancer.
++      if (stat.getParent().getStats().getLast() != stat){
++        return false;
++      }
++    }
++
++    if (!extractFirstIf(stat, stats)) {
++      return extractLastIf(stat, stats);
+     }
+     else {
+       return true;
+@@ -219,5 +225,10 @@ public class LoopExtractHelper {
+         loop.addPredecessor(edge);
+       }
+     }
++
++    List<StatEdge> link = target.getPredecessorEdges(StatEdge.TYPE_BREAK);
++    if (link.size() == 1) {
++      link.get(0).canInline = false;
++    }
+   }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
+index 26d427b..7902069 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
+@@ -52,6 +52,8 @@ public class StatEdge {
+ 
+   public boolean explicit = true;
+ 
++  public boolean canInline = true;
++
+   public StatEdge(int type, Statement source, Statement destination, Statement closure) {
+     this(type, source, destination);
+     this.closure = closure;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
+index 81d31a5..7d2ee43 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
+@@ -20,7 +20,6 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+-import org.jetbrains.java.decompiler.modules.decompiler.vars.StartEndPair;
+ 
+ import java.util.Arrays;
+ import java.util.List;
+-- 
+2.21.0.windows.1
+

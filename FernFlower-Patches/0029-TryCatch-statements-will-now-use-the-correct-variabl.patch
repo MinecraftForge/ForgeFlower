@@ -1,0 +1,257 @@
+From 5f699acc70d8e40f758737ae88aeddecc07edc8c Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sun, 9 Aug 2015 15:04:04 -0700
+Subject: [PATCH 029/122] TryCatch statements will now use the correct variable
+ index for their exception variable. Some small cleanups and NPE fix.
+
+---
+ .../decompiler/main/ClassesProcessor.java     |  1 -
+ .../main/rels/MethodProcessorRunnable.java    | 63 +------------------
+ .../decompiler/stats/CatchAllStatement.java   | 11 +++-
+ .../decompiler/stats/CatchStatement.java      | 10 ++-
+ .../modules/decompiler/vars/VarProcessor.java | 13 ++--
+ .../StructLocalVariableTableAttribute.java    |  1 -
+ .../TestClassSimpleBytecodeMapping.dec        |  4 +-
+ testData/results/TestTryCatchFinally.dec      | 12 ++--
+ 8 files changed, 37 insertions(+), 78 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index 7f75a0c..0060021 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -32,7 +32,6 @@ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
+-import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute.InnerClassInfo;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index 388e76a..9542a80 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.main.rels;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.code.InstructionSequence;
+-import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+ import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+@@ -277,63 +276,6 @@ public class MethodProcessorRunnable implements Runnable {
+           System.out.println(printExprent(indent + "  ", exp,varProc));
+       }
+     }
+-    /*
+-      for (Object obj : stat.getSequentialObjects()) {
+-        if (obj instanceof Statement) {
+-          Statement st = (Statement)obj;
+-          childVars.addAll(initStatement(st));
+-
+-          if (st.type == DoStatement.TYPE_DO) {
+-            DoStatement dost = (DoStatement)st;
+-            if (dost.getLooptype() != DoStatement.LOOP_FOR &&
+-                dost.getLooptype() != DoStatement.LOOP_DO) {
+-              currVars.add(dost.getConditionExprent());
+-            }
+-          }
+-          else if (st.type == DoStatement.TYPE_CATCHALL) {
+-            CatchAllStatement fin = (CatchAllStatement)st;
+-            if (fin.isFinally() && fin.getMonitor() != null) {
+-              currVars.add(fin.getMonitor());
+-            }
+-          }
+-        }
+-        else if (obj instanceof Exprent) {
+-          currVars.add((Exprent)obj);
+-        }
+-      }
+-
+-      // children statements
+-      for (Integer index : childVars) {
+-        Integer count = mapCount.get(index);
+-        if (count == null) {
+-          count = new Integer(0);
+-        }
+-        mapCount.put(index, new Integer(count.intValue() + 1));
+-      }
+-
+-      condlst = getAllVars(currVars);
+-    }
+-    else {
+-      condlst = getAllVars(stat.getExprents());
+-    }
+-
+-    // this statement
+-    for (VarExprent var : condlst) {
+-      mapCount.put(new Integer(var.getIndex()), new Integer(2));
+-    }
+-
+-
+-    HashSet<Integer> set = new HashSet<Integer>(mapCount.keySet());
+-
+-    // put all variables defined in this statement into the set
+-    for (Entry<Integer, Integer> en : mapCount.entrySet()) {
+-      if (en.getValue().intValue() > 1) {
+-        mapVarDefStatements.put(en.getKey(), stat);
+-      }
+-    }
+-
+-    mapStatementVars.put(stat.id, set);
+-*/
+     indent += "  ";
+     for (Object obj : statement.getSequentialObjects()) {
+       if (obj instanceof Statement) {
+@@ -357,8 +299,9 @@ public class MethodProcessorRunnable implements Runnable {
+           VarExprent varExprent = (VarExprent)exp;
+         int currindex = varExprent.getIndex();
+         int origindex = varProc.getRemapped(currindex);
+-        List<LVTVariable> candidates = varProc.getLVT().getCandidates(origindex);
+-        sb.append("[").append(currindex).append(":").append(origindex).append(", ").append(varExprent.isStack()).append("]").append(candidates);
++        sb.append("[").append(currindex).append(":").append(origindex).append(", ").append(varExprent.isStack()).append("]");
++        if (varProc.getLVT() != null)
++          sb.append(varProc.getLVT().getCandidates(origindex));
+       } else if (exp instanceof AssignmentExprent) {
+           AssignmentExprent assignmentExprent = (AssignmentExprent)exp;
+         sb.append("{").append(printExprent(" ",assignmentExprent.getLeft(),varProc)).append(" =").append(printExprent(" ",assignmentExprent.getRight(),varProc)).append("}");
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
+index 812ed10..d5b432c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
+@@ -16,6 +16,7 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.stats;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -68,7 +69,15 @@ public class CatchAllStatement extends Statement {
+       }
+     }
+ 
+-    vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
++    int varIndex = -1;
++    BasicBlock block = handler.getBasichead().getBlock();
++    if (!block.getSeq().isEmpty() && block.getInstruction(0).opcode == CodeConstants.opc_astore) {
++      varIndex = block.getInstruction(0).getOperand(0);
++    }
++    else {
++      varIndex = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
++    }
++    vars.add(new VarExprent(varIndex,
+                             new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
+                             (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
+index 8d56042..fda5ed3 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
+@@ -60,7 +60,15 @@ public class CatchStatement extends Statement {
+         stats.addWithKey(stat, stat.id);
+         exctstrings.add(new ArrayList<String>(edge.getExceptions()));
+ 
+-        vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
++        int varIndex = -1;
++        BasicBlock block = stat.getBasichead().getBlock();
++        if (!block.getSeq().isEmpty() && block.getInstruction(0).opcode == CodeConstants.opc_astore) {
++          varIndex = block.getInstruction(0).getOperand(0);
++        }
++        else {
++          varIndex = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
++        }
++        vars.add(new VarExprent(varIndex,
+                                 new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
+                                 // FIXME: for now simply the first type. Should get the first common superclass when possible.
+                                 (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+index 6b15a12..ef07c6b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+@@ -152,16 +152,17 @@ private LocalVariableTable lvt;
+     return externalVars;
+   }
+ 
+-public void setLVT(LocalVariableTable lvt) {
++  public void setLVT(LocalVariableTable lvt) {
+     this.lvt = lvt;
+-}
+-public LocalVariableTable getLVT() {
++  }
++
++  public LocalVariableTable getLVT() {
+     return this.lvt;
+-}
++  }
+ 
+-public int getRemapped(int index) {
++  public int getRemapped(int index) {
+     VarVersionPair res = varVersions.getMapOriginalVarIndices().get(index);
+     if (res == null) return index;
+     return res.var;
+-}
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
+index a983b27..a654359 100644
+--- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
++++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
+@@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.struct.attr;
+ 
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.LVTVariable;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.LocalVariableTable;
+-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ 
+diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
+index 1a2532f..4a2f333 100644
+--- a/testData/results/TestClassSimpleBytecodeMapping.dec
++++ b/testData/results/TestClassSimpleBytecodeMapping.dec
+@@ -21,8 +21,8 @@ public class TestClassSimpleBytecodeMapping {
+    public void test2(String var1) {
+       try {
+          Integer.parseInt(var1);// 34
+-      } catch (Exception var6) {// 35
+-         System.out.println(var6);// 36
++      } catch (Exception var2) {// 35
++         System.out.println(var2);// 36
+       } finally {
+          System.out.println("Finally");// 38
+       }
+diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
+index 772a76e..fbe5782 100644
+--- a/testData/results/TestTryCatchFinally.dec
++++ b/testData/results/TestTryCatchFinally.dec
+@@ -4,10 +4,10 @@ public class TestTryCatchFinally {
+    public void test1(String var1) {
+       try {
+          System.out.println("sout1");// 24
+-      } catch (Exception var9) {
++      } catch (Exception var2) {
+          try {
+             System.out.println("sout2");// 27
+-         } catch (Exception var8) {// 28
++         } catch (Exception var3) {// 28
+             ;
+          }
+       } finally {
+@@ -28,10 +28,10 @@ public class TestTryCatchFinally {
+ 
+    public int test(String var1) {
+       try {
+-         int var2 = Integer.parseInt(var1);// 51
+-         return var2;
+-      } catch (Exception var6) {// 52
+-         System.out.println("Error" + var6);// 53
++         int var5 = Integer.parseInt(var1);// 51
++         return var5;
++      } catch (Exception var2) {// 52
++         System.out.println("Error" + var2);// 53
+       } finally {
+          System.out.println("Finally");// 55
+       }
+-- 
+2.21.0.windows.1
+

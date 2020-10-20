@@ -1,0 +1,28 @@
+From 13dd6a29fe1620f34613b872263b0a1107409d93 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Mon, 19 Oct 2015 18:51:10 -0700
+Subject: [PATCH 097/122] Fixed potential NPE in lvt propogation.
+
+---
+ .../modules/decompiler/vars/VarDefinitionHelper.java         | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 0427e3b..aee11f6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -434,7 +434,10 @@ public class VarDefinitionHelper {
+     }
+ 
+     for (VarType var : md.params) {
+-      types.put(new VarVersionPair(index, 0), varproc.getLVT().getCandidates(index).get(0));
++      List<LVTVariable> vars = varproc.getLVT().getCandidates(index);
++      if (vars != null) {
++        types.put(new VarVersionPair(index, 0), vars.get(0));
++      }
+       index += var.stackSize;
+     }
+ 
+-- 
+2.21.0.windows.1
+

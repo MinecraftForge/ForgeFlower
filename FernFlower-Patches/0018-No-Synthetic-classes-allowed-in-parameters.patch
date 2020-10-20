@@ -1,0 +1,39 @@
+From f373923f5a6d05f0c6d2f42ad4a8d00af6fefd1c Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Mon, 3 Aug 2015 21:20:43 -0700
+Subject: [PATCH 018/122] No Synthetic classes allowed in parameters -.-
+
+---
+ .../jetbrains/java/decompiler/main/InitializerProcessor.java    | 2 +-
+ .../java/decompiler/modules/decompiler/exps/NewExprent.java     | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+index 85d580d..0438fd4 100644
+--- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
+@@ -349,7 +349,7 @@ public class InitializerProcessor {
+           VarType type = md.params[md.params.length - 1];
+           if (type.type == CodeConstants.TYPE_OBJECT) {
+             ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
+-            if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS)) {
++            if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
+               //TODO: Verify that the body is JUST a this([args]) call?
+               wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));
+             }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index 0297a55..51137cc 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -327,7 +327,7 @@ public class NewExprent extends Exprent {
+ 
+                 if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                   ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+-                  if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS)) {
++                  if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
+                     break;  // skip last parameter of synthetic constructor call
+                   }
+                 }
+-- 
+2.21.0.windows.1
+

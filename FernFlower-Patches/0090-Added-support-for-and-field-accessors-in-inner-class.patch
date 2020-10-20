@@ -1,0 +1,88 @@
+From cef8ac773526a830398ef753629b6b7611f7bcf9 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 15 Oct 2015 15:51:24 -0700
+Subject: [PATCH 090/122] Added support for ++ and -- field accessors in inner
+ classes. And fixed inner class type find issue.
+
+---
+ .../main/rels/NestedClassProcessor.java       |  4 +--
+ .../main/rels/NestedMemberAccess.java         | 27 +++++++++++++++++++
+ 2 files changed, 28 insertions(+), 3 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 6d40b8a..1e69d8d 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -1145,7 +1145,7 @@ public class NestedClassProcessor {
+           res = classname.equals(((InvocationExprent)expr).getClassname());
+           break;
+         case Exprent.EXPRENT_NEW:
+-          VarType newType = expr.getExprType();
++          VarType newType = ((NewExprent)expr).getNewType();
+           res = newType.type == CodeConstants.TYPE_OBJECT && classname.equals(newType.value);
+           break;
+         case Exprent.EXPRENT_VAR:
+@@ -1198,8 +1198,6 @@ public class NestedClassProcessor {
+     Exprent processExprent(Exprent exprent);
+   }
+ 
+-
+-
+   private static void iterateExprents(DirectGraph graph, ExprentIteratorWithReplace iter) {
+     LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
+     stack.add(graph.first);
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedMemberAccess.java b/src/org/jetbrains/java/decompiler/main/rels/NestedMemberAccess.java
+index 3fa8128..b4856a6 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedMemberAccess.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedMemberAccess.java
+@@ -40,6 +40,7 @@ public class NestedMemberAccess {
+   private static final int METHOD_ACCESS_FIELD_GET = 2;
+   private static final int METHOD_ACCESS_FIELD_SET = 3;
+   private static final int METHOD_ACCESS_METHOD = 4;
++  private static final int METHOD_ACCESS_FIELD_INC = 5;
+ 
+   private boolean noSynthFlag;
+   private final Map<MethodWrapper, Integer> mapMethodType = new HashMap<MethodWrapper, Integer>();
+@@ -137,6 +138,24 @@ public class NestedMemberAccess {
+                     }
+                   }
+                 }
++                break;
++              case Exprent.EXPRENT_FUNCTION:
++                FunctionExprent func = (FunctionExprent)exprCore;
++                if (func.getLstOperands().size() == 1 && func.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
++                  FieldExprent field = (FieldExprent)func.getLstOperands().get(0);
++                  if ((parcount == 1 && !field.isStatic()) ||
++                      (parcount == 0 && field.isStatic())) {
++                    if (field.getClassname().equals(node.classStruct.qualifiedName)) {
++                      if (func.getFuncType() == FunctionExprent.FUNCTION_IPP ||
++                          func.getFuncType() == FunctionExprent.FUNCTION_PPI ||
++                          func.getFuncType() == FunctionExprent.FUNCTION_IMM ||
++                          func.getFuncType() == FunctionExprent.FUNCTION_MMI) {
++                        type = METHOD_ACCESS_FIELD_INC;
++                      }
++                    }
++                  }
++                }
++                break;
+             }
+ 
+ 
+@@ -426,6 +445,14 @@ public class NestedMemberAccess {
+         }
+ 
+         retexprent = invret;
++        break;
++      case METHOD_ACCESS_FIELD_INC:
++        FunctionExprent func = (FunctionExprent)((ExitExprent)source).getValue().copy();
++        FieldExprent field = (FieldExprent)func.getLstOperands().get(0);
++        if (!field.isStatic()) {
++          field.replaceExprent(field.getInstance(), invexpr.getLstParameters().get(0));
++        }
++        retexprent = func;
+     }
+ 
+ 
+-- 
+2.21.0.windows.1
+

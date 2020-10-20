@@ -1,0 +1,110 @@
+From 89ea238257bbf10339409978ea26f982fd497090 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Fri, 2 Oct 2015 21:02:44 -0400
+Subject: [PATCH 065/122] Remove dowhile detection, and restore do loop
+ collapsing code. Seems to eliminate a lot of derpy loop smashage.
+
+---
+ .../main/rels/MethodProcessorRunnable.java    | 10 +++---
+ .../decompiler/EliminateLoopsHelper.java      | 36 ++++++++++---------
+ .../modules/decompiler/MergeHelper.java       |  2 +-
+ 3 files changed, 26 insertions(+), 22 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index a22d269..ef7e97a 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -162,15 +162,17 @@ public class MethodProcessorRunnable implements Runnable {
+       LabelHelper.cleanUpEdges(root);
+ 
+       while (true) {
++          if (EliminateLoopsHelper.eliminateLoops(root, cl)) {
++              continue;
++          }
+         MergeHelper.enhanceLoops(root);
+-
++        if (!IfHelper.mergeAllIfs(root)) {
++            break;
++          }
+         if (LoopExtractHelper.extractLoops(root)) {
+           continue;
+         }
+ 
+-        if (!IfHelper.mergeAllIfs(root)) {
+-          break;
+-        }
+       }
+ 
+       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
+index 16f7da0..823e561 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
+@@ -17,32 +17,34 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+ 
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.struct.StructClass;
+ 
+ import java.util.ArrayList;
+ import java.util.HashMap;
++import java.util.HashSet;
+ import java.util.List;
+ 
+ 
+ public class EliminateLoopsHelper {
+ 
+ 
+-  //	public static boolean eliminateLoops(Statement root) {
+-  //
+-  //		boolean ret = eliminateLoopsRec(root);
+-  //
+-  //		if(ret) {
+-  //			SequenceHelper.condenseSequences(root);
+-  //
+-  //			HashSet<Integer> setReorderedIfs = new HashSet<Integer>();
+-  //
+-  //			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(false);
+-  //			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, null)) {
+-  //				SequenceHelper.condenseSequences(root);
+-  //			}
+-  //		}
+-  //
+-  //		return ret;
+-  //	}
++  	public static boolean eliminateLoops(Statement root, StructClass cl) {
++
++  		boolean ret = eliminateLoopsRec(root);
++
++  		if(ret) {
++  			SequenceHelper.condenseSequences(root);
++
++  			HashSet<Integer> setReorderedIfs = new HashSet<Integer>();
++
++  			SimplifyExprentsHelper sehelper = new SimplifyExprentsHelper(false);
++  			while(sehelper.simplifyStackVarsStatement(root, setReorderedIfs, null,cl)) {
++  				SequenceHelper.condenseSequences(root);
++  			}
++  		}
++
++  		return ret;
++  	}
+ 
+   private static boolean eliminateLoopsRec(Statement stat) {
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
+index 5adf323..0e7f1ab 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
+@@ -74,7 +74,7 @@ public class MergeHelper {
+         }
+         else {
+           // identify a do{}while loop
+-          matchDoWhile(stat);
++//          matchDoWhile(stat);
+         }
+ 
+         break;
+-- 
+2.21.0.windows.1
+

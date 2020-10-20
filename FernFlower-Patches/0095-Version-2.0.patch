@@ -1,0 +1,25 @@
+From c265002beef65c2264a9a9ed6550e022754f1bc1 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Sat, 17 Oct 2015 01:11:19 -0400
+Subject: [PATCH 095/122] Version 2.0
+
+---
+ build.gradle | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build.gradle b/build.gradle
+index 4ba85ee..5e14c25 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -3,7 +3,7 @@ apply plugin: 'idea'
+ apply plugin: 'maven'
+ apply plugin: 'java'
+ 
+-version = "1.0"
++version = "2.0"
+ group = "net.minecraftforge" //not sure if we shoulkd publish under this name, but it's our fork so meh
+ archivesBaseName = "fernflower"
+ 
+-- 
+2.21.0.windows.1
+

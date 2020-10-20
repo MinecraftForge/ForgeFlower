@@ -1,0 +1,77 @@
+From f6acdf7dd26df4eebb27b2561f62f44e643c5f89 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Mon, 28 Sep 2015 01:26:23 -0400
+Subject: [PATCH 058/122] Fix types to use LVT first, and fallback to other
+ type bounds
+
+---
+ .../modules/decompiler/exps/VarExprent.java       | 15 ++++++++++++++-
+ .../modules/decompiler/vars/VarTypeProcessor.java |  7 ++++++-
+ 2 files changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 05a4f79..933b046 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.LVTVariable;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
+@@ -111,6 +112,9 @@ public class VarExprent extends Exprent {
+         if (lvt != null && lvt.getSig() != null) {
+           buffer.append(GenericMain.getGenericCastTypeName(new GenericType(lvt.getSig()))).append(" ");
+         }
++        else if (lvt != null) {
++          buffer.append(ExprProcessor.getCastTypeName(lvt.getVarType())).append(" ");
++        }
+         else {
+           buffer.append(ExprProcessor.getCastTypeName(getVarType())).append(" ");
+         }
+@@ -231,7 +235,7 @@ public class VarExprent extends Exprent {
+ 
+   public void setLVT(LVTVariable lvt) {
+     this.lvt = lvt;
+-    if (processor != null) {
++    if (processor != null && lvt != null) {
+       processor.setVarType(new VarVersionPair(this), lvt.getVarType());
+     }
+   }
+@@ -245,4 +249,13 @@ public class VarExprent extends Exprent {
+     return lvt != null ? lvt.name :  "var_" + index + "_" + version;
+   }
+ 
++  @Override
++  public CheckTypesResult checkExprTypeBounds() {
++    CheckTypesResult checkExprTypeBounds = super.checkExprTypeBounds();
++    if (lvt != null) {
++      checkExprTypeBounds.addMinTypeExprent(this, lvt.getVarType());
++    }
++    return checkExprTypeBounds;
++  }
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
+index d6c746b..4a2cb8f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
+@@ -108,7 +108,12 @@ public class VarTypeProcessor {
+ 
+         for (Exprent expr : lst) {
+           if (expr.type == Exprent.EXPRENT_VAR) {
+-            ((VarExprent)expr).setVarType(VarType.VARTYPE_UNKNOWN);
++            VarExprent ve = (VarExprent)expr;
++            if (ve.getLVT()!= null) {
++                ve.setVarType(ve.getLVT().getVarType());
++            } else {
++                ve.setVarType(VarType.VARTYPE_UNKNOWN);
++            }
+           }
+           else if (expr.type == Exprent.EXPRENT_CONST) {
+             ConstExprent constExpr = (ConstExprent)expr;
+-- 
+2.21.0.windows.1
+

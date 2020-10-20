@@ -1,0 +1,279 @@
+From 9f908e30826e71247955a0c38f1154d8065073ec Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Thu, 27 Aug 2015 15:39:39 -0400
+Subject: [PATCH 037/122] Lex's tests
+
+---
+ .../decompiler/DecompilerTestFixture.java     |   3 +-
+ .../jetbrains/java/decompiler/LVTTest.java    |   7 ++
+ .../decompiler/SingleClassesTestBase.java     |   2 +-
+ .../classes/pkg/TestLexManosLVT$Bob.class     | Bin 0 -> 1472 bytes
+ testData/classes/pkg/TestLexManosLVT.class    | Bin 0 -> 1967 bytes
+ testData/results/TestLexManosLVT.dec          |  64 ++++++++++++++++++
+ testData/src/pkg/TestLexManosLVT.java         |  64 ++++++++++++++++++
+ 7 files changed, 138 insertions(+), 2 deletions(-)
+ create mode 100644 testData/classes/pkg/TestLexManosLVT$Bob.class
+ create mode 100644 testData/classes/pkg/TestLexManosLVT.class
+ create mode 100644 testData/results/TestLexManosLVT.dec
+ create mode 100644 testData/src/pkg/TestLexManosLVT.java
+
+diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
+index d0d869c..f2c344a 100644
+--- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
++++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
+@@ -31,6 +31,7 @@ public class DecompilerTestFixture {
+   private File tempDir;
+   private File targetDir;
+   private ConsoleDecompiler decompiler;
++  public boolean cleanup = true;
+ 
+   public void setUp() throws IOException {
+     setUp(Collections.<String, Object>emptyMap());
+@@ -62,7 +63,7 @@ public class DecompilerTestFixture {
+   }
+ 
+   public void tearDown() {
+-    if (tempDir != null) {
++    if (tempDir != null && cleanup) {
+       delete(tempDir);
+     }
+   }
+diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
+index 983368c..f4d869c 100644
+--- a/test/org/jetbrains/java/decompiler/LVTTest.java
++++ b/test/org/jetbrains/java/decompiler/LVTTest.java
+@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.junit.Test;
+ 
++import java.io.IOException;
+ import java.util.HashMap;
+ import java.util.Map;
+ 
+@@ -29,6 +30,12 @@ public class LVTTest extends SingleClassesTestBase {
+     }};
+   }
+ 
++  @Override
++    public void setUp() throws IOException {
++        super.setUp();
++        fixture.cleanup = false;
++    }
++  @Test public void testMatchLM() { doTest("pkg/TestLexManosLVT"); }
+   @Test public void testMatch1() { doTest("pkg/TestLVT"); }
+   @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
+ }
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
+index 165f695..064ca5c 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
+@@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
+ import static org.junit.Assert.assertTrue;
+ 
+ public abstract class SingleClassesTestBase {
+-  private DecompilerTestFixture fixture;
++  protected DecompilerTestFixture fixture;
+ 
+   @Before
+   public void setUp() throws IOException {
+diff --git a/testData/classes/pkg/TestLexManosLVT$Bob.class b/testData/classes/pkg/TestLexManosLVT$Bob.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..38c9bd23ae2a768cab887a845c780bfd31e4c560
+GIT binary patch
+literal 1472
+zcmaJ>-%k@+6#h=9?R44^urgpNtL`o;En>B5b=$&%$YzNJOp1-oK26KWj+PnHnW{XR
+z@aCib1H4G~O)*)CW*Z;&Y5xxY4(qvBkglPoncjQO{mys4^JC_}Pw(0QvY1y9APjFj
+zT+6Ijo?o(_ESiq%l`1P^H{F_wAffMp`N+&POlK`K@3htlf!`MhiBgZ40s~6RgxLJj
+z-NmuWZ0YWNnK1Ilckq#7y<t1HKTS}^Qx!sR&Rw-42t`5Y*D-+Ogm7^mGBjQ~R8;nx
+zwzF1PNL4h(p3o6OI097|LpoH1#qOkz2sA-9q9ch>CVONyT9!u`9Z&UErr{LMs5ng+
+z=(=&!^R0CqKjJ5r>$ZG?@kNmBX6~>WpEX(LdLe=_&SchGy&uInjH@`$0wvG?fjUx1
+z6Vwe6+i;lfhy+Dd`b)NBEw$EbR&&LyH7r8B<krnb#cbNb-gi=sKy`jr3CGI5S%0`_
+zZpbrL6hT2h%kuxUy(p)5O-Byb37Xk#nwxcZW0R2XzJIy)z^eO&g|3<(xVY#nTUK)U
+zK4G#uY`-t5o?RD03Oa6}NVwJ=IoB{fuh4bfSE|Dvh&kjri<aG1vu^!ni&_kRGrt!F
+zoD(bCYmVu+nhcrfVigp{p6aHVU0-k<t10DJo{Bl{-Vr0uGr%v(%q1Q!h2JP;CLu-;
+z;FYHj7#I<=$0tEvqlht12gqcbSG;%+s>Y8gZ_)P#acK+&rD25r;Ui@i@p3h|3#0r7
+z!+S_nm)cWGaR>J%liAzC&a3TQSjmNUP)MjoD4P#TZ>*h*DmiTj$wbW1viV3l5qyc*
+zE`Esr{5Q^SX=G?dbi4C$D?~=f2yb`(-6BekZg>8AE%Lww|EF0oa21n0BvZJKGWW~I
+zFL05^W8Oby-!ndYj%i$A<Qa~e!V=>-b4Fj}Uzjts(T5E0BDlnU3u=c+f*?|H8R#I6
+zh{~2Uzd8-*2hM}_AYw4k;hG*1qaCs$Aif)4%FVYZvOQ{gV)QMtBEx{pFw6kpid3)5
+zy~>tQuZb_ket3?1D!Mzgi{a{RCEczTMROLF<Q}eGc=Zh%Nw$FGxWS3aj&m&ol0O=!
+f^d9mbK)vHc6@|iS{3_QO%<?KeV1%2vH8b)VjZ`gJ
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/classes/pkg/TestLexManosLVT.class b/testData/classes/pkg/TestLexManosLVT.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f3363d36c4d981d9d5f4e7d9bc463ec6627f95c
+GIT binary patch
+literal 1967
+zcmZ`)-%}G;6#j0q$tKGJ;YXm+Afl)VA}MIm5<~&Dqy|uvLJ_K6V2djuflYAWsWTn_
+zfIj!7<AbHsna)@{gSK_(Tc^|hBb`39ojTK(cA9>7lOVA;ll$xJIp00!JLjJK^zXMj
+z0QxYm!X?nOy1W!ioB2Z0+!!~qxqNaetwIq9+%@hQv5b*jicQYnH5Up3$2wEfiS+2$
+z?ey?S@^U9FJ72Qw9LdcKxMmXq-a#vC6@~=dk?53wGMZa7HMmiuLxoSEK51pmiS?Cv
+z(@q=n8B?G!nOiV2Q-*EHb6Kbq?pS$&U~(Tn<Ahx?tgIi6Xjaiw<#cK@Uocm61kpkt
+za_jUzm~>*Ya<OZ+l`W(SwrQ-yeRz#HMt<=F4F?cbageO+qo|_|hXmABX`9IsE>gmC
+zI3k#pU5ZDiR2;6@uNSOLY}mGq&7_qtXlO@`oQ~?~#4!P%RWNO%kh29^BGD3-W0EM#
+z<25*esEP==aU81ps-p`h>3P=NU~J75ggqH^>`&?FL5zOiG4d0RDid;3gFvqi5Bi7@
+ziOwecID>u_ZwR#R!?et+j<Yz&<c=}9q5aY!mEsz426V(R$SZU9qLno=P7Ne{IP1d&
+z0wgDW7#0wQ52IXIFk*valY`K%jo#f%RTIc`H|}A)RFxFEHW-9!Q%(k_y*lNrkl^at
+z+FY&F*IwRtQ#JViYle7HZK_}_ERP$jPHn32sz_DWoKpmTa{G?t)+@=F*6}W8_#W;V
+znRSz;946hbq)(<{R>uXLQ}Ld_fftW(B9~fUxO2raGmDpPTNaI$%B|ZA<`qjmp5~Wc
+zVvn>G&=c9LX^&=%d|uw|W{S{3|J-Z=BA`hpxpPy(N6FdGQ;e(N>gjp{?JI6v&^dcc
+zLez4vm-lt3=gE&i#n|;ZwFx3l`<`i6yJiNIogw%6E!2dRaL?d<mk75#DE{?A-sH$1
+zqoJ{N8=>;|-@Zfp%oB7ZPj2JL#1^zu-{82wIG1jLPm0gW@>^wjKzpVQC?RELz_-({
+zy8FFbs15mo-kyHXeXj_5gX)9gpH-iO<<GkpSJZy3NGf-I`V_A}#_4Um+4BWMMU+F5
+z<Kk%H=#U2I={sYT+aYeL&);Y8H(ngyg12#G{M8aKb!gX3GfB1LQ2h}ObI&$RTEo!L
+zjT+X4hCz~l33Zqw;mc^i8XMooXvRZ!xi7gsK`XxJw;vJ0&m6ztApRi2a~#6o=nx8y
+z2o*<#hE7q76QYH!C4{I5qf4}t+XzmHlWZ1!=ylS3gZC>U#ye$|bn|o>R~Y^!{EoLU
+z#@#Z~lqE>V8Yb{I^%Q#J!&T~ei0wua<NTj#r+3bdTBY(SVN4R^8YOFJF0z(9Dy~D&
+z$LkEgzP?B+g$I>gQ)MrNH&A4c_LoE|+!XGy@HaOU$xf9;5fQk`5YW^*SKUAIe4{4d
+zliiQk%aZ@lc><8BPS5-R<<az0Ozp@DF6CaC+=4RA!%Y@~r*xS48tF$2JV2tuOi3G#
+vvpVL8^zv(wwIYKI!81lzifDopBBwcAl@noZQNe}Vc%Q56&SyA`iwFJ#JW7^o
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/results/TestLexManosLVT.dec b/testData/results/TestLexManosLVT.dec
+new file mode 100644
+index 0000000..9ef5e62
+--- /dev/null
++++ b/testData/results/TestLexManosLVT.dec
+@@ -0,0 +1,64 @@
++package pkg;
++
++import java.util.ArrayList;
++
++public class TestLexManosLVT {
++   public static void main() {
++      int[] x = new int[5];
++      for(int y : x) {
++         ;
++      }
++      for(int y : x) {
++         System.out.println("asdf");
++      }
++      ArrayList<Object> x1 = new ArrayList<Object>();
++      for(Object y : x1) {
++         ;
++      }
++      for(Object y : x1) {
++         int[] x2 = new int[10];
++         for(int y2 : x2) {
++            ;
++
++         }
++         for(int y2 : x2) {
++            System.out.println("asdf");
++
++         }
++         System.out.println("asdf");
++
++      }
++      switch(Bob.HI) {
++      case HI:         System.out.println("HI");
++         break;
++      case LO:
++         System.out.println("LO");
++      }
++
++      if(TestLexManosLVT.Bob.HI == TestLexManosLVT.Bob.HI) {
++         String a = "a";
++      } else {
++         String b = "b";      }
++      String a2;
++      if(TestLexManosLVT.Bob.HI == TestLexManosLVT.Bob.HI) {
++            a2 = "a";
++      } else {            a2 = "b";
++      }
++      if (TestLexManosLVT.Bob.HI == TestLexManosLVT.Bob.HI) {
++         a2 = "a";
++      }
++      System.out.println(a2);   }   private static enum Bob {      HI,      LO;
++      static {
++         for(TestLexManosLVT.Bob b : values()) {
++            for(TestLexManosLVT.Bob c : values()) {
++               for(TestLexManosLVT.Bob d : values()) {
++                  if(b == c) {
++                     System.out.println("Asdf");
++                  }
++               }
++            }
++         }
++
++      }
++   }
++}
+diff --git a/testData/src/pkg/TestLexManosLVT.java b/testData/src/pkg/TestLexManosLVT.java
+new file mode 100644
+index 0000000..e04de1e
+--- /dev/null
++++ b/testData/src/pkg/TestLexManosLVT.java
+@@ -0,0 +1,64 @@
++package pkg;
++
++import java.util.ArrayList;
++
++public class TestLexManosLVT {
++    public static void main() {
++        int[] x = new int[5];
++        for (int y : x)
++            ;
++        for (int y : x) {
++            System.out.println("asdf");
++        }
++        ArrayList<Object> x1 = new ArrayList<Object>();
++        for (Object y : x1)
++            ;
++        for (Object y : x1) {
++            int[] x2 = new int[10];
++            for (int y2 : x2)
++                ;
++            for (int y2 : x2) {
++                System.out.println("asdf");
++            }
++            System.out.println("asdf");
++        }
++        switch (Bob.HI) {
++        case HI:
++            System.out.println("HI");
++            break;
++        case LO:
++            System.out.println("LO");
++            break;
++        }
++        if (Bob.HI == Bob.HI) {
++            String a = "a";
++        } else {
++            String b = "b";
++        }
++        String a2;
++        if (Bob.HI == Bob.HI) {
++            a2 = "a";
++        } else {
++            a2 = "b";
++        }
++        if (Bob.HI == Bob.HI) {
++            a2 = "a";
++        }
++        System.out.println(a2);
++
++    }
++
++    private static enum Bob {
++        HI, LO;
++        static {
++            for (Bob b : Bob.values()) {
++                for (Bob c : values()) {
++                    for (Bob d : values()) {
++                        if (b == c)
++                            System.out.println("Asdf");
++                    }
++                }
++            }
++        };
++    }
++}
+-- 
+2.21.0.windows.1
+

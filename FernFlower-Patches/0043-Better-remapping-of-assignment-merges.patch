@@ -1,0 +1,131 @@
+From fcb5e35a68f7155018b1330846e9fe8222f9e39d Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Fri, 11 Sep 2015 21:50:11 -0700
+Subject: [PATCH 043/122] Better remapping of assignment merges.
+
+---
+ .../decompiler/vars/VarDefinitionHelper.java  | 56 +++++++++++--------
+ 1 file changed, 34 insertions(+), 22 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 5a276cd..2436d6d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -427,51 +427,61 @@ public class VarDefinitionHelper {
+   }
+ 
+   private void mergeVars(Statement stat) {
++    Map<VarVersionPair, VarVersionPair> remaps = new HashMap<VarVersionPair, VarVersionPair>();
++    mergeVars(stat, remaps);
++    if (!remaps.isEmpty()) {
++      for (Entry<VarVersionPair, VarVersionPair> entry : remaps.entrySet()) {
++        VarVersionPair end = entry.getKey();
++        while (remaps.containsKey(end)) {
++          end = remaps.get(end);
++        }
++        remaps.put(entry.getKey(), end);
++      }
++      remapVar(remaps, stat);
++    }
++  }
++  private void mergeVars(Statement stat, Map<VarVersionPair, VarVersionPair> remaps) {
+     if (stat.getExprents() == null) {
+       for (Object obj : stat.getSequentialObjects()) {
+         if (obj instanceof Statement) {
+-          mergeVars((Statement)obj);
++          mergeVars((Statement)obj, remaps);
+         }
+         else if (obj instanceof AssignmentExprent) {
+-          remapVar(checkAssignment((AssignmentExprent)obj), stat.getParent());
++          checkAssignment((AssignmentExprent)obj, remaps);
+         }
+       }
+     }
+     else {
+       for (Exprent exp : stat.getExprents()) {
+         if (exp instanceof AssignmentExprent) {
+-          remapVar(checkAssignment((AssignmentExprent)exp), stat.getParent());
++          checkAssignment((AssignmentExprent)exp, remaps);
+         }
+       }
+     }
+   }
+ 
+-  private Map.Entry<VarVersionPair, VarVersionPair> checkAssignment(AssignmentExprent exp) {
++  private void checkAssignment(AssignmentExprent exp, Map<VarVersionPair, VarVersionPair> remaps) {
+     if (exp.getLeft().type != Exprent.EXPRENT_VAR) {
+-      return null;
++      return;
+     }
+ 
+     VarExprent left = (VarExprent)exp.getLeft();
+-    VarExprent right = null;
+     int index = varproc.getRemapped(left.getIndex());
+ 
+     for (Exprent e : exp.getRight().getAllExprents(true)) {
+       if (e.type == Exprent.EXPRENT_VAR) {
+-        if (varproc.getRemapped(((VarExprent)e).getIndex()) == index) {
+-          right = (VarExprent)e;
+-          break;
++          VarExprent right = (VarExprent)e;
++        if (varproc.getRemapped(right.getIndex()) == index) {
++          if (!left.equals(right) && left.getIndex() > right.getIndex()) {
++            remaps.put(new VarVersionPair(left), new VarVersionPair(right));
++          }
++          return;
+         }
+       }
+     }
+-
+-    if (right == null) {
+-      return null;
+-    }
+-
+-    return new SimpleImmutableEntry<VarVersionPair, VarVersionPair>(new VarVersionPair(left), new VarVersionPair(right));
+   }
+ 
+-  private static void remapVar(Entry<VarVersionPair, VarVersionPair> remap, Statement stat) {
++  private static void remapVar(Map<VarVersionPair, VarVersionPair> remap, Statement stat) {
+     if (remap == null || stat == null) {
+       return;
+     }
+@@ -482,18 +492,18 @@ public class VarDefinitionHelper {
+           remapVar(remap, (Statement)obj);
+         }
+         else if (obj instanceof Exprent) {
+-          remapVar(remap.getKey(), remap.getValue(), (Exprent)obj);
++          remapVar(remap, (Exprent)obj);
+         }
+       }
+     }
+     else {
+       for (Exprent exp : stat.getExprents()) {
+-        remapVar(remap.getKey(), remap.getValue(), exp);
++        remapVar(remap, exp);
+       }
+     }
+   }
+ 
+-  private static void remapVar(VarVersionPair from, VarVersionPair to, Exprent exprent) {
++  private static void remapVar(Map<VarVersionPair, VarVersionPair> remap, Exprent exprent) {
+     if (exprent == null) {
+       return;
+     }
+@@ -503,9 +513,11 @@ public class VarDefinitionHelper {
+     for (Exprent expr : lst) {
+       if (expr.type == Exprent.EXPRENT_VAR) {
+         VarExprent var = (VarExprent)expr;
+-        if (var.getIndex() == from.var && var.getVersion() == from.version) {
+-          var.setIndex(to.var);
+-          var.setVersion(to.version);
++        VarVersionPair old = new VarVersionPair(var);
++        VarVersionPair new_ = remap.get(old);
++        if (new_ != null) {
++          var.setIndex(new_.var);
++          var.setVersion(new_.version);
+         }
+       }
+     }
+-- 
+2.21.0.windows.1
+

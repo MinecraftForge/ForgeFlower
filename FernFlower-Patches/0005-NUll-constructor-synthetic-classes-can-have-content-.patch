@@ -1,0 +1,27 @@
+From 211a6f999cc0fc746ba73d6a9e4fd91be19a69e8 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sat, 1 Aug 2015 17:52:35 -0700
+Subject: [PATCH 005/122] NUll constructor synthetic classes can have content
+ as well so don't rely on it being a stub, just being anonymous. You can't
+ legitimatly have a anonymous argument.
+
+---
+ .../java/decompiler/modules/decompiler/exps/NewExprent.java     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index 24facc9..6dad7c9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -327,7 +327,7 @@ public class NewExprent extends Exprent {
+ 
+                 if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                   ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+-                  if (node != null && node.namelessConstructorStub) {
++                  if (node != null && node.type == ClassNode.CLASS_ANONYMOUS) {
+                     break;  // skip last parameter of synthetic constructor call
+                   }
+                 }
+-- 
+2.21.0.windows.1
+

@@ -1,0 +1,55 @@
+From 5b4bbacf01e3d69d86e0227a2ee17c7235f6396a Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Tue, 20 Oct 2015 04:04:12 -0700
+Subject: [PATCH 100/122] Fixed var merging not propogating type data to var
+ definitions.
+
+---
+ .../decompiler/vars/VarDefinitionHelper.java     | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index aee11f6..520b951 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -757,6 +757,18 @@ public class VarDefinitionHelper {
+           if (from.var == var.getIndex() && from.version == var.getVersion()) {
+             itr.remove();
+           }
++          else if (to.var == var.getIndex() && to.version == var.getVersion()) {
++            Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
++            Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
++            VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
++                                           mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
++
++            if (merged == null) { // Something went wrong.. This SHOULD be non-null
++              continue;
++            }
++
++            var.setVarType(merged);
++          }
+         }
+       }
+     }
+@@ -785,7 +797,7 @@ public class VarDefinitionHelper {
+ 
+           ConstExprent right = (ConstExprent)ass.getRight();
+           if (right.getConstType() == VarType.VARTYPE_NULL) {
+-              continue;
++            continue;
+           }
+           VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
+                                          mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
+@@ -865,7 +877,7 @@ public class VarDefinitionHelper {
+   }
+   private static class VPPEntry extends SimpleEntry<VarVersionPair, VarVersionPair> {
+     public VPPEntry(VarExprent key, VarVersionPair value) {
+-        super(new VarVersionPair(key), value);
++      super(new VarVersionPair(key), value);
+     }
+   }
+ }
+\ No newline at end of file
+-- 
+2.21.0.windows.1
+

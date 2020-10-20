@@ -1,0 +1,42 @@
+From 1cfbf4d63df1d352d611683366d7ec94b25951df Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Mon, 23 Nov 2015 14:01:47 -0500
+Subject: [PATCH 119/122] Try to release resources *after* we're done, not
+ before we've started
+
+---
+ src/org/jetbrains/java/decompiler/main/ClassesProcessor.java | 3 +++
+ src/org/jetbrains/java/decompiler/struct/StructClass.java    | 3 ---
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index f22baa0..5feaf47 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -354,6 +354,9 @@ public class ClassesProcessor {
+ 
+     node.wrapper = null;
+     node.classStruct.releaseResources();
++    for (StructMethod m : node.classStruct.getMethods()) {
++        m.renamer = null;
++    }
+ 
+     for (ClassNode nd : node.nested) {
+       destroyWrappers(nd);
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
+index 7848606..ab0f118 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
+@@ -147,9 +147,6 @@ public class StructClass extends StructMember {
+     if (loader != null) {
+       pool = null;
+     }
+-    for (StructMethod m : methods) {
+-        m.renamer = null;
+-    }
+   }
+ 
+   public ConstantPool getPool() {
+-- 
+2.21.0.windows.1
+

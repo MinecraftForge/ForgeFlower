@@ -1,0 +1,111 @@
+From 09209954680f314ed735818b7f22ca1e81080509 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Sat, 12 Sep 2015 00:48:02 -0400
+Subject: [PATCH 042/122] need to match both start and end, to avoid weirdness
+ sometimes
+
+---
+ .../modules/decompiler/vars/LVTVariable.java   |  7 ++++---
+ .../decompiler/vars/LocalVariableTable.java    | 17 +++++------------
+ .../modules/decompiler/vars/StartEndPair.java  | 18 ++++++++++++++++++
+ 3 files changed, 27 insertions(+), 15 deletions(-)
+ create mode 100644 src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
+index bc7ba23..59dee69 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
+@@ -50,11 +50,12 @@ public class LVTVariable implements Comparable<LVTVariable> {
+     return index * 31 + end;
+   }
+ 
+-  public void addTo(Map<Integer, Set<LVTVariable>> endpoints) {
+-    Set<LVTVariable> ends = endpoints.get(this.end);
++  public void addTo(Map<StartEndPair, Set<LVTVariable>> endpoints) {
++    StartEndPair sepair = new StartEndPair(this.start, this.end);
++    Set<LVTVariable> ends = endpoints.get(sepair);
+     if (ends == null) {
+       ends = new HashSet<LVTVariable>();
+-      endpoints.put(this.end, ends);
++      endpoints.put(sepair, ends);
+     }
+     ends.add(this);
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
+index f7e1858..1de7181 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
+@@ -1,31 +1,23 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.vars;
+ 
+-import java.util.ArrayDeque;
+ import java.util.ArrayList;
+ import java.util.BitSet;
+ import java.util.HashMap;
+-import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
+-import java.util.Map.Entry;
+ import java.util.Set;
+-import java.util.Stack;
+ 
+-import org.jetbrains.java.decompiler.code.Instruction;
+-import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+ import org.jetbrains.java.decompiler.main.rels.MethodProcessorRunnable;
+-import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+-import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ 
+ public class LocalVariableTable {
+-  private Map<Integer, Set<LVTVariable>> endpoints;
++  private Map<StartEndPair, Set<LVTVariable>> endpoints;
+   private ArrayList<LVTVariable> allLVT;
+   private Map<Integer, List<LVTVariable>> mapLVT;
+ 
+   public LocalVariableTable(int len) {
+-    endpoints = new HashMap<Integer,Set<LVTVariable>>(len);
++    endpoints = new HashMap<StartEndPair,Set<LVTVariable>>(len);
+     allLVT = new ArrayList<LVTVariable>(len);
+   }
+ 
+@@ -106,9 +98,10 @@ public class LocalVariableTable {
+       }
+     //System.out.println(indent + stat.getClass().getSimpleName() + " (" + start +", " + end + ")");
+ 
++    StartEndPair sepair = new StartEndPair(start, end);
+     Map<Integer, LVTVariable> ret = new HashMap<Integer, LVTVariable>();
+-    if (endpoints.containsKey(end)) {
+-        for (LVTVariable lvt : endpoints.get(end)) {
++    if (endpoints.containsKey(sepair)) {
++        for (LVTVariable lvt : endpoints.get(sepair)) {
+             ret.put(lvt.index,lvt);
+         }
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
+new file mode 100644
+index 0000000..23a3929
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
+@@ -0,0 +1,18 @@
++package org.jetbrains.java.decompiler.modules.decompiler.vars;
++
++public class StartEndPair {
++    public final int start;
++    public final int end;
++    public StartEndPair(int start, int end) {
++        this.start = start;
++        this.end = end;
++    }
++    @Override
++    public boolean equals(Object obj) {
++        return ((StartEndPair)obj).start == start && ((StartEndPair)obj).end == end;
++    }
++    @Override
++    public int hashCode() {
++        return start * 31 + end;
++    }
++}
+-- 
+2.21.0.windows.1
+

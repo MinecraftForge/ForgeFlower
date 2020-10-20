@@ -1,0 +1,36 @@
+From 8ea51a091a3d0fa64dbf8fd39d70391c7b7d5f80 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 1 Oct 2015 18:04:09 -0700
+Subject: [PATCH 060/122] Fix variable defintions in IfStatement's headers
+ having wrong scope.
+
+---
+ .../modules/decompiler/vars/VarDefinitionHelper.java         | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index cc5e5e4..560328a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -531,7 +531,7 @@ public class VarDefinitionHelper {
+           var.setLVT(lvt);
+         } else {
+           System.currentTimeMillis();
+-          System.out.println("null " + new VarVersionPair(var));
++          //System.out.println("null " + new VarVersionPair(var));
+         }
+       }
+     }
+@@ -631,6 +631,9 @@ public class VarDefinitionHelper {
+                 leaked_n.clear(); // Force no leaking at the end of if blocks
+                 // We may need to do this for Switches as well.. But havent run into that issue yet...
+               }
++              else if (obj == ifst.getFirst()) {
++                leaked.putAll(leaked_n); //First is outside the scope so leak!
++              }
+             }
+             this_vars.putAll(leaked_n);
+           }
+-- 
+2.21.0.windows.1
+

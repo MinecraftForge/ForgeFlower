@@ -1,0 +1,74 @@
+From 089ba9f7ecc59787de6f28b51cbfc8ee077caf6c Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sun, 2 Aug 2015 21:20:47 -0700
+Subject: [PATCH 013/122] Fixed last test, all tests pass.
+
+---
+ .../TestClassSimpleBytecodeMapping.dec        | 24 +++++++++----------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
+index a48375a..1a2532f 100644
+--- a/testData/results/TestClassSimpleBytecodeMapping.dec
++++ b/testData/results/TestClassSimpleBytecodeMapping.dec
+@@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
+       var1.run();// 49
+    }// 50
+ 
+-   public class InnerClass2 {
+-      public void print() {
+-         System.out.println("Inner2");// 54
+-      }// 55
+-   }
+-
+    public class InnerClass {
+       public void print() {
+          System.out.println("Inner");// 44
+       }// 45
+    }
++
++   public class InnerClass2 {
++      public void print() {
++         System.out.println("Inner2");// 54
++      }// 55
++   }
+ }
+ 
+ class 'pkg/TestClassSimpleBytecodeMapping$1' {
+@@ -96,7 +96,7 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
+    }
+ }
+ 
+-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
++class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+    method 'print ()V' {
+       0      37
+       3      37
+@@ -105,7 +105,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    }
+ }
+ 
+-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
++class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    method 'print ()V' {
+       0      43
+       3      43
+@@ -130,11 +130,11 @@ Lines mapping:
+ 36 <-> 25
+ 38 <-> 27
+ 40 <-> 30
+-44 <-> 44
+-45 <-> 45
++44 <-> 38
++45 <-> 39
+ 49 <-> 33
+ 50 <-> 34
+-54 <-> 38
+-55 <-> 39
++54 <-> 44
++55 <-> 45
+ Not mapped:
+ 39
+-- 
+2.21.0.windows.1
+

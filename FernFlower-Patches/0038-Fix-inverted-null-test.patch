@@ -1,0 +1,25 @@
+From f023a4410692d9e353b0ddd61d3072df16fdd18a Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Thu, 27 Aug 2015 15:41:47 -0400
+Subject: [PATCH 038/122] Fix inverted null test
+
+---
+ .../decompiler/modules/decompiler/vars/VarDefinitionHelper.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 1e1a4a7..d24813f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -556,7 +556,7 @@ public class VarDefinitionHelper {
+   }
+ 
+   private void setupLVTs(Statement stat) {
+-    if (stat == null || varproc.getLVT() != null) {
++    if (stat == null || varproc.getLVT() == null) {
+       return;
+     }
+ 
+-- 
+2.21.0.windows.1
+

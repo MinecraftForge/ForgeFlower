@@ -1,0 +1,66 @@
+From 1d9d7cdb8476a39a10b588465f749347b9d1c713 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Thu, 13 Aug 2015 22:57:55 -0700
+Subject: [PATCH 033/122] Added a test for variables that seem to come into
+ scope if we remove VarVersionsProcessor.simpleMerge
+
+---
+ testData/classes/pkg/TestLVT.class | Bin 1672 -> 1860 bytes
+ testData/results/TestLVT.dec       |  11 +++++++++--
+ testData/src/pkg/TestLVT.java      |   9 +++++++++
+ 3 files changed, 18 insertions(+), 2 deletions(-)
+
+diff --git a/testData/classes/pkg/TestLVT.class b/testData/classes/pkg/TestLVT.class
+index d8a5829d4f6504567ecf46bf65167047e41cd291..1cf6286f2a679368b301d408c928d93ed4eecf48 100644
+GIT binary patch
+delta 224
+zcmeC+J;KLz>ff$?3=9lL3~3v=v{}sAb5lz)@>3GI7_1qhc^K>%Vi*}%G+Z>p*z9-C
+z1c6y>_8%b(Mh3=2Aa()bq{+rC>Ws{rqggbV>e(0=8Q6hFmNKvcAp?Uvp9jC!CI%CA
+z&E#ziQ6dbn9wH3!2!V}2B}@!lKvE8@O%}+LV_;#BXW(T}U=U<bWDsRg0*WXza0AsS
+lFffCRWZ(hHg7nEUBr+rcEo5PkW=ICIm>D=38B)MfsQ}<yCF%eG
+
+delta 36
+scmX@Y*TKtm>ff$?3=9lL4AC38v{@$Sv8XaKZJxrS!NkhIz{C&*0Mu#;EC2ui
+
+diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
+index b1b7e2e..d161f07 100644
+--- a/testData/results/TestLVT.dec
++++ b/testData/results/TestLVT.dec
+@@ -23,7 +23,14 @@ public class TestLVT {
+          String spam = scope1a + scope2 + scope2a + i + noise;
+          System.out.println(spam);
+       }
+-        
+    }
+-}
+ 
++   public void methoda() {
++      double a = 0.0D;
++      double b = 1.0D;
++      System.out.println(a + b);
++      a = 0.1D;
++      b = 1.1D;
++      System.out.println(a + b);
++   }
++}
+diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
+index 05b5228..9a46272 100644
+--- a/testData/src/pkg/TestLVT.java
++++ b/testData/src/pkg/TestLVT.java
+@@ -24,4 +24,13 @@ public class TestLVT {
+             System.out.println(spam);
+         }
+     }
++    
++    public void methoda() {
++    	double a = 0D;
++    	double b = 1D;
++    	System.out.println(a+b);
++    	a = 0.1D;
++    	b = 1.1D;
++    	System.out.println(a+b);
++    }
+ }
+-- 
+2.21.0.windows.1
+

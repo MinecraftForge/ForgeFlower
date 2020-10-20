@@ -1,0 +1,802 @@
+From 143b1e688e6e73e0f54be08e2c381c740c75fd13 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 13 Aug 2015 16:03:24 -0700
+Subject: [PATCH 030/122] Add enhanced ForEach loop detection and re-introduce
+ the DotExporter for debugging.
+
+---
+ .../decompiler/main/rels/ClassWrapper.java    |   1 -
+ .../main/rels/NestedClassProcessor.java       |   2 +
+ .../modules/decompiler/MergeHelper.java       | 210 +++++++++++++++-
+ .../modules/decompiler/exps/VarExprent.java   |   5 +
+ .../sforms/FlattenStatementsHelper.java       |   7 +-
+ .../sforms/SSAConstructorSparseEx.java        |  17 +-
+ .../sforms/SSAUConstructorSparseEx.java       |  16 +-
+ .../modules/decompiler/stats/DoStatement.java |  12 +
+ .../decompiler/vars/VarDefinitionHelper.java  |  10 +
+ .../modules/decompiler/vars/VarProcessor.java |   2 +-
+ .../decompiler/vars/VarVersionsProcessor.java |   2 +
+ .../java/decompiler/util/DotExporter.java     | 238 ++++++++++++++++++
+ 12 files changed, 498 insertions(+), 24 deletions(-)
+ create mode 100644 src/org/jetbrains/java/decompiler/util/DotExporter.java
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+index 5a35cc8..01b9292 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+@@ -176,7 +176,6 @@ public class ClassWrapper {
+ 
+       MethodProcessorRunnable.printMethod(root, mt.getClassStruct().qualifiedName+"."+mt.getName()+mt.getDescriptor(),varProc);
+ 
+-
+       DecompilerContext.getLogger().endMethod();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 9aedf22..c6eda1b 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -301,6 +301,8 @@ public class NestedClassProcessor {
+         if (meth.root != null) { // neither abstract, nor native
+           DirectGraph graph = meth.getOrBuildGraph();
+ 
++          org.jetbrains.java.decompiler.util.DotExporter.toDotFile(graph, meth.methodStruct, "computeLocalVars");
++
+           graph.iterateExprents(new DirectGraph.ExprentIterator() {
+             public int processExprent(Exprent exprent) {
+               List<Exprent> lst = exprent.getAllExprents(true);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
+index 71d3d79..d994c26 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
+@@ -18,8 +18,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
+ 
+ import java.util.ArrayList;
+@@ -63,6 +68,8 @@ public class MergeHelper {
+         if (matchWhile(stat)) {
+           // identify a for loop - subtype of while
+           matchFor(stat);
++          // identify for each loop,
++          matchForEach(stat);
+         }
+         else {
+           // identify a do{}while loop
+@@ -72,6 +79,7 @@ public class MergeHelper {
+         break;
+       case DoStatement.LOOP_WHILE:
+         matchFor(stat);
++        matchForEach(stat);
+     }
+ 
+     return (stat.getLooptype() != oldloop);
+@@ -366,17 +374,193 @@ public class MergeHelper {
+       stat.setIncExprent(lastData.getExprents().remove(lastData.getExprents().size() - 1));
+     }
+ 
+-    if (lastData.getExprents().isEmpty()) {
+-      List<StatEdge> lst = lastData.getAllSuccessorEdges();
+-      if (!lst.isEmpty()) {
+-        lastData.removeSuccessor(lst.get(0));
++    cleanEmptyStatements(stat, lastData);
++
++    return true;
++  }
++
++  private static boolean matchForEach(DoStatement stat) {
++    AssignmentExprent firstDoExprent = null, initDoExprent = null, initCopyExprent = null;
++    Statement firstData, preData = null;
++
++    // search for an initializing exprent
++    Statement current = stat;
++    while (true) {
++      Statement parent = current.getParent();
++      if (parent == null) {
++        break;
++      }
++
++      if (parent.type == Statement.TYPE_SEQUENCE) {
++        if (current == parent.getFirst()) {
++          current = parent;
++        }
++        else {
++          preData = current.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).get(0);
++          preData = getLastDirectData(preData);
++          if (preData != null && !preData.getExprents().isEmpty()) {
++            Exprent exprent = preData.getExprents().get(preData.getExprents().size() - 1);
++            if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
++              initDoExprent = (AssignmentExprent)exprent;
++              if (preData.getExprents().size() >= 2) {
++                exprent = preData.getExprents().get(preData.getExprents().size() - 2);
++                if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
++                  initCopyExprent = (AssignmentExprent)exprent;
++                }
++              }
++            }
++          }
++          break;
++        }
++      }
++      else {
++        break;
+       }
+-      removeLastEmptyStatement(stat, lastData);
+     }
+ 
++    firstData = getFirstDirectData(stat.getFirst());
++    if (firstData != null && firstData.getExprents().get(0).type == Exprent.EXPRENT_ASSIGNMENT) {
++      firstDoExprent = (AssignmentExprent)firstData.getExprents().get(0);
++    }
++
++    if (stat.getLooptype() == DoStatement.LOOP_WHILE && initDoExprent != null && firstDoExprent != null) {
++      if (initDoExprent.type == Exprent.EXPRENT_ASSIGNMENT &&
++          isInvoke(((AssignmentExprent)initDoExprent).getRight(), null, "iterator", "()Ljava/util/Iterator;")) {
++
++        if (!isInvoke(drillNots(stat.getConditionExprent()), "java/util/Iterator", "hasNext", "()Z") ||
++            firstDoExprent.type != Exprent.EXPRENT_ASSIGNMENT) {
++          return false;
++        }
++
++        AssignmentExprent ass = (AssignmentExprent)firstDoExprent;
++        if (!isInvoke(ass.getRight(), "java/util/Iterator", "next", "()Ljava/lang/Object;") ||
++            ass.getLeft().type != Exprent.EXPRENT_VAR) {
++          return false;
++        }
++
++        InvocationExprent holder = (InvocationExprent)((AssignmentExprent)initDoExprent).getRight();
++        stat.setLooptype(DoStatement.LOOP_FOREACH);
++        stat.setInitExprent(ass.getLeft());
++        stat.setIncExprent(holder.getInstance());
++        preData.getExprents().remove(initDoExprent);
++        firstData.getExprents().remove(firstDoExprent);
++      }
++    }
++    else if (stat.getLooptype() == DoStatement.LOOP_FOR) {
++      if (isType(stat.getInitExprent(), Exprent.EXPRENT_ASSIGNMENT) &&
++          isInvoke(((AssignmentExprent)stat.getInitExprent()).getRight(), null, "iterator", "()Ljava/util/Iterator;") &&
++          isType(stat.getConditionExprent(), Exprent.EXPRENT_FUNCTION)) {
++
++        if (!isInvoke(drillNots(stat.getConditionExprent()), "java/util/Iterator", "hasNext", "()Z") ||
++            !isType(stat.getIncExprent(), Exprent.EXPRENT_ASSIGNMENT)) {
++          return false;
++        }
++
++        AssignmentExprent ass = (AssignmentExprent)stat.getIncExprent();
++        if (!isInvoke(ass.getRight(), "java/util/Iterator", "next", "()Ljava/lang/Object;") ||
++            ass.getLeft().type != Exprent.EXPRENT_VAR) {
++          return false;
++        }
++
++        InvocationExprent holder = (InvocationExprent)((AssignmentExprent)stat.getInitExprent()).getRight();
++        stat.setLooptype(DoStatement.LOOP_FOREACH);
++        stat.setInitExprent(ass.getLeft());
++        stat.setIncExprent(holder.getInstance());
++      }
++      else if (initDoExprent != null && initDoExprent.getRight().type == Exprent.EXPRENT_FUNCTION) {
++        if (firstDoExprent == null ||
++            firstDoExprent.getRight().type != Exprent.EXPRENT_ARRAY ||
++            firstDoExprent.getLeft().type != Exprent.EXPRENT_VAR ||
++            !isType(stat.getIncExprent(), Exprent.EXPRENT_FUNCTION) ||
++            !isType(stat.getInitExprent(), Exprent.EXPRENT_ASSIGNMENT)) {
++          return false;
++        }
++
++        FunctionExprent funcRight = (FunctionExprent)initDoExprent.getRight();
++        FunctionExprent funcInc = (FunctionExprent)stat.getIncExprent();
++        ArrayExprent arr = (ArrayExprent)firstDoExprent.getRight();
++
++        if (funcRight.getFuncType() != FunctionExprent.FUNCTION_ARRAY_LENGTH ||
++            (funcInc.getFuncType() != FunctionExprent.FUNCTION_PPI && funcInc.getFuncType() != FunctionExprent.FUNCTION_IPP) ||
++            arr.getIndex().type != Exprent.EXPRENT_VAR ||
++            arr.getArray().type != Exprent.EXPRENT_VAR) {
++            return false;
++        }
++
++        VarExprent index = (VarExprent)arr.getIndex();
++        VarExprent array = (VarExprent)arr.getArray();
++        VarExprent counter = (VarExprent)funcInc.getLstOperands().get(0);
++
++        if (counter.getIndex() != index.getIndex() ||
++            counter.getVersion() != index.getVersion()) {
++          return false;
++        }
++
++        stat.setLooptype(DoStatement.LOOP_FOREACH);
++        stat.setInitExprent(firstDoExprent.getLeft());
++        stat.setIncExprent(funcRight.getLstOperands().get(0));
++        preData.getExprents().remove(initDoExprent);
++        firstData.getExprents().remove(firstDoExprent);
++
++        if (initCopyExprent != null && initCopyExprent.getLeft().type == Exprent.EXPRENT_VAR) {
++          VarExprent copy = (VarExprent)initCopyExprent.getLeft();
++          if (copy.getIndex() == array.getIndex() && copy.getVersion() == array.getVersion()) {
++            preData.getExprents().remove(initCopyExprent);
++            stat.setIncExprent(initCopyExprent.getRight());
++          }
++        }
++      }
++    }
++
++    cleanEmptyStatements(stat, firstData);
++
+     return true;
+   }
+ 
++  private static boolean isType(Exprent exp, int type) { //This is just a helper macro, Wish java had real macros.
++    return exp != null && exp.type == type;
++  }
++
++  private static boolean isInvoke(Exprent exp, String cls, String method, String desc) {
++    if (!isType(exp,  Exprent.EXPRENT_INVOCATION)) {
++      return false;
++    }
++    InvocationExprent invoc = (InvocationExprent)exp;
++    if (cls != null && !cls.equals(invoc.getClassname())) {
++      return false;
++    }
++    return method.equals(invoc.getName()) && desc.equals(invoc.getStringDescriptor());
++  }
++  private static Exprent drillNots(Exprent exp) {
++    while (true) {
++      if (exp.type == Exprent.EXPRENT_FUNCTION) {
++        FunctionExprent fun = (FunctionExprent)exp;
++        if (fun.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT) {
++          exp = fun.getLstOperands().get(0);
++        }
++        else if (fun.getFuncType() == FunctionExprent.FUNCTION_EQ ||
++                 fun.getFuncType() == FunctionExprent.FUNCTION_NE) {
++          return fun.getLstOperands().get(0);
++        }
++        else {
++          return null;
++        }
++      }
++      else {
++        return null;
++      }
++    }
++  }
++
++  private static void cleanEmptyStatements(DoStatement dostat, Statement stat) {
++    if (stat != null && stat.getExprents().isEmpty()) {
++      List<StatEdge> lst = stat.getAllSuccessorEdges();
++      if (!lst.isEmpty()) {
++        stat.removeSuccessor(lst.get(0));
++      }
++      removeLastEmptyStatement(dostat, stat);
++    }
++  }
+   private static void removeLastEmptyStatement(DoStatement dostat, Statement stat) {
+ 
+     if (stat == dostat.getFirst()) {
+@@ -418,4 +602,20 @@ public class MergeHelper {
+     }
+     return null;
+   }
++
++  private static Statement getFirstDirectData(Statement stat) {
++    if (stat.getExprents() != null && !stat.getExprents().isEmpty()) {
++      return stat;
++    }
++
++    if (stat.type == Statement.TYPE_SEQUENCE) {
++      for (Statement tmp : stat.getStats()) {
++        Statement ret = getFirstDirectData(tmp);
++        if (ret != null) {
++          return ret;
++        }
++      }
++    }
++    return null;
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index f071933..969a03e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -217,4 +217,9 @@ public class VarExprent extends Exprent {
+     return true;
+   }
+ 
++  @Override
++  public String toString() {
++    return "var_" + index + "_" + version;
++  }
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
+index 971ace5..d88480e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
+@@ -16,8 +16,12 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.sforms;
+ 
+ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
+ 
+ import java.util.*;
+ import java.util.Map.Entry;
+@@ -215,6 +219,7 @@ public class FlattenStatementsHelper {
+                 sourcenode = node;
+                 break;
+               case DoStatement.LOOP_FOR:
++              case DoStatement.LOOP_FOREACH:
+                 DirectNode nodeinit = new DirectNode(DirectNode.NODE_INIT, stat, stat.id + "_init");
+                 if (dostat.getInitExprent() != null) {
+                   nodeinit.exprents = dostat.getInitExprentList();
+@@ -222,7 +227,7 @@ public class FlattenStatementsHelper {
+                 graph.nodes.putWithKey(nodeinit, nodeinit.id);
+ 
+                 DirectNode nodecond = new DirectNode(DirectNode.NODE_CONDITION, stat, stat.id + "_cond");
+-                nodecond.exprents = dostat.getConditionExprentList();
++                nodecond.exprents = (stat.type == DoStatement.LOOP_FOREACH ? null : dostat.getConditionExprentList());
+                 graph.nodes.putWithKey(nodecond, nodecond.id);
+ 
+                 DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+index 76a973f..7f4118c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+@@ -59,6 +59,7 @@ public class SSAConstructorSparseEx {
+   // var, version
+   private final HashMap<Integer, Integer> lastversion = new HashMap<Integer, Integer>();
+ 
++  @Deprecated // Collection containing all vars for catch blocks and parameters. Not used for anything...
+   private final List<VarVersionPair> startVars = new ArrayList<VarVersionPair>();
+ 
+   // set factory
+@@ -69,11 +70,9 @@ public class SSAConstructorSparseEx {
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+ 
+-    // try {
+-    // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
+-    // } catch(Exception ex) {ex.printStackTrace();}
++    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(dgraph, mt, "ssaSplitVariables");
+ 
+-    HashSet<Integer> setInit = new HashSet<Integer>();
++    List<Integer> setInit = new ArrayList<Integer>(); //Important: HashSets have undefined order, so use a ordered list.
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+@@ -84,20 +83,19 @@ public class SSAConstructorSparseEx {
+ 
+     setCatchMaps(root, dgraph, flatthelper);
+ 
++    int itteration = 1;
+     HashSet<String> updated = new HashSet<String>();
+     do {
+       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+-      ssaStatements(dgraph, updated);
++      ssaStatements(dgraph, updated, mt, itteration++);
+       // System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+     }
+     while (!updated.isEmpty());
+   }
+ 
+-  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated) {
++  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, StructMethod mt, int itteration) {
+ 
+-    // try {
+-    // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr1_my.dot"));
+-    // } catch(Exception ex) {ex.printStackTrace();}
++    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(dgraph, mt, "ssaStatements_" + itteration, outVarVersions);
+ 
+     for (DirectNode node : dgraph.nodes) {
+ 
+@@ -523,6 +521,7 @@ public class SSAConstructorSparseEx {
+     return phi;
+   }
+ 
++  @Deprecated // Collection containing all vars for catch blocks and parameters.
+   public List<VarVersionPair> getStartVars() {
+     return startVars;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+index 95cefcf..9ba8195 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+@@ -88,7 +88,9 @@ public class SSAUConstructorSparseEx {
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+ 
+-    HashSet<Integer> setInit = new HashSet<Integer>();
++    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(dgraph, mt, "ssauSplitVariables");
++
++    List<Integer> setInit = new ArrayList<Integer>(); //Important: HashSets have undefined order, so use a ordered list.
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+@@ -98,25 +100,25 @@ public class SSAUConstructorSparseEx {
+ 
+     setCatchMaps(root, dgraph, flatthelper);
+ 
+-    //		try {
+-    //			DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
+-    //		} catch(Exception ex) {ex.printStackTrace();}
+ 
++    int itteration = 1;
+     HashSet<String> updated = new HashSet<String>();
+     do {
+       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+-      ssaStatements(dgraph, updated, false);
++      ssaStatements(dgraph, updated, false, mt, itteration++);
+       //			System.out.println("~~~~~~~~~~~~~ \r\n"+root.toJava());
+     }
+     while (!updated.isEmpty());
+ 
+ 
+-    ssaStatements(dgraph, updated, true);
++    ssaStatements(dgraph, updated, true, mt, itteration);
+ 
+     ssuversions.initDominators();
+   }
+ 
+-  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars) {
++  private void ssaStatements(DirectGraph dgraph, HashSet<String> updated, boolean calcLiveVars, StructMethod mt, int itteration) {
++
++    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(dgraph, mt, "ssauStatements_" + itteration);
+ 
+     for (DirectNode node : dgraph.nodes) {
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
+index ef5ea76..8359284 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
+@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+ 
+ import java.util.ArrayList;
+@@ -31,6 +32,7 @@ public class DoStatement extends Statement {
+   public static final int LOOP_DOWHILE = 1;
+   public static final int LOOP_WHILE = 2;
+   public static final int LOOP_FOR = 3;
++  public static final int LOOP_FOREACH = 4;
+ 
+   private int looptype;
+ 
+@@ -135,6 +137,13 @@ public class DoStatement extends Statement {
+         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
+         buf.appendIndent(indent).append("}").appendLineSeparator();
+         tracer.incrementCurrentSourceLine();
++        break;
++      case LOOP_FOREACH:
++        buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
++        buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
++        tracer.incrementCurrentSourceLine();
++        buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
++        buf.appendIndent(indent).append("}").appendLineSeparator();
+     }
+ 
+     return buf;
+@@ -151,6 +160,9 @@ public class DoStatement extends Statement {
+         }
+       case LOOP_WHILE:
+         lst.add(getConditionExprent());
++        break;
++      case LOOP_FOREACH:
++        lst.add(getInitExprent());
+     }
+ 
+     lst.add(first);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 23b1c5e..aa2ef6e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -154,6 +154,15 @@ public class VarDefinitionHelper {
+             }
+           }
+         }
++        else if (dstat.getLooptype() == DoStatement.LOOP_FOREACH) {
++          if (dstat.getInitExprent() != null && dstat.getInitExprent().type == Exprent.EXPRENT_VAR) {
++            VarExprent var = (VarExprent)dstat.getInitExprent();
++            if (var.getIndex() == index.intValue()) {
++              var.setDefinition(true);
++              continue;
++            }
++          }
++        }
+       }
+ 
+ 
+@@ -269,6 +278,7 @@ public class VarDefinitionHelper {
+           if (st.type == DoStatement.TYPE_DO) {
+             DoStatement dost = (DoStatement)st;
+             if (dost.getLooptype() != DoStatement.LOOP_FOR &&
++                dost.getLooptype() != DoStatement.LOOP_FOREACH &&
+                 dost.getLooptype() != DoStatement.LOOP_DO) {
+               currVars.add(dost.getConditionExprent());
+             }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+index ef07c6b..0f530f9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+@@ -31,7 +31,7 @@ public class VarProcessor {
+   private VarVersionsProcessor varVersions;
+   private final Map<VarVersionPair, String> thisVars = new HashMap<VarVersionPair, String>();
+   private final Set<VarVersionPair> externalVars = new HashSet<VarVersionPair>();
+-private LocalVariableTable lvt;
++  private LocalVariableTable lvt;
+ 
+   public void setVarVersions(RootStatement root) {
+     Map<Integer, VarVersionPair> mapOriginalVarIndices = null;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+index eae4cba..cb37d4d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+@@ -46,6 +46,8 @@ public class VarVersionsProcessor {
+     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
+     DirectGraph graph = flattenHelper.buildDirectGraph(root);
+ 
++    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(graph, mt, "setVarVersions");
++
+     mergePhiVersions(ssa, graph);
+ 
+     typeProcessor = new VarTypeProcessor();
+diff --git a/src/org/jetbrains/java/decompiler/util/DotExporter.java b/src/org/jetbrains/java/decompiler/util/DotExporter.java
+new file mode 100644
+index 0000000..0d41718
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/util/DotExporter.java
+@@ -0,0 +1,238 @@
++package org.jetbrains.java.decompiler.util;
++
++import java.io.BufferedOutputStream;
++import java.io.File;
++import java.io.FileOutputStream;
++import java.util.Collections;
++import java.util.HashSet;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++import java.util.Map.Entry;
++
++import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
++import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
++import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
++import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
++import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionEdge;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionNode;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
++import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
++
++public class DotExporter {
++  private static final String DOTS_FOLDER = "Z:/dots/";
++  private static final boolean DUMP_DOTS = false;
++  // http://graphs.grevian.org/graph is a nice visualizer for the outputed dots.
++
++  private static String toDotFormat(Statement stat) {
++
++    StringBuffer buffer = new StringBuffer();
++
++    buffer.append("digraph G {\r\n");
++
++    for(Statement st : stat.getStats()) {
++
++      String sourceid = st.id + (st.getSuccessorEdges(StatEdge.TYPE_EXCEPTION).isEmpty()?"":"000000");
++
++      buffer.append(sourceid+" [shape=box,label=\""+sourceid+"\"];\r\n");
++
++      for(StatEdge edge : st.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL)) {
++        String destid = edge.getDestination().id + (edge.getDestination().getSuccessorEdges(StatEdge.TYPE_EXCEPTION).isEmpty()?"":"000000");
++
++        buffer.append(sourceid+"->"+destid+";\r\n");
++
++        if(!stat.getStats().contains(edge.getDestination())) {
++          buffer.append(destid+" [label=\""+destid+"\"];\r\n");
++        }
++      }
++
++      for(StatEdge edge : st.getSuccessorEdges(StatEdge.TYPE_EXCEPTION)) {
++        String destid = edge.getDestination().id + (edge.getDestination().getSuccessorEdges(StatEdge.TYPE_EXCEPTION).isEmpty()?"":"000000");
++
++        buffer.append(sourceid+" -> "+destid+" [style=dotted];\r\n");
++
++        if(!stat.getStats().contains(edge.getDestination())) {
++          buffer.append(destid+" [label=\""+destid+"\"];\r\n");
++        }
++      }
++    }
++
++    buffer.append("}");
++
++    return buffer.toString();
++  }
++
++
++  private static String toDotFormat(ControlFlowGraph graph, boolean showMultipleEdges) {
++
++    StringBuffer buffer = new StringBuffer();
++
++    buffer.append("digraph G {\r\n");
++
++    List<BasicBlock> blocks = graph.getBlocks();
++    for(int i=0;i<blocks.size();i++) {
++      BasicBlock block = (BasicBlock)blocks.get(i);
++
++      buffer.append(block.id+" [shape=box,label=\""+block.id+"\"];\r\n");
++
++
++      List<BasicBlock> suc = block.getSuccs();
++      if(!showMultipleEdges) {
++        HashSet<BasicBlock> set = new HashSet<BasicBlock>();
++        set.addAll(suc);
++        suc = Collections.list(Collections.enumeration(set));
++      }
++      for(int j=0;j<suc.size();j++) {
++        buffer.append(block.id+"->"+((BasicBlock)suc.get(j)).id+";\r\n");
++      }
++
++
++      suc = block.getSuccExceptions();
++      if(!showMultipleEdges) {
++        HashSet<BasicBlock> set = new HashSet<BasicBlock>();
++        set.addAll(suc);
++        suc = Collections.list(Collections.enumeration(set));
++      }
++      for(int j=0;j<suc.size();j++) {
++        buffer.append(block.id+" -> "+((BasicBlock)suc.get(j)).id+" [style=dotted];\r\n");
++      }
++    }
++
++    buffer.append("}");
++
++    return buffer.toString();
++  }
++
++  private static String toDotFormat(VarVersionsGraph graph) {
++
++    StringBuffer buffer = new StringBuffer();
++
++    buffer.append("digraph G {\r\n");
++
++    List<VarVersionNode> blocks = graph.nodes;
++    for(int i=0;i<blocks.size();i++) {
++      VarVersionNode block = blocks.get(i);
++
++      buffer.append((block.var*1000+block.version)+" [shape=box,label=\""+block.var+"_"+block.version+"\"];\r\n");
++
++      for(VarVersionEdge edge: block.succs) {
++        VarVersionNode dest = edge.dest;
++        buffer.append((block.var*1000+block.version)+"->"+(dest.var*1000+dest.version)+(edge.type==VarVersionEdge.EDGE_PHANTOM?" [style=dotted]":"")+";\r\n");
++      }
++    }
++
++    buffer.append("}");
++
++    return buffer.toString();
++  }
++
++  private static String toDotFormat(DirectGraph graph, Map<String, SFormsFastMapDirect> vars) {
++
++    StringBuffer buffer = new StringBuffer();
++
++    buffer.append("digraph G {\r\n");
++
++    List<DirectNode> blocks = graph.nodes;
++    for(int i=0;i<blocks.size();i++) {
++      DirectNode block = blocks.get(i);
++
++      StringBuilder label = new StringBuilder(block.id);
++      if (vars != null && vars.containsKey(block.id)) {
++        SFormsFastMapDirect map = vars.get(block.id);
++
++        List<Entry<Integer, FastSparseSet<Integer>>> lst = map.entryList();
++        if (lst != null) {
++          for (Entry<Integer, FastSparseSet<Integer>> entry : lst) {
++             label.append("\\n").append(entry.getKey());
++            Set<Integer> set = entry.getValue().toPlainSet();
++            label.append("=").append(set.toString());
++          }
++        }
++      }
++
++      buffer.append(directBlockIdToDot(block.id)+" [shape=box,label=\""+label+"\"];\r\n");
++
++      for(DirectNode dest: block.succs) {
++        buffer.append(directBlockIdToDot(block.id)+"->"+directBlockIdToDot(dest.id)+";\r\n");
++      }
++    }
++
++    buffer.append("}");
++
++    return buffer.toString();
++  }
++
++  private static String directBlockIdToDot(String id) {
++    id = id.replaceAll("_try", "999");
++    id = id.replaceAll("_tail", "888");
++
++    id = id.replaceAll("_init", "111");
++    id = id.replaceAll("_cond", "222");
++    id = id.replaceAll("_inc", "333");
++    return id;
++  }
++
++  private static File getFile(StructMethod mt, String suffix) {
++    File root = new File(DOTS_FOLDER + mt.getClassStruct().qualifiedName);
++    if (!root.isDirectory())
++      root.mkdirs();
++    return new File(root,
++      mt.getName().replace('<', '.').replace('>', '_') +
++      mt.getDescriptor().replace('/', '.') +
++      '_' + suffix + ".dot");
++  }
++
++  public static void toDotFile(DirectGraph dgraph, StructMethod mt, String suffix) {
++    toDotFile(dgraph, mt, suffix, null);
++  }
++  public static void toDotFile(DirectGraph dgraph, StructMethod mt, String suffix, Map<String, SFormsFastMapDirect> vars) {
++    if (!DUMP_DOTS)
++      return;
++    try{
++      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(getFile(mt, suffix)));
++      out.write(toDotFormat(dgraph, vars).getBytes());
++      out.close();
++    } catch (Exception e) {
++      e.printStackTrace();
++    }
++  }
++
++  public static void toDotFile(Statement stat, StructMethod mt, String suffix) {
++    if (!DUMP_DOTS)
++      return;
++    try{
++      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(getFile(mt, suffix)));
++      out.write(toDotFormat(stat).getBytes());
++      out.close();
++    } catch (Exception e) {
++      e.printStackTrace();
++    }
++  }
++
++  public static void toDotFile(VarVersionsGraph graph, StructMethod mt, String suffix) {
++    if (!DUMP_DOTS)
++      return;
++    try{
++      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(getFile(mt, suffix)));
++      out.write(toDotFormat(graph).getBytes());
++      out.close();
++    } catch (Exception e) {
++      e.printStackTrace();
++    }
++  }
++
++  public static void toDotFile(ControlFlowGraph graph, StructMethod mt, String suffix, boolean showMultipleEdges) {
++    if (!DUMP_DOTS)
++      return;
++    try{
++      BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(getFile(mt, suffix)));
++      out.write(toDotFormat(graph, showMultipleEdges).getBytes());
++      out.close();
++    } catch (Exception e) {
++      e.printStackTrace();
++    }
++  }
++}
+\ No newline at end of file
+-- 
+2.21.0.windows.1
+

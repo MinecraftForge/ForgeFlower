@@ -1,0 +1,48 @@
+From 87ede1c33768fd77ab480c2b60cea3b23de9f754 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sat, 1 Aug 2015 13:45:25 -0700
+Subject: [PATCH 002/122] Output generic parametrs for anonymous classes.
+
+---
+ .../modules/decompiler/exps/NewExprent.java     | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index b5ecd9e..24facc9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -26,7 +26,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
++import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.ListStack;
+ 
+@@ -234,6 +237,20 @@ public class NewExprent extends Exprent {
+             typename = typename.substring(typename.lastIndexOf('.') + 1);
+           }
+         }
++
++        if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
++          StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)child.getWrapper().getClassStruct().getAttributes().getWithKey("Signature");
++          if (attr != null) {
++              GenericClassDescriptor descriptor = GenericMain.parseClassSignature(attr.getSignature());
++              // Anon classes can only be a child to one type. So either the first interface or the super class
++              if (descriptor.superinterfaces.size() > 0) {
++                  typename = GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(0));
++              }
++              else {
++                  typename = GenericMain.getGenericCastTypeName(descriptor.superclass);
++              }
++          }
++        }
+         buf.prepend("new " + typename);
+ 
+         if (enclosing != null) {
+-- 
+2.21.0.windows.1
+
