@@ -1,17 +1,12 @@
 From a88b1c06f60850be429ebdba20e5e6ba507936bb Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Fri, 9 Oct 2015 13:22:13 -0700
-Subject: [PATCH 075/122] Add new decompiler option -iec
- Include_Entire_Classpath which will read the current JVM's classpath and
- parse all libraries for metadata.
+Subject: Add new decompiler option -iec Include_Entire_Classpath which will
+ read the current JVM's classpath and parse all libraries for metadata.
 
----
- .../java/decompiler/main/Fernflower.java      | 29 +++++++++++++++++++
- .../main/extern/IFernflowerPreferences.java   |  3 ++
- 2 files changed, 32 insertions(+)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index e355ee9..65733ac 100644
+index e355ee9ff5bc6e5c3a9dd2262c1c33b2dc826f83..65733ac2c8ea53277e5a2ffe54ea7e91e0c6fc97 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -71,7 +66,7 @@ index e355ee9..65733ac 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 31871c5..79dd8e8 100644
+index 31871c5d945034a810fa9f866446e14c40cd9b18..79dd8e890cd37e88bfbe9f0c22c825b3c2549bb8 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -60,6 +60,8 @@ public interface IFernflowerPreferences {
@@ -91,5 +86,5 @@ index 31871c5..79dd8e8 100644
    }});
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

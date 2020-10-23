@@ -1,22 +1,13 @@
 From 5f699acc70d8e40f758737ae88aeddecc07edc8c Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 9 Aug 2015 15:04:04 -0700
-Subject: [PATCH 029/122] TryCatch statements will now use the correct variable
- index for their exception variable. Some small cleanups and NPE fix.
+Subject: =?UTF-8?q?TryCatch=20statements=20will=20now=20use=20the=20correc?=
+ =?UTF-8?q?t=20variable=20index=20for=20their=20exception=20variable.=0ASo?=
+ =?UTF-8?q?me=20small=20cleanups=20and=20NPE=20fix.?=
 
----
- .../decompiler/main/ClassesProcessor.java     |  1 -
- .../main/rels/MethodProcessorRunnable.java    | 63 +------------------
- .../decompiler/stats/CatchAllStatement.java   | 11 +++-
- .../decompiler/stats/CatchStatement.java      | 10 ++-
- .../modules/decompiler/vars/VarProcessor.java | 13 ++--
- .../StructLocalVariableTableAttribute.java    |  1 -
- .../TestClassSimpleBytecodeMapping.dec        |  4 +-
- testData/results/TestTryCatchFinally.dec      | 12 ++--
- 8 files changed, 37 insertions(+), 78 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 7f75a0c..0060021 100644
+index 7f75a0cf9dd0e58fcf8c3e3c6bfa56678f7b1dfe..00600213ac4a4a39de72131a9cc6dc22424dc7a0 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -32,7 +32,6 @@ import org.jetbrains.java.decompiler.struct.StructClass;
@@ -28,7 +19,7 @@ index 7f75a0c..0060021 100644
  import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute.InnerClassInfo;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 388e76a..9542a80 100644
+index 388e76a7a8270d81d03b661ddbfef5ed9fb53fe4..9542a8025136f7416c2c806f52d5c990613604bc 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.main.rels;
@@ -116,7 +107,7 @@ index 388e76a..9542a80 100644
            AssignmentExprent assignmentExprent = (AssignmentExprent)exp;
          sb.append("{").append(printExprent(" ",assignmentExprent.getLeft(),varProc)).append(" =").append(printExprent(" ",assignmentExprent.getRight(),varProc)).append("}");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index 812ed10..d5b432c 100644
+index 812ed10b00ba6224ef947be953bc8d88bd72e2f7..d5b432c4fe852fff994e03fed0398da7e22997bd 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 @@ -16,6 +16,7 @@
@@ -145,7 +136,7 @@ index 812ed10..d5b432c 100644
                              (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 8d56042..fda5ed3 100644
+index 8d56042e3667eb6843cdea18d01536f90ea59e50..fda5ed373d94f875ba6450d361bda722086e03d0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -60,7 +60,15 @@ public class CatchStatement extends Statement {
@@ -166,7 +157,7 @@ index 8d56042..fda5ed3 100644
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
                                  (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 6b15a12..ef07c6b 100644
+index 6b15a12069348463463c60b541b38a355fb27e91..ef07c6bc838bb597d27598351b545343e8a725c5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -152,16 +152,17 @@ private LocalVariableTable lvt;
@@ -194,7 +185,7 @@ index 6b15a12..ef07c6b 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index a983b27..a654359 100644
+index a983b2788c5ccb570539a28eca0acf4c627f0595..a654359296bac48d1cc7316987849bd7bd5b8be5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.struct.attr;
@@ -206,7 +197,7 @@ index a983b27..a654359 100644
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  
 diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
-index 1a2532f..4a2f333 100644
+index 1a2532f0b736a3d1a2db4f7ba3645e48e419189f..4a2f333d257cb2a56dddd0b5ae2887537b01bd86 100644
 --- a/testData/results/TestClassSimpleBytecodeMapping.dec
 +++ b/testData/results/TestClassSimpleBytecodeMapping.dec
 @@ -21,8 +21,8 @@ public class TestClassSimpleBytecodeMapping {
@@ -221,7 +212,7 @@ index 1a2532f..4a2f333 100644
           System.out.println("Finally");// 38
        }
 diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
-index 772a76e..fbe5782 100644
+index 772a76e8a850ff853ef51acb29d82a1ba95dfee6..fbe5782266c4dbcdb4d5558b3173625228f71038 100644
 --- a/testData/results/TestTryCatchFinally.dec
 +++ b/testData/results/TestTryCatchFinally.dec
 @@ -4,10 +4,10 @@ public class TestTryCatchFinally {
@@ -253,5 +244,5 @@ index 772a76e..fbe5782 100644
           System.out.println("Finally");// 55
        }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

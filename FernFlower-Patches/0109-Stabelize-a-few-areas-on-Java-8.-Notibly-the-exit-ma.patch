@@ -1,20 +1,12 @@
 From 01e351e13f31deaa74035ceeda111ace834849a8 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Wed, 28 Oct 2015 23:45:40 -0700
-Subject: [PATCH 109/122] Stabelize a few areas on Java 8. Notibly the exit
- mapper. Fixes the decompile differences between J6/7 and J8.
+Subject: Stabelize a few areas on Java 8. Notibly the exit mapper. Fixes the
+ decompile differences between J6/7 and J8.
 
----
- .../decompiler/main/rels/MethodProcessorRunnable.java  |  6 ++++--
- .../java/decompiler/modules/decompiler/DomHelper.java  |  4 ++--
- .../decompose/DominatorTreeExceptionFilter.java        |  6 +++---
- .../decompose/FastExtendedPostdominanceHelper.java     |  6 +++---
- .../modules/decompiler/stats/GeneralStatement.java     |  3 ++-
- .../modules/decompiler/stats/SwitchStatement.java      | 10 +++++++++-
- 6 files changed, 23 insertions(+), 12 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 16d7788..9bcd3ba 100644
+index 16d778867677249c16b38fcfbca16618b1fa4ac0..9bcd3ba461d73cb139bca4fc0756130d0e20a6de 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -253,8 +253,10 @@ public class MethodProcessorRunnable implements Runnable {
@@ -39,7 +31,7 @@ index 16d7788..9bcd3ba 100644
          System.out.print(" t:"+((DoStatement)statement).getLooptype());
      } else if (statement.type == Statement.TYPE_BASICBLOCK) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index c45f5e0..e780bd6 100644
+index c45f5e06dba0607232dd1fac4c089a22ceeede7b..e780bd6642f5ebca0af8971bb209630e44bb3b0a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -483,11 +483,11 @@ public class DomHelper {
@@ -57,7 +49,7 @@ index c45f5e0..e780bd6 100644
          while (true) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-index 89e6849..1c3a8e1 100644
+index 89e684930084f603339ce2cb067ec9719532110c..1c3a8e13df680240d0a6638115bf9a7f6982b5c9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 @@ -27,10 +27,10 @@ public class DominatorTreeExceptionFilter {
@@ -83,7 +75,7 @@ index 89e6849..1c3a8e1 100644
        set.add(key);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-index eee7b15..349f522 100644
+index eee7b15dc347c9582f49f13c41106f76ff14b064..349f522b2fe170c57b55d4812cbc56086f6a1502 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 @@ -28,9 +28,9 @@ public class FastExtendedPostdominanceHelper {
@@ -108,7 +100,7 @@ index eee7b15..349f522 100644
        set.add(st.id);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index 499894a..f7e0080 100644
+index 499894a572629a0e14aba0ebfae4929d6e0eec18..f7e00804a046ad4992f918396b9ca53c6872b01c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 @@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -129,7 +121,7 @@ index 499894a..f7e0080 100644
  
      for (Statement st : set) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 2a29309..af522d9 100644
+index 2a2930908a9051cea5f590d0a6e66d38689d1753..af522d97a6198ba50a5eae7b69232d9e4ac5eec6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -80,7 +80,15 @@ public class SwitchStatement extends Statement {
@@ -150,5 +142,5 @@ index 2a29309..af522d9 100644
      }
    }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

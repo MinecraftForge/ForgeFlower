@@ -1,24 +1,11 @@
 From de3a686365bc75c89bf8a1cf47d8c9cb9266b7df Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Fri, 11 Sep 2015 21:57:09 -0400
-Subject: [PATCH 039/122] More tweaks. Closer!
+Subject: More tweaks. Closer!
 
----
- .../java/decompiler/code/cfg/BasicBlock.java  | 15 +++++
- .../main/rels/MethodProcessorRunnable.java    |  2 +-
- .../modules/decompiler/PPandMMHelper.java     | 65 ++++++++++++++++++-
- .../modules/decompiler/stats/Statement.java   | 10 ++-
- .../modules/decompiler/vars/LVTVariable.java  | 22 +++----
- .../decompiler/vars/LocalVariableTable.java   | 61 ++++++++---------
- .../decompiler/vars/VarDefinitionHelper.java  | 60 ++++++++++++-----
- .../decompiler/vars/VarVersionsProcessor.java |  4 +-
- testData/results/TestLVT.dec                  |  6 +-
- testData/results/TestLVTScoping.dec           |  6 +-
- testData/results/TestLexManosLVT.dec          | 14 ++--
- 11 files changed, 187 insertions(+), 78 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-index 2e29529..a36047b 100644
+index 2e29529da63d2d83c975945bc4a17f409a7dbff3..a36047be9d5aaafd1e37ea1fc4ed861b7e26e5c9 100644
 --- a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
 +++ b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
 @@ -262,4 +262,19 @@ public class BasicBlock implements IGraphNode {
@@ -42,7 +29,7 @@ index 2e29529..a36047b 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 54a77e1..5844b93 100644
+index 54a77e19ac62d4a198f4943a19af1887c3843ab1..5844b931ca6c6f2634455d2d91c6eca0680bcc5b 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -153,7 +153,7 @@ public class MethodProcessorRunnable implements Runnable {
@@ -55,7 +42,7 @@ index 54a77e1..5844b93 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index 4eb366b..d93bad6 100644
+index 4eb366b466da3c9384f5ae6807b790aa8fd1d477..d93bad6bd760a6de8e546411b1f2798b4bbd03ad 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 @@ -19,19 +19,31 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
@@ -169,7 +156,7 @@ index 4eb366b..d93bad6 100644
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index ced701f..5a44fcf 100644
+index ced701f998a28521bf39ad0cf977eb7ea4006c14..5a44fcfa1fff73ae00d869781ebcba27cccb186b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -862,9 +862,9 @@ public class Statement implements IMatchable {
@@ -196,7 +183,7 @@ index ced701f..5a44fcf 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
-index dc7783c..bc7ba23 100644
+index dc7783cdc1266ab91bf49cbe66f11bcd433d0837..bc7ba23f14806acf42ec1765c0e3831c1f7aa27d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 @@ -42,34 +42,34 @@ public class LVTVariable implements Comparable<LVTVariable> {
@@ -246,7 +233,7 @@ index dc7783c..bc7ba23 100644
  
    public String getDesc() {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index cd56bac..f7e1858 100644
+index cd56bacb1d0d337f3d33b0eb7b87779cefd3d347..f7e185839a37c353cbc63da9d26128d0dd44355c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -1,29 +1,37 @@
@@ -352,7 +339,7 @@ index cd56bac..f7e1858 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index d24813f..d68ee36 100644
+index d24813f0d9962ed8b0d6efacd251c175721e33d0..d68ee3605d37d09a125facde48f3b3e48d3921bf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -16,6 +16,7 @@
@@ -507,7 +494,7 @@ index d24813f..d68ee36 100644
        for (Object obj : stat.getSequentialObjects()) {
          if (obj instanceof Statement) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index cb37d4d..d56c778 100644
+index cb37d4d220ee2f513c9c3458cda95c933d1ea267..d56c778820770b52016900cef6d1753ba5f1d814 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -53,7 +53,7 @@ public class VarVersionsProcessor {
@@ -529,7 +516,7 @@ index cb37d4d..d56c778 100644
        @Override
        public int processExprent(Exprent exprent) {
 diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
-index d161f07..aed09b4 100644
+index d161f07ae5441548e45707f96b8a7c485be0aeee..aed09b402ba8f79e0260d8eaa98e638097341b05 100644
 --- a/testData/results/TestLVT.dec
 +++ b/testData/results/TestLVT.dec
 @@ -14,9 +14,9 @@ public class TestLVT {
@@ -546,7 +533,7 @@ index d161f07..aed09b4 100644
           String scope2a = "scope2+1a";
           HashMap noise = new HashMap();
 diff --git a/testData/results/TestLVTScoping.dec b/testData/results/TestLVTScoping.dec
-index 7bbf624..2949d31 100644
+index 7bbf62484e40f9f00b4028029c6c0862d08e750c..2949d31b4ab29159fd9523b63da9ee30574a8486 100644
 --- a/testData/results/TestLVTScoping.dec
 +++ b/testData/results/TestLVTScoping.dec
 @@ -12,11 +12,11 @@ public class TestLVTScoping {
@@ -565,7 +552,7 @@ index 7bbf624..2949d31 100644
        }   }
  
 diff --git a/testData/results/TestLexManosLVT.dec b/testData/results/TestLexManosLVT.dec
-index 9ef5e62..285cb14 100644
+index 9ef5e62bd10b5818a60bf1842c2daa446c84d9d3..285cb14b2b56200d6d9951eb6c8ba7266e3961dd 100644
 --- a/testData/results/TestLexManosLVT.dec
 +++ b/testData/results/TestLexManosLVT.dec
 @@ -29,26 +29,28 @@ public class TestLexManosLVT {
@@ -604,5 +591,5 @@ index 9ef5e62..285cb14 100644
              for(TestLexManosLVT.Bob c : values()) {
                 for(TestLexManosLVT.Bob d : values()) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

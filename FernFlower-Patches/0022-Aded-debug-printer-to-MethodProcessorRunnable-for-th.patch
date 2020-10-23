@@ -1,15 +1,11 @@
 From 7f9bb7d21c105347ab987df050eb7458ac8ab1f5 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 6 Aug 2015 17:01:25 -0700
-Subject: [PATCH 022/122] Aded debug printer to MethodProcessorRunnable for the
- method outline.
+Subject: Aded debug printer to MethodProcessorRunnable for the method outline.
 
----
- .../main/rels/MethodProcessorRunnable.java    | 123 +++++++++++++++++-
- 1 file changed, 122 insertions(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 1c90fb6..dc6f2f0 100644
+index 1c90fb6fc41b20e8b295201cfdb69abb63463bd0..dc6f2f0e61563f8132d99b70d3d81278f224da04 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.main.rels;
@@ -175,5 +171,5 @@ index 1c90fb6..dc6f2f0 100644
 +  }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

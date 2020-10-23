@@ -1,15 +1,12 @@
 From 7dec35b37bbeb3c785e142980718e799d25c618a Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 4 Oct 2015 04:22:34 -0700
-Subject: [PATCH 069/122] Include ForEach source vars in itteration, allows for
- remapping in merge.
+Subject: Include ForEach source vars in itteration, allows for remapping in
+ merge.
 
----
- .../java/decompiler/modules/decompiler/stats/DoStatement.java    | 1 +
- 1 file changed, 1 insertion(+)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 36cd7fb..acc74a6 100644
+index 36cd7fb229ea03784017336da4dd1cb0fd528fa4..acc74a60fd6a90ad15959f6c3164757390542ada 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -164,6 +164,7 @@ public class DoStatement extends Statement {
@@ -21,5 +18,5 @@ index 36cd7fb..acc74a6 100644
  
      lst.add(first);
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

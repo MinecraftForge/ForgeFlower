@@ -1,17 +1,12 @@
 From 0ecec99fee439f1f018c51826f4105c7753af7f2 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 17:26:00 -0700
-Subject: [PATCH 017/122] Sort local variables and variable definitions. Again,
- different JVMs sort hash sets differently causing different variable names.
+Subject: Sort local variables and variable definitions. Again, different JVMs
+ sort hash sets differently causing different variable names.
 
----
- .../modules/decompiler/ExprProcessor.java     |  1 +
- .../modules/decompiler/exps/Exprent.java      | 53 +++++++++++++++----
- .../decompiler/vars/VarVersionsProcessor.java | 11 +++-
- 3 files changed, 53 insertions(+), 12 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 9296bb3..205b187 100644
+index 9296bb3f6007bda9647e2f0d919cdfd311567222..205b1876758155132600148f61f641b64e42369c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -833,6 +833,7 @@ public class ExprProcessor implements CodeConstants {
@@ -23,7 +18,7 @@ index 9296bb3..205b187 100644
      for (Exprent expr : lst) {
        TextBuffer content = expr.toJava(indent, tracer);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index fbd146e..5f2cb56 100644
+index fbd146eca6b7efc4d56e96121a7c6d91748d077c..5f2cb56a85b9ac61141de1c17b457e5847eb8fff 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -17,6 +17,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -124,7 +119,7 @@ index fbd146e..5f2cb56 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index 31f0f86..4751052 100644
+index 31f0f86d4423ac537faf31b7f16833f263801b23..4751052a5468ffc469d7166bce648d5b658e040d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -235,8 +235,15 @@ public class VarVersionsProcessor {
@@ -146,5 +141,5 @@ index 31f0f86..4751052 100644
        if (pair.version >= 0) {
          int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

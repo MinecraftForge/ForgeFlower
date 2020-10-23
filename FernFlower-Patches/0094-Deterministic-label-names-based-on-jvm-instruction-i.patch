@@ -1,23 +1,11 @@
 From 36ea9a310b443b45ecdc298060e3685f8541950a Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 17 Oct 2015 00:51:19 -0400
-Subject: [PATCH 094/122] Deterministic label names based on jvm instruction #
- instead of ID
+Subject: Deterministic label names based on jvm instruction # instead of ID
 
----
- .../java/decompiler/modules/decompiler/ExprProcessor.java     | 2 +-
- .../modules/decompiler/stats/CatchAllStatement.java           | 2 +-
- .../decompiler/modules/decompiler/stats/CatchStatement.java   | 2 +-
- .../java/decompiler/modules/decompiler/stats/DoStatement.java | 2 +-
- .../decompiler/modules/decompiler/stats/GeneralStatement.java | 2 +-
- .../java/decompiler/modules/decompiler/stats/IfStatement.java | 4 ++--
- .../modules/decompiler/stats/SequenceStatement.java           | 2 +-
- .../decompiler/modules/decompiler/stats/SwitchStatement.java  | 2 +-
- .../modules/decompiler/stats/SynchronizedStatement.java       | 2 +-
- 9 files changed, 10 insertions(+), 10 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 60832d3..c832772 100644
+index 60832d3af2925a806c852e72209e676fb293d882..c83277288453cb286014d926dfcb2e1b5198e338 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -815,7 +815,7 @@ public class ExprProcessor implements CodeConstants {
@@ -30,7 +18,7 @@ index 60832d3..c832772 100644
          buf.append(";").appendLineSeparator();
          tracer.incrementCurrentSourceLine();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index 812ed10..34dfa85 100644
+index 812ed10b00ba6224ef947be953bc8d88bd72e2f7..34dfa85eb134ed1bb59a3bee9de0fbb0f35b392a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 @@ -120,7 +120,7 @@ public class CatchAllStatement extends Statement {
@@ -43,7 +31,7 @@ index 812ed10..34dfa85 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 8d56042..9359fbb 100644
+index 8d56042e3667eb6843cdea18d01536f90ea59e50..9359fbb134065e51b1e9c437b0dc4de55b734713 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -157,7 +157,7 @@ public class CatchStatement extends Statement {
@@ -56,7 +44,7 @@ index 8d56042..9359fbb 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index acc74a6..6636d1d 100644
+index acc74a60fd6a90ad15959f6c3164757390542ada..6636d1dab67c0ad87b98fd6b9ebfeca708fd0139 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -100,7 +100,7 @@ public class DoStatement extends Statement {
@@ -69,7 +57,7 @@ index acc74a6..6636d1d 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index 4f22cf7..499894a 100644
+index 4f22cf710a67e5f0d69951fb4bee6fa194e5a4ea..499894a572629a0e14aba0ebfae4929d6e0eec18 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 @@ -57,7 +57,7 @@ public class GeneralStatement extends Statement {
@@ -82,7 +70,7 @@ index 4f22cf7..499894a 100644
  
      buf.appendIndent(indent).append("abstract statement {").appendLineSeparator();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-index 8f3e467..6b0eb9a 100644
+index 8f3e4679be0d5821df94253a9f58082aa4f236d4..6b0eb9acf5065cdc67af212f14422fd07ec148c0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 @@ -213,7 +213,7 @@ public class IfStatement extends Statement {
@@ -104,7 +92,7 @@ index 8f3e467..6b0eb9a 100644
        }
        buf.append(";").appendLineSeparator();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
-index 7d2ee43..92588fe 100644
+index 7d2ee435ce1c153b6da410d825d697d9790e35fe..92588febd470b2cf9db2d9f7ff3ae4e240187ca2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 @@ -105,7 +105,7 @@ public class SequenceStatement extends Statement {
@@ -117,7 +105,7 @@ index 7d2ee43..92588fe 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index f8eec64..2a29309 100644
+index f8eec64ce7edbb2ff9e4d76c7d9e59c42060e57f..2a2930908a9051cea5f590d0a6e66d38689d1753 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -118,7 +118,7 @@ public class SwitchStatement extends Statement {
@@ -130,7 +118,7 @@ index f8eec64..2a29309 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java
-index b71531f..aaafab9 100644
+index b71531f51d77724ca78e0271290ca592539b23a7..aaafab989518417c429221f40ff8fe392daf6b53 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SynchronizedStatement.java
 @@ -76,7 +76,7 @@ public class SynchronizedStatement extends Statement {
@@ -143,5 +131,5 @@ index b71531f..aaafab9 100644
      }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

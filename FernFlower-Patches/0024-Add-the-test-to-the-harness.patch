@@ -1,14 +1,11 @@
 From 1314b694ee1457fd6e9a91adcfa910ef9549faf0 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 8 Aug 2015 13:43:47 -0400
-Subject: [PATCH 024/122] Add the test to the harness
+Subject: Add the test to the harness
 
----
- test/org/jetbrains/java/decompiler/LVTTest.java | 1 +
- 1 file changed, 1 insertion(+)
 
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index 2d39827..983368c 100644
+index 2d39827fabef8a71133de494460a0c67f4ae9f8b..983368c25695ab8bbf090fa01e6d8df9a302bc91 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -30,4 +30,5 @@ public class LVTTest extends SingleClassesTestBase {
@@ -18,5 +15,5 @@ index 2d39827..983368c 100644
 +  @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

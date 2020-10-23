@@ -1,16 +1,12 @@
 From 114aebe82cf40075c5c4f916c409b8aebf8096d5 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 14 Dec 2015 02:09:28 -0800
-Subject: [PATCH 122/122] Do not merge varaibles when the to target is read
- further in the method.
+Subject: Do not merge varaibles when the to target is read further in the
+ method.
 
----
- .../decompiler/vars/VarDefinitionHelper.java  | 19 +++----
- .../java/decompiler/util/ExprentUtil.java     | 57 +++++++++++++++++++
- 2 files changed, 66 insertions(+), 10 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index fcd8c64..6566ca7 100644
+index fcd8c64de9c7d3af4e9ce943c41dd58ced598014..6566ca75db19a863a54b69ededffc31a2ab3ea55 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -36,6 +36,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -80,7 +76,7 @@ index fcd8c64..6566ca7 100644
          }
        }
 diff --git a/src/org/jetbrains/java/decompiler/util/ExprentUtil.java b/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
-index 39ce7ff..cadf983 100644
+index 39ce7ff03344f2c0dc9a23e85663af003e312fc6..cadf983d316055b1c5f3d822b8f32d808d23cb6c 100644
 --- a/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
 +++ b/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
 @@ -17,9 +17,11 @@ package org.jetbrains.java.decompiler.util;
@@ -159,5 +155,5 @@ index 39ce7ff..cadf983 100644
              return true;
            }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

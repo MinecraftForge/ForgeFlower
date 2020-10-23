@@ -1,14 +1,11 @@
 From 089ba9f7ecc59787de6f28b51cbfc8ee077caf6c Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 2 Aug 2015 21:20:47 -0700
-Subject: [PATCH 013/122] Fixed last test, all tests pass.
+Subject: Fixed last test, all tests pass.
 
----
- .../TestClassSimpleBytecodeMapping.dec        | 24 +++++++++----------
- 1 file changed, 12 insertions(+), 12 deletions(-)
 
 diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
-index a48375a..1a2532f 100644
+index a48375ae4a8f7bbe75a5db9b94ff1b023043faa7..1a2532f0b736a3d1a2db4f7ba3645e48e419189f 100644
 --- a/testData/results/TestClassSimpleBytecodeMapping.dec
 +++ b/testData/results/TestClassSimpleBytecodeMapping.dec
 @@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
@@ -70,5 +67,5 @@ index a48375a..1a2532f 100644
  Not mapped:
  39
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

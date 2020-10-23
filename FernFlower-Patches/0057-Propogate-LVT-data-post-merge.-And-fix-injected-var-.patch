@@ -1,16 +1,12 @@
 From ec3558a5473045e647365b39187c259e1690042d Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 27 Sep 2015 21:17:47 -0700
-Subject: [PATCH 057/122] Propogate LVT data post merge. And fix injected var
- defs LVT association.
+Subject: Propogate LVT data post merge. And fix injected var defs LVT
+ association.
 
----
- .../modules/decompiler/exps/VarExprent.java   |   6 +-
- .../decompiler/vars/VarDefinitionHelper.java  | 155 +++++++++++++++---
- 2 files changed, 140 insertions(+), 21 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 3d5f03b..05a4f79 100644
+index 3d5f03b67d07b54d305c16e1dce4d10a93c5b26d..05a4f79e80f9ac6023ff66996e3fda0e9640db18 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -232,10 +232,14 @@ public class VarExprent extends Exprent {
@@ -30,7 +26,7 @@ index 3d5f03b..05a4f79 100644
    public String toString() {
      return lvt != null ? lvt.name :  "var_" + index + "_" + version;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 6d8ab12..cc5e5e4 100644
+index 6d8ab120af2261fa02eccfcced62fdcb5cec79ae..cc5e5e427125ab4673f9aef2a7b56de37f0ab113 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -133,7 +133,6 @@ public class VarDefinitionHelper {
@@ -269,5 +265,5 @@ index 6d8ab12..cc5e5e4 100644
      Map<Integer, VarVersionPair> this_vars = new HashMap<Integer, VarVersionPair>();
      if (parent.size() > 0)
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,15 +1,11 @@
 From 08cf2eed89abfcfed52fbcaac9ee4c4b172b465a Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 4 Oct 2015 18:14:24 -0700
-Subject: [PATCH 072/122] Fix issue where For loops would be enhanced to
- ForEach incorrectly.
+Subject: Fix issue where For loops would be enhanced to ForEach incorrectly.
 
----
- .../java/decompiler/modules/decompiler/MergeHelper.java    | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index f354f06..11c7c59 100644
+index f354f0684b4d16e8dcd08b2ce6db76210249b571..11c7c599d4413cb46b58906f4b7fdbe4a019e1f0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -501,10 +501,12 @@ public class MergeHelper {
@@ -37,5 +33,5 @@ index f354f06..11c7c59 100644
          funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[0].bytecode);
          funcRight.getLstOperands().get(0).addBytecodeOffsets(initExprents[1].bytecode);
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

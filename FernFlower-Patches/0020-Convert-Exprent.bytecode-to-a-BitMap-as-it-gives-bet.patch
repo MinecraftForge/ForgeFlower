@@ -1,35 +1,15 @@
 From 814dc4a3267ceceb892d6fa84de99f2311274400 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 6 Aug 2015 12:18:10 -0700
-Subject: [PATCH 020/122] Convert Exprent.bytecode to a BitMap, as it gives
- better speed and functionality. Added method to gather bytecode markers for
- every exporession. Allows us to get the bytecode offsets for an entire block
- of code.
+Subject: =?UTF-8?q?Convert=20Exprent.bytecode=20to=20a=20BitMap,=20as=20it?=
+ =?UTF-8?q?=20gives=20better=20speed=20and=20functionality.=0AAdded=20meth?=
+ =?UTF-8?q?od=20to=20gather=20bytecode=20markers=20for=20every=20exporessi?=
+ =?UTF-8?q?on.=20Allows=20us=20to=20get=20the=20bytecode=20offsets=20for?=
+ =?UTF-8?q?=20an=20entire=20block=20of=20code.?=
 
----
- .../collectors/BytecodeMappingTracer.java     |  6 ++--
- .../modules/decompiler/ExprProcessor.java     |  6 +++-
- .../decompiler/SimplifyExprentsHelper.java    | 27 ++++++++--------
- .../decompiler/exps/AnnotationExprent.java    |  7 ++++
- .../modules/decompiler/exps/ArrayExprent.java | 11 +++++--
- .../decompiler/exps/AssertExprent.java        |  7 ++++
- .../decompiler/exps/AssignmentExprent.java    | 12 +++++--
- .../modules/decompiler/exps/ConstExprent.java | 11 +++++--
- .../modules/decompiler/exps/ExitExprent.java  | 20 ++++++++----
- .../modules/decompiler/exps/Exprent.java      | 32 ++++++++++++++-----
- .../modules/decompiler/exps/FieldExprent.java | 24 ++++++++------
- .../decompiler/exps/FunctionExprent.java      | 22 ++++++++-----
- .../modules/decompiler/exps/IfExprent.java    | 10 ++++--
- .../decompiler/exps/InvocationExprent.java    | 10 ++++--
- .../decompiler/exps/MonitorExprent.java       | 10 ++++--
- .../modules/decompiler/exps/NewExprent.java   | 14 ++++++--
- .../decompiler/exps/SwitchExprent.java        | 20 ++++++++++--
- .../modules/decompiler/exps/VarExprent.java   | 18 +++++++----
- .../decompiler/stats/DummyExitStatement.java  | 11 +++----
- 19 files changed, 199 insertions(+), 79 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
-index e25cca2..f847784 100644
+index e25cca2cba4c642d1068d61555f53b51185c72e5..f84778424e5591c31809e1a50bce1263a1390f08 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
 @@ -55,10 +55,10 @@ public class BytecodeMappingTracer {
@@ -47,7 +27,7 @@ index e25cca2..f847784 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 205b187..f33e438 100644
+index 205b1876758155132600148f61f641b64e42369c..f33e438c8297887d41b7438402efe4974412265a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -336,7 +336,11 @@ public class ExprProcessor implements CodeConstants {
@@ -64,7 +44,7 @@ index 205b187..f33e438 100644
        switch (instr.opcode) {
          case opc_aconst_null:
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index ddf6865..106a904 100644
+index ddf68652e6f09ca7d333e1383406b9f49bb783d7..106a90493d2bb5a2c442caa64a63f69bb8999f85 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 @@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -153,7 +133,7 @@ index ddf6865..106a904 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-index 905bc21..0560ae6 100644
+index 905bc212fcb375c98f4ee8a7fefc7a20a1450664..0560ae60b9bde48d503f439461fa2f6cfdafc10a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 @@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -176,7 +156,7 @@ index 905bc21..0560ae6 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
-index 8f7269b..ebbcab0 100644
+index 8f7269b63e0329f39d43ab80e8d67dadd93c48e9..ebbcab0c33258846968279eccb49c9675d3e2974 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 @@ -23,8 +23,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -211,7 +191,7 @@ index 8f7269b..ebbcab0 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
-index af95d15..82305f3 100644
+index af95d15ac9eb41fc13c15b08397a0db55548792d..82305f3df4267a7a01511681530c9714bb9111d5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
 @@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -234,7 +214,7 @@ index af95d15..82305f3 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 95ebdc5..efc64b9 100644
+index 95ebdc5d1bd967c32eb4c7bd34e701de699afd1c..efc64b9d98005572eb9752e36d472f7a65358203 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -27,8 +27,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -272,7 +252,7 @@ index 95ebdc5..efc64b9 100644
    // getter and setter methods
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 5a751f9..312f6c8 100644
+index 5a751f91d28558268fc18f6f4630338c1e751f9b..312f6c8a51e96e8f1a8dc27b509716022e22cc39 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -48,15 +48,15 @@ public class ConstExprent extends Exprent {
@@ -307,7 +287,7 @@ index 5a751f9..312f6c8 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index 7b4a5ac..fd1491f 100644
+index 7b4a5ac4750ed627d1db5ae735eaa2acca5f3ac6..fd1491f3b31fc17716d715b8b2b76cf3b846bdc6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -31,8 +31,8 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
@@ -367,7 +347,7 @@ index 7b4a5ac..fd1491f 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 5f2cb56..db839fe 100644
+index 5f2cb56a85b9ac61141de1c17b457e5847eb8fff..db839fe5e35da590ce5ebae6cb4122f60e89219d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -16,6 +16,7 @@
@@ -433,7 +413,7 @@ index 5f2cb56..db839fe 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 4ac8123..fdc9cec 100644
+index 4ac8123ddc7cbef7771ea0a06c425193614bcd95..fdc9cec54252976b63964d039875e0229ff93172 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -34,8 +34,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -505,7 +485,7 @@ index 4ac8123..fdc9cec 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 48206a7..e8edbd5 100644
+index 48206a7b2cc49aa710eb4f8754a0d01e8e9d2924..e8edbd5f0cfa8c61b3af2a1b1b2256fbe6a7aa00 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -198,7 +198,7 @@ public class FunctionExprent extends Exprent {
@@ -580,7 +560,7 @@ index 48206a7..e8edbd5 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
-index 059270f..84ac9e7 100644
+index 059270fe5c7532cf7d30045cb30b02fc78954aa4..84ac9e7bcdd6b05fd1d39c12c34d6dfd281a4f64 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
 @@ -75,7 +75,7 @@ public class IfExprent extends Exprent {
@@ -613,7 +593,7 @@ index 059270f..84ac9e7 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 4e73f06..7cf83be 100644
+index 4e73f0649a7d85aa59756a3634bceae61e3d59fe..7cf83bedc432341a0af7ed0d895abdea919bee75 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -20,7 +20,6 @@ import java.util.BitSet;
@@ -648,7 +628,7 @@ index 4e73f06..7cf83be 100644
      return lstParameters;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
-index 0ece9aa..bd9207f 100644
+index 0ece9aa0fb30c42b9942c3a14bb280ee32f57a29..bd9207fe85915240d5626e2be88923fc08f042d1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
 @@ -20,8 +20,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -684,7 +664,7 @@ index 0ece9aa..bd9207f 100644
      return monType;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 51137cc..1e87201 100644
+index 51137cc3c2f5756e688d910ed405cccb935ab0d8..1e87201c8322b8c9d6db16a89ecab56fdb0df85d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -34,9 +34,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -728,7 +708,7 @@ index 51137cc..1e87201 100644
      return constructor;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
-index fd77112..c2065c1 100644
+index fd7711231a0dfa49697f2908852bea89a33ebeb9..c2065c1673f3a86cee9c2e707d328becb3d90100 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
 @@ -22,15 +22,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -773,7 +753,7 @@ index fd77112..c2065c1 100644
      return value;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 4436cb5..f071933 100644
+index 4436cb50105342836d5bf278477efd43bbafefde..f0719331904f4db44a7ff8b1db2ad6f80512b01f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -33,6 +33,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -835,7 +815,7 @@ index 4436cb5..f071933 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
-index ba82182..30a7a8f 100644
+index ba8218263a2b293825c4875f972c67d36baeba80..30a7a8ff1ba852dbe1b522c4b99e5efd638ac1da 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
 @@ -15,6 +15,7 @@
@@ -872,5 +852,5 @@ index ba82182..30a7a8f 100644
    }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,20 +1,11 @@
 From 280f466fb5135e0612b0afed08741a0925ee1936 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Fri, 2 Oct 2015 01:34:53 -0700
-Subject: [PATCH 063/122] Cleanup unwanted variables in synchronized headers.
+Subject: Cleanup unwanted variables in synchronized headers.
 
----
- .../main/rels/MethodProcessorRunnable.java    |  2 +
- .../modules/decompiler/MergeHelper.java       | 54 ++------------
- .../decompiler/SynchronizedHelper.java        | 51 +++++++++++++
- .../decompiler/vars/VarDefinitionHelper.java  |  6 ++
- .../java/decompiler/util/ExprentUtil.java     | 71 +++++++++++++++++++
- 5 files changed, 134 insertions(+), 50 deletions(-)
- create mode 100644 src/org/jetbrains/java/decompiler/modules/decompiler/SynchronizedHelper.java
- create mode 100644 src/org/jetbrains/java/decompiler/util/ExprentUtil.java
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 5844b93..a22d269 100644
+index 5844b931ca6c6f2634455d2d91c6eca0680bcc5b..a22d269e7e2609576be0c7fb3752ac0c710d3158 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -205,6 +205,8 @@ public class MethodProcessorRunnable implements Runnable {
@@ -27,7 +18,7 @@ index 5844b93..a22d269 100644
  
      // must be the last invocation, because it makes the statement structure inconsistent
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 5ba4dcd..5adf323 100644
+index 5ba4dcd0944696d200a8a5857d7afccc3737e5fb..5adf32354b34abd479184f162ea22d45a342a271 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
@@ -121,7 +112,7 @@ index 5ba4dcd..5adf323 100644
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SynchronizedHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SynchronizedHelper.java
 new file mode 100644
-index 0000000..371fc5a
+index 0000000000000000000000000000000000000000..371fc5aafff4dd8f7dc86bc476e97f8e199366b2
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SynchronizedHelper.java
 @@ -0,0 +1,51 @@
@@ -177,7 +168,7 @@ index 0000000..371fc5a
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 560328a..e294648 100644
+index 560328a405e5860dba08daf85f0e957a21fc91d1..e294648ca0e77864f3827b94bd6846440b139a30 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -635,6 +635,12 @@ public class VarDefinitionHelper {
@@ -195,7 +186,7 @@ index 560328a..e294648 100644
          }
 diff --git a/src/org/jetbrains/java/decompiler/util/ExprentUtil.java b/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
 new file mode 100644
-index 0000000..39ce7ff
+index 0000000000000000000000000000000000000000..39ce7ff03344f2c0dc9a23e85663af003e312fc6
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/ExprentUtil.java
 @@ -0,0 +1,71 @@
@@ -271,5 +262,5 @@ index 0000000..39ce7ff
 +  }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

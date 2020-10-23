@@ -1,15 +1,11 @@
 From ded50868b3d9d908540f9c895eca95f44bb0ce9f Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 17 Oct 2015 00:50:20 -0400
-Subject: [PATCH 093/122] Fix constants with trailing zeros and incorrect
- types.
+Subject: Fix constants with trailing zeros and incorrect types.
 
----
- .../modules/decompiler/exps/ConstExprent.java    | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 3398924..0fc4055 100644
+index 3398924fabb57daddb0f6b51daafdd266cc371b6..0fc40559457cfc425bced3a536b862a963a466e5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -182,16 +182,16 @@ public class ConstExprent extends Exprent {
@@ -55,5 +51,5 @@ index 3398924..0fc4055 100644
            }
            else if (Float.isNaN(fval)) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,15 +1,11 @@
 From 8ea51a091a3d0fa64dbf8fd39d70391c7b7d5f80 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 1 Oct 2015 18:04:09 -0700
-Subject: [PATCH 060/122] Fix variable defintions in IfStatement's headers
- having wrong scope.
+Subject: Fix variable defintions in IfStatement's headers having wrong scope.
 
----
- .../modules/decompiler/vars/VarDefinitionHelper.java         | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index cc5e5e4..560328a 100644
+index cc5e5e427125ab4673f9aef2a7b56de37f0ab113..560328a405e5860dba08daf85f0e957a21fc91d1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -531,7 +531,7 @@ public class VarDefinitionHelper {
@@ -32,5 +28,5 @@ index cc5e5e4..560328a 100644
              this_vars.putAll(leaked_n);
            }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

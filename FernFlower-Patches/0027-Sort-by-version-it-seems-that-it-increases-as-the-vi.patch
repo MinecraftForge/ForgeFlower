@@ -1,19 +1,16 @@
 From b75a7c5fc84e6da8582a01e6a772572eaf1dcdc4 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 8 Aug 2015 19:43:37 -0400
-Subject: [PATCH 027/122] Sort by version (it seems that it increases as the
- visitors visit the various methods), and use that to align versions with
- different instances of the same variable. Still some tweaks need to be made,
- but it's starting to look promising.
+Subject: =?UTF-8?q?Sort=20by=20version=20(it=20seems=20that=20it=20increas?=
+ =?UTF-8?q?es=20as=20the=20visitors=20visit=20the=20various=20methods),=20?=
+ =?UTF-8?q?and=20use=20that=20to=0Aalign=20versions=20with=20different=20i?=
+ =?UTF-8?q?nstances=20of=20the=20same=20variable.=20Still=20some=20tweaks?=
+ =?UTF-8?q?=20need=20to=20be=20made,=20but=0Ait's=20starting=20to=20look?=
+ =?UTF-8?q?=20promising.?=
 
----
- .../decompiler/vars/LocalVariableTable.java   | 11 +++----
- .../modules/decompiler/vars/VarProcessor.java | 29 +++++++++++++++----
- .../StructLocalVariableTableAttribute.java    |  5 ++--
- 3 files changed, 31 insertions(+), 14 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index 99025a5..e5fbec8 100644
+index 99025a511b670f1bf84493afb1ac43f3cd394600..e5fbec84cfe40111f8cb93154f99904bcef8d20a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -9,7 +9,6 @@ import java.util.Set;
@@ -61,7 +58,7 @@ index 99025a5..e5fbec8 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index a2a79f5..ccd1bd6 100644
+index a2a79f581baeb57597f8a69c9701b8c35ac4e2dc..ccd1bd64ac0c5e721806fc2b9b423561976c7fe9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -52,7 +52,7 @@ private LocalVariableTable lvt;
@@ -114,7 +111,7 @@ index a2a79f5..ccd1bd6 100644
        }
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 4b00061..a983b27 100644
+index 4b00061fcee269a40b24f80b6147d4940caa9db6..a983b2788c5ccb570539a28eca0acf4c627f0595 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -23,6 +23,7 @@ import org.jetbrains.java.decompiler.util.DataInputFullStream;
@@ -144,5 +141,5 @@ index 4b00061..a983b27 100644
    }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

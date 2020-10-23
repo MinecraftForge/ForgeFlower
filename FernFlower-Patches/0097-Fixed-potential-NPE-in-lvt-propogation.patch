@@ -1,14 +1,11 @@
 From 13dd6a29fe1620f34613b872263b0a1107409d93 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 19 Oct 2015 18:51:10 -0700
-Subject: [PATCH 097/122] Fixed potential NPE in lvt propogation.
+Subject: Fixed potential NPE in lvt propogation.
 
----
- .../modules/decompiler/vars/VarDefinitionHelper.java         | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 0427e3b..aee11f6 100644
+index 0427e3b329d4599d42ef5f8ac35fd84581c5f8c6..aee11f60aab5e1f790a607e78675ba23f774fb47 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -434,7 +434,10 @@ public class VarDefinitionHelper {
@@ -24,5 +21,5 @@ index 0427e3b..aee11f6 100644
      }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

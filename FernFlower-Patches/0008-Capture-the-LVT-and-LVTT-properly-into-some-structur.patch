@@ -1,19 +1,15 @@
 From f83b43ba0aaf6e5fb17d17a9fcaa2420ab8aa0ff Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 2 Aug 2015 14:07:52 -0400
-Subject: [PATCH 008/122] Capture the LVT and LVTT properly, into some
- structured data. Ends seem to be the way to index the variable table. Next
- up, we need to capture the block ends in the var parsing code, so we can then
- match up later.
+Subject: =?UTF-8?q?Capture=20the=20LVT=20and=20LVTT=20properly,=20into=20s?=
+ =?UTF-8?q?ome=20structured=20data.=20Ends=20seem=20to=20be=20the=20way=20?=
+ =?UTF-8?q?to=20index=20the=20variable=0Atable.=20Next=20up,=20we=20need?=
+ =?UTF-8?q?=20to=20capture=20the=20block=20ends=20in=20the=20var=20parsing?=
+ =?UTF-8?q?=20code,=20so=20we=20can=20then=20match=20up=20later.?=
 
----
- .../java/decompiler/struct/StructMember.java  |  4 +-
- .../struct/attr/StructGeneralAttribute.java   |  3 +-
- .../StructLocalVariableTableAttribute.java    | 77 ++++++++++++++++++-
- 3 files changed, 79 insertions(+), 5 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-index f681e19..724c0db 100644
+index f681e19604b34fdc130fe0b8ebfb697c07580f97..724c0db23d607d1e243f8cf278b0a61a9789e19d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
 @@ -57,9 +57,9 @@ public class StructMember {
@@ -29,7 +25,7 @@ index f681e19..724c0db 100644
          }
          else {
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java
-index dc0ebc6..87f5741 100644
+index dc0ebc6708a23899fff7c43a7df56ccf02954ec9..87f574193437cf322d002e8ff3120d245474fbcc 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java
 @@ -42,6 +42,7 @@ public class StructGeneralAttribute {
@@ -50,7 +46,7 @@ index dc0ebc6..87f5741 100644
      }
      else if (ATTRIBUTE_BOOTSTRAP_METHODS.equals(name)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index fceae35..04f534e 100644
+index fceae359d8fa763b162851a43284e5f13b6c13ee..04f534ed5482d8778826437dafd6979085a3fb65 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -19,9 +19,14 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -168,5 +164,5 @@ index fceae35..04f534e 100644
  
    public Map<Integer, String> getMapVarNames() {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

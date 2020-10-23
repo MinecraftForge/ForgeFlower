@@ -1,17 +1,11 @@
 From 7397a3a93f58c06def0180227486b7a23915b4b4 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 15 Oct 2015 00:15:50 -0700
-Subject: [PATCH 088/122] Enhance switches on enums.
+Subject: Enhance switches on enums.
 
----
- .../main/rels/MethodProcessorRunnable.java    |   2 +-
- .../main/rels/NestedClassProcessor.java       | 129 ++++++++++++++++++
- .../decompiler/stats/SwitchStatement.java     |  55 +++++++-
- .../java/decompiler/struct/StructClass.java   |   3 +
- 4 files changed, 186 insertions(+), 3 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 2e1668d..16d7788 100644
+index 2e1668de1af3414bfbed0bf72461688246303931..16d778867677249c16b38fcfbca16618b1fa4ac0 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -296,7 +296,7 @@ public class MethodProcessorRunnable implements Runnable {
@@ -24,7 +18,7 @@ index 2e1668d..16d7788 100644
      System.out.println();
      for (StatEdge edge : statement.getAllSuccessorEdges())
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 3378549..12653a4 100644
+index 33785497b358346846ce58824ce3c2f0aa2be815..12653a4836d4f864154310b6115369e943f36fd7 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -16,6 +16,7 @@
@@ -194,7 +188,7 @@ index 3378549..12653a4 100644
  
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 3e27201..f8eec64 100644
+index 3e272016903de00ee47c55fad62db4b0687a04b5..f8eec64ce7edbb2ff9e4d76c7d9e59c42060e57f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -24,10 +24,14 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -285,7 +279,7 @@ index 3e27201..f8eec64 100644
      SwitchExprent swexpr = (SwitchExprent)first.getExprents().remove(first.getExprents().size() - 1);
      swexpr.setCaseValues(caseValues);
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index c0683fc..ab0f118 100644
+index c0683fc0c33773d1f96a2eda2dbf6ca7c4e935c2..ab0f118debc0d7dee08f79a12c3558909e652482 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -30,6 +30,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -306,5 +300,5 @@ index c0683fc..ab0f118 100644
    private ConstantPool pool;
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

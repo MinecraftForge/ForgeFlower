@@ -1,22 +1,13 @@
 From 5d42ed490c525d168d6d2f9d727610aa6262237c Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 25 Aug 2015 12:05:24 -0700
-Subject: [PATCH 036/122] Add step to VarDefintionHelper that splits variables
- out as best it can. For now ForEach loops are forced to seperate variables.
- Also attempt to attach LVT information EVERY VarExprent in the method not
- just in head.
+Subject: Add step to VarDefintionHelper that splits variables out as best it
+ can. For now ForEach loops are forced to seperate variables. Also attempt to
+ attach LVT information EVERY VarExprent in the method not just in head.
 
----
- .../main/rels/MethodProcessorRunnable.java    |   2 +-
- .../modules/decompiler/exps/Exprent.java      |   1 -
- .../sforms/FlattenStatementsHelper.java       |   4 +-
- .../decompiler/vars/LocalVariableTable.java   |  64 ++++-
- .../decompiler/vars/VarDefinitionHelper.java  | 248 +++++++++++++++++-
- .../modules/decompiler/vars/VarProcessor.java |  11 +-
- 6 files changed, 304 insertions(+), 26 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 9542a80..54a77e1 100644
+index 9542a8025136f7416c2c806f52d5c990613604bc..54a77e19ac62d4a198f4943a19af1887c3843ab1 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -243,7 +243,7 @@ public class MethodProcessorRunnable implements Runnable {
@@ -29,7 +20,7 @@ index 9542a80..54a77e1 100644
        values.or(((DummyExitStatement)st).bytecode);
      if (st.getExprents() != null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index db839fe..ca9c1ed 100644
+index db839fe5e35da590ce5ebae6cb4122f60e89219d..ca9c1ed566e423e9169e2b7f72bfec128010f68f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -41,7 +32,7 @@ index db839fe..ca9c1ed 100644
  import java.util.Comparator;
  import java.util.HashSet;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index d88480e..abc0f67 100644
+index d88480ef7133b0c27ff18518599127ecf3e54df6..abc0f670715204a5b8e1f6f168d136fa65292b8d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -227,7 +227,9 @@ public class FlattenStatementsHelper {
@@ -56,7 +47,7 @@ index d88480e..abc0f67 100644
  
                  DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index 270def3..cd56bac 100644
+index 270def3a9ba906e3cce7df1c8feed1b9d9fd6b51..cd56bacb1d0d337f3d33b0eb7b87779cefd3d347 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -1,11 +1,16 @@
@@ -151,7 +142,7 @@ index 270def3..cd56bac 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 53201ed..1e1a4a7 100644
+index 53201ede8047b09f76fd8ebfee3eeb9d2149327c..1e1a4a7987545d00460cd7e7e17c3bcde6a75df1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -17,7 +17,9 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -470,7 +461,7 @@ index 53201ed..1e1a4a7 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 0a619d0..a8ad019 100644
+index 0a619d023d4413f969517f8a60ef816be1173fb7..a8ad01909d5ccd56cdadbd7ecab087a63e1e3d09 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -160,8 +160,8 @@ public class VarProcessor {
@@ -497,5 +488,5 @@ index 0a619d0..a8ad019 100644
 +  }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,22 +1,11 @@
 From 38305edba97b6b5ae23d451ffb9d5dee9dc4bcf4 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Mon, 14 Sep 2015 00:42:17 -0400
-Subject: [PATCH 050/122] Types are merged properly now
+Subject: Types are merged properly now
 
----
- .../modules/decompiler/exps/VarExprent.java       |   3 +++
- .../modules/decompiler/vars/LVTVariable.java      |   6 ++++++
- .../decompiler/vars/VarDefinitionHelper.java      |  11 +++++++++--
- .../modules/decompiler/vars/VarProcessor.java     |   4 ++++
- .../decompiler/vars/VarVersionsProcessor.java     |   3 +++
- testData/classes/pkg/TestVarType.class            | Bin 0 -> 375 bytes
- testData/src/pkg/TestVarType.java                 |   9 +++++++++
- 7 files changed, 34 insertions(+), 2 deletions(-)
- create mode 100644 testData/classes/pkg/TestVarType.class
- create mode 100644 testData/src/pkg/TestVarType.java
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 6c973af..3d5f03b 100644
+index 6c973af9d01a92e1977022aa28324a0fcbbcf5be..3d5f03b67d07b54d305c16e1dce4d10a93c5b26d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -231,6 +231,9 @@ public class VarExprent extends Exprent {
@@ -30,7 +19,7 @@ index 6c973af..3d5f03b 100644
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
-index 59dee69..209d3e0 100644
+index 59dee69e92d414371f9212d6c1b05a042ffadd92..209d3e081f58e2d54b231dbe2c90fe11c319f66c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 @@ -5,6 +5,8 @@ import java.util.HashSet;
@@ -53,7 +42,7 @@ index 59dee69..209d3e0 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 56061fe..7abcec8 100644
+index 56061fe881f6c9f0e78a27ac62613136fd0277c3..7abcec8a356fa92f2bc18bf2dc24fc3defac3a38 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -24,11 +24,13 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
@@ -108,7 +97,7 @@ index 56061fe..7abcec8 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index a8ad019..691797e 100644
+index a8ad01909d5ccd56cdadbd7ecab087a63e1e3d09..691797e5bb69b95b1883be1c52f0822823f4a452 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -176,4 +176,8 @@ public class VarProcessor {
@@ -121,7 +110,7 @@ index a8ad019..691797e 100644
 +}
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index d56c778..d201157 100644
+index d56c778820770b52016900cef6d1753ba5f1d814..d201157f241a77410bbd495ed43c5a54540ee59c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -321,4 +321,7 @@ public class VarVersionsProcessor {
@@ -149,7 +138,7 @@ HcmV?d00001
 
 diff --git a/testData/src/pkg/TestVarType.java b/testData/src/pkg/TestVarType.java
 new file mode 100644
-index 0000000..1847aa2
+index 0000000000000000000000000000000000000000..1847aa2fba0c10776a33ee85c2bb0be6025bfd2d
 --- /dev/null
 +++ b/testData/src/pkg/TestVarType.java
 @@ -0,0 +1,9 @@
@@ -163,5 +152,5 @@ index 0000000..1847aa2
 +    }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

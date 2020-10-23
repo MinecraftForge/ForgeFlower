@@ -1,16 +1,11 @@
 From f6acdf7dd26df4eebb27b2561f62f44e643c5f89 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Mon, 28 Sep 2015 01:26:23 -0400
-Subject: [PATCH 058/122] Fix types to use LVT first, and fallback to other
- type bounds
+Subject: Fix types to use LVT first, and fallback to other type bounds
 
----
- .../modules/decompiler/exps/VarExprent.java       | 15 ++++++++++++++-
- .../modules/decompiler/vars/VarTypeProcessor.java |  7 ++++++-
- 2 files changed, 20 insertions(+), 2 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 05a4f79..933b046 100644
+index 05a4f79e80f9ac6023ff66996e3fda0e9640db18..933b0467478a4315a6d8dbdb7ae067f57046a8bc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -55,7 +50,7 @@ index 05a4f79..933b046 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
-index d6c746b..4a2cb8f 100644
+index d6c746b405f2655725b87e719f885c916818c7e3..4a2cb8f56fd0133cea5c1a7fe52abcbaa8345115 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 @@ -108,7 +108,12 @@ public class VarTypeProcessor {
@@ -73,5 +68,5 @@ index d6c746b..4a2cb8f 100644
            else if (expr.type == Exprent.EXPRENT_CONST) {
              ConstExprent constExpr = (ConstExprent)expr;
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

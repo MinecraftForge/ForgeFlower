@@ -1,14 +1,11 @@
 From f023a4410692d9e353b0ddd61d3072df16fdd18a Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 27 Aug 2015 15:41:47 -0400
-Subject: [PATCH 038/122] Fix inverted null test
+Subject: Fix inverted null test
 
----
- .../decompiler/modules/decompiler/vars/VarDefinitionHelper.java | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 1e1a4a7..d24813f 100644
+index 1e1a4a7987545d00460cd7e7e17c3bcde6a75df1..d24813f0d9962ed8b0d6efacd251c175721e33d0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -556,7 +556,7 @@ public class VarDefinitionHelper {
@@ -21,5 +18,5 @@ index 1e1a4a7..d24813f 100644
      }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

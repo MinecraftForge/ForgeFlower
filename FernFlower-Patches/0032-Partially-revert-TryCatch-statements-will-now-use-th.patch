@@ -1,20 +1,14 @@
 From 52c5082cd65ed6436412b97c742edf08878890f8 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 13 Aug 2015 21:45:39 -0700
-Subject: [PATCH 032/122] Partially revert "TryCatch statements will now use
- the correct variable index for their exception variable." (rolled back catch
- changes)
+Subject: =?UTF-8?q?Partially=20revert=20"TryCatch=20statements=20will=20no?=
+ =?UTF-8?q?w=20use=20the=20correct=20variable=20index=20for=20their=20exce?=
+ =?UTF-8?q?ption=20variable."=0A(rolled=20back=20catch=20changes)?=
 
 This reverts commit 5f699acc70d8e40f758737ae88aeddecc07edc8c.
----
- .../modules/decompiler/stats/CatchAllStatement.java  | 11 +----------
- .../modules/decompiler/stats/CatchStatement.java     | 10 +---------
- testData/results/TestClassSimpleBytecodeMapping.dec  |  4 ++--
- testData/results/TestTryCatchFinally.dec             | 12 ++++++------
- 4 files changed, 10 insertions(+), 27 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index d5b432c..812ed10 100644
+index d5b432c4fe852fff994e03fed0398da7e22997bd..812ed10b00ba6224ef947be953bc8d88bd72e2f7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 @@ -16,7 +16,6 @@
@@ -43,7 +37,7 @@ index d5b432c..812ed10 100644
                              (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index fda5ed3..8d56042 100644
+index fda5ed373d94f875ba6450d361bda722086e03d0..8d56042e3667eb6843cdea18d01536f90ea59e50 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -60,15 +60,7 @@ public class CatchStatement extends Statement {
@@ -64,7 +58,7 @@ index fda5ed3..8d56042 100644
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
                                  (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
 diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
-index 4a2f333..1a2532f 100644
+index 4a2f333d257cb2a56dddd0b5ae2887537b01bd86..1a2532f0b736a3d1a2db4f7ba3645e48e419189f 100644
 --- a/testData/results/TestClassSimpleBytecodeMapping.dec
 +++ b/testData/results/TestClassSimpleBytecodeMapping.dec
 @@ -21,8 +21,8 @@ public class TestClassSimpleBytecodeMapping {
@@ -79,7 +73,7 @@ index 4a2f333..1a2532f 100644
           System.out.println("Finally");// 38
        }
 diff --git a/testData/results/TestTryCatchFinally.dec b/testData/results/TestTryCatchFinally.dec
-index fbe5782..772a76e 100644
+index fbe5782266c4dbcdb4d5558b3173625228f71038..772a76e8a850ff853ef51acb29d82a1ba95dfee6 100644
 --- a/testData/results/TestTryCatchFinally.dec
 +++ b/testData/results/TestTryCatchFinally.dec
 @@ -4,10 +4,10 @@ public class TestTryCatchFinally {
@@ -111,5 +105,5 @@ index fbe5782..772a76e 100644
           System.out.println("Finally");// 55
        }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

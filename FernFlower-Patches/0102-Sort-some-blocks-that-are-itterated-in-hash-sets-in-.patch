@@ -1,15 +1,12 @@
 From 68d13c5f3063b87c73c892f53f2adef199dba16d Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 20 Oct 2015 16:37:32 -0700
-Subject: [PATCH 102/122] Sort some blocks that are itterated in hash sets in
- Finally Processor. SHOULD stabelize SOME of the finally's in decompiles.
+Subject: Sort some blocks that are itterated in hash sets in Finally
+ Processor. SHOULD stabelize SOME of the finally's in decompiles.
 
----
- .../modules/decompiler/FinallyProcessor.java  | 19 +++++++++++++++++--
- 1 file changed, 17 insertions(+), 2 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 9f1c11b..ee8d4ce 100644
+index 9f1c11b318b128a3bf8dc17e3a6d343ef07800d7..ee8d4cee6cbb439907fb9d9c3f7f61a1b068b70f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 @@ -579,10 +579,17 @@ public class FinallyProcessor {
@@ -49,5 +46,5 @@ index 9f1c11b..ee8d4ce 100644
  
        if (entry.getValue()) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

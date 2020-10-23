@@ -1,18 +1,11 @@
 From 4c12c7a453ab63d9b966d8247ed88e4873fe7d29 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 2 Aug 2015 19:22:15 -0700
-Subject: [PATCH 010/122] Fix tests for inner class sorting.
+Subject: Fix tests for inner class sorting.
 
----
- testData/results/TestAnonymousClass.dec   | 60 ++++++++++-----------
- testData/results/TestInnerLocal.dec       | 50 +++++++++---------
- testData/results/TestInnerLocalPkg.dec    | 50 +++++++++---------
- testData/results/TestInnerSignature.dec   | 64 +++++++++++------------
- testData/results/TestMethodParameters.dec | 48 ++++++++---------
- 5 files changed, 136 insertions(+), 136 deletions(-)
 
 diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
-index 75d1df2..fdce110 100644
+index 75d1df239bb56bc0a4be42a1310957721146ece2..fdce11007ba778eaaeb4081e1a11041b2573feca 100644
 --- a/testData/results/TestAnonymousClass.dec
 +++ b/testData/results/TestAnonymousClass.dec
 @@ -67,15 +67,8 @@ public abstract class TestAnonymousClass {
@@ -116,7 +109,7 @@ index 75d1df2..fdce110 100644
  18
  104
 diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
-index 6ca3a7e..e5aba7d 100644
+index 6ca3a7e1053087d91543ce588eb81e19c9f3432d..e5aba7da20b0b57a4c796a36c24960f38c6eac31 100644
 --- a/testData/results/TestInnerLocal.dec
 +++ b/testData/results/TestInnerLocal.dec
 @@ -28,6 +28,14 @@ public class TestInnerLocal {
@@ -205,7 +198,7 @@ index 6ca3a7e..e5aba7d 100644
  21
  33
 diff --git a/testData/results/TestInnerLocalPkg.dec b/testData/results/TestInnerLocalPkg.dec
-index 7cafa41..7ddb0ce 100644
+index 7cafa415f9b6212b593d0c0940cc16c277cf5e2f..7ddb0ce6ad8adf326a51e145f419e23eed8779dd 100644
 --- a/testData/results/TestInnerLocalPkg.dec
 +++ b/testData/results/TestInnerLocalPkg.dec
 @@ -30,6 +30,14 @@ public class TestInnerLocalPkg {
@@ -294,7 +287,7 @@ index 7cafa41..7ddb0ce 100644
  23
  35
 diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
-index 3087a40..406e1f4 100644
+index 3087a40dc63251ee1444ef4924050413f39221d5..406e1f41d8f0a084a986f683bf7ecb3b44c37429 100644
 --- a/testData/results/TestInnerSignature.dec
 +++ b/testData/results/TestInnerSignature.dec
 @@ -9,18 +9,6 @@ public class TestInnerSignature<A, B, C> {
@@ -393,7 +386,7 @@ index 3087a40..406e1f4 100644
  22
  33
 diff --git a/testData/results/TestMethodParameters.dec b/testData/results/TestMethodParameters.dec
-index 21f0f12..af7ce86 100644
+index 21f0f129d1bc260e2dbc7ce77f07ece57711bf75..af7ce865f5d946980010ee02c3e5be384a041064 100644
 --- a/testData/results/TestMethodParameters.dec
 +++ b/testData/results/TestMethodParameters.dec
 @@ -21,6 +21,14 @@ public class TestMethodParameters {
@@ -482,5 +475,5 @@ index 21f0f12..af7ce86 100644
  37 <-> 19
  39 <-> 22
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

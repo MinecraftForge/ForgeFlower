@@ -1,27 +1,12 @@
 From 143b1e688e6e73e0f54be08e2c381c740c75fd13 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 13 Aug 2015 16:03:24 -0700
-Subject: [PATCH 030/122] Add enhanced ForEach loop detection and re-introduce
- the DotExporter for debugging.
+Subject: Add enhanced ForEach loop detection and re-introduce the DotExporter
+ for debugging.
 
----
- .../decompiler/main/rels/ClassWrapper.java    |   1 -
- .../main/rels/NestedClassProcessor.java       |   2 +
- .../modules/decompiler/MergeHelper.java       | 210 +++++++++++++++-
- .../modules/decompiler/exps/VarExprent.java   |   5 +
- .../sforms/FlattenStatementsHelper.java       |   7 +-
- .../sforms/SSAConstructorSparseEx.java        |  17 +-
- .../sforms/SSAUConstructorSparseEx.java       |  16 +-
- .../modules/decompiler/stats/DoStatement.java |  12 +
- .../decompiler/vars/VarDefinitionHelper.java  |  10 +
- .../modules/decompiler/vars/VarProcessor.java |   2 +-
- .../decompiler/vars/VarVersionsProcessor.java |   2 +
- .../java/decompiler/util/DotExporter.java     | 238 ++++++++++++++++++
- 12 files changed, 498 insertions(+), 24 deletions(-)
- create mode 100644 src/org/jetbrains/java/decompiler/util/DotExporter.java
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index 5a35cc8..01b9292 100644
+index 5a35cc8f05f06ca0e9726ff830eccff46da99b6b..01b92922b005d29cdc66cbf1c55e087ff1b1e205 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -176,7 +176,6 @@ public class ClassWrapper {
@@ -33,7 +18,7 @@ index 5a35cc8..01b9292 100644
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 9aedf22..c6eda1b 100644
+index 9aedf22af1f60b3e17752769462aee91cd9daeb0..c6eda1b630480cdec964a3571fc44e1c90626b24 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -301,6 +301,8 @@ public class NestedClassProcessor {
@@ -46,7 +31,7 @@ index 9aedf22..c6eda1b 100644
              public int processExprent(Exprent exprent) {
                List<Exprent> lst = exprent.getAllExprents(true);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 71d3d79..d994c26 100644
+index 71d3d7991287bcfc163fb0a5229e8f2595a20dc3..d994c26c65b45e18e54622865e3bc454b22feb0a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -18,8 +18,13 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -301,7 +286,7 @@ index 71d3d79..d994c26 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index f071933..969a03e 100644
+index f0719331904f4db44a7ff8b1db2ad6f80512b01f..969a03e6b1c096f6efbfc5a761459db61eee85f0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -217,4 +217,9 @@ public class VarExprent extends Exprent {
@@ -315,7 +300,7 @@ index f071933..969a03e 100644
 +
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index 971ace5..d88480e 100644
+index 971ace503b1289a07195289a8e951ae192d9123a..d88480ef7133b0c27ff18518599127ecf3e54df6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -16,8 +16,12 @@
@@ -349,7 +334,7 @@ index 971ace5..d88480e 100644
  
                  DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 76a973f..7f4118c 100644
+index 76a973f9d5813db6c4422b588ec910662dc634a2..7f4118cd58c31d58c3715e67bbe2ad8f227da8b8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -59,6 +59,7 @@ public class SSAConstructorSparseEx {
@@ -408,7 +393,7 @@ index 76a973f..7f4118c 100644
      return startVars;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 95cefcf..9ba8195 100644
+index 95cefcfeef4cbbd2c6e863ae31efd74ee48cd724..9ba8195cd90a7d7c78fca7fa28cf7370d319768c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -88,7 +88,9 @@ public class SSAUConstructorSparseEx {
@@ -455,7 +440,7 @@ index 95cefcf..9ba8195 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index ef5ea76..8359284 100644
+index ef5ea764d6e5d7d6372c21593613ba2b1f98d108..8359284281d3c3e02c15ed407ab4dfacf9eae478 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -499,7 +484,7 @@ index ef5ea76..8359284 100644
  
      lst.add(first);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 23b1c5e..aa2ef6e 100644
+index 23b1c5ef242202d74775a5588a3fbbce9670fafa..aa2ef6ef9701257f03fcfec1cacee9b03d24bc84 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -154,6 +154,15 @@ public class VarDefinitionHelper {
@@ -527,7 +512,7 @@ index 23b1c5e..aa2ef6e 100644
                currVars.add(dost.getConditionExprent());
              }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index ef07c6b..0f530f9 100644
+index ef07c6bc838bb597d27598351b545343e8a725c5..0f530f92a5ccf150bc7640f3fdcd41f5cb9a4582 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -31,7 +31,7 @@ public class VarProcessor {
@@ -540,7 +525,7 @@ index ef07c6b..0f530f9 100644
    public void setVarVersions(RootStatement root) {
      Map<Integer, VarVersionPair> mapOriginalVarIndices = null;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index eae4cba..cb37d4d 100644
+index eae4cbac7b5074685e16cb6738434e1124528d57..cb37d4d220ee2f513c9c3458cda95c933d1ea267 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -46,6 +46,8 @@ public class VarVersionsProcessor {
@@ -554,7 +539,7 @@ index eae4cba..cb37d4d 100644
      typeProcessor = new VarTypeProcessor();
 diff --git a/src/org/jetbrains/java/decompiler/util/DotExporter.java b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 new file mode 100644
-index 0000000..0d41718
+index 0000000000000000000000000000000000000000..0d417185f4cc38e8c9804120a31c7cbc38e0d2de
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 @@ -0,0 +1,238 @@
@@ -798,5 +783,5 @@ index 0000000..0d41718
 +}
 \ No newline at end of file
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,15 +1,11 @@
 From f373923f5a6d05f0c6d2f42ad4a8d00af6fefd1c Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 21:20:43 -0700
-Subject: [PATCH 018/122] No Synthetic classes allowed in parameters -.-
+Subject: No Synthetic classes allowed in parameters -.-
 
----
- .../jetbrains/java/decompiler/main/InitializerProcessor.java    | 2 +-
- .../java/decompiler/modules/decompiler/exps/NewExprent.java     | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 85d580d..0438fd4 100644
+index 85d580d6ced6b14889453ab92689b13b1986da01..0438fd435d70c34265d4a8d5a86dd58a9daea2f3 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -349,7 +349,7 @@ public class InitializerProcessor {
@@ -22,7 +18,7 @@ index 85d580d..0438fd4 100644
                wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));
              }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 0297a55..51137cc 100644
+index 0297a55fc16eb3eddc0e458bfa49325f563fd613..51137cc3c2f5756e688d910ed405cccb935ab0d8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -327,7 +327,7 @@ public class NewExprent extends Exprent {
@@ -35,5 +31,5 @@ index 0297a55..51137cc 100644
                    }
                  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

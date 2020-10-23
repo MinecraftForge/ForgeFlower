@@ -1,16 +1,11 @@
 From 1cfbf4d63df1d352d611683366d7ec94b25951df Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Mon, 23 Nov 2015 14:01:47 -0500
-Subject: [PATCH 119/122] Try to release resources *after* we're done, not
- before we've started
+Subject: Try to release resources *after* we're done, not before we've started
 
----
- src/org/jetbrains/java/decompiler/main/ClassesProcessor.java | 3 +++
- src/org/jetbrains/java/decompiler/struct/StructClass.java    | 3 ---
- 2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index f22baa0..5feaf47 100644
+index f22baa00bfcb99aa8e05ee323fdecacdf8cf177a..5feaf475b6e1100d40a907d1b42bb602f1db7984 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -354,6 +354,9 @@ public class ClassesProcessor {
@@ -24,7 +19,7 @@ index f22baa0..5feaf47 100644
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 7848606..ab0f118 100644
+index 784860620c1c07884c28ac26d431396960312f19..ab0f118debc0d7dee08f79a12c3558909e652482 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -147,9 +147,6 @@ public class StructClass extends StructMember {
@@ -38,5 +33,5 @@ index 7848606..ab0f118 100644
  
    public ConstantPool getPool() {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

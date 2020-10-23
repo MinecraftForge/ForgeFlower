@@ -1,28 +1,12 @@
 From 676f9ba6584df07224d713698aca89eae71b44e4 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Fri, 9 Oct 2015 13:29:20 -0700
-Subject: [PATCH 076/122] Rework GenericType to be subclass of VarType and
- contain all data needed to be treated as such.
+Subject: Rework GenericType to be subclass of VarType and contain all data
+ needed to be treated as such.
 
----
- .../java/decompiler/main/ClassWriter.java     | 148 ++++---------
- .../modules/decompiler/ExprProcessor.java     |   7 +-
- .../modules/decompiler/exps/ExitExprent.java  |   6 +-
- .../modules/decompiler/exps/NewExprent.java   |  20 +-
- .../modules/decompiler/exps/VarExprent.java   |   2 +-
- .../java/decompiler/struct/StructClass.java   |  21 ++
- .../java/decompiler/struct/StructField.java   |  21 ++
- .../java/decompiler/struct/StructMethod.java  |  18 +-
- .../java/decompiler/struct/gen/VarType.java   |  15 +-
- .../gen/generics/GenericClassDescriptor.java  |   8 +-
- .../gen/generics/GenericFieldDescriptor.java  |   4 +-
- .../struct/gen/generics/GenericMain.java      |  82 ++-----
- .../gen/generics/GenericMethodDescriptor.java |  10 +-
- .../struct/gen/generics/GenericType.java      | 204 ++++++++++++------
- 14 files changed, 288 insertions(+), 278 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 404265f..4ec7fe9 100644
+index 404265fb49a5f2cd599af38dafb8b1d0551105c8..4ec7fe9d7d34fe35fcd379d608a102d8f40e1734 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -342,13 +342,7 @@ public class ClassWriter {
@@ -260,7 +244,7 @@ index 404265f..4ec7fe9 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 1abd093..162d9cb 100644
+index 1abd0934cada3c90b1ee0d24ffbf0fa5e0d1fad9..162d9cb6953a6501771750e82f7de0a6b855c75c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -730,9 +730,12 @@ public class ExprProcessor implements CodeConstants {
@@ -279,7 +263,7 @@ index 1abd093..162d9cb 100644
  
        String ret = buildJavaClassName(type.value);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index bbf1458..3b5f0ba 100644
+index bbf14584e481d48a7feb9b5bb324efb47684c9f5..3b5f0babb1c13152d2935024c07e924676935fae 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -26,11 +26,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -305,7 +289,7 @@ index bbf1458..3b5f0ba 100644
          buffer.append(" ");
          ExprProcessor.getCastedExprent(value, ret, buffer, indent, false, force, tracer);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 1e87201..56e6771 100644
+index 1e87201c8322b8c9d6db16a89ecab56fdb0df85d..56e67715de8e9fa7c7bf7e341e50d37b0b6b1382 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -238,19 +238,17 @@ public class NewExprent extends Exprent {
@@ -338,7 +322,7 @@ index 1e87201..56e6771 100644
  
          if (enclosing != null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index c85d889..4784e03 100644
+index c85d889d96073327a5ea08a9d986621dd8792e26..4784e030332e1ea0ce87a4bfa69432cfa0906b73 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -111,7 +111,7 @@ public class VarExprent extends Exprent {
@@ -351,7 +335,7 @@ index c85d889..4784e03 100644
          else if (lvt != null) {
            buffer.append(ExprProcessor.getCastTypeName(lvt.getVarType())).append(" ");
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index cb24ff6..c0683fc 100644
+index cb24ff65db631feeb2206ddf0fe18244eabdc788..c0683fc0c33773d1f96a2eda2dbf6ca7c4e935c2 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -16,8 +16,14 @@
@@ -397,7 +381,7 @@ index cb24ff6..c0683fc 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructField.java b/src/org/jetbrains/java/decompiler/struct/StructField.java
-index 796d77f..cde19f1 100644
+index 796d77f1c9a3f78740e1a536eac4eddd2f7ed527..cde19f1efeb7bd771f2c3d8c54b88114ae187f31 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructField.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructField.java
 @@ -15,7 +15,13 @@
@@ -442,7 +426,7 @@ index 796d77f..cde19f1 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 2b5249f..8f0da2b 100644
+index 2b5249f59d5a5e4bf43c2f8515adcaa31df88813..8f0da2b8eeed9428133834dbf4bd8be3f6e38ee5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -16,8 +16,13 @@
@@ -492,7 +476,7 @@ index 2b5249f..8f0da2b 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index 45fd289..1b0df9d 100644
+index 45fd2896cf946747b4a04e47ec54d99eae900d82..1b0df9d2e710cb6d1bee94eb1dddfe2c06135941 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -47,7 +47,6 @@ public class VarType {  // TODO: optimize switch
@@ -550,7 +534,7 @@ index 45fd289..1b0df9d 100644
    public static VarType getCommonMinType(VarType type1, VarType type2) {
      if (type1.type == CodeConstants.TYPE_BOOLEAN && type2.type == CodeConstants.TYPE_BOOLEAN) { // special case booleans
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java
-index 2ff2954..9418bb8 100644
+index 2ff295461e5234ad5877ed87f77046cc84ae5dcc..9418bb890763d0da30a2af93770f2d4e3be813b1 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericClassDescriptor.java
 @@ -18,13 +18,15 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
@@ -573,7 +557,7 @@ index 2ff2954..9418bb8 100644
 +  public final List<List<VarType>> fbounds = new ArrayList<List<VarType>>();
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericFieldDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericFieldDescriptor.java
-index 598d17b..9857f60 100644
+index 598d17bef2d00d938146dc75fa296c54848e31bf..9857f608088d254188a58b92857e486e8b1026bc 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericFieldDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericFieldDescriptor.java
 @@ -15,7 +15,9 @@
@@ -588,7 +572,7 @@ index 598d17b..9857f60 100644
 +  public VarType type;
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
-index 0a3f9d3..cffd008 100644
+index 0a3f9d33c9e6649af3520c4b99bbd2fcb278642b..cffd0089a659148d803bf18364de4e22c487f268 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 @@ -18,6 +18,8 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
@@ -746,7 +730,7 @@ index 0a3f9d3..cffd008 100644
 -  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java
-index 7ef9399..5c2ff05 100644
+index 7ef93995cb08d8bc8f88603c16907740a6b09b57..5c2ff051baebf27af879a6e01a4bd855989e9bda 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java
 @@ -18,15 +18,17 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
@@ -772,7 +756,7 @@ index 7ef9399..5c2ff05 100644
 +  public final List<VarType> exceptions = new ArrayList<VarType>();
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index 9305bf9..c45d47f 100644
+index 9305bf93cf68b9f87b6d765b25494bcb2813c2aa..c45d47f7e7efbd28e5bbddb02441299306518733 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -16,38 +16,43 @@
@@ -1064,5 +1048,5 @@ index 9305bf9..c45d47f 100644
    }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

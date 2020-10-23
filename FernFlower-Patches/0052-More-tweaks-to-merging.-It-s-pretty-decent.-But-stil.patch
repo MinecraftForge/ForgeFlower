@@ -1,15 +1,12 @@
 From 8ac9ea89c0f38c0fd16568424e3ae274f709ca5f Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 17 Sep 2015 17:13:17 -0400
-Subject: [PATCH 052/122] More tweaks to merging. It's pretty decent. But still
- no where near good enough.
+Subject: More tweaks to merging. It's pretty decent. But still no where near
+ good enough.
 
----
- .../decompiler/vars/VarDefinitionHelper.java  | 21 +++++++++++++++----
- 1 file changed, 17 insertions(+), 4 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 8c42c0c..ca27e47 100644
+index 8c42c0c192cd73d7aef3632e22eaa74a3fff20e1..ca27e4718c556a478242a60df896f6f61db6e915 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -550,10 +550,18 @@ public class VarDefinitionHelper {
@@ -48,5 +45,5 @@ index 8c42c0c..ca27e47 100644
        }
      }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

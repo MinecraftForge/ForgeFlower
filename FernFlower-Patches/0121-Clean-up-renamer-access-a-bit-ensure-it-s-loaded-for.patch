@@ -1,18 +1,11 @@
 From add9bf560f6db5cea287c95b2ee13575ba15c8f3 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Mon, 23 Nov 2015 14:56:19 -0500
-Subject: [PATCH 121/122] Clean up renamer access a bit- ensure it's loaded for
- inner classes
+Subject: Clean up renamer access a bit- ensure it's loaded for inner classes
 
----
- .../java/decompiler/main/ClassWriter.java     |  2 +-
- .../decompiler/main/ClassesProcessor.java     |  2 +-
- .../decompiler/vars/VarDefinitionHelper.java  |  4 ++--
- .../java/decompiler/struct/StructMethod.java  | 19 +++++++++++++++++--
- 4 files changed, 21 insertions(+), 6 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 25d01e3..b90f2ec 100644
+index 25d01e38f0c006411e0a6c5c053b16d188b0c9a1..b90f2ec58cc54cdd9b72257824ec6ceaefbc536e 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -731,7 +731,7 @@ public class ClassWriter {
@@ -25,7 +18,7 @@ index 25d01e3..b90f2ec 100644
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
  
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 5feaf47..e0fdaac 100644
+index 5feaf475b6e1100d40a907d1b42bb602f1db7984..e0fdaacc5d6f16c5eea148540b2c90758779deae 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -355,7 +355,7 @@ public class ClassesProcessor {
@@ -38,7 +31,7 @@ index 5feaf47..e0fdaac 100644
  
      for (ClassNode nd : node.nested) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index de4dbdc..fcd8c64 100644
+index de4dbdc7b84cc6bcb95faa3ba05e6e2290922cf5..fcd8c64de9c7d3af4e9ce943c41dd58ced598014 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -452,7 +452,7 @@ public class VarDefinitionHelper {
@@ -60,7 +53,7 @@ index de4dbdc..fcd8c64 100644
          }
          return 0;
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 77fd181..d7ede2e 100644
+index 77fd181a17eb566fa0f0330c0c21fb08f787922f..d7ede2e3ab1f542a7223cc79e2f139d29c29cec4 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -61,7 +61,7 @@ public class StructMethod extends StructMember {
@@ -106,5 +99,5 @@ index 77fd181..d7ede2e 100644
 +  }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,18 +1,11 @@
 From e083cb151d05afd2e06431fb24443e381c03b361 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Mon, 5 Oct 2015 00:12:38 -0400
-Subject: [PATCH 074/122] Return generic typevar casting support
+Subject: Return generic typevar casting support
 
----
- .../jetbrains/java/decompiler/main/ClassWriter.java  |  5 ++++-
- .../decompiler/modules/decompiler/ExprProcessor.java |  7 +++----
- .../modules/decompiler/exps/ExitExprent.java         | 12 +++++++++++-
- .../java/decompiler/struct/gen/MethodDescriptor.java |  5 +++++
- .../java/decompiler/struct/gen/VarType.java          |  7 ++++++-
- 5 files changed, 29 insertions(+), 7 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index daf3444..404265f 100644
+index daf3444f9bc3c0811af2f2370fcb218dc84ce42b..404265fb49a5f2cd599af38dafb8b1d0551105c8 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -607,6 +607,7 @@ public class ClassWriter {
@@ -35,7 +28,7 @@ index daf3444..404265f 100644
        int paramCount = 0;
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 7b94e5b..1abd093 100644
+index 7b94e5b4af7a6618e46f078bcec596e972cef4d1..1abd0934cada3c90b1ee0d24ffbf0fa5e0d1fad9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -731,10 +731,9 @@ public class ExprProcessor implements CodeConstants {
@@ -53,7 +46,7 @@ index 7b94e5b..1abd093 100644
        String ret = buildJavaClassName(type.value);
        if (getShort) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index fd1491f..bbf1458 100644
+index fd1491f3b31fc17716d715b8b2b76cf3b846bdc6..bbf14584e481d48a7feb9b5bb324efb47684c9f5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -24,7 +24,10 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -90,7 +83,7 @@ index fd1491f..bbf1458 100644
  
        return buffer.prepend("return");
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 2465382..0ab555f 100644
+index 24653823d944d460c79906527cff1b70c781e945..0ab555fe617a0e6d2c72b29caa31122a149457ae 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -16,6 +16,7 @@
@@ -120,7 +113,7 @@ index 2465382..0ab555f 100644
      boolean updated = false;
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index 1eb177f..45fd289 100644
+index 1eb177fd1b9e8e445ab122c78e2145a70f2bffd3..45fd2896cf946747b4a04e47ec54d99eae900d82 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -16,6 +16,7 @@
@@ -152,5 +145,5 @@ index 1eb177f..45fd289 100644
      this(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
    }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

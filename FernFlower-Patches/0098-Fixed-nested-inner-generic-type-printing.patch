@@ -1,14 +1,11 @@
 From 0d3f25d13d15a0204cf57f7cbc6e4c96f3b232d7 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 19 Oct 2015 18:51:39 -0700
-Subject: [PATCH 098/122] Fixed nested inner generic type printing.
+Subject: Fixed nested inner generic type printing.
 
----
- .../java/decompiler/struct/gen/generics/GenericType.java        | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index 9ad5a1f..9b111e5 100644
+index 9ad5a1fe83d6f2e43f257bad5982e1b524e9d3af..9b111e572b474328818f044002d50dc22e946c5c 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -280,7 +280,7 @@ public class GenericType extends VarType {
@@ -21,5 +18,5 @@ index 9ad5a1f..9b111e5 100644
      else {
        clsName = DecompilerContext.getImportCollector().getShortName(parent.value.replace('/', '.')) + "." + value.substring(value.lastIndexOf('.') + 1);
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

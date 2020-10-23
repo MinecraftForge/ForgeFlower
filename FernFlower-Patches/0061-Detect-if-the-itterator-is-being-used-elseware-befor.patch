@@ -1,15 +1,12 @@
 From de52ba808f928bd138c8cbf29baee707ecf469d3 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 1 Oct 2015 20:00:53 -0700
-Subject: [PATCH 061/122] Detect if the itterator is being used elseware before
- creating an enhanced for loop.
+Subject: Detect if the itterator is being used elseware before creating an
+ enhanced for loop.
 
----
- .../modules/decompiler/MergeHelper.java       | 73 +++++++++++++++++++
- 1 file changed, 73 insertions(+)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 3172b5e..5ba4dcd 100644
+index 3172b5e6754fc9e2d5570f1d7110dc452b77b510..5ba4dcd0944696d200a8a5857d7afccc3737e5fb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -458,6 +458,14 @@ public class MergeHelper {
@@ -121,5 +118,5 @@ index 3172b5e..5ba4dcd 100644
      return exp != null && exp.type == type;
    }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

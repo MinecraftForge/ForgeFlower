@@ -1,15 +1,11 @@
 From 788d8fdb6346422ce9717694f957b970625072ec Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Wed, 14 Oct 2015 16:40:04 -0700
-Subject: [PATCH 087/122] Be a bit more strict in detecting copy var usage.
+Subject: Be a bit more strict in detecting copy var usage.
 
----
- .../java/decompiler/modules/decompiler/MergeHelper.java   | 2 +-
- .../decompiler/modules/decompiler/stats/Statement.java    | 8 ++++++++
- 2 files changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index d0158ab..3025737 100644
+index d0158aba3e732e854494bfbe80b128f47a70fc24..3025737508432bebbbd645908852f93d44dd384f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -496,7 +496,7 @@ public class MergeHelper {
@@ -22,7 +18,7 @@ index d0158ab..3025737 100644
              initExprents[1].getRight().addBytecodeOffsets(initExprents[1].bytecode);
              initExprents[1].getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index f71ed84..686001d 100644
+index f71ed84bc4ad195a97b4c535f21b55a9568cac62..686001d878d4204c439e6a4b6d140c155eadbb97 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -837,6 +837,14 @@ public class Statement implements IMatchable {
@@ -41,5 +37,5 @@ index f71ed84..686001d 100644
      return labelEdges;
    }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,18 +1,11 @@
 From 09209954680f314ed735818b7f22ca1e81080509 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 12 Sep 2015 00:48:02 -0400
-Subject: [PATCH 042/122] need to match both start and end, to avoid weirdness
- sometimes
+Subject: need to match both start and end, to avoid weirdness sometimes
 
----
- .../modules/decompiler/vars/LVTVariable.java   |  7 ++++---
- .../decompiler/vars/LocalVariableTable.java    | 17 +++++------------
- .../modules/decompiler/vars/StartEndPair.java  | 18 ++++++++++++++++++
- 3 files changed, 27 insertions(+), 15 deletions(-)
- create mode 100644 src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
-index bc7ba23..59dee69 100644
+index bc7ba23f14806acf42ec1765c0e3831c1f7aa27d..59dee69e92d414371f9212d6c1b05a042ffadd92 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 @@ -50,11 +50,12 @@ public class LVTVariable implements Comparable<LVTVariable> {
@@ -32,7 +25,7 @@ index bc7ba23..59dee69 100644
      ends.add(this);
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index f7e1858..1de7181 100644
+index f7e185839a37c353cbc63da9d26128d0dd44355c..1de71812af2089eb1445f9b8448c1a8086b1d435 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -1,31 +1,23 @@
@@ -84,7 +77,7 @@ index f7e1858..1de7181 100644
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
 new file mode 100644
-index 0000000..23a3929
+index 0000000000000000000000000000000000000000..23a3929a12446772fb3e35196223925853b28ec3
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
 @@ -0,0 +1,18 @@
@@ -107,5 +100,5 @@ index 0000000..23a3929
 +    }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

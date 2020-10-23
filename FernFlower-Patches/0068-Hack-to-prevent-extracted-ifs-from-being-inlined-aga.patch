@@ -1,20 +1,12 @@
 From 3be7e213dcd0be08189ca0207b54c600a0ff4602 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 4 Oct 2015 02:10:44 -0700
-Subject: [PATCH 068/122] Hack to prevent extracted ifs from being inlined
- again in infinite loop. MC decompiles much better!
+Subject: Hack to prevent extracted ifs from being inlined again in infinite
+ loop. MC decompiles much better!
 
----
- .../main/rels/MethodProcessorRunnable.java        |  2 --
- .../decompiler/modules/decompiler/ExitHelper.java |  2 +-
- .../decompiler/InlineSingleBlockHelper.java       |  5 ++++-
- .../modules/decompiler/LoopExtractHelper.java     | 15 +++++++++++++--
- .../decompiler/modules/decompiler/StatEdge.java   |  2 ++
- .../decompiler/stats/SequenceStatement.java       |  1 -
- 6 files changed, 20 insertions(+), 7 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index eca3413..62d5297 100644
+index eca34134bf72cb0ddc9e3b245ca3847478f3a39f..62d52975708c5a8126bdc73824fe575b14dea108 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -33,14 +33,12 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
@@ -33,7 +25,7 @@ index eca3413..62d5297 100644
  public class MethodProcessorRunnable implements Runnable {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
-index d467cdc..df2cb4a 100644
+index d467cdcc200f5b0547a94d7276e00dc8521f31fa..df2cb4a554931467d7feccaf1c0393192eeb3bc2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 @@ -206,7 +206,7 @@ public class ExitHelper {
@@ -46,7 +38,7 @@ index d467cdc..df2cb4a 100644
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
-index adeda02..1c468c8 100644
+index adeda024151b030fe94e7ab4b224dc51dc6e8ea8..1c468c818be14ab4a92392b48db98f0ff72bb2b2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 @@ -132,7 +132,10 @@ public class InlineSingleBlockHelper {
@@ -62,7 +54,7 @@ index adeda02..1c468c8 100644
          }
          else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
-index 93bc21d..f09dd3c 100644
+index 93bc21dd17add5a854450a034ed69a0a961808ee..f09dd3c0a4251b0a7c792fff20635704f4c8784a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 @@ -92,8 +92,14 @@ public class LoopExtractHelper {
@@ -94,7 +86,7 @@ index 93bc21d..f09dd3c 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
-index 26d427b..7902069 100644
+index 26d427b9377097653912b624ad76bd78563d5718..7902069a9fe823f4873c2fb00b0f4b308dfc454a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/StatEdge.java
 @@ -52,6 +52,8 @@ public class StatEdge {
@@ -107,7 +99,7 @@ index 26d427b..7902069 100644
      this(type, source, destination);
      this.closure = closure;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
-index 81d31a5..7d2ee43 100644
+index 81d31a58f6a913ddc4f5a89ae22fe69f98c63f3e..7d2ee435ce1c153b6da410d825d697d9790e35fe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 @@ -20,7 +20,6 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -119,5 +111,5 @@ index 81d31a5..7d2ee43 100644
  import java.util.Arrays;
  import java.util.List;
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

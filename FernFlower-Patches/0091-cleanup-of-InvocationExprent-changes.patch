@@ -1,14 +1,11 @@
 From 188b626d3d18755760de06dedf2c050abb03ed61 Mon Sep 17 00:00:00 2001
 From: RainWarrior <rainwarrior@fry.su>
 Date: Fri, 16 Oct 2015 02:06:25 +0300
-Subject: [PATCH 091/122] cleanup of InvocationExprent changes
+Subject: cleanup of InvocationExprent changes
 
----
- .../decompiler/exps/InvocationExprent.java    | 98 +++----------------
- 1 file changed, 11 insertions(+), 87 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b2c3574..e615207 100644
+index b2c3574dec9dcc67e8af5c94c4f2e6c2cb078214..e6152070d2b155d98fc0b8155db12c12ca3864e0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -170,30 +170,11 @@ public class InvocationExprent extends Exprent {
@@ -196,5 +193,5 @@ index b2c3574..e615207 100644
  
      nextMethod:
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

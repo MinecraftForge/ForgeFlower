@@ -1,15 +1,12 @@
 From fff1261eeb1e19a8f57fea9b1a81bce7894f9aef Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 25 Aug 2015 12:03:36 -0700
-Subject: [PATCH 035/122] Make Loop Enhancement retain all bytecode data. And
- support iterator/listIterator.
+Subject: Make Loop Enhancement retain all bytecode data. And support
+ iterator/listIterator.
 
----
- .../modules/decompiler/MergeHelper.java       | 147 ++++++++++++++----
- 1 file changed, 115 insertions(+), 32 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index d994c26..3172b5e 100644
+index d994c26c65b45e18e54622865e3bc454b22feb0a..3172b5e6754fc9e2d5570f1d7110dc452b77b510 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -118,6 +118,10 @@ public class MergeHelper {
@@ -270,5 +267,5 @@ index d994c26..3172b5e 100644
 +  }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

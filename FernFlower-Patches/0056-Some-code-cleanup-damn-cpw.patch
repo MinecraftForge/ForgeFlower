@@ -1,22 +1,11 @@
 From 97779c0a2088cb5153b21f1b3f4f7459cc9c4ec0 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 27 Sep 2015 21:17:03 -0700
-Subject: [PATCH 056/122] Some code cleanup damn cpw
+Subject: Some code cleanup damn cpw
 
----
- .../java/decompiler/code/cfg/BasicBlock.java  | 18 +++++------
- .../decompiler/stats/BasicBlockStatement.java |  8 ++---
- .../modules/decompiler/stats/DoStatement.java |  5 ---
- .../modules/decompiler/stats/IfStatement.java |  8 +++--
- .../decompiler/stats/RootStatement.java       |  6 ++--
- .../decompiler/stats/SequenceStatement.java   |  5 ---
- .../modules/decompiler/stats/Statement.java   | 18 +++++------
- .../decompiler/stats/SwitchStatement.java     | 16 +++++-----
- .../decompiler/vars/LocalVariableTable.java   | 32 ++++++-------------
- 9 files changed, 48 insertions(+), 68 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
-index a36047b..407aaa9 100644
+index a36047be9d5aaafd1e37ea1fc4ed861b7e26e5c9..407aaa96659637e8a746a5e21e6a30d07e09aa31 100644
 --- a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
 +++ b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
 @@ -264,17 +264,17 @@ public class BasicBlock implements IGraphNode {
@@ -47,7 +36,7 @@ index a36047b..407aaa9 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-index ea7e611..e68cb97 100644
+index ea7e6110cf1e5eeb4d3f13d98527d53e85dd60fe..e68cb97ea66761387a6d05a8b38f0f1bf0e1225e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
 @@ -97,11 +97,11 @@ public class BasicBlockStatement extends Statement {
@@ -67,7 +56,7 @@ index ea7e611..e68cb97 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 0768912..36cd7fb 100644
+index 0768912fe41d5d60580029e640cfaab07e6447bb..36cd7fb229ea03784017336da4dd1cb0fd528fa4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -242,9 +242,4 @@ public class DoStatement extends Statement {
@@ -81,7 +70,7 @@ index 0768912..36cd7fb 100644
 -    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-index f216b73..8f3e467 100644
+index f216b73fe7480b9425608a1b19b48ef6de6424bc..8f3e4679be0d5821df94253a9f58082aa4f236d4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 @@ -465,7 +465,9 @@ public class IfStatement extends Statement {
@@ -98,7 +87,7 @@ index f216b73..8f3e467 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-index 0a1e798..d8329ff 100644
+index 0a1e798299c913755fd7b99a8afe10ca34e27d20..d8329ff22605f0ef278cefc29483eb760b90a02f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
 @@ -49,7 +49,7 @@ public class RootStatement extends Statement {
@@ -113,7 +102,7 @@ index 0a1e798..d8329ff 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
-index b3785fb..81d31a5 100644
+index b3785fb3235dd593ce293d0c6677546a361fb489..81d31a58f6a913ddc4f5a89ae22fe69f98c63f3e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 @@ -138,9 +138,4 @@ public class SequenceStatement extends Statement {
@@ -127,7 +116,7 @@ index b3785fb..81d31a5 100644
 -    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index 806c4d5..f71ed84 100644
+index 806c4d57423605f5b11b33f8647734646473b00c..f71ed84bc4ad195a97b4c535f21b55a9568cac62 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -941,15 +941,15 @@ public class Statement implements IMatchable {
@@ -156,7 +145,7 @@ index 806c4d5..f71ed84 100644
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 8d7127c..3e27201 100644
+index 8d7127cc348720d35f161c5c92c7fb66c2bd7ddb..3e272016903de00ee47c55fad62db4b0687a04b5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -368,13 +368,13 @@ public class SwitchStatement extends Statement {
@@ -182,7 +171,7 @@ index 8d7127c..3e27201 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index 4193f56..729a3d2 100644
+index 4193f563d90c2fdfee692cf272fb3d3886f72e5b..729a3d2129c0d6765ad7b415bd4bee6cc40a09d2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -1,15 +1,11 @@
@@ -247,5 +236,5 @@ index 4193f56..729a3d2 100644
  }
 \ No newline at end of file
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

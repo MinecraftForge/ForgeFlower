@@ -1,15 +1,11 @@
 From 42cf0ce83e1c02a459430065811093cd923073b4 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Fri, 18 Sep 2015 14:36:48 -0700
-Subject: [PATCH 053/122] New aproach to merging variables. Use top down manual
- scoping. 341
+Subject: New aproach to merging variables. Use top down manual scoping. 341
 
----
- .../decompiler/vars/VarDefinitionHelper.java  | 378 ++++++++++++------
- 1 file changed, 258 insertions(+), 120 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index ca27e47..0c03cd5 100644
+index ca27e4718c556a478242a60df896f6f61db6e915..0c03cd52d3ab4b664545ebf8c57faa9381a7ac65 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -25,8 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
@@ -531,5 +527,5 @@ index ca27e47..0c03cd5 100644
  }
 \ No newline at end of file
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

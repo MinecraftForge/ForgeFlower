@@ -1,22 +1,11 @@
 From 78afb4580567df9f7d1e6245dc9735eba714a3b2 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 13 Sep 2015 18:26:04 -0400
-Subject: [PATCH 045/122] Change begin/end detection. Less derpy.
+Subject: Change begin/end detection. Less derpy.
 
----
- .../modules/decompiler/stats/DoStatement.java |  6 +++++
- .../modules/decompiler/stats/IfStatement.java | 15 ++++++++-----
- .../decompiler/stats/RootStatement.java       |  6 +++++
- .../decompiler/stats/SequenceStatement.java   |  6 +++++
- .../modules/decompiler/stats/Statement.java   | 22 ++++++++++++-------
- .../decompiler/stats/SwitchStatement.java     | 12 ++++++++++
- .../decompiler/vars/LocalVariableTable.java   | 17 +++++---------
- .../modules/decompiler/vars/StartEndPair.java | 15 +++++++++++++
- .../decompiler/vars/VarDefinitionHelper.java  | 14 +++++++-----
- 9 files changed, 82 insertions(+), 31 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 8359284..0768912 100644
+index 8359284281d3c3e02c15ed407ab4dfacf9eae478..0768912fe41d5d60580029e640cfaab07e6447bb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -38,7 +27,7 @@ index 8359284..0768912 100644
 +    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
-index 8be0dcc..f216b73 100644
+index 8be0dcc0ca2e0e3a9da1f5f92d625ee25f7d7e7a..f216b73fe7480b9425608a1b19b48ef6de6424bc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/IfStatement.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -87,7 +76,7 @@ index 8be0dcc..f216b73 100644
 +    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
-index 7193f9a..0a1e798 100644
+index 7193f9a787a2b849aac667354b6931e4ed2816d8..0a1e798299c913755fd7b99a8afe10ca34e27d20 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/RootStatement.java
 @@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
@@ -109,7 +98,7 @@ index 7193f9a..0a1e798 100644
 +    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
-index 7d2ee43..b3785fb 100644
+index 7d2ee435ce1c153b6da410d825d697d9790e35fe..b3785fb3235dd593ce293d0c6677546a361fb489 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SequenceStatement.java
 @@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -131,7 +120,7 @@ index 7d2ee43..b3785fb 100644
 +    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index c126050..806c4d5 100644
+index c12605070b1de0bd65ebed44eacb25467666efbc..806c4d57423605f5b11b33f8647734646473b00c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -169,7 +158,7 @@ index c126050..806c4d5 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 5916490..8d7127c 100644
+index 59164900d91a1d02526de1ab32958fac7083357b..8d7127cc348720d35f161c5c92c7fb66c2bd7ddb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -197,7 +186,7 @@ index 5916490..8d7127c 100644
 +    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index 1de7181..fe45b11 100644
+index 1de71812af2089eb1445f9b8448c1a8086b1d435..fe45b111874c303e7a0e839e1ef358131bc320a2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -232,7 +221,7 @@ index 1de7181..fe45b11 100644
          for (LVTVariable lvt : endpoints.get(sepair)) {
              ret.put(lvt.index,lvt);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
-index 23a3929..32c8799 100644
+index 23a3929a12446772fb3e35196223925853b28ec3..32c87996ea629302559202e7cd39c9e345a67398 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/StartEndPair.java
 @@ -15,4 +15,19 @@ public class StartEndPair {
@@ -256,7 +245,7 @@ index 23a3929..32c8799 100644
 +    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 2436d6d..56061fe 100644
+index 2436d6d6bcf284bede78fb2e31a9f4efd2578d20..56061fe881f6c9f0e78a27ac62613136fd0277c3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -127,13 +127,13 @@ public class VarDefinitionHelper {
@@ -305,5 +294,5 @@ index 2436d6d..56061fe 100644
        }
      }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

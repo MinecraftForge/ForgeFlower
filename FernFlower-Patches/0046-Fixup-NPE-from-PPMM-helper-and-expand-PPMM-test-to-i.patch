@@ -1,20 +1,12 @@
 From 7e027aef8ba2caaee9f3e93412274b7073b8f6a7 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 13 Sep 2015 17:49:00 -0700
-Subject: [PATCH 046/122] Fixup NPE from PPMM helper, and expand PPMM test to
- include more edge cases.
+Subject: Fixup NPE from PPMM helper, and expand PPMM test to include more edge
+ cases.
 
----
- .../modules/decompiler/PPandMMHelper.java     |  15 +++-
- .../modules/decompiler/exps/ConstExprent.java |   5 ++
- testData/classes/pkg/TestPPMM.class           | Bin 371 -> 936 bytes
- testData/results/TestPPMM.dec                 |  70 ++++++++++++++++++
- testData/src/pkg/TestPPMM.java                |  69 +++++++++++++++--
- 5 files changed, 150 insertions(+), 9 deletions(-)
- create mode 100644 testData/results/TestPPMM.dec
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index d93bad6..f39946d 100644
+index d93bad6bd760a6de8e546411b1f2798b4bbd03ad..f39946d1c839333a69c91521f6714b183028567d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 @@ -34,6 +34,7 @@ import java.util.HashSet;
@@ -52,7 +44,7 @@ index d93bad6..f39946d 100644
        @Override
        public int processExprent(Exprent exprent) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 312f6c8..3398924 100644
+index 312f6c8a51e96e8f1a8dc27b509716022e22cc39..3398924fabb57daddb0f6b51daafdd266cc371b6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -416,6 +416,11 @@ public class ConstExprent extends Exprent {
@@ -89,7 +81,7 @@ E0NOq`X8-^I
 
 diff --git a/testData/results/TestPPMM.dec b/testData/results/TestPPMM.dec
 new file mode 100644
-index 0000000..ba3a5fc
+index 0000000000000000000000000000000000000000..ba3a5fc1b4a29798078399358a7e560326aa2044
 --- /dev/null
 +++ b/testData/results/TestPPMM.dec
 @@ -0,0 +1,70 @@
@@ -164,7 +156,7 @@ index 0000000..ba3a5fc
 +   }
 +}
 diff --git a/testData/src/pkg/TestPPMM.java b/testData/src/pkg/TestPPMM.java
-index 02eecf4..21c7f2e 100644
+index 02eecf4b565584b5644ad5898565593494aad285..21c7f2eab8296554f3fdb5d23efba4832e42e745 100644
 --- a/testData/src/pkg/TestPPMM.java
 +++ b/testData/src/pkg/TestPPMM.java
 @@ -1,11 +1,66 @@
@@ -243,5 +235,5 @@ index 02eecf4..21c7f2e 100644
  }
 \ No newline at end of file
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

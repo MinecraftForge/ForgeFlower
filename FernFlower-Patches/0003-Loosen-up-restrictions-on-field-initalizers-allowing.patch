@@ -1,15 +1,12 @@
 From be53afc282317c377cf92433cf40b01dce77af77 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 15:10:28 -0700
-Subject: [PATCH 003/122] Loosen up restrictions on field initalizers allowing
- for some to be moved out of the <ini> and <cinit> functions.
+Subject: Loosen up restrictions on field initalizers allowing for some to be
+ moved out of the <ini> and <cinit> functions.
 
----
- .../decompiler/main/InitializerProcessor.java | 37 ++++++++++++-------
- 1 file changed, 23 insertions(+), 14 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index d9a0a3d..d916b19 100644
+index d9a0a3d828be573cf474d22d836c21ece546e424..d916b1951e026f239028e52f75199e784a7a9639 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -29,7 +29,10 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -112,5 +109,5 @@ index d9a0a3d..d916b19 100644
      }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

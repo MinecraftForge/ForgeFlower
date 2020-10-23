@@ -1,16 +1,12 @@
 From eeabc2fd9d388a3361b0ec89733add20e4ade8a6 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 15:07:46 -0700
-Subject: [PATCH 014/122] Fix how class types are determined, was detecting
- anon classes as member classes.
+Subject: Fix how class types are determined, was detecting anon classes as
+ member classes.
 
----
- .../decompiler/main/ClassesProcessor.java     | 48 ++++++++++----
- .../attr/StructInnerClassesAttribute.java     | 62 +++++++++++--------
- 2 files changed, 70 insertions(+), 40 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index b3e9d81..7f75a0c 100644
+index b3e9d81eaa3a4d86e4714adf2f8e007af831d670..7f75a0cf9dd0e58fcf8c3e3c6bfa56678f7b1dfe 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -31,7 +31,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -103,7 +99,7 @@ index b3e9d81..7f75a0c 100644
                    continue;
                  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java
-index 5969487..ecef558 100644
+index 5969487904608fb01550965dedfa43e4184c22c4..ecef5588a52318a40849f9ac4ae27e2bb1723000 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java
 @@ -23,10 +23,21 @@ import java.util.ArrayList;
@@ -193,5 +189,5 @@ index 5969487..ecef558 100644
    }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,14 +1,11 @@
 From 87ede1c33768fd77ab480c2b60cea3b23de9f754 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 13:45:25 -0700
-Subject: [PATCH 002/122] Output generic parametrs for anonymous classes.
+Subject: Output generic parametrs for anonymous classes.
 
----
- .../modules/decompiler/exps/NewExprent.java     | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index b5ecd9e..24facc9 100644
+index b5ecd9e66750f7f392c111e9254ad97430d780b1..24facc9d80857d3eacbc7b5aaf1ad9a62cd7fd91 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -26,7 +26,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -44,5 +41,5 @@ index b5ecd9e..24facc9 100644
  
          if (enclosing != null) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

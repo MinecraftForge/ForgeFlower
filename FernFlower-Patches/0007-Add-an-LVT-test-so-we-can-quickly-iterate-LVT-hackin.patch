@@ -1,22 +1,12 @@
 From 213752acb3080ed6bff297f5a4e54b09998cf10a Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 2 Aug 2015 10:43:54 -0400
-Subject: [PATCH 007/122] Add an LVT test so we can quickly iterate LVT hacking
+Subject: Add an LVT test so we can quickly iterate LVT hacking
 
----
- .../jetbrains/java/decompiler/LVTTest.java    |  33 ++++++++++++++++++
- testData/classes/pkg/TestLVT.class            | Bin 0 -> 1672 bytes
- testData/results/TestLVT.dec                  |  29 +++++++++++++++
- testData/src/pkg/TestLVT.java                 |  27 ++++++++++++++
- 4 files changed, 89 insertions(+)
- create mode 100644 test/org/jetbrains/java/decompiler/LVTTest.java
- create mode 100644 testData/classes/pkg/TestLVT.class
- create mode 100644 testData/results/TestLVT.dec
- create mode 100644 testData/src/pkg/TestLVT.java
 
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
 new file mode 100644
-index 0000000..2d39827
+index 0000000000000000000000000000000000000000..2d39827fabef8a71133de494460a0c67f4ae9f8b
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -0,0 +1,33 @@
@@ -82,7 +72,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
 new file mode 100644
-index 0000000..b1b7e2e
+index 0000000000000000000000000000000000000000..b1b7e2e3d96ae555cb0fec2901968fb1b366b2a5
 --- /dev/null
 +++ b/testData/results/TestLVT.dec
 @@ -0,0 +1,29 @@
@@ -117,7 +107,7 @@ index 0000000..b1b7e2e
 +
 diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
 new file mode 100644
-index 0000000..05b5228
+index 0000000000000000000000000000000000000000..05b5228e223eb20be14622126efdb7461c0e1bdf
 --- /dev/null
 +++ b/testData/src/pkg/TestLVT.java
 @@ -0,0 +1,27 @@
@@ -149,5 +139,5 @@ index 0000000..05b5228
 +    }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

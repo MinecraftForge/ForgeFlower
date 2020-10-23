@@ -1,15 +1,12 @@
 From 32d7a1464e50520aa4e0c78fce84528448bca249 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 15 Oct 2015 01:10:03 -0700
-Subject: [PATCH 089/122] Fixed issue where inner class fields would not be
- replaced by their parent method parameters.
+Subject: Fixed issue where inner class fields would not be replaced by their
+ parent method parameters.
 
----
- .../main/rels/NestedClassProcessor.java       | 51 ++++++++++++++++---
- 1 file changed, 45 insertions(+), 6 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 12653a4..6d40b8a 100644
+index 12653a4836d4f864154310b6115369e943f36fd7..6d40b8a1dc102b0cdf90aed615e74c10cbd08ffa 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -706,8 +706,8 @@ public class NestedClassProcessor {
@@ -94,5 +91,5 @@ index 12653a4..6d40b8a 100644
 +  }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

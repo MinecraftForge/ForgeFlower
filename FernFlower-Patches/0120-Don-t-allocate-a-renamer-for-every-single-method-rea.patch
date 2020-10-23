@@ -1,15 +1,12 @@
 From fd28c848f1295a31d38e69f7f5dd7afec52f208f Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Mon, 23 Nov 2015 14:27:08 -0500
-Subject: [PATCH 120/122] Don't allocate a renamer for every single method
- read. That should cut down the memory quite a lot.
+Subject: Don't allocate a renamer for every single method read. That should
+ cut down the memory quite a lot.
 
----
- src/org/jetbrains/java/decompiler/struct/StructMethod.java | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 68f5427..77fd181 100644
+index 68f5427e95ffd45a0fd925b8912c79d07a999d17..77fd181a17eb566fa0f0330c0c21fb08f787922f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -80,7 +80,6 @@ public class StructMethod extends StructMember {
@@ -29,5 +26,5 @@ index 68f5427..77fd181 100644
      }
    }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,14 +1,11 @@
 From 1dfe3bcf3f09d6595a5dbd0bac11056ebad79b4e Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 1 Oct 2015 18:03:36 -0700
-Subject: [PATCH 059/122] NPE protection in LVT loading.
+Subject: NPE protection in LVT loading.
 
----
- .../struct/attr/StructLocalVariableTableAttribute.java   | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 771ec7a..a95870f 100644
+index 771ec7add154d7897fa54ac46d91e66e6ad2ecc5..a95870f4b9de4b87eff9a15b88492e8cc051cbdd 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -61,8 +61,13 @@ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
@@ -28,5 +25,5 @@ index 771ec7a..a95870f 100644
  
    public Map<Integer, List<LVTVariable>> getMapVarNames() {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

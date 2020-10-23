@@ -1,18 +1,12 @@
 From ba604f35f4e1abbba5a893c3eb031fb3c6720ebd Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 8 Nov 2015 13:28:24 -0500
-Subject: [PATCH 115/122] Add the index to the param renamer, needed for sane
- param name generation..
+Subject: Add the index to the param renamer, needed for sane param name
+ generation..
 
----
- src/org/jetbrains/java/decompiler/main/ClassWriter.java         | 2 +-
- .../jetbrains/java/decompiler/main/IdentityRenamerFactory.java  | 2 +-
- .../java/decompiler/main/extern/IVariableNameProvider.java      | 2 +-
- src/org/jetbrains/java/decompiler/util/JADNameProvider.java     | 2 +-
- 4 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 1338a42..25d01e3 100644
+index 1338a42a36f02f479a7efbb280f2826a2948bb03..25d01e38f0c006411e0a6c5c053b16d188b0c9a1 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -731,7 +731,7 @@ public class ClassWriter {
@@ -25,7 +19,7 @@ index 1338a42..25d01e3 100644
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
  
 diff --git a/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
-index bc29407..e8c3340 100644
+index bc29407ea2503b16a1eff3b49a6579189eccd14f..e8c33402d6b7e0c07dbe2aacf73c2f8f500fc8c3 100644
 --- a/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 +++ b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 @@ -14,7 +14,7 @@ public class IdentityRenamerFactory implements IVariableNamingFactory, IVariable
@@ -38,7 +32,7 @@ index bc29407..e8c3340 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
-index 9d6b1a5..26f1071 100644
+index 9d6b1a5cdff732d251e078750b2a26243f93463e..26f10715a8d594f00480a80e9c94c8b3bf011998 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 @@ -6,6 +6,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -50,7 +44,7 @@ index 9d6b1a5..26f1071 100644
    public void addParentContext(IVariableNameProvider renamer);
  }
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
-index f2d2e3b..b588cec 100644
+index f2d2e3baf14f3004b1d377b9cb7a882741885d23..b588cec7b138dfffeb1d57a11aeb7e4b41fa5a38 100644
 --- a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 @@ -179,7 +179,7 @@ public class JADNameProvider implements IVariableNameProvider {
@@ -63,5 +57,5 @@ index f2d2e3b..b588cec 100644
      }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

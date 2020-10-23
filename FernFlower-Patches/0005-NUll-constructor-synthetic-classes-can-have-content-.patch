@@ -1,16 +1,13 @@
 From 211a6f999cc0fc746ba73d6a9e4fd91be19a69e8 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 17:52:35 -0700
-Subject: [PATCH 005/122] NUll constructor synthetic classes can have content
- as well so don't rely on it being a stub, just being anonymous. You can't
- legitimatly have a anonymous argument.
+Subject: NUll constructor synthetic classes can have content as well so don't
+ rely on it being a stub, just being anonymous. You can't legitimatly have a
+ anonymous argument.
 
----
- .../java/decompiler/modules/decompiler/exps/NewExprent.java     | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 24facc9..6dad7c9 100644
+index 24facc9d80857d3eacbc7b5aaf1ad9a62cd7fd91..6dad7c98c8c6c9fe0714e63c24763d2eb111df4c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -327,7 +327,7 @@ public class NewExprent extends Exprent {
@@ -23,5 +20,5 @@ index 24facc9..6dad7c9 100644
                    }
                  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

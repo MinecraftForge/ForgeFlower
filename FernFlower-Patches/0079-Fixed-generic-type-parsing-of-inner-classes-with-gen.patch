@@ -1,15 +1,11 @@
 From 6b4dc8d90d43ad16cc14df1cdff86f18dd8d0f4f Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Wed, 14 Oct 2015 13:20:13 -0700
-Subject: [PATCH 079/122] Fixed generic type parsing of inner classes with
- generic outers.
+Subject: Fixed generic type parsing of inner classes with generic outers.
 
----
- .../java/decompiler/struct/gen/generics/GenericType.java       | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index c45d47f..aeb786a 100644
+index c45d47f7e7efbd28e5bbddb02441299306518733..aeb786a7b26864424c5b730ef3f954b9bfb583be 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -95,7 +95,7 @@ public class GenericType extends VarType {
@@ -30,5 +26,5 @@ index c45d47f..aeb786a 100644
            }
            break loop;
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

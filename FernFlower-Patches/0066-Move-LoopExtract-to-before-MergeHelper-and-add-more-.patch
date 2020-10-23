@@ -1,16 +1,12 @@
 From 34a7253e7b3997dda29ae47f63151c976c9275a4 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 3 Oct 2015 22:54:34 -0700
-Subject: [PATCH 066/122] Move LoopExtract to before MergeHelper and add more
- debug information to printMethod.
+Subject: Move LoopExtract to before MergeHelper and add more debug information
+ to printMethod.
 
----
- .../main/rels/MethodProcessorRunnable.java    | 46 +++++++++++++------
- .../modules/decompiler/DomHelper.java         | 13 ++----
- 2 files changed, 36 insertions(+), 23 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index ef7e97a..eca3413 100644
+index ef7e97a5e99899896b11376fd31e3511fb5b06b5..eca34134bf72cb0ddc9e3b245ca3847478f3a39f 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -141,7 +137,7 @@ index ef7e97a..eca3413 100644
        return sb.toString();
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index c93be38..67d16d5 100644
+index c93be38f6abaabfe2704a3fd7c8f0d17a1b9ff52..67d16d5c139033d4774acc22c54b8866594c3ec5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -20,9 +20,12 @@ import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
@@ -178,5 +174,5 @@ index c93be38..67d16d5 100644
      }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,31 +1,11 @@
 From f02eb602c3f8d68e5842cc9dd65718aa9ab425cf Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Fri, 6 Nov 2015 01:36:47 -0500
-Subject: [PATCH 111/122] Renaming thinger
+Subject: Renaming thinger
 
----
- .../java/decompiler/main/ClassWriter.java     |  10 +-
- .../decompiler/main/DecompilerContext.java    |  19 ++
- .../java/decompiler/main/Fernflower.java      |   1 +
- .../main/IdentityRenamerFactory.java          |  28 +++
- .../main/extern/IVariableNameProvider.java    |  11 +
- .../main/extern/IVariableNamingFactory.java   |   7 +
- .../decompiler/main/rels/MethodWrapper.java   |   2 +
- .../main/rels/NestedClassProcessor.java       |   2 +-
- .../decompiler/vars/VarDefinitionHelper.java  |  48 +++--
- .../java/decompiler/struct/StructMethod.java  |   3 +
- .../java/decompiler/util/JADNameProvider.java | 193 ++++++++++++++++++
- .../decompiler/DecompilerTestFixture.java     |  16 +-
- .../jetbrains/java/decompiler/LVTTest.java    |   1 +
- .../MinecraftDecompilationTest.java           | 173 +++-------------
- 14 files changed, 337 insertions(+), 177 deletions(-)
- create mode 100644 src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
- create mode 100644 src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
- create mode 100644 src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
- create mode 100644 src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 808c5e1..c515d2e 100644
+index 808c5e1bb2c32a5f85eaac548040522697e60fc8..c515d2e60e0917d2588a359c1d52a5345e8747ca 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -732,7 +732,7 @@ public class ClassWriter {
@@ -53,7 +33,7 @@ index 808c5e1..c515d2e 100644
      HashMap<Integer, Set<Integer>> lineStartOffsets = new HashMap<Integer, Set<Integer>>();
      for (Map.Entry<Integer, Integer> entry : tracer.getMapping().entrySet()) {
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index 15c6e40..8d4d403 100644
+index 15c6e406640315e5fbe82d48006b1a15f97020c8..8d4d403773a861191083e2b2f6e469ec9ace45f2 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 @@ -21,8 +21,10 @@ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
@@ -113,7 +93,7 @@ index 15c6e40..8d4d403 100644
      if (logger != null) {
        String level = (String)getProperty(IFernflowerPreferences.LOG_LEVEL);
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index 6afe975..91e70d3 100644
+index 6afe975fe2034ad25b7810a0bdc59ebcff8453e1..91e70d3132095281338593d2166eedbcbd09e5d6 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
@@ -126,7 +106,7 @@ index 6afe975..91e70d3 100644
  import java.util.HashSet;
 diff --git a/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 new file mode 100644
-index 0000000..bc29407
+index 0000000000000000000000000000000000000000..bc29407ea2503b16a1eff3b49a6579189eccd14f
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/IdentityRenamerFactory.java
 @@ -0,0 +1,28 @@
@@ -160,7 +140,7 @@ index 0000000..bc29407
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 new file mode 100644
-index 0000000..9d6b1a5
+index 0000000000000000000000000000000000000000..9d6b1a5cdff732d251e078750b2a26243f93463e
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNameProvider.java
 @@ -0,0 +1,11 @@
@@ -177,7 +157,7 @@ index 0000000..9d6b1a5
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java b/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
 new file mode 100644
-index 0000000..2f6c3ec
+index 0000000000000000000000000000000000000000..2f6c3ec033f37a1ff88c1fb0ab75413144867ddc
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IVariableNamingFactory.java
 @@ -0,0 +1,7 @@
@@ -189,7 +169,7 @@ index 0000000..2f6c3ec
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/MethodWrapper.java
-index 0f44e42..c277392 100644
+index 0f44e42c44c68b178fced0d0c362fe6a027b5a8a..c277392bd6bace5efee52426204b6eeb61e35964 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodWrapper.java
 @@ -15,7 +15,9 @@
@@ -203,7 +183,7 @@ index 0f44e42..c277392 100644
  import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 3975d8c..07ac606 100644
+index 3975d8cf93f8a2ce22b57ca3a666f3be77b5dcb4..07ac606e43cdb7d21467d72ce32fb89e9d09a61f 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -577,7 +577,7 @@ public class NestedClassProcessor {
@@ -216,7 +196,7 @@ index 3975d8c..07ac606 100644
          HashMap<VarVersionPair, String> mapNewNames = new HashMap<VarVersionPair, String>();
          // local var types
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 164ddb5..59b1c42 100644
+index 164ddb5639ed92ae8bcab25a62713211d2e904fe..59b1c42717441f6bce853aa4ce9d710c15d723b6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -312,7 +292,7 @@ index 164ddb5..59b1c42 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 8f0da2b..7e7f758 100644
+index 8f0da2b8eeed9428133834dbf4bd8be3f6e38ee5..7e7f7580f5301ea94b4bf97440a471caa3f62c50 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -341,7 +321,7 @@ index 8f0da2b..7e7f758 100644
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000..010ef5f
+index 0000000000000000000000000000000000000000..010ef5fdc0137798ca8a7097222cbc67ba5101ec
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 @@ -0,0 +1,193 @@
@@ -540,7 +520,7 @@ index 0000000..010ef5f
 +}
 \ No newline at end of file
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index 77eda87..f2c344a 100644
+index 77eda8797ac72262d0c6dabbbd06a0ed0f481596..f2c344a925dda9d1081aa867987147fd3fb3664e 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 @@ -46,26 +46,23 @@ public class DecompilerTestFixture {
@@ -584,7 +564,7 @@ index 77eda87..f2c344a 100644
    }
  }
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index 368407e..ff2457b 100644
+index 368407ef017b524f7e26940606e7b50714c7d96a..ff2457b4e38f5cec0854d21a15ca4bc5551bbda3 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -59,4 +59,5 @@ public class LVTTest extends SingleClassesTestBase {
@@ -594,7 +574,7 @@ index 368407e..ff2457b 100644
 +  @Test public void testMCContainerPlayer() { doTest("net/minecraft/inventory/ContainerPlayer"); }
  }
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
-index 2ae6da5..087c810 100644
+index 2ae6da55e0d8ecb2fbdb39a6e42d1f179ac32203..087c8102c11b1258d8e3f1615fe64f745b8587d6 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 +++ b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 @@ -16,83 +16,47 @@
@@ -842,5 +822,5 @@ index 2ae6da5..087c810 100644
    }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

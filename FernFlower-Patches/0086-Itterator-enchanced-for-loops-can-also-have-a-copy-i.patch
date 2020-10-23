@@ -1,15 +1,12 @@
 From c9699a02f50eaa677fc72201e6c4c3581a13744f Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Wed, 14 Oct 2015 16:07:14 -0700
-Subject: [PATCH 086/122] Itterator enchanced for loops can also have a 'copy'
- instruction, so detect those as well.
+Subject: Itterator enchanced for loops can also have a 'copy' instruction, so
+ detect those as well.
 
----
- .../decompiler/modules/decompiler/MergeHelper.java   | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index c240daa..d0158ab 100644
+index c240daa740a7766b1541dc8aea73025cb9486ac7..d0158aba3e732e854494bfbe80b128f47a70fc24 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -491,6 +491,18 @@ public class MergeHelper {
@@ -32,5 +29,5 @@ index c240daa..d0158ab 100644
        }
        else if (initExprents[0] != null && initExprents[1] != null && firstDoExprent != null) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

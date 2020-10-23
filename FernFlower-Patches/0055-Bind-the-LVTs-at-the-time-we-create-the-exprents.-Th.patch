@@ -1,19 +1,12 @@
 From b065f7aef331543501429be47e0f36a22933c617 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 24 Sep 2015 12:48:31 -0400
-Subject: [PATCH 055/122] Bind the LVTs at the time we create the exprents. The
- offset is absolute at that point, and won't be incorrect.
+Subject: Bind the LVTs at the time we create the exprents. The offset is
+ absolute at that point, and won't be incorrect.
 
----
- .../decompiler/modules/decompiler/ExprProcessor.java | 10 +++++++---
- .../modules/decompiler/vars/LocalVariableTable.java  |  8 ++------
- .../modules/decompiler/vars/VarDefinitionHelper.java |  3 +--
- .../modules/decompiler/vars/VarProcessor.java        | 12 +++++++++---
- test/org/jetbrains/java/decompiler/LVTTest.java      |  6 +++---
- 5 files changed, 22 insertions(+), 17 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 0425fbc..7b94e5b 100644
+index 0425fbc336f5318514d09849e9910171aa46d8f9..7b94e5b4af7a6618e46f078bcec596e972cef4d1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -382,7 +382,9 @@ public class ExprProcessor implements CodeConstants {
@@ -48,7 +41,7 @@ index 0425fbc..7b94e5b 100644
              instr.getOperand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
              .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.getOperand(1)), null)),
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index fe45b11..4193f56 100644
+index fe45b111874c303e7a0e839e1ef358131bc320a2..4193f563d90c2fdfee692cf272fb3d3886f72e5b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -41,11 +41,7 @@ public class LocalVariableTable {
@@ -74,7 +67,7 @@ index fe45b11..4193f56 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 9ecb28b..6d8ab12 100644
+index 9ecb28bffa6dc6159370823066d8f189a3f1a83b..6d8ab120af2261fa02eccfcced62fdcb5cec79ae 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -133,7 +133,7 @@ public class VarDefinitionHelper {
@@ -95,7 +88,7 @@ index 9ecb28b..6d8ab12 100644
      Map<Integer, VarVersionPair> this_vars = new HashMap<Integer, VarVersionPair>();
      if (parent.size() > 0)
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 691797e..bbf17ad 100644
+index 691797e5bb69b95b1883be1c52f0822823f4a452..bbf17adc460d22b1c91fd54ba88d0e2624c625c4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -132,7 +125,7 @@ index 691797e..bbf17ad 100644
  
    public int getRemapped(int index) {
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index 52428c7..d4771bb 100644
+index 52428c70df9fe4166129c11eacd4d19c2d7196e3..d4771bb0b063154fd4e38ac3d68ed3c0b27c8938 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -42,13 +42,13 @@ public class LVTTest extends SingleClassesTestBase {
@@ -153,5 +146,5 @@ index 52428c7..d4771bb 100644
 +//  @Test public void testMCGuiShareToLan() { doTest("net/minecraft/client/gui/GuiShareToLan"); }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

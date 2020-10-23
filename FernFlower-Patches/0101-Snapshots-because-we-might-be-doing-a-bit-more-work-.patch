@@ -1,15 +1,11 @@
 From 15a7d35628a5db31cbdf2f0ac8fc3b0686107d23 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Tue, 20 Oct 2015 19:20:44 -0400
-Subject: [PATCH 101/122] Snapshots because we might be doing a bit more work
- yet
+Subject: Snapshots because we might be doing a bit more work yet
 
----
- build.gradle | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/build.gradle b/build.gradle
-index 5e14c25..bc211f2 100644
+index 5e14c2528a26cc50323d2d408cd16c2506d6b6c1..bc211f2219fbcef72a0acca7b79f5c41fcf0affa 100644
 --- a/build.gradle
 +++ b/build.gradle
 @@ -3,7 +3,7 @@ apply plugin: 'idea'
@@ -22,5 +18,5 @@ index 5e14c25..bc211f2 100644
  archivesBaseName = "fernflower"
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,21 +1,16 @@
 From 956c3db1c65161901df7a9872005857aa2b8f544 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 19 Oct 2015 18:54:52 -0700
-Subject: [PATCH 099/122] Fixed JUint tests. AmbiguousCallWithDebugInfo: Was
- broken, our LVT changes fixed it Constants: cpw's type forcing changed output
- ExtendsList: Added (T) typecast, tho not explicitly needed will address
- later. InnerSignature: Original test had invalid arguments.
+Subject: =?UTF-8?q?Fixed=20JUint=20tests.=0AAmbiguousCallWithDebugInfo:=20?=
+ =?UTF-8?q?Was=20broken,=20our=20LVT=20changes=20fixed=20it=0AConstants:?=
+ =?UTF-8?q?=20cpw's=20type=20forcing=20changed=20output=0AExtendsList:=20A?=
+ =?UTF-8?q?dded=20(T)=20typecast,=20tho=20not=20explicitly=20needed=20will?=
+ =?UTF-8?q?=20address=20later.=0AInnerSignature:=20Original=20test=20had?=
+ =?UTF-8?q?=20invalid=20arguments.?=
 
----
- test/org/jetbrains/java/decompiler/LVTTest.java     |  8 +++++++-
- testData/results/TestAmbiguousCallWithDebugInfo.dec |  4 ++--
- testData/results/TestConstants.dec                  | 12 ++++++------
- testData/results/TestExtendsList.dec                |  4 ++--
- testData/results/TestInnerSignature.dec             |  2 +-
- 5 files changed, 18 insertions(+), 12 deletions(-)
 
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index fea37bc..368407e 100644
+index fea37bceb36c964966c7772c8911f9aa63ae119e..368407ef017b524f7e26940606e7b50714c7d96a 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -26,7 +26,13 @@ public class LVTTest extends SingleClassesTestBase {
@@ -34,7 +29,7 @@ index fea37bc..368407e 100644
    }
  
 diff --git a/testData/results/TestAmbiguousCallWithDebugInfo.dec b/testData/results/TestAmbiguousCallWithDebugInfo.dec
-index 40f1eaf..3825b08 100644
+index 40f1eaf68c9b0ca7a1a9744b157827ca89684478..3825b0816ba5140dfcebde9f37b70e28c20b83eb 100644
 --- a/testData/results/TestAmbiguousCallWithDebugInfo.dec
 +++ b/testData/results/TestAmbiguousCallWithDebugInfo.dec
 @@ -11,8 +11,8 @@ class TestAmbiguousCall {
@@ -49,7 +44,7 @@ index 40f1eaf..3825b08 100644
     }// 15
  }
 diff --git a/testData/results/TestConstants.dec b/testData/results/TestConstants.dec
-index 28df2c2..1170f1a 100644
+index 28df2c294ca1c0818ffad43052919c61c262c16a..1170f1a5876121e55bc5c58a2d10afeac8d1527f 100644
 --- a/testData/results/TestConstants.dec
 +++ b/testData/results/TestConstants.dec
 @@ -16,14 +16,14 @@ public class TestConstants {
@@ -74,7 +69,7 @@ index 28df2c2..1170f1a 100644
     static final double DMax = 1.7976931348623157E308D;
  
 diff --git a/testData/results/TestExtendsList.dec b/testData/results/TestExtendsList.dec
-index 6f116db..3f3dbea 100644
+index 6f116dbad41c3ce71fd5c79ee639ddbff3f1b39f..3f3dbea1836b9acaa8626c029bfe40dc0ee3c751 100644
 --- a/testData/results/TestExtendsList.dec
 +++ b/testData/results/TestExtendsList.dec
 @@ -2,11 +2,11 @@ package pkg;
@@ -92,7 +87,7 @@ index 6f116db..3f3dbea 100644
  }
  
 diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
-index 406e1f4..9acbef8 100644
+index 406e1f41d8f0a084a986f683bf7ecb3b44c37429..9acbef8495cbdb99cccee5d1e766eb153c39331c 100644
 --- a/testData/results/TestInnerSignature.dec
 +++ b/testData/results/TestInnerSignature.dec
 @@ -14,7 +14,7 @@ public class TestInnerSignature<A, B, C> {
@@ -105,5 +100,5 @@ index 406e1f4..9acbef8 100644
           this.b = var3;// 35
           this.c = var4;// 36
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

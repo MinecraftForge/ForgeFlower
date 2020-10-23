@@ -1,24 +1,11 @@
 From 9f908e30826e71247955a0c38f1154d8065073ec Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 27 Aug 2015 15:39:39 -0400
-Subject: [PATCH 037/122] Lex's tests
+Subject: Lex's tests
 
----
- .../decompiler/DecompilerTestFixture.java     |   3 +-
- .../jetbrains/java/decompiler/LVTTest.java    |   7 ++
- .../decompiler/SingleClassesTestBase.java     |   2 +-
- .../classes/pkg/TestLexManosLVT$Bob.class     | Bin 0 -> 1472 bytes
- testData/classes/pkg/TestLexManosLVT.class    | Bin 0 -> 1967 bytes
- testData/results/TestLexManosLVT.dec          |  64 ++++++++++++++++++
- testData/src/pkg/TestLexManosLVT.java         |  64 ++++++++++++++++++
- 7 files changed, 138 insertions(+), 2 deletions(-)
- create mode 100644 testData/classes/pkg/TestLexManosLVT$Bob.class
- create mode 100644 testData/classes/pkg/TestLexManosLVT.class
- create mode 100644 testData/results/TestLexManosLVT.dec
- create mode 100644 testData/src/pkg/TestLexManosLVT.java
 
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index d0d869c..f2c344a 100644
+index d0d869c04400e25a9191dd6fdfee78b2ee64dd25..f2c344a925dda9d1081aa867987147fd3fb3664e 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 @@ -31,6 +31,7 @@ public class DecompilerTestFixture {
@@ -39,7 +26,7 @@ index d0d869c..f2c344a 100644
      }
    }
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index 983368c..f4d869c 100644
+index 983368c25695ab8bbf090fa01e6d8df9a302bc91..f4d869c4f04fef50aa1bcf64cb61ce0d2b02bfb9 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler;
@@ -64,7 +51,7 @@ index 983368c..f4d869c 100644
    @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
-index 165f695..064ca5c 100644
+index 165f695e0f4b04fe5ff3dc58e88d28f29dc150ae..064ca5c1c1eaacf2d2cf70eac8071d3c93cf625f 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 @@ -32,7 +32,7 @@ import static org.junit.Assert.assertEquals;
@@ -136,7 +123,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestLexManosLVT.dec b/testData/results/TestLexManosLVT.dec
 new file mode 100644
-index 0000000..9ef5e62
+index 0000000000000000000000000000000000000000..9ef5e62bd10b5818a60bf1842c2daa446c84d9d3
 --- /dev/null
 +++ b/testData/results/TestLexManosLVT.dec
 @@ -0,0 +1,64 @@
@@ -206,7 +193,7 @@ index 0000000..9ef5e62
 +}
 diff --git a/testData/src/pkg/TestLexManosLVT.java b/testData/src/pkg/TestLexManosLVT.java
 new file mode 100644
-index 0000000..e04de1e
+index 0000000000000000000000000000000000000000..e04de1e8d82f6162e49d4735b6e4335595e321b7
 --- /dev/null
 +++ b/testData/src/pkg/TestLexManosLVT.java
 @@ -0,0 +1,64 @@
@@ -275,5 +262,5 @@ index 0000000..e04de1e
 +    }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

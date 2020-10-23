@@ -1,15 +1,11 @@
 From f3b023e5db4654cb1201528f0633545592f2f610 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 4 Aug 2015 21:50:19 -0700
-Subject: [PATCH 019/122] Change LVT indexing to VarVersionPair
+Subject: Change LVT indexing to VarVersionPair
 
----
- .../modules/decompiler/vars/VarProcessor.java |  9 ++--
- .../StructLocalVariableTableAttribute.java    | 51 +++++++++++++++----
- 2 files changed, 46 insertions(+), 14 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index ce81474..fbd3455 100644
+index ce81474ef8291e0a4fbf59bed8b0902de1731921..fbd3455dae324f21854b6374448c0c50f0c1e1ce 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -44,7 +44,7 @@ public class VarProcessor {
@@ -36,7 +32,7 @@ index ce81474..fbd3455 100644
  
        Integer counter = mapNames.get(name);
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 04f534e..5f55537 100644
+index 04f534ed5482d8778826437dafd6979085a3fb65..5f55537fc80d50a1b22919165eb117f51f0b86b8 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -15,12 +15,14 @@
@@ -138,5 +134,5 @@ index 04f534e..5f55537 100644
    }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

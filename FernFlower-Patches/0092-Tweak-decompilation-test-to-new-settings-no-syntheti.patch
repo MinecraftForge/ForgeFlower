@@ -1,15 +1,11 @@
 From 71f348d0c9b66b35db2c7a42d37d15ea7f2ea5d9 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Fri, 16 Oct 2015 21:39:10 -0400
-Subject: [PATCH 092/122] Tweak decompilation test to new settings (no
- synthetics or bridge)
+Subject: Tweak decompilation test to new settings (no synthetics or bridge)
 
----
- .../jetbrains/java/decompiler/MinecraftDecompilationTest.java   | 2 --
- 1 file changed, 2 deletions(-)
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
-index 2afd2e6..087c810 100644
+index 2afd2e6f60ee5cc191b6eaf535e0fa12f25ea275..087c8102c11b1258d8e3f1615fe64f745b8587d6 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 +++ b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 @@ -43,10 +43,8 @@ public class MinecraftDecompilationTest {
@@ -24,5 +20,5 @@ index 2afd2e6..087c810 100644
      }};
      fixture.setUp(mcFFOptions);
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

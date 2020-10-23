@@ -1,17 +1,13 @@
 From 89ea238257bbf10339409978ea26f982fd497090 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Fri, 2 Oct 2015 21:02:44 -0400
-Subject: [PATCH 065/122] Remove dowhile detection, and restore do loop
- collapsing code. Seems to eliminate a lot of derpy loop smashage.
+Subject: =?UTF-8?q?Remove=20dowhile=20detection,=20and=20restore=20do=20lo?=
+ =?UTF-8?q?op=20collapsing=20code.=20Seems=20to=20eliminate=20a=20lot=20of?=
+ =?UTF-8?q?=0Aderpy=20loop=20smashage.?=
 
----
- .../main/rels/MethodProcessorRunnable.java    | 10 +++---
- .../decompiler/EliminateLoopsHelper.java      | 36 ++++++++++---------
- .../modules/decompiler/MergeHelper.java       |  2 +-
- 3 files changed, 26 insertions(+), 22 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index a22d269..ef7e97a 100644
+index a22d269e7e2609576be0c7fb3752ac0c710d3158..ef7e97a5e99899896b11376fd31e3511fb5b06b5 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -162,15 +162,17 @@ public class MethodProcessorRunnable implements Runnable {
@@ -37,7 +33,7 @@ index a22d269..ef7e97a 100644
  
        if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
-index 16f7da0..823e561 100644
+index 16f7da0845344d017c3f2b4354bcca6a243b9fe8..823e561264e4fe3482c10dd9bf40f13593ad1ec8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 @@ -17,32 +17,34 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -93,7 +89,7 @@ index 16f7da0..823e561 100644
    private static boolean eliminateLoopsRec(Statement stat) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 5adf323..0e7f1ab 100644
+index 5adf32354b34abd479184f162ea22d45a342a271..0e7f1ab7fe6fe4ca716cdcc0fc182dcfa59c3b7b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -74,7 +74,7 @@ public class MergeHelper {
@@ -106,5 +102,5 @@ index 5adf323..0e7f1ab 100644
  
          break;
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

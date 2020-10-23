@@ -1,16 +1,12 @@
 From 155a27086d2f5178ce4e981e208d69ce8e9a421d Mon Sep 17 00:00:00 2001
 From: RainWarrior <rainwarrior@fry.su>
 Date: Wed, 14 Oct 2015 09:26:05 +0300
-Subject: [PATCH 082/122] passing information from InvocationExprent's inferred
- type arguments to the parameters
+Subject: passing information from InvocationExprent's inferred type arguments
+ to the parameters
 
----
- .../decompiler/exps/InvocationExprent.java    | 42 +++++++++++++++++--
- .../struct/gen/generics/GenericType.java      |  6 ++-
- 2 files changed, 43 insertions(+), 5 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index ca5e077..884a2d7 100644
+index ca5e0778987e633aaf5c4f54a63fefe28cb356e0..884a2d7ed927eb6f402b05a169ca772764bf9c61 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -429,7 +429,7 @@ public class InvocationExprent extends Exprent {
@@ -87,7 +83,7 @@ index ca5e077..884a2d7 100644
          if (!paramType.equals(md.params[i])) {
            ambiguous.set(i);
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index da04e00..9319bf7 100644
+index da04e009a8b3ef883536cf117faee2f6dfe3b417..9319bf76366d189afd5bdb98b018c8e0425a58b0 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -35,7 +35,7 @@ public class GenericType extends VarType {
@@ -111,5 +107,5 @@ index da04e00..9319bf7 100644
      return arguments;
    }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

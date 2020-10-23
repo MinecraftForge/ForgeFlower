@@ -1,14 +1,11 @@
 From 72d20673f0ae872335858e728ff81532049422f0 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 25 Oct 2015 14:26:33 -0400
-Subject: [PATCH 108/122] Fix NPE
+Subject: Fix NPE
 
----
- .../jetbrains/java/decompiler/MinecraftDecompilationTest.java   | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
-index 0d68e88..2ae6da5 100644
+index 0d68e8886c6f6584c4514e9b95f320fb05b9e941..2ae6da55e0d8ecb2fbdb39a6e42d1f179ac32203 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 +++ b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 @@ -177,7 +177,7 @@ public class MinecraftDecompilationTest {
@@ -21,5 +18,5 @@ index 0d68e88..2ae6da5 100644
          } else if (!md5digest.equals(md5s.get(fname))) {
            System.out.println("Existing Variant: " + fname);
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

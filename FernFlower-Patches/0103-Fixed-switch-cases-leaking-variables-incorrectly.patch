@@ -1,14 +1,11 @@
 From cf2bb43998a31ffa206193b9f0661df00bfbb6c0 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 22 Oct 2015 16:14:59 -0700
-Subject: [PATCH 103/122] Fixed switch cases leaking variables incorrectly.
+Subject: Fixed switch cases leaking variables incorrectly.
 
----
- .../modules/decompiler/vars/VarDefinitionHelper.java           | 3 +++
- 1 file changed, 3 insertions(+)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 520b951..726edd7 100644
+index 520b951dd96e4cc70a1800af58aa7a9b43ac1d9f..726edd7aeab41647414952e0a0a6c8cb52674816 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -648,6 +648,9 @@ public class VarDefinitionHelper {
@@ -22,5 +19,5 @@ index 520b951..726edd7 100644
              else if (stat.type == Statement.TYPE_TRYCATCH ||
                       stat.type == Statement.TYPE_CATCHALL) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

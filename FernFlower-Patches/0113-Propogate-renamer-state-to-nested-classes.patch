@@ -1,18 +1,11 @@
 From 2ab59c1d7153f83d74f4e82db8174429f9eb80ea Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Fri, 6 Nov 2015 03:13:00 -0800
-Subject: [PATCH 113/122] Propogate renamer state to nested classes.
+Subject: Propogate renamer state to nested classes.
 
----
- .../decompiler/main/ClassesProcessor.java     |  7 ---
- .../decompiler/vars/VarDefinitionHelper.java  | 43 ++++++++++++++++---
- .../java/decompiler/util/JADNameProvider.java | 14 +++---
- .../decompiler/util/StatementIterator.java    | 43 +++++++++++++++++++
- 4 files changed, 88 insertions(+), 19 deletions(-)
- create mode 100644 src/org/jetbrains/java/decompiler/util/StatementIterator.java
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index b3bd44e..f22baa0 100644
+index b3bd44e5c7276d33eecd4cf4287d77864568f927..f22baa00bfcb99aa8e05ee323fdecacdf8cf177a 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -335,13 +335,6 @@ public class ClassesProcessor {
@@ -30,7 +23,7 @@ index b3bd44e..f22baa0 100644
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 59b1c42..de4dbdc 100644
+index 59b1c42717441f6bce853aa4ce9d710c15d723b6..de4dbdc7b84cc6bcb95faa3ba05e6e2290922cf5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -16,14 +16,16 @@
@@ -113,7 +106,7 @@ index 59b1c42..de4dbdc 100644
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
-index 4c0c976..f2d2e3b 100644
+index 4c0c9762f5f59e858f49e6bd093df00eff0cdaac..f2d2e3baf14f3004b1d377b9cb7a882741885d23 100644
 --- a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 @@ -25,13 +25,13 @@ public class JADNameProvider implements IVariableNameProvider {
@@ -139,7 +132,7 @@ index 4c0c976..f2d2e3b 100644
        last.put("Class",   new Holder(0, true,  "oclass"  ));
 diff --git a/src/org/jetbrains/java/decompiler/util/StatementIterator.java b/src/org/jetbrains/java/decompiler/util/StatementIterator.java
 new file mode 100644
-index 0000000..4e4c8b4
+index 0000000000000000000000000000000000000000..4e4c8b475a4fdf4d6452ebe57621fc36bc2a2e38
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/StatementIterator.java
 @@ -0,0 +1,43 @@
@@ -187,5 +180,5 @@ index 0000000..4e4c8b4
 +  }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

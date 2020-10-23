@@ -1,15 +1,11 @@
 From 497af514fd5c868021fc9be12acac2c387f5541d Mon Sep 17 00:00:00 2001
 From: RainWarrior <rainwarrior@fry.su>
 Date: Wed, 14 Oct 2015 15:30:51 +0300
-Subject: [PATCH 084/122] handle generic lists with multiple arguments in
- method invocations
+Subject: handle generic lists with multiple arguments in method invocations
 
----
- .../decompiler/exps/InvocationExprent.java    | 21 ++++++++++++-------
- 1 file changed, 13 insertions(+), 8 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 4c4b898..f98c822 100644
+index 4c4b8981d0e7b3e12d7024e5dc7e05c31476ea8d..f98c822f58aa151185507a7fd7dc2cb0198f72b8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -208,14 +208,19 @@ public class InvocationExprent extends Exprent {
@@ -41,5 +37,5 @@ index 4c4b898..f98c822 100644
            }
          }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

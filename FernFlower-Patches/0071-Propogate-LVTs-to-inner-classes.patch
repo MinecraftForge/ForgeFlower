@@ -1,19 +1,12 @@
 From bf26fb1390f668dcadb5dc15cdf9cbfc12b84d81 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 4 Oct 2015 16:52:33 -0700
-Subject: [PATCH 071/122] Propogate LVTs to inner classes. Fix improper var
- merging in var handlers.
+Subject: =?UTF-8?q?Propogate=20LVTs=20to=20inner=20classes.=0AFix=20improp?=
+ =?UTF-8?q?er=20var=20merging=20in=20var=20handlers.?=
 
----
- .../main/rels/NestedClassProcessor.java       | 37 +++++++++++--
- .../modules/decompiler/vars/LVTVariable.java  |  8 ++-
- .../decompiler/vars/VarDefinitionHelper.java  | 53 ++++++++++++++-----
- .../modules/decompiler/vars/VarProcessor.java | 13 ++++-
- .../decompiler/vars/VarVersionsProcessor.java |  2 +-
- 5 files changed, 90 insertions(+), 23 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index c6eda1b..3378549 100644
+index c6eda1b630480cdec964a3571fc44e1c90626b24..33785497b358346846ce58824ce3c2f0aa2be815 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
@@ -151,7 +144,7 @@ index c6eda1b..3378549 100644
              }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
-index 209d3e0..cb376d9 100644
+index 209d3e081f58e2d54b231dbe2c90fe11c319f66c..cb376d9b480f06971c71647037a17a166764e805 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
 @@ -83,7 +83,11 @@ public class LVTVariable implements Comparable<LVTVariable> {
@@ -170,7 +163,7 @@ index 209d3e0..cb376d9 100644
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 88dae4d..0427e3b 100644
+index 88dae4d81ca4ebc059cc575cf5e97d9f5bfe0fee..0427e3b329d4599d42ef5f8ac35fd84581c5f8c6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -440,6 +440,10 @@ public class VarDefinitionHelper {
@@ -265,7 +258,7 @@ index 88dae4d..0427e3b 100644
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 89f24f3..04ee48f 100644
+index 89f24f365a7c01b7920fd8002dda2ec0b955f96c..04ee48f75b4d78b117e6fe1e70cf41fa0073b99d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -29,6 +29,7 @@ import java.util.Map.Entry;
@@ -301,7 +294,7 @@ index 89f24f3..04ee48f 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index d201157..a1acd19 100644
+index d201157f241a77410bbd495ed43c5a54540ee59c..a1acd195bb107e423f2ed29c1e1554a7fa63442f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -323,5 +323,5 @@ public class VarVersionsProcessor {
@@ -312,5 +305,5 @@ index d201157..a1acd19 100644
 +  }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

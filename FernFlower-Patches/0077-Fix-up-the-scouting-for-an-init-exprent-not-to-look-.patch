@@ -1,25 +1,12 @@
 From 0fac2512ae858770015e5bc2f3d84448ac5031c5 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 11 Oct 2015 12:51:22 -0400
-Subject: [PATCH 077/122] Fix up the scouting for an init exprent, not to look
- inside loops for it. Fixes the broken loops. Added tests for it.
+Subject: Fix up the scouting for an init exprent, not to look inside loops for
+ it. Fixes the broken loops. Added tests for it.
 
----
- .../main/rels/MethodProcessorRunnable.java    |  24 ++++++++-
- .../modules/decompiler/MergeHelper.java       |   2 +
- .../jetbrains/java/decompiler/LVTTest.java    |   4 +-
- .../java/decompiler/LoopMergingTests.java     |  30 +++++++++++
- testData/classes/pkg/TestLoopMerging.class    | Bin 0 -> 1524 bytes
- testData/results/TestLoopMerging.dec          |  49 ++++++++++++++++++
- testData/src/pkg/TestLoopMerging.java         |  47 +++++++++++++++++
- 7 files changed, 153 insertions(+), 3 deletions(-)
- create mode 100644 test/org/jetbrains/java/decompiler/LoopMergingTests.java
- create mode 100644 testData/classes/pkg/TestLoopMerging.class
- create mode 100644 testData/results/TestLoopMerging.dec
- create mode 100644 testData/src/pkg/TestLoopMerging.java
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 62d5297..2e1668d 100644
+index 62d52975708c5a8126bdc73824fe575b14dea108..2e1668de1af3414bfbed0bf72461688246303931 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -28,9 +28,13 @@ import org.jetbrains.java.decompiler.modules.decompiler.*;
@@ -92,7 +79,7 @@ index 62d5297..2e1668d 100644
        return sb.toString();
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 11c7c59..c240daa 100644
+index 11c7c599d4413cb46b58906f4b7fdbe4a019e1f0..c240daa740a7766b1541dc8aea73025cb9486ac7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -358,6 +358,8 @@ public class MergeHelper {
@@ -105,7 +92,7 @@ index 11c7c59..c240daa 100644
            if (preData != null && !preData.getExprents().isEmpty()) {
              initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index d4771bb..fea37bc 100644
+index d4771bb0b063154fd4e38ac3d68ed3c0b27c8938..fea37bceb36c964966c7772c8911f9aa63ae119e 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -38,11 +38,12 @@ public class LVTTest extends SingleClassesTestBase {
@@ -130,7 +117,7 @@ index d4771bb..fea37bc 100644
  }
 diff --git a/test/org/jetbrains/java/decompiler/LoopMergingTests.java b/test/org/jetbrains/java/decompiler/LoopMergingTests.java
 new file mode 100644
-index 0000000..ddc15d1
+index 0000000000000000000000000000000000000000..ddc15d14e9efaca03115795dbce9266d361b565e
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/LoopMergingTests.java
 @@ -0,0 +1,30 @@
@@ -190,7 +177,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestLoopMerging.dec b/testData/results/TestLoopMerging.dec
 new file mode 100644
-index 0000000..9f91437
+index 0000000000000000000000000000000000000000..9f91437231e714f985a1f44aa1a7e3df82cb1e5a
 --- /dev/null
 +++ b/testData/results/TestLoopMerging.dec
 @@ -0,0 +1,49 @@
@@ -245,7 +232,7 @@ index 0000000..9f91437
 +}
 diff --git a/testData/src/pkg/TestLoopMerging.java b/testData/src/pkg/TestLoopMerging.java
 new file mode 100644
-index 0000000..c257b10
+index 0000000000000000000000000000000000000000..c257b10446cf1cc23c6c9408e8f5660d30906b29
 --- /dev/null
 +++ b/testData/src/pkg/TestLoopMerging.java
 @@ -0,0 +1,47 @@
@@ -297,5 +284,5 @@ index 0000000..c257b10
 +    }
 +}
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

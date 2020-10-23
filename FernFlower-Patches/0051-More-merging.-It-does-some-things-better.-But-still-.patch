@@ -1,16 +1,12 @@
 From f88735d87e1dc889676151707ce066420475da78 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Wed, 16 Sep 2015 00:49:12 -0400
-Subject: [PATCH 051/122] More merging. It does some things better. But still
- not anywhere near good enough :(
+Subject: More merging. It does some things better. But still not anywhere near
+ good enough :(
 
----
- .../decompiler/stats/BasicBlockStatement.java | 10 ++++
- .../decompiler/vars/VarDefinitionHelper.java  | 54 +++++++++++++++----
- 2 files changed, 55 insertions(+), 9 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
-index 762fd01..ea7e611 100644
+index 762fd011314ca3f5c7fdc370ffe2bccdbb01a509..ea7e6110cf1e5eeb4d3f13d98527d53e85dd60fe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/BasicBlockStatement.java
 @@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
@@ -36,7 +32,7 @@ index 762fd01..ea7e611 100644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 7abcec8..8c42c0c 100644
+index 7abcec8a356fa92f2bc18bf2dc24fc3defac3a38..8c42c0c192cd73d7aef3632e22eaa74a3fff20e1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -139,5 +135,5 @@ index 7abcec8..8c42c0c 100644
        }
      }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

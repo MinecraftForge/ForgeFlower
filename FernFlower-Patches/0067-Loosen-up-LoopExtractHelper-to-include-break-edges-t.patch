@@ -1,15 +1,12 @@
 From 751b2227a9b40757f0c01008882263e0c4acbd1d Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 3 Oct 2015 22:55:00 -0700
-Subject: [PATCH 067/122] Loosen up LoopExtractHelper to include break edges
- that can be extracted.
+Subject: Loosen up LoopExtractHelper to include break edges that can be
+ extracted.
 
----
- .../modules/decompiler/LoopExtractHelper.java | 27 +++++++++++++++----
- 1 file changed, 22 insertions(+), 5 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
-index d5c9e8f..93bc21d 100644
+index d5c9e8f20aee82846a0d92f1c80b9d75a5984f8f..93bc21dd17add5a854450a034ed69a0a961808ee 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -86,5 +83,5 @@ index d5c9e8f..93bc21d 100644
              return true;
            }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,15 +1,12 @@
 From b44392c8602fca4597fc52d98955a3be4d32ee77 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 15:43:39 -0700
-Subject: [PATCH 016/122] Fix JVM differences printing floats with an undefined
- number of trailing zeros. (Some JVMs do 0.1F and some do 0.10F)
+Subject: Fix JVM differences printing floats with an undefined number of
+ trailing zeros. (Some JVMs do 0.1F and some do 0.10F)
 
----
- .../modules/decompiler/exps/ConstExprent.java | 28 +++++++++++++------
- 1 file changed, 19 insertions(+), 9 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 4b9b687..5a751f9 100644
+index 4b9b687382d96886a1a954e0fa179211843d45a8..5a751f91d28558268fc18f6f4630338c1e751f9b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -210,7 +210,7 @@ public class ConstExprent extends Exprent {
@@ -89,5 +86,5 @@ index 4b9b687..5a751f9 100644
 +
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

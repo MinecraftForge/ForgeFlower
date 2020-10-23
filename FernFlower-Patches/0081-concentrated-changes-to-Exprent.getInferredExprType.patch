@@ -1,22 +1,11 @@
 From b84e34a3999001b3da2bed7766c1ed2a77bcd100 Mon Sep 17 00:00:00 2001
 From: RainWarrior <rainwarrior@fry.su>
 Date: Wed, 14 Oct 2015 05:45:41 +0300
-Subject: [PATCH 081/122] concentrated changes to Exprent.getInferredExprType
+Subject: concentrated changes to Exprent.getInferredExprType
 
----
- .../java/decompiler/main/ClassWriter.java     |   1 +
- .../modules/decompiler/ExprProcessor.java     |   4 +-
- .../decompiler/exps/AssignmentExprent.java    |   8 +-
- .../modules/decompiler/exps/Exprent.java      |   6 +-
- .../modules/decompiler/exps/FieldExprent.java |   5 +-
- .../decompiler/exps/InvocationExprent.java    | 189 ++++++++++--------
- .../modules/decompiler/exps/VarExprent.java   |   2 +-
- .../struct/gen/generics/GenericType.java      |  16 ++
- .../MinecraftDecompilationTest.java           |   1 +
- 9 files changed, 139 insertions(+), 93 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 4ec7fe9..7c8276c 100644
+index 4ec7fe9d7d34fe35fcd379d608a102d8f40e1734..7c8276c8dd60eac7022378d4b0700d272a333705 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -435,6 +435,7 @@ public class ClassWriter {
@@ -28,7 +17,7 @@ index 4ec7fe9..7c8276c 100644
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 2760f20..3be3b6f 100644
+index 2760f202f5d1b04570ad3eb59f89c829f050b6ab..3be3b6fb3db44ef1320c3106e7d432dd1579e335 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -912,9 +912,9 @@ public class ExprProcessor implements CodeConstants {
@@ -44,7 +33,7 @@ index 2760f20..3be3b6f 100644
      boolean cast =
        castAlways ||
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index efc64b9..8276abd 100644
+index efc64b9d98005572eb9752e36d472f7a65358203..8276abdbc032467bcff47d2be07729c0f0e53d44 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -65,6 +65,12 @@ public class AssignmentExprent extends Exprent {
@@ -70,7 +59,7 @@ index efc64b9..8276abd 100644
      boolean fieldInClassInit = false, hiddenField = false;
      if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index 9d41ec2..bda80a0 100644
+index 9d41ec2900c7cbdddfb591598526c009f69148ae..bda80a0333129fd0e1d476e00cd1e6dee18ce98b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -74,7 +74,7 @@ public abstract class Exprent implements IMatchable {
@@ -94,7 +83,7 @@ index 9d41ec2..bda80a0 100644
      throw new RuntimeException("not implemented");
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index d4bd68e..be95dc1 100644
+index d4bd68ef9fd192a67843e14504a226250aaf7a85..be95dc1f6242dc3a12cc433384d34700d8c602b3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -68,14 +68,15 @@ public class FieldExprent extends Exprent {
@@ -116,7 +105,7 @@ index d4bd68e..be95dc1 100644
      return getExprType();
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 81b6f4e..ca5e077 100644
+index 81b6f4e5108eb3e7b73b4962b5695337e5a1e726..ca5e0778987e633aaf5c4f54a63fefe28cb356e0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -72,6 +72,8 @@ public class InvocationExprent extends Exprent {
@@ -394,7 +383,7 @@ index 81b6f4e..ca5e077 100644
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 3058e77..0d41725 100644
+index 3058e7724f20f48309683af8c16b7bf19e124820..0d417258f78e649b034a680374610a961ed21257 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -66,7 +66,7 @@ public class VarExprent extends Exprent {
@@ -407,7 +396,7 @@ index 3058e77..0d41725 100644
        // TODO; figure out why it's crashing, ugly fix for now
        try {
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index aeb786a..da04e00 100644
+index aeb786a7b26864424c5b730ef3f954b9bfb583be..da04e009a8b3ef883536cf117faee2f6dfe3b417 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -318,4 +318,20 @@ public class GenericType extends VarType {
@@ -432,7 +421,7 @@ index aeb786a..da04e00 100644
 +  }
  }
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
-index c7e781e..2afd2e6 100644
+index c7e781e4172f736a831b857ca7fd3060d95e6186..2afd2e6f60ee5cc191b6eaf535e0fa12f25ea275 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 +++ b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
 @@ -47,6 +47,7 @@ public class MinecraftDecompilationTest {
@@ -444,5 +433,5 @@ index c7e781e..2afd2e6 100644
      fixture.setUp(mcFFOptions);
      if (!new File(fixture.getTestDataDir(), MC_JAR).exists()) {
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

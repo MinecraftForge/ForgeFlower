@@ -1,18 +1,14 @@
 From 67a6f1d47bd5780221f7a545e899430cfc82e9be Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 8 Aug 2015 17:22:07 -0400
-Subject: [PATCH 026/122] Change to track the varversionpair in the "oldnames"
- table. Track if we have an lvt entry when generating names and trust it's
- name exactly.
+Subject: =?UTF-8?q?Change=20to=20track=20the=20varversionpair=20in=20the?=
+ =?UTF-8?q?=20"oldnames"=20table.=20Track=20if=20we=20have=20an=20lvt=20en?=
+ =?UTF-8?q?try=20when=20generating=20names=0Aand=20trust=20it's=20name=20e?=
+ =?UTF-8?q?xactly.?=
 
----
- .../decompiler/vars/LocalVariableTable.java     |  2 +-
- .../modules/decompiler/vars/VarProcessor.java   | 17 +++++++++--------
- .../decompiler/vars/VarVersionsProcessor.java   |  8 ++++----
- 3 files changed, 14 insertions(+), 13 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
-index 027e816..99025a5 100644
+index 027e81652438e7648ec02c49feb2afcb1e2f234c..99025a511b670f1bf84493afb1ac43f3cd394600 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
 @@ -64,7 +64,7 @@ private Map<Integer, List<LVTVariable>> mapLVT;
@@ -25,7 +21,7 @@ index 027e816..99025a5 100644
          idx++;
        versions.put(lvt.index, idx);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 07b5398..a2a79f5 100644
+index 07b5398d4ccd7b6a06e91056a88b2b6e0df94291..a2a79f581baeb57597f8a69c9701b8c35ac4e2dc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -34,7 +34,7 @@ public class VarProcessor {
@@ -82,7 +78,7 @@ index 07b5398..a2a79f5 100644
  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index 0de789a..eae4cba 100644
+index 0de789a6f2278edc1e327d741b800fdba4a9dfcc..eae4cbac7b5074685e16cb6738434e1124528d57 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -34,7 +34,7 @@ import java.util.Map.Entry;
@@ -122,5 +118,5 @@ index 0de789a..eae4cba 100644
    }
  }
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 

@@ -1,14 +1,11 @@
 From 723017cb1251c8f0ff9b09e97a8800109bc5375f Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 15:52:57 -0700
-Subject: [PATCH 004/122] Fixed this calls not having arguments.
+Subject: Fixed this calls not having arguments.
 
----
- .../modules/decompiler/exps/InvocationExprent.java   | 12 ++++++------
- 1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 294a115..4e73f06 100644
+index 294a115207d3c76ef0ae29e63556ec5de750889d..4e73f0649a7d85aa59756a3634bceae61e3d59fe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -321,7 +321,7 @@ public class InvocationExprent extends Exprent {
@@ -53,5 +50,5 @@ index 294a115..4e73f06 100644
    }
  
 -- 
-2.21.0.windows.1
+2.28.0.windows.1
 
