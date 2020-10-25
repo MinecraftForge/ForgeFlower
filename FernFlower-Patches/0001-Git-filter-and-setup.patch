@@ -1,11 +1,11 @@
-From 5be583d933dcef773015c10617101552bf49d4aa Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 20:44:39 -0700
 Subject: [PATCH] Git filter and setup
 
 
 diff --git a/.gitattributes b/.gitattributes
-index f1df734..972529a 100644
+index f1df734f9f0bc7080a99140482eedf28bfe6b166..972529aebd1f5daa057f1fe9606c79be1dc4f64f 100644
 --- a/.gitattributes
 +++ b/.gitattributes
 @@ -1 +1,42 @@
@@ -55,7 +55,7 @@ index f1df734..972529a 100644
 \ No newline at end of file
 diff --git a/.gitignore b/.gitignore
 new file mode 100644
-index 0000000..c52eb2e
+index 0000000000000000000000000000000000000000..c52eb2e815432be8d1f1e6b61cffdcce68af85bb
 --- /dev/null
 +++ b/.gitignore
 @@ -0,0 +1,231 @@
@@ -290,6 +290,3 @@ index 0000000..c52eb2e
 +.idea/
 +repo
 +!testData/classes/**
--- 
-2.10.0.windows.1
-

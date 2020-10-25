@@ -1,11 +1,11 @@
-From 7362c8cee557eb45bd59a7c42a3eb066ec1edfc5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 13:21:00 -0700
 Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 764b4d4..0627e8c 100644
+index 764b4d4945b8733b746befe61317eff472df07c4..0627e8c0c8818e52cd43bfa449e23322a8957abd 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -54,6 +54,7 @@ public class ClassWriter {
@@ -17,7 +17,7 @@ index 764b4d4..0627e8c 100644
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersionGE_1_5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index a743f98..1e9478b 100644
+index a743f985878d101606f2d287ef1138c6d05336a7..1e9478b91610c6cc972dc5dbb4f8643f9312b8cb 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -31,6 +31,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -61,7 +61,7 @@ index a743f98..1e9478b 100644
                String enclClassName;
                if (entry.outerNameIdx != 0) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 18a13d9..41e6934 100644
+index 18a13d9e5e728da363ed9e4615c884f2bfac8fda..41e6934b082db39c451089c1fbd8dd7f957b1eba 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -27,6 +27,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -131,7 +131,7 @@ index 18a13d9..41e6934 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index d43388c..8510a8b 100644
+index d43388ca7fd3eba0c9f822057126872a3f231124..8510a8b32d42eaf9fc5c9ced7fc5faf6bcd8df68 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -331,7 +331,7 @@ public class NewExprent extends Exprent {
@@ -143,6 +143,3 @@ index d43388c..8510a8b 100644
                    break;  // skip last parameter of synthetic constructor call
                  }
                }
--- 
-2.10.0.windows.1
-

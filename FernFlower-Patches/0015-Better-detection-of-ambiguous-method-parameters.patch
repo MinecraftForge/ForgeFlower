@@ -1,11 +1,11 @@
-From b627df9d04e4788c7a4e43ae7a4331dbce4217bb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 13 May 2017 22:17:47 -0700
 Subject: [PATCH] Better detection of ambiguous method parameters.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b423fb4..cf0ab0a 100644
+index b423fb468a9b0bfc00026904299cded8715730c7..cf0ab0a0a2e64bc6155d525dfd0df51a743714fe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -16,6 +16,7 @@
@@ -79,6 +79,3 @@ index b423fb4..cf0ab0a 100644
  
          if (mtt.getSignature() != null && mtt.getSignature().params.get(i).isGeneric()) {
            break;
--- 
-2.10.0.windows.1
-

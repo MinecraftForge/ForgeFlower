@@ -1,4 +1,4 @@
-From e9ec9eb48924137aa8511711df24f10fc2653595 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 19 Apr 2017 01:59:28 -0700
 Subject: [PATCH] Add Minecraft test framework
@@ -6,7 +6,7 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000..981ceff
+index 0000000000000000000000000000000000000000..981ceff90bbd6241e6bfafcdedff93b835c88fa8
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 @@ -0,0 +1,111 @@
@@ -121,6 +121,3 @@ index 0000000..981ceff
 +  @Test public void testEntityPlayer() { doTest("net/minecraft/entity/player/EntityPlayerMP"); }
 +
 +}
--- 
-2.10.0.windows.1
-

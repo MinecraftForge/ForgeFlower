@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Sat, 24 Oct 2020 23:33:03 -0700
+Subject: [PATCH] J9 Buffer fixes. Add explicit cast to invocations of
+ java/nio/Buffer functions. Java 9+ added overrides to these functions to
+ return the specific subclass, however, when there is a compiler "bug" that
+ when targeting release * or below, it will still reference these new methods,
+ causing exceptions at runtime on Java 8.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index cf0ab0a0a2e64bc6155d525dfd0df51a743714fe..0dad2aa241a6230ef73034fa5e6494a849cdc767 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -60,6 +60,8 @@ public class InvocationExprent extends Exprent {
+ 
+   private static final BitSet EMPTY_BIT_SET = new BitSet(0);
+ 
++  private static final VarType JAVA_NIO_BUFFER = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/nio/Buffer");
++
+   private String name;
+   private String classname;
+   private boolean isStatic;
+@@ -334,6 +336,12 @@ public class InvocationExprent extends Exprent {
+           else if (instance.getPrecedence() > getPrecedence()) {
+             buf.append("(").append(res).append(")");
+           }
++          //Java 9+ adds some overrides to java/nio/Buffer's subclasses that alter the return types.
++          //This isn't properly handled by the compiler. So explicit casts are needed to retain J8 compatibility.
++          else if (JAVA_NIO_BUFFER.equals(descriptor.ret) && !JAVA_NIO_BUFFER.equals(rightType)
++              && DecompilerContext.getStructContext().instanceOf(rightType.value, JAVA_NIO_BUFFER.value)) {
++              buf.append("((").append(ExprProcessor.getCastTypeName(JAVA_NIO_BUFFER)).append(")").append(res).append(")");
++          }
+           else {
+             buf.append(res);
+           }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index 970824161163de0cc08ff880f3f829731b8f47cf..a1563bad19f1ee76bc6df779516ca6c454b87751 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -219,4 +219,30 @@ public class StructContext {
+     List<String> params = this.abstractNames.get(className + ' ' + methodName + ' ' + descriptor);
+     return params != null && index < params.size() ? params.get(index) : _default;
+   }
++
++  public boolean instanceOf(String valclass, String refclass) {
++    if (valclass.equals(refclass)) {
++      return true;
++    }
++
++    StructClass cl = this.getClass(valclass);
++    if (cl == null) {
++      return false;
++    }
++
++    if (cl.superClass != null && this.instanceOf(cl.superClass.getString(), refclass)) {
++      return true;
++    }
++
++    int[] interfaces = cl.getInterfaces();
++    for (int i = 0; i < interfaces.length; i++) {
++      String intfc = cl.getPool().getPrimitiveConstant(interfaces[i]).getString();
++
++      if (this.instanceOf(intfc, refclass)) {
++        return true;
++      }
++    }
++
++    return false;
++  }
+ }

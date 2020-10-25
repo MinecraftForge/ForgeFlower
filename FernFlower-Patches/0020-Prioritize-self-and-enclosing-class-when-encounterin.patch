@@ -1,4 +1,4 @@
-From 9e0914aadb9a1c7e074b2af10c1770a042939bc3 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sun, 23 Feb 2020 21:28:31 -0800
 Subject: [PATCH] Prioritize self and enclosing class when encountering
@@ -9,7 +9,7 @@ Subject: [PATCH] Prioritize self and enclosing class when encountering
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 8df18a3..9ec1f28 100644
+index 8df18a3a6ce27bd6b221dbd65ad2d87544137597..9ec1f281b42cb787c65d76961b41a7221ad46b3f 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -41,6 +41,7 @@ import org.jetbrains.java.decompiler.struct.gen.generics.*;
@@ -32,7 +32,7 @@ index 8df18a3..9ec1f28 100644
      buffer.append('<');
  
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 64ebc94..662741a 100644
+index 64ebc94524843ae842add1f45c1649c0ed0ec633..662741a495c747b004f5ca11336d48e9471c9efa 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -50,10 +50,20 @@ public class ClassesProcessor {
@@ -78,6 +78,3 @@ index 64ebc94..662741a 100644
                    }
  
                    // reference to the nested class
--- 
-2.25.0.windows.1
-

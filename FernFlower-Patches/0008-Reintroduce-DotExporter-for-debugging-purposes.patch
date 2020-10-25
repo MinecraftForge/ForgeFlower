@@ -1,11 +1,11 @@
-From 7be525ac7d736bac0e87a6be0343edc474801d8c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 18:37:18 -0700
 Subject: [PATCH] Reintroduce DotExporter for debugging purposes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index ba77e1e..7367df0 100644
+index ba77e1e6519719b3f06f27a70de72b81c1136404..7367df006ea8de2dd69603e5d87772457166dc47 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -40,6 +40,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -25,7 +25,7 @@ index ba77e1e..7367df0 100644
              @Override
              public int processExprent(Exprent exprent) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index b6a2245..df3c1b5 100644
+index b6a2245636a34e824abc3f55940fa60d21d06512..df3c1b54539f0e52f96103c15cc767d5eef3c08c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -73,7 +73,7 @@ index b6a2245..df3c1b5 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 01d21d5..6f3ab79 100644
+index 01d21d5f566ad21ac5a38fcff8a48c1595420903..6f3ab79e253745dae21ff2395229d2fd17e94791 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -126,7 +126,7 @@ index 01d21d5..6f3ab79 100644
      for (DirectNode node : dgraph.nodes) {
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index cce407c..4c18dd7 100644
+index cce407c66a2010c92450dd62473183964b90a3cf..4c18dd75be0571a70a9594ec454a4e3ee1ba4765 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
@@ -148,7 +148,7 @@ index cce407c..4c18dd7 100644
      typeProcessor.calculateVarTypes(root, graph);
 diff --git a/src/org/jetbrains/java/decompiler/util/DotExporter.java b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 new file mode 100644
-index 0000000..d3c6f92
+index 0000000000000000000000000000000000000000..d3c6f92fbe0e8304f4f3e8d110dbee77eb04fe56
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 @@ -0,0 +1,238 @@
@@ -391,6 +391,3 @@ index 0000000..d3c6f92
 +  }
 +}
 \ No newline at end of file
--- 
-2.10.0.windows.1
-

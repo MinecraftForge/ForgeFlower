@@ -1,4 +1,4 @@
-From ff048b04fcb54e4b378dfe3fbe621fdf9b719cea Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Mon, 25 Sep 2017 13:46:14 -0700
 Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
@@ -6,7 +6,7 @@ Subject: [PATCH] Support for Java 9 Module and Package constant pool entries.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/code/CodeConstants.java b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
-index 7718ac3..fff0840 100644
+index 7718ac31625928b4299a07f1d9d54ef0d54319df..fff0840d50ea8b72567ce3016624fd48ce10a1c3 100644
 --- a/src/org/jetbrains/java/decompiler/code/CodeConstants.java
 +++ b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
 @@ -98,6 +98,7 @@ public interface CodeConstants {
@@ -27,7 +27,7 @@ index 7718ac3..fff0840 100644
    // ----------------------------------------------------------------------
    // MethodHandle reference_kind values
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 9b731eb..1814517 100644
+index 9b731eb4230f3adca6b0abd30e87ebd7efef041c..181451738e632c15a9f59ca62649be63a09db8af 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -55,7 +55,7 @@ index 9b731eb..1814517 100644
              classes.put(cl.qualifiedName, cl);
              unit.addClass(cl, name);
 diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
-index 68dffc6..99203dd 100644
+index 68dffc66c768aa49c4c94273406a4f8d832fec69..99203dde87ce707bcabfa8a96067c20274a6bfb6 100644
 --- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 +++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 @@ -78,6 +78,8 @@ public class ConstantPool implements NewClassNameBuilder {
@@ -105,6 +105,3 @@ index 68dffc6..99203dd 100644
        }
      }
    }
--- 
-2.14.1.windows.1
-

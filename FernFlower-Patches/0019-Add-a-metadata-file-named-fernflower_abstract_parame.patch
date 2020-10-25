@@ -1,4 +1,4 @@
-From 64fde16efe2f961082cabcf79ea8ab1df999ff46 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 12 Sep 2019 18:31:01 -0700
 Subject: [PATCH] Add a metadata file named
@@ -7,7 +7,7 @@ Subject: [PATCH] Add a metadata file named
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 561679a..8df18a3 100644
+index 561679a5f09b3b212dd6276ceab61539e93d006f..8df18a3a6ce27bd6b221dbd65ad2d87544137597 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -724,7 +724,8 @@ public class ClassWriter {
@@ -28,7 +28,7 @@ index 561679a..8df18a3 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index 3003c67..b0797ec 100644
+index 3003c67a9e45742cbfed1c8a2ad4a941cef11427..b0797ecc7340b98ce2b7badf1e8dd16435bde1cf 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -42,6 +42,7 @@ public class Fernflower implements IDecompiledData {
@@ -40,7 +40,7 @@ index 3003c67..b0797ec 100644
  
      if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index 38c9487..a7311f6 100644
+index 38c9487748ecc01f091e93dea28b250bf355549f..a7311f686300e0fd646a9b11d36a5ea3d84da2f8 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -21,12 +21,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -93,7 +93,7 @@ index 38c9487..a7311f6 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 40cf9cb..9708241 100644
+index 40cf9cbc117a326a25c369f2625baf1cad21941b..970824161163de0cc08ff880f3f829731b8f47cf 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -18,14 +18,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -149,6 +149,3 @@ index 40cf9cb..9708241 100644
 +    return params != null && index < params.size() ? params.get(index) : _default;
 +  }
  }
--- 
-2.19.1.windows.1
-

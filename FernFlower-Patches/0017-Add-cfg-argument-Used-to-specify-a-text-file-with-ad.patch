@@ -1,4 +1,4 @@
-From 70e1aff705753b84a651880e5d743427833cc5e8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 12 Sep 2019 15:51:15 -0700
 Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
@@ -8,7 +8,7 @@ Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 8925ad7..78b0ddd 100644
+index 8925ad7588cd34d9ffdfbc4de65fbd9365da4cae..78b0ddd815ed40cd270fb6620e80b0a61a76ceb4 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -23,9 +23,13 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -89,7 +89,7 @@ index 8925ad7..78b0ddd 100644
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 1814517..40cf9cb 100644
+index 181451738e632c15a9f59ca62649be63a09db8af..40cf9cbc117a326a25c369f2625baf1cad21941b 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -108,6 +108,7 @@ public class StructContext {
@@ -115,6 +115,3 @@ index 1814517..40cf9cb 100644
 -}
 \ No newline at end of file
 +}
--- 
-2.19.1.windows.1
-

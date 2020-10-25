@@ -1,11 +1,11 @@
-From 6655a7b9a9fa3b6749f8ba22c22e4d1f04f43982 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Fri, 14 Apr 2017 10:13:01 -0700
 Subject: [PATCH] Improvements to var++ and var--
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index facfe5f..5e3fcd2 100644
+index facfe5fa09c362ba3d5b6d52d55ff9747955c8e2..5e3fcd2ace5fced3cb5f91175420cdab763a1990 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -1064,7 +1064,7 @@ public class NestedClassProcessor {
@@ -18,7 +18,7 @@ index facfe5f..5e3fcd2 100644
            break;
          case Exprent.EXPRENT_VAR:
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index 76f5b98..96dd849 100644
+index 76f5b98b976748b5095139cddb016d4cc6e13105..96dd8495d4dfb7841e64356a05e1a3bbe59a4653 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 @@ -27,7 +27,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
@@ -111,7 +111,7 @@ index 76f5b98..96dd849 100644
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index d07efe7..d7364f1 100644
+index d07efe72a3073ffb55a937d000d7b571e9208574..d7364f1662ad09344956be3a2077beff7d03d8b2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -416,7 +416,12 @@ public class ConstExprent extends Exprent {
@@ -129,7 +129,7 @@ index d07efe7..d7364f1 100644
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
-index 71d689d..76e4064 100644
+index 71d689df60a4377103777be6a408ed4f8651377c..76e406446e524ad1df39881ab5178c09c1e5b421 100644
 --- a/test/org/jetbrains/java/decompiler/LVTTest.java
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
 @@ -45,4 +45,5 @@ public class LVTTest extends SingleClassesTestBase {
@@ -160,7 +160,7 @@ HcmV?d00001
 
 diff --git a/testData/results/TestPPMM.dec b/testData/results/TestPPMM.dec
 new file mode 100644
-index 0000000..ba3a5fc
+index 0000000000000000000000000000000000000000..ba3a5fc1b4a29798078399358a7e560326aa2044
 --- /dev/null
 +++ b/testData/results/TestPPMM.dec
 @@ -0,0 +1,70 @@
@@ -236,7 +236,7 @@ index 0000000..ba3a5fc
 +}
 diff --git a/testData/src/pkg/TestPPMM.java b/testData/src/pkg/TestPPMM.java
 new file mode 100644
-index 0000000..0a062be
+index 0000000000000000000000000000000000000000..0a062be8c8cc93d9f398e786671223ac9a591492
 --- /dev/null
 +++ b/testData/src/pkg/TestPPMM.java
 @@ -0,0 +1,81 @@
@@ -322,6 +322,3 @@ index 0000000..0a062be
 +   }
 +}
 \ No newline at end of file
--- 
-2.10.0.windows.1
-

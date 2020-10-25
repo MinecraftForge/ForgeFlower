@@ -1,4 +1,4 @@
-From 2b4bb7b965e82467a688869b0d6f5405f03e72df Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Thu, 11 May 2017 03:24:33 -0700
 Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
@@ -6,7 +6,7 @@ Subject: [PATCH] Fix primitive unboxing causing invocations of wrong
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b76d223..b423fb4 100644
+index b76d223b38e444a0f99478b3f265382126f28df5..b423fb468a9b0bfc00026904299cded8715730c7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -71,6 +71,7 @@ public class InvocationExprent extends Exprent {
@@ -191,7 +191,7 @@ zC;1rNsN-m+KI)_&Itl8E9{QOxL|Z&bzi>{`b}eFxevO~N8YOy>QoV{9UWQILRj&+`
 pG~BMN#U+}tmr8Mx_z7&P>6iXNNa~kJP%Hn}_Or|N6!`@3-2apXB8mV2
 
 diff --git a/testData/results/TestPrimitives.dec b/testData/results/TestPrimitives.dec
-index 52f2cdf..c85c4e7 100644
+index 52f2cdf01c873c3bdf2cdf53a0cf29c99a9dd154..c85c4e7fbfe7eea981a97d5bd48277a212feeb2e 100644
 --- a/testData/results/TestPrimitives.dec
 +++ b/testData/results/TestPrimitives.dec
 @@ -1,480 +1,549 @@
@@ -1133,7 +1133,7 @@ index 52f2cdf..c85c4e7 100644
 +98 <-> 97
 +99 <-> 98
 diff --git a/testData/src/pkg/TestPrimitives.java b/testData/src/pkg/TestPrimitives.java
-index 39041ef..fd850be 100644
+index 39041eface077c7f9baba1e15c9650e11cc81fa2..fd850be462ba51cfe6f4b5ccb9f37a34e5c07543 100644
 --- a/testData/src/pkg/TestPrimitives.java
 +++ b/testData/src/pkg/TestPrimitives.java
 @@ -1,6 +1,15 @@
@@ -1152,6 +1152,3 @@ index 39041ef..fd850be 100644
  
    public void printAll() {
      printBoolean(true);
--- 
-2.10.0.windows.1
-

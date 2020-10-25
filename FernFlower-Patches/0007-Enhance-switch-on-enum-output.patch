@@ -1,11 +1,11 @@
-From 5b6aae55c84fea45e1eb5e2c1776da962d02746c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Sat, 15 Apr 2017 17:32:28 -0700
 Subject: [PATCH] Enhance switch on enum output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 24c1947..ba77e1e 100644
+index 24c194712ad915e7a7195de2ee66066d094d4e13..ba77e1e6519719b3f06f27a70de72b81c1136404 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -16,6 +16,7 @@
@@ -155,7 +155,7 @@ index 24c1947..ba77e1e 100644
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index cf935f4..3513ffc 100644
+index cf935f4a5b27c0443fc62738daca83bfef49e96a..3513ffca3242c5d58c8aef3ac0f2ed262c611f59 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 @@ -23,7 +23,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -332,7 +332,7 @@ zv~1o}$51x!tz$Hsm+A;+8*ra;_KTT}(9eDpL5$P!1+WU8T5QhnF5<-Ag%w;R9VGh%
 RF}#on(r=%hghG)*{{<v4Oc4M8
 
 diff --git a/testData/results/TestEnum.dec b/testData/results/TestEnum.dec
-index 069e4ef..ce2511c 100644
+index 069e4efe131ecd59c97e979a3ab4f1fcb8170cfc..ce2511cc9f80e7162f6d7d3e8d061757a38ba125 100644
 --- a/testData/results/TestEnum.dec
 +++ b/testData/results/TestEnum.dec
 @@ -21,10 +21,32 @@ public enum TestEnum {
@@ -454,7 +454,7 @@ index 069e4ef..ce2511c 100644
 +57 <-> 45
 +59 <-> 48
 diff --git a/testData/src/pkg/TestEnum.java b/testData/src/pkg/TestEnum.java
-index e474d34..974898e 100644
+index e474d341d406981b924706ac065121f2a9603ed4..974898e766f59086aa471ea2ca48352478bece3a 100644
 --- a/testData/src/pkg/TestEnum.java
 +++ b/testData/src/pkg/TestEnum.java
 @@ -35,4 +35,26 @@ public enum TestEnum {
@@ -484,6 +484,3 @@ index e474d34..974898e 100644
 +    }
 +  }
  }
--- 
-2.10.0.windows.1
-

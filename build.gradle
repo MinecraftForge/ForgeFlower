@@ -1,8 +1,19 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven { url = 'https://files.minecraftforge.net/maven/'}
+    }
+    dependencies {
+        classpath 'net.minecraftforge:gitpatcher:0.10.+'
+    }
+}
 plugins {
-    id 'net.minecrell.gitpatcher' version '0.9.0'
     id 'org.ajoberstar.grgit' version '4.0.1'
     id 'com.github.ben-manes.versions' version '0.28.0'
 }
+apply plugin: 'net.minecraftforge.gitpatcher'
 
 allprojects {
     group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
@@ -14,10 +25,10 @@ def gitVersion() {
     def hash = desc.remove(desc.size() - 1)
     def offset = desc.remove(desc.size() - 1)
     def tag = desc.join('-')
-    def branch = grgit.branch.current().name 
-    return "${tag}.${offset}${t -> if (branch != 'master' && branch != 'HEAD') t << '-' + branch}"
+    return "${tag}.${offset}"
 }
 
+println('Version: ' + version + ' Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 
 patches {
     submodule = 'FernFlower'
