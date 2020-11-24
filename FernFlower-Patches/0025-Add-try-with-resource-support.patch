@@ -21,7 +21,7 @@ index 65712f684520590db2682ad8f9b67c993212662e..57498b1549f381c9af185e5a35293b25
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..6484ee0ba087cde20472fdd75247c4e515f15996
+index 0000000000000000000000000000000000000000..7e18ff4d3c83fe4d844be3547c567b5fa4583a3a
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 @@ -0,0 +1,263 @@
@@ -147,7 +147,7 @@ index 0000000000000000000000000000000000000000..6484ee0ba087cde20472fdd75247c4e5
 +
 +          child.setTryType(CatchStatement.RESORCES);
 +          initBlock.getExprents().remove(ass);
-+          child.getResources().add(resourceDef);
++          child.getResources().add(0, resourceDef);
 +
 +          if (!finallyStat.getVarDefinitions().isEmpty()) {
 +            child.getVarDefinitions().addAll(0, finallyStat.getVarDefinitions());
