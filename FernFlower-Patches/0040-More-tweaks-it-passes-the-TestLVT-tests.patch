@@ -1,7 +1,7 @@
-From d828cac2aee189062bac3731431f33e2a6ba30ca Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Fri, 11 Sep 2015 23:42:09 -0400
-Subject: More tweaks, it passes the TestLVT tests
+Subject: [PATCH] More tweaks, it passes the TestLVT tests
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
@@ -151,6 +151,3 @@ index d68ee3605d37d09a125facde48f3b3e48d3921bf..db41fb8a8ebfb8981c390f6782ca02d9
            return true;
          }
        }
--- 
-2.28.0.windows.1
-

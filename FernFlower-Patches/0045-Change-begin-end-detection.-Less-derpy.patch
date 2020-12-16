@@ -1,7 +1,7 @@
-From 78afb4580567df9f7d1e6245dc9735eba714a3b2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 13 Sep 2015 18:26:04 -0400
-Subject: Change begin/end detection. Less derpy.
+Subject: [PATCH] Change begin/end detection. Less derpy.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
@@ -293,6 +293,3 @@ index 2436d6d6bcf284bede78fb2e31a9f4efd2578d20..56061fe881f6c9f0e78a27ac62613136
          }
        }
      }
--- 
-2.28.0.windows.1
-

@@ -1,8 +1,8 @@
-From 0ecec99fee439f1f018c51826f4105c7753af7f2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 17:26:00 -0700
-Subject: Sort local variables and variable definitions. Again, different JVMs
- sort hash sets differently causing different variable names.
+Subject: [PATCH] Sort local variables and variable definitions. Again,
+ different JVMs sort hash sets differently causing different variable names.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
@@ -140,6 +140,3 @@ index 31f0f86d4423ac537faf31b7f16833f263801b23..4751052a5468ffc469d7166bce648d5b
  
        if (pair.version >= 0) {
          int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
--- 
-2.28.0.windows.1
-

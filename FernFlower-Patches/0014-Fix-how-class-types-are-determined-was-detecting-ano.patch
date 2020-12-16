@@ -1,8 +1,8 @@
-From eeabc2fd9d388a3361b0ec89733add20e4ade8a6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 15:07:46 -0700
-Subject: Fix how class types are determined, was detecting anon classes as
- member classes.
+Subject: [PATCH] Fix how class types are determined, was detecting anon
+ classes as member classes.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
@@ -188,6 +188,3 @@ index 5969487904608fb01550965dedfa43e4184c22c4..ecef5588a52318a40849f9ac4ae27e2b
 +    }
    }
  }
--- 
-2.28.0.windows.1
-

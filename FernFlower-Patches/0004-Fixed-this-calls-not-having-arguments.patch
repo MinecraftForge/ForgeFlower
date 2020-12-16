@@ -1,7 +1,7 @@
-From 723017cb1251c8f0ff9b09e97a8800109bc5375f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 15:52:57 -0700
-Subject: Fixed this calls not having arguments.
+Subject: [PATCH] Fixed this calls not having arguments.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
@@ -49,6 +49,3 @@ index 294a115207d3c76ef0ae29e63556ec5de750889d..4e73f0649a7d85aa59756a3634bceae6
      return true;
    }
  
--- 
-2.28.0.windows.1
-

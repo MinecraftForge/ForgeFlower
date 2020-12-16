@@ -1,7 +1,7 @@
-From 213752acb3080ed6bff297f5a4e54b09998cf10a Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 2 Aug 2015 10:43:54 -0400
-Subject: Add an LVT test so we can quickly iterate LVT hacking
+Subject: [PATCH] Add an LVT test so we can quickly iterate LVT hacking
 
 
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
@@ -138,6 +138,3 @@ index 0000000000000000000000000000000000000000..05b5228e223eb20be14622126efdb746
 +        }
 +    }
 +}
--- 
-2.28.0.windows.1
-

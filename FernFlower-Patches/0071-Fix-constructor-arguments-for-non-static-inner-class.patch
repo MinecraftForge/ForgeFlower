@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Sun, 4 Oct 2015 19:29:55 -0700
+Subject: [PATCH] Fix constructor arguments for non-static inner classes with
+ generic signatures.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 3e5789da9240c8b59cb914bd5fd94a78b13ddc61..daf3444f9bc3c0811af2f2370fcb218dc84ce42b 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -725,6 +725,12 @@ public class ClassWriter {
+         int index = isEnum && init ? 3 : thisVar ? 1 : 0;
+         boolean hasDescriptor = descriptor != null;
+         int start = isEnum && init && !hasDescriptor ? 2 : 0;
++
++        if (init && hasDescriptor && !isEnum &&
++            ((node.access & CodeConstants.ACC_STATIC) == 0) && node.type == ClassNode.CLASS_MEMBER) {
++          index++; //Enclosing class
++        }
++
+         int params = hasDescriptor ? descriptor.params.size() : md.params.length;
+         for (int i = start; i < params; i++) {
+           if (hasDescriptor || (signFields == null || signFields.get(i) == null)) {
+@@ -787,7 +793,7 @@ public class ClassWriter {
+             paramCount++;
+           }
+ 
+-          index += md.params[i].stackSize;
++          index += hasDescriptor ? descriptor.params.get(i).stackSize : md.params[i].stackSize;
+         }
+ 
+         buffer.append(')');
+diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
+index d3b38960a05cb9102bff5ae3aa305acd1111e6dc..9305bf93cf68b9f87b6d765b25494bcb2813c2aa 100644
+--- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
++++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
+@@ -31,6 +31,7 @@ public class GenericType {
+   public final int type;
+   public final int arrayDim;
+   public final String value;
++  public final int stackSize;
+ 
+   private final List<GenericType> enclosingClasses = new ArrayList<GenericType>();
+   private final List<GenericType> arguments = new ArrayList<GenericType>();
+@@ -40,6 +41,7 @@ public class GenericType {
+     this.type = type;
+     this.arrayDim = arrayDim;
+     this.value = value;
++    this.stackSize = getStackSize(type, arrayDim);
+   }
+ 
+   public GenericType(String signature) {
+@@ -102,6 +104,7 @@ public class GenericType {
+     this.type = type;
+     this.arrayDim = arrayDim;
+     this.value = value;
++    this.stackSize = getStackSize(type, arrayDim);
+   }
+ 
+   private static String getNextClassSignature(String value) {
+@@ -209,6 +212,23 @@ public class GenericType {
+     return value.substring(0, index + 1);
+   }
+ 
++  private static int getStackSize(int type, int arrayDim) {
++      if (arrayDim > 0) {
++        return 1;
++      }
++
++      switch (type) {
++        case CodeConstants.TYPE_DOUBLE:
++        case CodeConstants.TYPE_LONG:
++          return 2;
++        case CodeConstants.TYPE_VOID:
++        case CodeConstants.TYPE_GROUP2EMPTY:
++          return 0;
++        default:
++          return 1;
++      }
++    }
++
+   public GenericType decreaseArrayDim() {
+     assert arrayDim > 0 : this;
+     return new GenericType(type, arrayDim - 1, value);

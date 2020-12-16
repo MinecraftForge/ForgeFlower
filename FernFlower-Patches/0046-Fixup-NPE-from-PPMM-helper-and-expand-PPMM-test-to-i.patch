@@ -1,8 +1,8 @@
-From 7e027aef8ba2caaee9f3e93412274b7073b8f6a7 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 13 Sep 2015 17:49:00 -0700
-Subject: Fixup NPE from PPMM helper, and expand PPMM test to include more edge
- cases.
+Subject: [PATCH] Fixup NPE from PPMM helper, and expand PPMM test to include
+ more edge cases.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
@@ -234,6 +234,3 @@ index 02eecf4b565584b5644ad5898565593494aad285..21c7f2eab8296554f3fdb5d23efba483
 +   }
  }
 \ No newline at end of file
--- 
-2.28.0.windows.1
-

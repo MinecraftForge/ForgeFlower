@@ -1,13 +1,11 @@
-From cca06e0f3dd96dd8f0412628e2ee33359c461179 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 8 Aug 2015 16:13:27 -0400
-Subject: =?UTF-8?q?Some=20modifications=20to=20the=20printout.=20Also,=20f?=
- =?UTF-8?q?ixed=20a=20fascinating=20bug=20in=20VarVersionsProcessor=20wher?=
- =?UTF-8?q?e=20it=20dumped=20the=20original=20indexes=20because=0AsetVarVe?=
- =?UTF-8?q?rsions=20is=20called=20multiple=20times=20(seems=20to=20be=20so?=
- =?UTF-8?q?me=20sort=20of=20reparse=20loop).=20Preserving=20an=20existing?=
- =?UTF-8?q?=20origvarstable=20across=20the=0Athat=20method=20seems=20to=20?=
- =?UTF-8?q?have=20improved=20accuracy=20a=20LOT.?=
+Subject: [PATCH] Some modifications to the printout. Also, fixed a fascinating
+ bug in VarVersionsProcessor where it dumped the original indexes because
+ setVarVersions is called multiple times (seems to be some sort of reparse
+ loop). Preserving an existing origvarstable across the that method seems to
+ have improved accuracy a LOT.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
@@ -255,6 +253,3 @@ index 44557858b5cf5ef1a6b05c79c34bb41f6ae6e5eb..4b00061fcee269a40b24f80b6147d494
 +    return lvt;
 +}
  }
--- 
-2.28.0.windows.1
-

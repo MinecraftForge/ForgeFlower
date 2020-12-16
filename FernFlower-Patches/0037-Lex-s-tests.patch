@@ -1,7 +1,7 @@
-From 9f908e30826e71247955a0c38f1154d8065073ec Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 27 Aug 2015 15:39:39 -0400
-Subject: Lex's tests
+Subject: [PATCH] Lex's tests
 
 
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
@@ -261,6 +261,3 @@ index 0000000000000000000000000000000000000000..e04de1e8d82f6162e49d4735b6e43355
 +        };
 +    }
 +}
--- 
-2.28.0.windows.1
-

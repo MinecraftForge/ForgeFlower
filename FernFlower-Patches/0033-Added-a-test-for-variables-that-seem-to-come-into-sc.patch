@@ -1,8 +1,8 @@
-From 1d9d7cdb8476a39a10b588465f749347b9d1c713 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 13 Aug 2015 22:57:55 -0700
-Subject: Added a test for variables that seem to come into scope if we remove
- VarVersionsProcessor.simpleMerge
+Subject: [PATCH] Added a test for variables that seem to come into scope if we
+ remove VarVersionsProcessor.simpleMerge
 
 
 diff --git a/testData/classes/pkg/TestLVT.class b/testData/classes/pkg/TestLVT.class
@@ -56,6 +56,3 @@ index 05b5228e223eb20be14622126efdb7461c0e1bdf..9a462728bd07fca82b96a7511882523f
 +    	System.out.println(a+b);
 +    }
  }
--- 
-2.28.0.windows.1
-

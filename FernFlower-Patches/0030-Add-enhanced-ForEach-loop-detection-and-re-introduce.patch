@@ -1,8 +1,8 @@
-From 143b1e688e6e73e0f54be08e2c381c740c75fd13 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 13 Aug 2015 16:03:24 -0700
-Subject: Add enhanced ForEach loop detection and re-introduce the DotExporter
- for debugging.
+Subject: [PATCH] Add enhanced ForEach loop detection and re-introduce the
+ DotExporter for debugging.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
@@ -782,6 +782,3 @@ index 0000000000000000000000000000000000000000..0d417185f4cc38e8c9804120a31c7cbc
 +  }
 +}
 \ No newline at end of file
--- 
-2.28.0.windows.1
-

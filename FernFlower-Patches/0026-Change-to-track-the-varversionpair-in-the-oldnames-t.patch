@@ -1,10 +1,9 @@
-From 67a6f1d47bd5780221f7a545e899430cfc82e9be Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 8 Aug 2015 17:22:07 -0400
-Subject: =?UTF-8?q?Change=20to=20track=20the=20varversionpair=20in=20the?=
- =?UTF-8?q?=20"oldnames"=20table.=20Track=20if=20we=20have=20an=20lvt=20en?=
- =?UTF-8?q?try=20when=20generating=20names=0Aand=20trust=20it's=20name=20e?=
- =?UTF-8?q?xactly.?=
+Subject: [PATCH] Change to track the varversionpair in the "oldnames" table.
+ Track if we have an lvt entry when generating names and trust it's name
+ exactly.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
@@ -117,6 +116,3 @@ index 0de789a6f2278edc1e327d741b800fdba4a9dfcc..eae4cbac7b5074685e16cb6738434e11
      return mapOriginalVarIndices;
    }
  }
--- 
-2.28.0.windows.1
-

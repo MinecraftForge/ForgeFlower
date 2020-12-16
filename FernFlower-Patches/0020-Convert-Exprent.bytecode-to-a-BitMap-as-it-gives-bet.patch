@@ -1,11 +1,10 @@
-From 814dc4a3267ceceb892d6fa84de99f2311274400 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 6 Aug 2015 12:18:10 -0700
-Subject: =?UTF-8?q?Convert=20Exprent.bytecode=20to=20a=20BitMap,=20as=20it?=
- =?UTF-8?q?=20gives=20better=20speed=20and=20functionality.=0AAdded=20meth?=
- =?UTF-8?q?od=20to=20gather=20bytecode=20markers=20for=20every=20exporessi?=
- =?UTF-8?q?on.=20Allows=20us=20to=20get=20the=20bytecode=20offsets=20for?=
- =?UTF-8?q?=20an=20entire=20block=20of=20code.?=
+Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
+ speed and functionality. Added method to gather bytecode markers for every
+ exporession. Allows us to get the bytecode offsets for an entire block of
+ code.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
@@ -851,6 +850,3 @@ index ba8218263a2b293825c4875f972c67d36baeba80..30a7a8ff1ba852dbe1b522c4b99e5efd
      }
    }
  }
--- 
-2.28.0.windows.1
-

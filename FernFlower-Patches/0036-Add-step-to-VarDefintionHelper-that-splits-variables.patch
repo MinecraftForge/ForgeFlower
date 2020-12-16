@@ -1,9 +1,10 @@
-From 5d42ed490c525d168d6d2f9d727610aa6262237c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 25 Aug 2015 12:05:24 -0700
-Subject: Add step to VarDefintionHelper that splits variables out as best it
- can. For now ForEach loops are forced to seperate variables. Also attempt to
- attach LVT information EVERY VarExprent in the method not just in head.
+Subject: [PATCH] Add step to VarDefintionHelper that splits variables out as
+ best it can. For now ForEach loops are forced to seperate variables. Also
+ attempt to attach LVT information EVERY VarExprent in the method not just in
+ head.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
@@ -487,6 +488,3 @@ index 0a619d023d4413f969517f8a60ef816be1173fb7..a8ad01909d5ccd56cdadbd7ecab087a6
 +    varVersions.getMapOriginalVarIndices().put(to.var, varVersions.getMapOriginalVarIndices().get(from.var));
 +  }
  }
--- 
-2.28.0.windows.1
-

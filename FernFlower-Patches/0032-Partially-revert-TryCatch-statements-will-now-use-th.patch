@@ -1,9 +1,9 @@
-From 52c5082cd65ed6436412b97c742edf08878890f8 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Thu, 13 Aug 2015 21:45:39 -0700
-Subject: =?UTF-8?q?Partially=20revert=20"TryCatch=20statements=20will=20no?=
- =?UTF-8?q?w=20use=20the=20correct=20variable=20index=20for=20their=20exce?=
- =?UTF-8?q?ption=20variable."=0A(rolled=20back=20catch=20changes)?=
+Subject: [PATCH] Partially revert "TryCatch statements will now use the
+ correct variable index for their exception variable." (rolled back catch
+ changes)
 
 This reverts commit 5f699acc70d8e40f758737ae88aeddecc07edc8c.
 
@@ -104,6 +104,3 @@ index fbe5782266c4dbcdb4d5558b3173625228f71038..772a76e8a850ff853ef51acb29d82a1b
        } finally {
           System.out.println("Finally");// 55
        }
--- 
-2.28.0.windows.1
-

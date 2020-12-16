@@ -1,7 +1,7 @@
-From f3b023e5db4654cb1201528f0633545592f2f610 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 4 Aug 2015 21:50:19 -0700
-Subject: Change LVT indexing to VarVersionPair
+Subject: [PATCH] Change LVT indexing to VarVersionPair
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
@@ -133,6 +133,3 @@ index 04f534ed5482d8778826437dafd6979085a3fb65..5f55537fc80d50a1b22919165eb117f5
      return mapVarNames;
    }
  }
--- 
-2.28.0.windows.1
-

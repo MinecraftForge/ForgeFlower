@@ -1,7 +1,8 @@
-From 7f9bb7d21c105347ab987df050eb7458ac8ab1f5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Thu, 6 Aug 2015 17:01:25 -0700
-Subject: Aded debug printer to MethodProcessorRunnable for the method outline.
+Subject: [PATCH] Aded debug printer to MethodProcessorRunnable for the method
+ outline.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
@@ -170,6 +171,3 @@ index 1c90fb6fc41b20e8b295201cfdb69abb63463bd0..dc6f2f0e61563f8132d99b70d3d81278
 +    }
 +  }
  }
--- 
-2.28.0.windows.1
-

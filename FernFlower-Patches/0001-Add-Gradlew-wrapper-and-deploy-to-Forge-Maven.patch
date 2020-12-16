@@ -1,7 +1,7 @@
-From e8661f9befc8ce9b4422eb13de5bc2ffd370f1ed Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 11:35:52 -0700
-Subject: Add Gradlew wrapper and deploy to Forge Maven.
+Subject: [PATCH] Add Gradlew wrapper and deploy to Forge Maven.
 
 
 diff --git a/.gitignore b/.gitignore
@@ -1305,6 +1305,3 @@ index 0000000000000000000000000000000000000000..7dfd6c3119638af25144f484e8bbb74b
 +++ b/settings.gradle
 @@ -0,0 +1 @@
 +rootProject.name = "fernflower"
--- 
-2.28.0.windows.1
-

@@ -1,7 +1,7 @@
-From ab0b5409d7cacdc6d9c208de4657377a4a259c05 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 13 Sep 2015 18:25:07 -0400
-Subject: PPMM test for lex
+Subject: [PATCH] PPMM test for lex
 
 
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
@@ -55,6 +55,3 @@ index 0000000000000000000000000000000000000000..02eecf4b565584b5644ad58985655934
 +    }
 +}
 \ No newline at end of file
--- 
-2.28.0.windows.1
-

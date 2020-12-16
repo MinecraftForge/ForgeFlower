@@ -1,11 +1,10 @@
-From f83b43ba0aaf6e5fb17d17a9fcaa2420ab8aa0ff Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 2 Aug 2015 14:07:52 -0400
-Subject: =?UTF-8?q?Capture=20the=20LVT=20and=20LVTT=20properly,=20into=20s?=
- =?UTF-8?q?ome=20structured=20data.=20Ends=20seem=20to=20be=20the=20way=20?=
- =?UTF-8?q?to=20index=20the=20variable=0Atable.=20Next=20up,=20we=20need?=
- =?UTF-8?q?=20to=20capture=20the=20block=20ends=20in=20the=20var=20parsing?=
- =?UTF-8?q?=20code,=20so=20we=20can=20then=20match=20up=20later.?=
+Subject: [PATCH] Capture the LVT and LVTT properly, into some structured data.
+ Ends seem to be the way to index the variable table. Next up, we need to
+ capture the block ends in the var parsing code, so we can then match up
+ later.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
@@ -163,6 +162,3 @@ index fceae359d8fa763b162851a43284e5f13b6c13ee..04f534ed5482d8778826437dafd69790
    }
  
    public Map<Integer, String> getMapVarNames() {
--- 
-2.28.0.windows.1
-

@@ -1,0 +1,99 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Mon, 19 Oct 2015 18:54:52 -0700
+Subject: [PATCH] Fixed JUint tests. AmbiguousCallWithDebugInfo: Was broken,
+ our LVT changes fixed it Constants: cpw's type forcing changed output
+ ExtendsList: Added (T) typecast, tho not explicitly needed will address
+ later. InnerSignature: Original test had invalid arguments.
+
+
+diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
+index fea37bceb36c964966c7772c8911f9aa63ae119e..368407ef017b524f7e26940606e7b50714c7d96a 100644
+--- a/test/org/jetbrains/java/decompiler/LVTTest.java
++++ b/test/org/jetbrains/java/decompiler/LVTTest.java
+@@ -26,7 +26,13 @@ public class LVTTest extends SingleClassesTestBase {
+   @Override
+   protected Map<String, Object> getDecompilerOptions() {
+     return new HashMap<String, Object>() {{
+-      put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
++      put(IFernflowerPreferences.DECOMPILE_INNER,"1");
++      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1");
++      put(IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1");
++      put(IFernflowerPreferences.LOG_LEVEL, "TRACE");
++      put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
++      put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
++      put(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1");
+     }};
+   }
+ 
+diff --git a/testData/results/TestAmbiguousCallWithDebugInfo.dec b/testData/results/TestAmbiguousCallWithDebugInfo.dec
+index 40f1eaf68c9b0ca7a1a9744b157827ca89684478..3825b0816ba5140dfcebde9f37b70e28c20b83eb 100644
+--- a/testData/results/TestAmbiguousCallWithDebugInfo.dec
++++ b/testData/results/TestAmbiguousCallWithDebugInfo.dec
+@@ -11,8 +11,8 @@ class TestAmbiguousCall {
+       IllegalArgumentException iae = new IllegalArgumentException();// 8
+       this.m1((RuntimeException)iae, "RE");// 9
+       this.m1(iae, "IAE");// 10
+-      IllegalArgumentException re = new IllegalArgumentException();// 12
+-      this.m1((RuntimeException)re, "RE");// 13
++      RuntimeException re = new IllegalArgumentException();// 12
++      this.m1(re, "RE");// 13
+       this.m1((IllegalArgumentException)re, "IAE");// 14
+    }// 15
+ }
+diff --git a/testData/results/TestConstants.dec b/testData/results/TestConstants.dec
+index 28df2c294ca1c0818ffad43052919c61c262c16a..1170f1a5876121e55bc5c58a2d10afeac8d1527f 100644
+--- a/testData/results/TestConstants.dec
++++ b/testData/results/TestConstants.dec
+@@ -16,14 +16,14 @@ public class TestConstants {
+    static final int IMax = 2147483647;
+    static final long LMin = -9223372036854775808L;
+    static final long LMax = 9223372036854775807L;
+-   static final float FNan = 0.0F / 0.0;
+-   static final float FNeg = -1.0F / 0.0;
+-   static final float FPos = 1.0F / 0.0;
++   static final float FNan = 0.0F / 0.0F;
++   static final float FNeg = -1.0F / 0.0F;
++   static final float FPos = 1.0F / 0.0F;
+    static final float FMin = 1.4E-45F;
+    static final float FMax = 3.4028235E38F;
+-   static final double DNan = 0.0D / 0.0;
+-   static final double DNeg = -1.0D / 0.0;
+-   static final double DPos = 1.0D / 0.0;
++   static final double DNan = 0.0D / 0.0D;
++   static final double DNeg = -1.0D / 0.0D;
++   static final double DPos = 1.0D / 0.0D;
+    static final double DMin = 4.9E-324D;
+    static final double DMax = 1.7976931348623157E308D;
+ 
+diff --git a/testData/results/TestExtendsList.dec b/testData/results/TestExtendsList.dec
+index 6f116dbad41c3ce71fd5c79ee639ddbff3f1b39f..3f3dbea1836b9acaa8626c029bfe40dc0ee3c751 100644
+--- a/testData/results/TestExtendsList.dec
++++ b/testData/results/TestExtendsList.dec
+@@ -2,11 +2,11 @@ package pkg;
+ 
+ public class TestExtendsList {
+    static <T extends Comparable<? super T>> T m1(T var0) {
+-      return null;// 20
++      return (T)null;// 20
+    }
+ 
+    static <T extends Object & Comparable<? super T>> T m2(T var0) {
+-      return null;// 24
++      return (T)null;// 24
+    }
+ }
+ 
+diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
+index 406e1f41d8f0a084a986f683bf7ecb3b44c37429..9acbef8495cbdb99cccee5d1e766eb153c39331c 100644
+--- a/testData/results/TestInnerSignature.dec
++++ b/testData/results/TestInnerSignature.dec
+@@ -14,7 +14,7 @@ public class TestInnerSignature<A, B, C> {
+       B b;
+       C c;
+ 
+-      public Inner(A var1, B var2, C var3) {
++      public Inner(A var2, B var3, C var4) {
+          this.a = var2;// 34
+          this.b = var3;// 35
+          this.c = var4;// 36

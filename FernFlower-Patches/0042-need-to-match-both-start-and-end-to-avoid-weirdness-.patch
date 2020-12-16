@@ -1,7 +1,8 @@
-From 09209954680f314ed735818b7f22ca1e81080509 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 12 Sep 2015 00:48:02 -0400
-Subject: need to match both start and end, to avoid weirdness sometimes
+Subject: [PATCH] need to match both start and end, to avoid weirdness
+ sometimes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
@@ -99,6 +100,3 @@ index 0000000000000000000000000000000000000000..23a3929a12446772fb3e351962239258
 +        return start * 31 + end;
 +    }
 +}
--- 
-2.28.0.windows.1
-

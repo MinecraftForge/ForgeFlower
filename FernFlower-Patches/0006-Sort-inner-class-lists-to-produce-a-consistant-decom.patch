@@ -1,8 +1,9 @@
-From fdff6cfcb291cf7dcba48ce13e2aefcb7dae0d5b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 18:40:43 -0700
-Subject: Sort inner class lists to produce a consistant decompile. Different
- JVMs sort HashSets differently causing inner classes to get shuffled.
+Subject: [PATCH] Sort inner class lists to produce a consistant decompile.
+ Different JVMs sort HashSets differently causing inner classes to get
+ shuffled.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
@@ -70,6 +71,3 @@ index 798010e24206ffcfb76b1f4936f9b5d3709a7275..9aedf22af1f60b3e17752769462aee91
  
          return true;
        }
--- 
-2.28.0.windows.1
-

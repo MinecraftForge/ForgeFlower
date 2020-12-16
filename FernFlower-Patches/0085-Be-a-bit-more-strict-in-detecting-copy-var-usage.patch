@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Wed, 14 Oct 2015 16:40:04 -0700
+Subject: [PATCH] Be a bit more strict in detecting copy var usage.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
+index d0158aba3e732e854494bfbe80b128f47a70fc24..3025737508432bebbbd645908852f93d44dd384f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
+@@ -496,7 +496,7 @@ public class MergeHelper {
+             holder.getInstance().type == Exprent.EXPRENT_VAR) {
+           VarExprent copy = (VarExprent)initExprents[1].getLeft();
+           VarExprent inc = (VarExprent)holder.getInstance();
+-          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() && !ExprentUtil.isVarReferenced(inc, stat, copy)) {
++          if (copy.getIndex() == inc.getIndex() && copy.getVersion() == inc.getVersion() && !ExprentUtil.isVarReferenced(inc, stat.getTopParent(), copy)) {
+             preData.getExprents().remove(initExprents[1]);
+             initExprents[1].getRight().addBytecodeOffsets(initExprents[1].bytecode);
+             initExprents[1].getRight().addBytecodeOffsets(stat.getIncExprent().bytecode);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
+index f71ed84bc4ad195a97b4c535f21b55a9568cac62..686001d878d4204c439e6a4b6d140c155eadbb97 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
+@@ -837,6 +837,14 @@ public class Statement implements IMatchable {
+     this.parent = parent;
+   }
+ 
++  public Statement getTopParent() {
++    Statement ret = this;
++    while (ret.getParent() != null) {
++      ret = ret.getParent();
++    }
++    return ret;
++  }
++
+   public HashSet<StatEdge> getLabelEdges() {  // FIXME: why HashSet?
+     return labelEdges;
+   }

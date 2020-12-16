@@ -1,7 +1,7 @@
-From 1314b694ee1457fd6e9a91adcfa910ef9549faf0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 8 Aug 2015 13:43:47 -0400
-Subject: Add the test to the harness
+Subject: [PATCH] Add the test to the harness
 
 
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
@@ -14,6 +14,3 @@ index 2d39827fabef8a71133de494460a0c67f4ae9f8b..983368c25695ab8bbf090fa01e6d8df9
    @Test public void testMatch1() { doTest("pkg/TestLVT"); }
 +  @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
  }
--- 
-2.28.0.windows.1
-

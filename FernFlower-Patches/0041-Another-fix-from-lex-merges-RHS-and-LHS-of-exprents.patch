@@ -1,7 +1,7 @@
-From 9ac4c6fcc3a1c13833ad17c41d6c6218ec9059bb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sat, 12 Sep 2015 00:00:42 -0400
-Subject: Another fix from lex, merges RHS and LHS of exprents
+Subject: [PATCH] Another fix from lex, merges RHS and LHS of exprents
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
@@ -374,6 +374,3 @@ index db41fb8a8ebfb8981c390f6782ca02d974792f95..5a276cdb7e6fcef6c06280edf6080af7
 -}
 +}
 \ No newline at end of file
--- 
-2.28.0.windows.1
-

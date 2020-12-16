@@ -1,8 +1,8 @@
-From 7d5770f2462f354c4663f77818ae718062689d7b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Sun, 2 Aug 2015 20:56:16 -0400
-Subject: Merge any LVTT to an incoming LVT (if they're out of sequence), and
- merge LVTTs together if there's no LVT yet.
+Subject: [PATCH] Merge any LVTT to an incoming LVT (if they're out of
+ sequence), and merge LVTTs together if there's no LVT yet.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
@@ -25,6 +25,3 @@ index 724c0db23d607d1e243f8cf278b0a61a9789e19d..af1df05e4120b1053ad0d1e74da88810
          else {
            attributes.addWithKey(attribute, attribute.getName());
          }
--- 
-2.28.0.windows.1
-

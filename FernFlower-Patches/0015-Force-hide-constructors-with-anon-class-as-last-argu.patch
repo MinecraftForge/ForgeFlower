@@ -1,8 +1,8 @@
-From 289fb0b9bab3589bef077b002eca23e33fcd1e16 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 15:08:26 -0700
-Subject: Force hide constructors with anon class as last argument. Java adds
- these for unknown resons.
+Subject: [PATCH] Force hide constructors with anon class as last argument.
+ Java adds these for unknown resons.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
@@ -62,6 +62,3 @@ index e64feea59b43cd41ad42ace70ebf78dec4ffb54e..85d580d6ced6b14889453ab92689b13b
 +    }
 +  }
  }
--- 
-2.28.0.windows.1
-

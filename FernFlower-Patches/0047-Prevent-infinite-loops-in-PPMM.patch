@@ -1,7 +1,7 @@
-From 613a1873954a310ee5ee18be6db5790e6ec74ba0 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 13 Sep 2015 18:19:20 -0700
-Subject: Prevent infinite loops in PPMM.
+Subject: [PATCH] Prevent infinite loops in PPMM.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
@@ -21,6 +21,3 @@ index f39946d1c839333a69c91521f6714b183028567d..db70f64a91a21c04b1277b6da9b38ef7
                }
                return ret;
              }
--- 
-2.28.0.windows.1
-

@@ -1,7 +1,7 @@
-From fff1261eeb1e19a8f57fea9b1a81bce7894f9aef Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Tue, 25 Aug 2015 12:03:36 -0700
-Subject: Make Loop Enhancement retain all bytecode data. And support
+Subject: [PATCH] Make Loop Enhancement retain all bytecode data. And support
  iterator/listIterator.
 
 
@@ -266,6 +266,3 @@ index d994c26c65b45e18e54622865e3bc454b22feb0a..3172b5e6754fc9e2d5570f1d7110dc45
 +           isInvoke(exp, "java/util/ListIterator", "next", "()Ljava/lang/Object;");
 +  }
  }
--- 
-2.28.0.windows.1
-

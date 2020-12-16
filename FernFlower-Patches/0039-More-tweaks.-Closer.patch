@@ -1,7 +1,7 @@
-From de3a686365bc75c89bf8a1cf47d8c9cb9266b7df Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: cpw <cpw@weeksfamily.ca>
 Date: Fri, 11 Sep 2015 21:57:09 -0400
-Subject: More tweaks. Closer!
+Subject: [PATCH] More tweaks. Closer!
 
 
 diff --git a/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java b/src/org/jetbrains/java/decompiler/code/cfg/BasicBlock.java
@@ -590,6 +590,3 @@ index 9ef5e62bd10b5818a60bf1842c2daa446c84d9d3..285cb14b2b56200d6d9951eb6c8ba726
           for(TestLexManosLVT.Bob b : values()) {
              for(TestLexManosLVT.Bob c : values()) {
                 for(TestLexManosLVT.Bob d : values()) {
--- 
-2.28.0.windows.1
-

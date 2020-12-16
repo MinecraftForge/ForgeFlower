@@ -1,7 +1,7 @@
-From f373923f5a6d05f0c6d2f42ad4a8d00af6fefd1c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Mon, 3 Aug 2015 21:20:43 -0700
-Subject: No Synthetic classes allowed in parameters -.-
+Subject: [PATCH] No Synthetic classes allowed in parameters -.-
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
@@ -30,6 +30,3 @@ index 0297a55fc16eb3eddc0e458bfa49325f563fd613..51137cc3c2f5756e688d910ed405cccb
                      break;  // skip last parameter of synthetic constructor call
                    }
                  }
--- 
-2.28.0.windows.1
-

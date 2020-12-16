@@ -1,0 +1,199 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 22 Oct 2015 16:15:46 -0700
+Subject: [PATCH] More move from HashSet to LinkedHashSet to stabelize
+ itteration. Fixed a try finally merge issue.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22ceeede7b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+@@ -213,12 +213,12 @@ public class DomHelper {
+   public static RootStatement parseGraph(ControlFlowGraph graph, StructMethod mt) {
+ 
+     RootStatement root = graphToStatement(graph);
+-    if (!processStatement(root, new HashMap<Integer, Set<Integer>>())) {
++    if (!processStatement(root, new HashMap<Integer, LinkedHashSet<Integer>>())) {
+       DotExporter.toDotFile(graph, mt, "parseGraphFail", true);
+       throw new RuntimeException("parsing failure!");
+     }
+ 
+-    LabelHelper.lowContinueLabels(root, new HashSet<StatEdge>());
++    LabelHelper.lowContinueLabels(root, new LinkedHashSet<StatEdge>());
+ 
+     SequenceHelper.condenseSequences(root);
+     root.buildMonitorFlags();
+@@ -309,7 +309,7 @@ public class DomHelper {
+     }
+   }
+ 
+-  private static boolean processStatement(Statement general, HashMap<Integer, Set<Integer>> mapExtPost) {
++  private static boolean processStatement(Statement general, HashMap<Integer, LinkedHashSet<Integer>> mapExtPost) {
+ 
+     if (general.type == Statement.TYPE_ROOT) {
+       Statement stat = general.getFirst();
+@@ -358,7 +358,7 @@ public class DomHelper {
+           //						DotExporter.toDotFile(general, new File("c:\\Temp\\stat1.dot"));
+           //					} catch(Exception ex) {ex.printStackTrace();}
+ 
+-          mapExtPost = new HashMap<Integer, Set<Integer>>();
++          mapExtPost = new HashMap<Integer, LinkedHashSet<Integer>>();
+           mapRefreshed = true;
+         }
+ 
+@@ -379,7 +379,7 @@ public class DomHelper {
+             Statement stat = findGeneralStatement(general, forceall, mapExtPost);
+ 
+             if (stat != null) {
+-              boolean complete = processStatement(stat, general.getFirst() == stat ? mapExtPost : new HashMap<Integer, Set<Integer>>());
++              boolean complete = processStatement(stat, general.getFirst() == stat ? mapExtPost : new HashMap<Integer, LinkedHashSet<Integer>>());
+ 
+               if (complete) {
+                 // replace general purpose statement with simple one
+@@ -389,7 +389,7 @@ public class DomHelper {
+                 return false;
+               }
+ 
+-              mapExtPost = new HashMap<Integer, Set<Integer>>();
++              mapExtPost = new HashMap<Integer, LinkedHashSet<Integer>>();
+               mapRefreshed = true;
+               reducibility = 0;
+             }
+@@ -410,14 +410,14 @@ public class DomHelper {
+         break;
+       }
+       else {
+-        mapExtPost = new HashMap<Integer, Set<Integer>>();
++        mapExtPost = new HashMap<Integer, LinkedHashSet<Integer>>();
+       }
+     }
+ 
+     return false;
+   }
+ 
+-  private static Statement findGeneralStatement(Statement stat, boolean forceall, HashMap<Integer, Set<Integer>> mapExtPost) {
++  private static Statement findGeneralStatement(Statement stat, boolean forceall, HashMap<Integer, LinkedHashSet<Integer>> mapExtPost) {
+ 
+     VBStyleCollection<Statement, Integer> stats = stat.getStats();
+     VBStyleCollection<List<Integer>, Integer> vbPost;
+@@ -595,7 +595,7 @@ public class DomHelper {
+     return true;
+   }
+ 
+-  private static boolean findSimpleStatements(Statement stat, HashMap<Integer, Set<Integer>> mapExtPost) {
++  private static boolean findSimpleStatements(Statement stat, HashMap<Integer, LinkedHashSet<Integer>> mapExtPost) {
+ 
+     boolean found, success = false;
+ 
+@@ -633,9 +633,9 @@ public class DomHelper {
+               set.removeAll(setOldNodes);
+ 
+               if (setOldNodes.contains(key)) {
+-                Set<Integer> setNew = mapExtPost.get(newid);
++                LinkedHashSet<Integer> setNew = mapExtPost.get(newid);
+                 if (setNew == null) {
+-                  mapExtPost.put(newid, setNew = new HashSet<Integer>());
++                  mapExtPost.put(newid, setNew = new LinkedHashSet<Integer>());
+                 }
+                 setNew.addAll(set);
+ 
+@@ -666,7 +666,6 @@ public class DomHelper {
+ 
+ 
+   private static Statement detectStatement(Statement head) {
+-
+     Statement res;
+ 
+     if ((res = DoStatement.isHead(head)) != null) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
+index 26cc638aacb1ae120a4f0000bf224eb01cefe1f1..9bf29358c5c3c36c1fa69198ad17587a21d66823 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
+@@ -33,7 +33,7 @@ public class LabelHelper {
+ 
+     liftClosures(root);
+ 
+-    lowContinueLabels(root, new HashSet<StatEdge>());
++    lowContinueLabels(root, new LinkedHashSet<StatEdge>());
+ 
+     lowClosures(root);
+   }
+@@ -99,7 +99,7 @@ public class LabelHelper {
+     }
+   }
+ 
+-  public static void lowContinueLabels(Statement stat, HashSet<StatEdge> edges) {
++  public static void lowContinueLabels(Statement stat, LinkedHashSet<StatEdge> edges) {
+ 
+     boolean ok = (stat.type != Statement.TYPE_DO);
+     if (!ok) {
+@@ -131,7 +131,7 @@ public class LabelHelper {
+         lowContinueLabels(st, edges);
+       }
+       else {
+-        lowContinueLabels(st, new HashSet<StatEdge>());
++        lowContinueLabels(st, new LinkedHashSet<StatEdge>());
+       }
+     }
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
+index 52338f909228f21a19a2a6e31cc734bdbcd024ff..eee7b15dc347c9582f49f13c41106f76ff14b064 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
+@@ -36,7 +36,7 @@ public class FastExtendedPostdominanceHelper {
+ 
+   private FastFixedSetFactory<Integer> factory;
+ 
+-  public HashMap<Integer, Set<Integer>> getExtendedPostdominators(Statement statement) {
++  public HashMap<Integer, LinkedHashSet<Integer>> getExtendedPostdominators(Statement statement) {
+ 
+     this.statement = statement;
+ 
+@@ -65,9 +65,11 @@ public class FastExtendedPostdominanceHelper {
+ 
+     filterOnDominance(filter);
+ 
+-    HashMap<Integer, Set<Integer>> res = new HashMap<Integer, Set<Integer>>();
++    HashMap<Integer, LinkedHashSet<Integer>> res = new HashMap<Integer, LinkedHashSet<Integer>>();
+     for (Entry<Integer, FastFixedSet<Integer>> entry : mapExtPostdominators.entrySet()) {
+-      res.put(entry.getKey(), entry.getValue().toPlainSet());
++      List<Integer> lst =  new ArrayList<Integer>(entry.getValue().toPlainSet());
++      Collections.sort(lst); // Order matters!
++      res.put(entry.getKey(), new LinkedHashSet<Integer>(lst));
+     }
+ 
+     return res;
+@@ -91,7 +93,7 @@ public class FastExtendedPostdominanceHelper {
+       Set<Statement> setVisited = new HashSet<Statement>();
+ 
+       setVisited.add(stack.getFirst());
+-      
++
+       while (!stack.isEmpty()) {
+ 
+         Statement stat = stack.removeFirst();
+@@ -109,17 +111,17 @@ public class FastExtendedPostdominanceHelper {
+           setPostdoms.complement(path);
+           continue;
+         }
+-        
++
+         for (StatEdge edge : stat.getSuccessorEdges(StatEdge.TYPE_REGULAR)) {
+-          
++
+           Statement edge_destination = edge.getDestination();
+-          
++
+           if(!setVisited.contains(edge_destination)) {
+-            
++
+             stack.add(edge_destination);
+             stackPath.add(path.getCopy());
+-            
+-            setVisited.add(edge_destination); 
++
++            setVisited.add(edge_destination);
+           }
+         }
+       }

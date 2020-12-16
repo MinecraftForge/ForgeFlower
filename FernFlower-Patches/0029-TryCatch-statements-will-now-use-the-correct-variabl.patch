@@ -1,9 +1,8 @@
-From 5f699acc70d8e40f758737ae88aeddecc07edc8c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Lex Manos <LexManos@gmail.com>
 Date: Sun, 9 Aug 2015 15:04:04 -0700
-Subject: =?UTF-8?q?TryCatch=20statements=20will=20now=20use=20the=20correc?=
- =?UTF-8?q?t=20variable=20index=20for=20their=20exception=20variable.=0ASo?=
- =?UTF-8?q?me=20small=20cleanups=20and=20NPE=20fix.?=
+Subject: [PATCH] TryCatch statements will now use the correct variable index
+ for their exception variable. Some small cleanups and NPE fix.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
@@ -243,6 +242,3 @@ index 772a76e8a850ff853ef51acb29d82a1ba95dfee6..fbe5782266c4dbcdb4d5558b31736252
        } finally {
           System.out.println("Finally");// 55
        }
--- 
-2.28.0.windows.1
-
