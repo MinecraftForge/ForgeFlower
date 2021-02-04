@@ -7,47 +7,42 @@ archivesBaseName = 'forgeflower'
 ext {
     CHANGELOG = rootProject.file('build/changelog.txt')
 }
-
-sourceCompatibility = targetCompatibility = 8
  
 sourceSets {
     main.java.srcDirs = ['src']
     test.java.srcDirs = ['test']
     java9.java.srcDirs = ['java9']
 }
+
 repositories {
-    mavenCentral()   
+    mavenCentral()
     maven { url = "https://libraries.minecraft.net/" }
-}
-configurations {
-    deployerJars
 }
 
 dependencies {
     // The Java9 code depends on (can see) the "main" source set
-    java9Implementation files(sourceSets.main.output.classesDirs) { builtBy compileJava }
+    java9Implementation sourceSets.main.output
 
-    testCompile 'junit:junit:4.+'
-    testCompile 'org.hamcrest:hamcrest-core:1.3'
-    testCompile 'org.assertj:assertj-core:3.+'
-    testCompile 'com.google.code.gson:gson:2.8.0'
+    testImplementation 'junit:junit:4.+'
+    testImplementation 'org.hamcrest:hamcrest-core:1.3'
+    testImplementation 'org.assertj:assertj-core:3.+'
+    testImplementation 'com.google.code.gson:gson:2.8.0'
+}
+
+java.toolchain {
+    languageVersion = JavaLanguageVersion.of(8)
 }
 
 // Default all standard Java compile tasks to Java 8
 // We'll specify Java 9 only for the java9 compile task
 tasks.withType(JavaCompile) {
-    options.encoding = 'utf-8'
     options.deprecation = true
-    sourceCompatibility = 8
-    targetCompatibility = 8
-    options.compilerArgs.addAll(['--release', '8'])
 }
 
 compileJava9Java {
-    options.encoding = 'utf-8'
-    sourceCompatibility = 9
-    targetCompatibility = 9
-    options.compilerArgs.addAll(['--release', '9'])
+    javaCompiler = javaToolchains.compilerFor {
+        languageVersion = JavaLanguageVersion.of(9)
+    }
 }
 
 eclipse {
@@ -69,6 +64,12 @@ jar {
             'Multi-Release': 'true'
         )
     }
+}
+
+// There's an issue where deleting the built JARs/code edits leaves the jar tasks being falsely UP-TO-DATE
+// This forces the jar tasks to always happen (which should only happen when building)
+tasks.withType(Jar) {
+    outputs.upToDateWhen { false }
 }
 
 task sourceJar(type: Jar) {
