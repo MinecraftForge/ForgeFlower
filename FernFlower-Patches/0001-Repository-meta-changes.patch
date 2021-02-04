@@ -3,8 +3,6 @@ From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 11:35:52 -0700
 Subject: [PATCH] Repository meta changes
 
-SHA1 of original commits:
-59d19c77, d51c33c3, 77fcea54, 37cb58c7, 70c73055
 
 diff --git a/.gitignore b/.gitignore
 new file mode 100644
@@ -31,102 +29,6 @@ index 0000000000000000000000000000000000000000..f7284b5aab48e6a6430698fe3c0eb204
 +#other
 +repo
 +
-diff --git a/build.gradle b/build.gradle
-new file mode 100644
-index 0000000000000000000000000000000000000000..b07b27ac85efa26329091d217623301bc3cdba45
---- /dev/null
-+++ b/build.gradle
-@@ -0,0 +1,90 @@
-+apply plugin: 'eclipse'
-+apply plugin: 'idea'
-+apply plugin: 'maven'
-+apply plugin: 'java'
-+
-+version = "0.2.3"
-+group = "net.minecraftforge" //not sure if we shoulkd publish under this name, but it's our fork so meh
-+archivesBaseName = "forgeflower"
-+
-+sourceCompatibility = '1.6'
-+targetCompatibility = '1.6'
-+
-+sourceSets {
-+    main.java.srcDirs = ['src']
-+    test.java.srcDirs = ['test']
-+}
-+
-+repositories {
-+    mavenCentral()
-+}
-+
-+configurations {
-+    deployerJars
-+}
-+
-+dependencies {
-+    testCompile "junit:junit:4.12"
-+    testCompile 'org.hamcrest:hamcrest-core:1.3'
-+    testCompile 'org.hamcrest:hamcrest-library:1.3'
-+
-+    // maven deployment
-+    deployerJars "org.apache.maven.wagon:wagon-ssh:2.2"
-+}
-+
-+compileJava.options.encoding = "utf-8"
-+compileJava.options.deprecation = true
-+
-+jar.manifest {
-+    attributes "Main-Class" : "org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler"
-+}
-+
-+uploadArchives {
-+    repositories {
-+        add getProject().repositories.mavenLocal()
-+    }
-+    repositories.mavenDeployer {
-+        configuration = configurations.deployerJars
-+
-+        if (project.hasProperty("filesmaven")) {
-+            logger.info('Publishing to files server')
-+            repository(url: project.filesmaven.url) {
-+                authentication(userName: project.filesmaven.username, privateKey: project.filesmaven.key)
-+            }
-+        } else {
-+            logger.info('Publishing to repo folder')
-+            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
-+        }
-+
-+        pom {
-+            groupId = project.group
-+            version = project.version
-+            artifactId = project.archivesBaseName
-+            project {
-+                name project.archivesBaseName
-+                packaging 'jar'
-+                description 'Fernflower from https://github.com/JetBrains/intellij-community as standalone library'
-+                url 'https://github.com/MinecraftForge/FernFlower'
-+
-+                scm {
-+                    url 'https://github.com/MinecraftForge/FernFlower'
-+                    connection 'scm:git:git://github.com/MinecraftForge/FernFlower.git'
-+                    developerConnection 'scm:git:git@github.com:MinecraftForge/FernFlower.git'
-+                }
-+
-+                issueManagement {
-+                    system 'github'
-+                    url 'https://github.com/MinecraftForge/FernFlower/issues'
-+                }
-+
-+                licenses {
-+                    license {
-+                        name 'Apache License 2.0'
-+                        url 'http://www.apache.org/licenses/LICENSE-2.0'
-+                        distribution 'repo'
-+                    }
-+                }
-+            }
-+        }
-+    }
-+}
 diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
 new file mode 100644
 index 0000000000000000000000000000000000000000..c97a8bdb9088d370da7e88784a7a093b971aa23a
