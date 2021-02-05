@@ -66,12 +66,6 @@ jar {
     }
 }
 
-// There's an issue where deleting the built JARs/code edits leaves the jar tasks being falsely UP-TO-DATE
-// This forces the jar tasks to always happen (which should only happen when building)
-tasks.withType(Jar) {
-    outputs.upToDateWhen { false }
-}
-
 task sourceJar(type: Jar) {
     classifier 'sources'
     from sourceSets.main.allJava
