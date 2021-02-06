@@ -1,0 +1,1028 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Sun, 2 Aug 2015 10:43:54 -0400
+Subject: [PATCH] LVT and LVTT changes
+
+- Add an LVT test so we can quickly iterate LVT hacking
+- Capture the LVT and LVTT properly, into some structured data.
+- Merge any LVTT to an incoming LVT (if they're out of sequence), merge LVTTs together if there's no LVT yet
+- Change LVT indexing to VarVersionPair
+- Separate the LVT data from the Struct for easier ability to pass around.
+- Added debug printer to MethodProcessorRunnable for the method outline
+- A scoping test, simpler than the complex one, almost passes
+- Some modifications to the printout.
+- Fixed bug in VarVersionsProcessor where it dumped the original indexes, because setVarVersions is called multiple times.
+Preserving an existing origvarstable across the that method seems to have improved accuracy a LOT.
+- Change to track the varversionpair in the "oldnames" table, track if we have a LVT entry when generating names and trust its name exactly
+- Sort by version, use that to align versions with different instances of the same variable.
+- Ignore variables without an LVT entry, and don't exception on empty blocks
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+index 18f05a34329a4750249225ce7fbe44e4870d2469..5a35cc8f05f06ca0e9726ff830eccff46da99b6b 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+@@ -169,10 +169,14 @@ public class ClassWrapper {
+           StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+ 
+         if (attr != null) {
++          varProc.setLVT(attr.getLVT());
+           varProc.setDebugVarNames(attr.getMapVarNames());
+         }
+       }
+ 
++      MethodProcessorRunnable.printMethod(root, mt.getClassStruct().qualifiedName+"."+mt.getName()+mt.getDescriptor(),varProc);
++
++
+       DecompilerContext.getLogger().endMethod();
+     }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index 1c90fb6fc41b20e8b295201cfdb69abb63463bd0..388e76a7a8270d81d03b661ddbfef5ed9fb53fe4 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.main.rels;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.code.InstructionSequence;
++import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+ import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+@@ -25,12 +26,20 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.modules.code.DeadCodeHelper;
+ import org.jetbrains.java.decompiler.modules.decompiler.*;
+ import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.ExceptionDeobfuscator;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.DummyExitStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.LVTVariable;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+ 
+ import java.io.IOException;
++import java.util.BitSet;
++import java.util.List;
+ 
+ public class MethodProcessorRunnable implements Runnable {
+ 
+@@ -138,7 +147,7 @@ public class MethodProcessorRunnable implements Runnable {
+     proc.processStatement(root, cl);
+ 
+     SequenceHelper.condenseSequences(root);
+-    
++
+     while (true) {
+       StackVarsProcessor stackProc = new StackVarsProcessor();
+       stackProc.simplifyStackVars(root, mt, cl);
+@@ -217,4 +226,143 @@ public class MethodProcessorRunnable implements Runnable {
+   public boolean isFinished() {
+     return finished;
+   }
++
++  public static void printMethod(RootStatement root, String name, VarProcessor varProc) {
++    System.out.println(name + " {");
++    if (root == null || root.getSequentialObjects() == null) {
++        System.out.println("}");
++        return;
++    }
++    for (Object obj : root.getSequentialObjects()) {
++      if (obj instanceof Statement) {
++        printStatement((Statement)obj, "  ",varProc);
++      } else {
++        System.out.println("  " + obj.getClass().getSimpleName());
++      }
++    }
++    printStatement(root.getDummyExit(), "  ",varProc);
++    System.out.println("}");
++  }
++
++  private static void getOffset(Statement st, BitSet values) {
++    if (st instanceof DummyExitStatement && ((DummyExitStatement)st).bytecode != null)
++      values.or(((DummyExitStatement)st).bytecode);
++    if (st.getExprents() != null) {
++      for (Exprent e : st.getExprents()) {
++        e.getBytecodeRange(values);
++      }
++    } else {
++      for (Object obj : st.getSequentialObjects()) {
++        if (obj instanceof Statement) {
++          getOffset((Statement)obj, values);
++        } else if (obj instanceof Exprent) {
++          ((Exprent)obj).getBytecodeRange(values);
++        } else {
++          System.out.println("WTF?" + obj.getClass());
++        }
++      }
++    }
++  }
++
++  private static void printStatement(Statement statement, String indent, VarProcessor varProc) {
++    BitSet values = new BitSet();
++    getOffset(statement, values);
++    int start = values.nextSetBit(0);
++    int end = values.length()-1;
++
++    System.out.println(indent + statement.type + ": (" + start + ", " + end + ") " + statement.getClass().getSimpleName());
++
++    if (statement.getExprents() != null) {
++      for(Exprent exp : statement.getExprents()) {
++          System.out.println(printExprent(indent + "  ", exp,varProc));
++      }
++    }
++    /*
++      for (Object obj : stat.getSequentialObjects()) {
++        if (obj instanceof Statement) {
++          Statement st = (Statement)obj;
++          childVars.addAll(initStatement(st));
++
++          if (st.type == DoStatement.TYPE_DO) {
++            DoStatement dost = (DoStatement)st;
++            if (dost.getLooptype() != DoStatement.LOOP_FOR &&
++                dost.getLooptype() != DoStatement.LOOP_DO) {
++              currVars.add(dost.getConditionExprent());
++            }
++          }
++          else if (st.type == DoStatement.TYPE_CATCHALL) {
++            CatchAllStatement fin = (CatchAllStatement)st;
++            if (fin.isFinally() && fin.getMonitor() != null) {
++              currVars.add(fin.getMonitor());
++            }
++          }
++        }
++        else if (obj instanceof Exprent) {
++          currVars.add((Exprent)obj);
++        }
++      }
++
++      // children statements
++      for (Integer index : childVars) {
++        Integer count = mapCount.get(index);
++        if (count == null) {
++          count = new Integer(0);
++        }
++        mapCount.put(index, new Integer(count.intValue() + 1));
++      }
++
++      condlst = getAllVars(currVars);
++    }
++    else {
++      condlst = getAllVars(stat.getExprents());
++    }
++
++    // this statement
++    for (VarExprent var : condlst) {
++      mapCount.put(new Integer(var.getIndex()), new Integer(2));
++    }
++
++
++    HashSet<Integer> set = new HashSet<Integer>(mapCount.keySet());
++
++    // put all variables defined in this statement into the set
++    for (Entry<Integer, Integer> en : mapCount.entrySet()) {
++      if (en.getValue().intValue() > 1) {
++        mapVarDefStatements.put(en.getKey(), stat);
++      }
++    }
++
++    mapStatementVars.put(stat.id, set);
++*/
++    indent += "  ";
++    for (Object obj : statement.getSequentialObjects()) {
++      if (obj instanceof Statement) {
++        printStatement((Statement)obj, indent,varProc);
++      } else if (obj instanceof Exprent) {
++          System.out.println(printExprent(indent, (Exprent) obj, varProc));
++      } else {
++        System.out.println(indent + obj.getClass().getSimpleName());
++      }
++    }
++  }
++  private static String printExprent(String indent, Exprent exp, VarProcessor varProc) {
++      StringBuffer sb = new StringBuffer();
++      sb.append(indent);
++      BitSet values = new BitSet();
++      exp.getBytecodeRange(values);
++      sb.append("(").append(values.nextSetBit(0)).append(", ").append(values.length()-1).append(") ");
++      sb.append(exp.getClass().getSimpleName());
++      sb.append(" ").append(exp.id).append(" ");
++      if (exp instanceof VarExprent) {
++          VarExprent varExprent = (VarExprent)exp;
++        int currindex = varExprent.getIndex();
++        int origindex = varProc.getRemapped(currindex);
++        List<LVTVariable> candidates = varProc.getLVT().getCandidates(origindex);
++        sb.append("[").append(currindex).append(":").append(origindex).append(", ").append(varExprent.isStack()).append("]").append(candidates);
++      } else if (exp instanceof AssignmentExprent) {
++          AssignmentExprent assignmentExprent = (AssignmentExprent)exp;
++        sb.append("{").append(printExprent(" ",assignmentExprent.getLeft(),varProc)).append(" =").append(printExprent(" ",assignmentExprent.getRight(),varProc)).append("}");
++      }
++      return sb.toString();
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..13cfa70a586a82cbcea81553680e8d59b5bfd343
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LVTVariable.java
+@@ -0,0 +1,74 @@
++package org.jetbrains.java.decompiler.modules.decompiler.vars;
++
++import java.util.Comparator;
++import java.util.HashSet;
++import java.util.Map;
++import java.util.Set;
++
++public class LVTVariable implements Comparable<LVTVariable> {
++  public static final Comparator<LVTVariable> INDEX_SORTER = new Comparator<LVTVariable>() {
++    @Override
++    public int compare(LVTVariable o1, LVTVariable o2) {
++      if (o1.index != o2.index) return o1.index - o2.index;
++      if (o1.start != o2.start) return o1.start - o2.start;
++      return o1.end - o2.end;
++    }
++  };
++
++  public final String name;
++  public final int start;
++  public final int end;
++  public final int index;
++  private String desc;
++  private String sig;
++  private boolean isLVTT;
++
++  public LVTVariable(String name, String desc, int start, int end, int index, boolean isLVTT) {
++    this.name = name;
++    this.desc = desc;
++    this.start = start;
++    this.end = end;
++    this.index = index;
++    this.isLVTT = isLVTT;
++  }
++
++  void merge(LVTVariable other) {
++    if (other.isLVTT && this.sig == null) {
++      this.sig = other.desc;
++    }
++  }
++
++  @Override
++  public boolean equals(Object obj) {
++    if (!(obj instanceof LVTVariable))
++      return false;
++    return ((LVTVariable) obj).index == index && ((LVTVariable) obj).start == start;
++  }
++
++  @Override
++  public int hashCode() {
++    return index * 31 + start;
++  }
++
++  public void addTo(Map<Integer, Set<LVTVariable>> startpoints) {
++    Set<LVTVariable> starts = startpoints.get(this.start);
++    if (starts == null) {
++      starts = new HashSet<LVTVariable>();
++      startpoints.put(this.start, starts);
++    }
++    starts.add(this);
++  }
++
++  @Override
++  public int compareTo(LVTVariable o) {
++    if (o.start > start) return -1;
++    if (o.start < start) return 1;
++    if (o.index > index) return -1;
++    if (o.index < index) return 1;
++    return 0;
++  }
++  @Override
++    public String toString() {
++        return "\'("+index+","+start+")"+desc+(sig!=null ? "<"+sig+"> ":" ")+name+"\'";
++    }
++}
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..e5fbec84cfe40111f8cb93154f99904bcef8d20a
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/LocalVariableTable.java
+@@ -0,0 +1,81 @@
++package org.jetbrains.java.decompiler.modules.decompiler.vars;
++
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Set;
++
++public class LocalVariableTable {
++  private Map<Integer, Set<LVTVariable>> startpoints;
++  private ArrayList<LVTVariable> allLVT;
++private Map<Integer, List<LVTVariable>> mapLVT;
++
++  public LocalVariableTable(int len) {
++    startpoints = new HashMap<Integer,Set<LVTVariable>>(len);
++    allLVT = new ArrayList<LVTVariable>(len);
++  }
++
++  public void addVariable(LVTVariable v) {
++    allLVT.add(v);
++    v.addTo(startpoints);
++  }
++
++  public void mergeLVTs(LocalVariableTable otherLVT) {
++   for (LVTVariable other : otherLVT.allLVT) {
++      int idx = allLVT.indexOf(other);
++      if (idx < 0) {
++        allLVT.add(other);
++      }
++      else {
++        LVTVariable mine = allLVT.get(idx);
++        mine.merge(other);
++      }
++    }
++    mapLVT = null; // Invalidate the cache and rebuild it.
++  }
++
++  public LVTVariable find(Integer index, List<Integer> offsets) {
++    for (Integer offset : offsets) {
++      Set<LVTVariable> lvs = startpoints.get(offset);
++      if (lvs == null || lvs.isEmpty())
++        continue;
++      int idx = index.intValue();
++
++      for (LVTVariable lv : lvs) {
++        if (lv.index == idx)
++          return lv;
++      }
++    }
++    return null;
++  }
++
++  public Map<Integer, List<LVTVariable>> getMapVarNames() {
++    if (mapLVT == null)
++      buildNameMap();
++    return mapLVT;
++  }
++
++  private void buildNameMap() {
++    Map<Integer, Integer> versions = new HashMap<Integer, Integer>();
++    mapLVT = new HashMap<Integer,List<LVTVariable>>();
++    for (LVTVariable lvt : allLVT) {
++      Integer idx = versions.get(lvt.index);
++      if (idx == null)
++        idx = 1;
++      else
++        idx++;
++      versions.put(lvt.index, idx);
++      List<LVTVariable> lvtList = mapLVT.get(lvt.index);
++      if (lvtList == null) {
++          lvtList = new ArrayList<LVTVariable>();
++          mapLVT.put(lvt.index, lvtList);
++      }
++      lvtList.add(lvt);
++    }
++  }
++
++public List<LVTVariable> getCandidates(int index) {
++    return mapLVT.get(index);
++}
++}
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+index ce81474ef8291e0a4fbf59bed8b0902de1731921..6b15a12069348463463c60b541b38a355fb27e91 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
+@@ -31,10 +31,18 @@ public class VarProcessor {
+   private VarVersionsProcessor varVersions;
+   private final Map<VarVersionPair, String> thisVars = new HashMap<VarVersionPair, String>();
+   private final Set<VarVersionPair> externalVars = new HashSet<VarVersionPair>();
++private LocalVariableTable lvt;
+ 
+   public void setVarVersions(RootStatement root) {
++    Map<Integer, VarVersionPair> mapOriginalVarIndices = null;
++    if (varVersions != null) {
++        mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
++    }
+     varVersions = new VarVersionsProcessor();
+     varVersions.setVarVersions(root);
++    if (mapOriginalVarIndices != null) {
++        varVersions.getMapOriginalVarIndices().putAll(mapOriginalVarIndices);
++    }
+   }
+ 
+   public void setVarDefinitions(Statement root) {
+@@ -44,12 +52,12 @@ public class VarProcessor {
+     new VarDefinitionHelper(root, mt, this).setVarDefinitions();
+   }
+ 
+-  public void setDebugVarNames(Map<Integer, String> mapDebugVarNames) {
++  public void setDebugVarNames(Map<Integer, List<LVTVariable>> mapDebugVarNames) {
+     if (varVersions == null) {
+       return;
+     }
+ 
+-    Map<Integer, Integer> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
++    Map<Integer, VarVersionPair> mapOriginalVarIndices = varVersions.getMapOriginalVarIndices();
+ 
+     List<VarVersionPair> listVars = new ArrayList<VarVersionPair>(mapVarNames.keySet());
+     Collections.sort(listVars, new Comparator<VarVersionPair>() {
+@@ -60,19 +68,44 @@ public class VarProcessor {
+     });
+ 
+     Map<String, Integer> mapNames = new HashMap<String, Integer>();
+-
++    Map<Integer,SortedSet<VarVersionPair>> indexedPairs = new HashMap<Integer,SortedSet<VarVersionPair>>();
++    Comparator<VarVersionPair> vvpVersionComparator = new Comparator<VarVersionPair>() {
++        @Override
++        public int compare(VarVersionPair o1, VarVersionPair o2) {
++            return o1.version - o2.version;
++        }
++    };
++    for (Entry<Integer, VarVersionPair> vvp : mapOriginalVarIndices.entrySet()) {
++        SortedSet<VarVersionPair> set = indexedPairs.get(vvp.getValue().var);
++        if (set == null) {
++            set = new TreeSet<VarVersionPair>(vvpVersionComparator);
++            indexedPairs.put(vvp.getValue().var, set);
++        }
++        set.add(vvp.getValue());
++    }
+     for (VarVersionPair pair : listVars) {
+       String name = mapVarNames.get(pair);
+ 
+-      Integer index = mapOriginalVarIndices.get(pair.var);
+-      if (index != null && mapDebugVarNames.containsKey(index)) {
+-        name = mapDebugVarNames.get(index);
++      VarVersionPair key = mapOriginalVarIndices.get(pair.var);
++
++      boolean lvtName = false;
++      if (key != null) {
++        if (indexedPairs.containsKey(key.var)) {
++          int veridx = indexedPairs.get(key.var).headSet(key).size();
++          List<LVTVariable> list = mapDebugVarNames.get(key.var);
++          if (list != null && list.size()>veridx) {
++              name = list.get(veridx).name;
++              lvtName = true;
++          } else if (list == null) {
++              // we're an exception type, probably. let's just fall through
++          }
++        }
+       }
+ 
+       Integer counter = mapNames.get(name);
+       mapNames.put(name, counter == null ? counter = new Integer(0) : ++counter);
+ 
+-      if (counter > 0) {
++      if (counter > 0 && !lvtName) {
+         name += String.valueOf(counter);
+       }
+ 
+@@ -118,4 +151,17 @@ public class VarProcessor {
+   public Set<VarVersionPair> getExternalVars() {
+     return externalVars;
+   }
++
++public void setLVT(LocalVariableTable lvt) {
++    this.lvt = lvt;
++}
++public LocalVariableTable getLVT() {
++    return this.lvt;
++}
++
++public int getRemapped(int index) {
++    VarVersionPair res = varVersions.getMapOriginalVarIndices().get(index);
++    if (res == null) return index;
++    return res.var;
++}
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+index 4751052a5468ffc469d7166bce648d5b658e040d..eae4cbac7b5074685e16cb6738434e1124528d57 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+@@ -34,7 +34,7 @@ import java.util.Map.Entry;
+ 
+ public class VarVersionsProcessor {
+ 
+-  private Map<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();
++  private Map<Integer, VarVersionPair> mapOriginalVarIndices = new HashMap<Integer, VarVersionPair>();
+   private VarTypeProcessor typeProcessor;
+ 
+   public void setVarVersions(RootStatement root) {
+@@ -232,7 +232,8 @@ public class VarVersionsProcessor {
+     CounterContainer counters = DecompilerContext.getCounterContainer();
+ 
+     final Map<VarVersionPair, Integer> mapVarPaar = new HashMap<VarVersionPair, Integer>();
+-    Map<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();
++    Map<Integer, VarVersionPair> mapOriginalVarIndices = new HashMap<Integer, VarVersionPair>();
++    mapOriginalVarIndices.putAll(this.mapOriginalVarIndices);
+ 
+     // map var-version pairs on new var indexes
+     List<VarVersionPair> lst = new ArrayList<VarVersionPair>(mapExprentMinTypes.keySet());
+@@ -258,7 +259,7 @@ public class VarVersionsProcessor {
+         }
+ 
+         mapVarPaar.put(pair, newIndex);
+-        mapOriginalVarIndices.put(newIndex, pair.var);
++        mapOriginalVarIndices.put(newIndex, pair);
+       }
+     }
+ 
+@@ -315,7 +316,7 @@ public class VarVersionsProcessor {
+     typeProcessor.getMapFinalVars().put(pair, finalType);
+   }
+ 
+-  public Map<Integer, Integer> getMapOriginalVarIndices() {
++  public Map<Integer, VarVersionPair> getMapOriginalVarIndices() {
+     return mapOriginalVarIndices;
+   }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
+index f681e19604b34fdc130fe0b8ebfb697c07580f97..af1df05e4120b1053ad0d1e74da88810c3b97487 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
+@@ -57,11 +57,20 @@ public class StructMember {
+       StructGeneralAttribute attribute = readAttribute(in, pool, name);
+ 
+       if (attribute != null) {
+-        if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(name)) {
++        if ((StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) || StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name)) && attributes.containsKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE)) {
+           // merge all variable tables
+-          StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.getWithKey(name);
++          StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+           table.addLocalVariableTable((StructLocalVariableTableAttribute)attribute);
+         }
++        else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) && attributes.containsKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE)) {
++            StructLocalVariableTableAttribute lvtt = (StructLocalVariableTableAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
++            ((StructLocalVariableTableAttribute)attribute).addLocalVariableTable(lvtt);
++            attributes.addWithKey(attribute, attribute.getName());
++        }
++        else if (StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name) && attributes.containsKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE)) {
++            StructLocalVariableTableAttribute table = (StructLocalVariableTableAttribute)attributes.getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
++            table.addLocalVariableTable((StructLocalVariableTableAttribute)attribute);
++        }
+         else {
+           attributes.addWithKey(attribute, attribute.getName());
+         }
+diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java
+index dc0ebc6708a23899fff7c43a7df56ccf02954ec9..87f574193437cf322d002e8ff3120d245474fbcc 100644
+--- a/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java
++++ b/src/org/jetbrains/java/decompiler/struct/attr/StructGeneralAttribute.java
+@@ -42,6 +42,7 @@ public class StructGeneralAttribute {
+   public static final String ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS = "RuntimeVisibleTypeAnnotations";
+   public static final String ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS = "RuntimeInvisibleTypeAnnotations";
+   public static final String ATTRIBUTE_LOCAL_VARIABLE_TABLE = "LocalVariableTable";
++  public static final String ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE = "LocalVariableTypeTable";
+   public static final String ATTRIBUTE_CONSTANT_VALUE = "ConstantValue";
+   public static final String ATTRIBUTE_BOOTSTRAP_METHODS = "BootstrapMethods";
+   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
+@@ -85,7 +86,7 @@ public class StructGeneralAttribute {
+              ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS.equals(name)) {
+       attr = new StructAnnotationTypeAttribute();
+     }
+-    else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name)) {
++    else if (ATTRIBUTE_LOCAL_VARIABLE_TABLE.equals(name) || ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.equals(name)) {
+       attr = new StructLocalVariableTableAttribute();
+     }
+     else if (ATTRIBUTE_BOOTSTRAP_METHODS.equals(name)) {
+diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
+index fceae359d8fa763b162851a43284e5f13b6c13ee..a983b2788c5ccb570539a28eca0acf4c627f0595 100644
+--- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
++++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
+@@ -15,12 +15,15 @@
+  */
+ package org.jetbrains.java.decompiler.struct.attr;
+ 
++import org.jetbrains.java.decompiler.modules.decompiler.vars.LVTVariable;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.LocalVariableTable;
++import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ 
+ import java.io.IOException;
+ import java.util.Collections;
+-import java.util.HashMap;
++import java.util.List;
+ import java.util.Map;
+ 
+ /*
+@@ -35,33 +38,39 @@ import java.util.Map;
+ */
+ public class StructLocalVariableTableAttribute extends StructGeneralAttribute {
+ 
+-  private Map<Integer, String> mapVarNames = Collections.emptyMap();
++  private Map<Integer, List<LVTVariable>> EMPTY_LVT = Collections.emptyMap();
++  private LocalVariableTable lvt;
+ 
+   @Override
+   public void initContent(ConstantPool pool) throws IOException {
+     DataInputFullStream data = stream();
+ 
+     int len = data.readUnsignedShort();
++    boolean isLVTT = this.getName().equals(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
+     if (len > 0) {
+-      mapVarNames = new HashMap<Integer, String>(len);
++      lvt = new LocalVariableTable(len);
+       for (int i = 0; i < len; i++) {
+-        data.discard(4);
++        int start = data.readUnsignedShort();
++        int vlen = data.readUnsignedShort();
+         int nameIndex = data.readUnsignedShort();
+-        data.discard(2);
++        int descIndex = data.readUnsignedShort(); // either descriptor or signature
+         int varIndex = data.readUnsignedShort();
+-        mapVarNames.put(varIndex, pool.getPrimitiveConstant(nameIndex).getString());
++        LVTVariable v = new LVTVariable(pool.getPrimitiveConstant(nameIndex).getString(), pool.getPrimitiveConstant(descIndex).getString(),start,start+vlen,varIndex,isLVTT);
++        lvt.addVariable(v);
+       }
+     }
+-    else {
+-      mapVarNames = Collections.emptyMap();
+-    }
+   }
+ 
+   public void addLocalVariableTable(StructLocalVariableTableAttribute attr) {
+-    mapVarNames.putAll(attr.getMapVarNames());
++    lvt.mergeLVTs(attr.lvt);
++    attr.lvt = lvt;
+   }
+ 
+-  public Map<Integer, String> getMapVarNames() {
+-    return mapVarNames;
++  public Map<Integer, List<LVTVariable>> getMapVarNames() {
++    return lvt == null ? EMPTY_LVT : lvt.getMapVarNames();
+   }
++
++public LocalVariableTable getLVT() {
++    return lvt;
++}
+ }
+diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..983368c25695ab8bbf090fa01e6d8df9a302bc91
+--- /dev/null
++++ b/test/org/jetbrains/java/decompiler/LVTTest.java
+@@ -0,0 +1,34 @@
++/*
++ * Copyright 2000-2014 JetBrains s.r.o.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.jetbrains.java.decompiler;
++
++import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
++import org.junit.Test;
++
++import java.util.HashMap;
++import java.util.Map;
++
++public class LVTTest extends SingleClassesTestBase {
++  @Override
++  protected Map<String, Object> getDecompilerOptions() {
++    return new HashMap<String, Object>() {{
++      put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
++    }};
++  }
++
++  @Test public void testMatch1() { doTest("pkg/TestLVT"); }
++  @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
++}
+diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c7e781e4172f736a831b857ca7fd3060d95e6186
+--- /dev/null
++++ b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
+@@ -0,0 +1,125 @@
++/*
++ * Copyright 2000-2014 JetBrains s.r.o.
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ * http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++package org.jetbrains.java.decompiler;
++
++import org.hamcrest.Matchers;
++import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
++import org.jetbrains.java.decompiler.util.InterpreterUtil;
++import org.junit.After;
++import org.junit.Before;
++import org.junit.Test;
++
++import java.io.*;
++import java.util.Enumeration;
++import java.util.HashMap;
++import java.util.Map;
++import java.util.zip.ZipEntry;
++import java.util.zip.ZipFile;
++
++import static org.junit.Assert.assertThat;
++import static org.junit.Assert.assertTrue;
++
++public class MinecraftDecompilationTest {
++  private DecompilerTestFixture fixture;
++
++  private static final String MC_JAR = "minecraft_ff_in.jar";
++  @Before
++  public void setUp() throws IOException {
++    fixture = new DecompilerTestFixture();
++    // -din=1 -rbr=0 -dgs=1 -asc=1 -rsy=0
++    Map<String,Object> mcFFOptions = new HashMap<String,Object>() {{
++        put(IFernflowerPreferences.DECOMPILE_INNER,"1");
++        put(IFernflowerPreferences.REMOVE_BRIDGE, "0");
++        put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1");
++        put(IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1");
++        put(IFernflowerPreferences.REMOVE_SYNTHETIC,"0");
++    }};
++    fixture.setUp(mcFFOptions);
++    if (!new File(fixture.getTestDataDir(), MC_JAR).exists()) {
++        throw new RuntimeException("Missing "+MC_JAR+" in testData dir - aborting");
++    }
++  }
++
++  @After
++  public void tearDown() {
++//    fixture.tearDown();
++//    fixture = null;
++  }
++
++//  @Test
++//  public void testDirectory() {
++//    File classes = new File(fixture.getTempDir(), "classes");
++//    unpack(new File(fixture.getTestDataDir(), "mc-fernflower-in.jar"), classes);
++//
++//    ConsoleDecompiler decompiler = fixture.getDecompiler();
++//    decompiler.addSpace(classes, true);
++//    decompiler.decompileContext();
++//
++//    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
++//  }
++
++  @Test
++  public void testJar() {
++    ConsoleDecompiler decompiler = fixture.getDecompiler();
++    decompiler.addSpace(new File(fixture.getTestDataDir(), MC_JAR), true);
++    decompiler.decompileContext();
++
++    File unpacked = new File(fixture.getTempDir(), "unpacked");
++    unpack(new File(fixture.getTargetDir(), "bulk.jar"), unpacked);
++
++//    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), unpacked);
++  }
++
++  private static void unpack(File archive, File targetDir) {
++    try {
++      ZipFile zip = new ZipFile(archive);
++      try {
++        Enumeration<? extends ZipEntry> entries = zip.entries();
++        while (entries.hasMoreElements()) {
++          ZipEntry entry = entries.nextElement();
++          if (!entry.isDirectory()) {
++            File file = new File(targetDir, entry.getName());
++            assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
++            InputStream in = zip.getInputStream(entry);
++            OutputStream out = new FileOutputStream(file);
++            InterpreterUtil.copyStream(in, out);
++            out.close();
++            in.close();
++          }
++        }
++      }
++      finally {
++        zip.close();
++      }
++    }
++    catch (IOException e) {
++      throw new RuntimeException(e);
++    }
++  }
++
++  private static void compareDirectories(File expected, File actual) {
++    String[] expectedList = expected.list();
++    String[] actualList = actual.list();
++    assertThat(actualList, Matchers.arrayContainingInAnyOrder(expectedList));
++    for (String name : expectedList) {
++      File child = new File(expected, name);
++      if (child.isDirectory()) {
++        compareDirectories(child, new File(actual, name));
++      }
++    }
++  }
++}
+diff --git a/testData/classes/pkg/TestLVT.class b/testData/classes/pkg/TestLVT.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..d8a5829d4f6504567ecf46bf65167047e41cd291
+GIT binary patch
+literal 1672
+zcmZ`(T~k|C6kR9W<bH6mAta&cmsOD_Ei@8su?bQE#ex^8f>CsQID{))ny*Q2I>Woq
+zJUPDjqT^Vf^&vRc=@0N1_+OkUu9KS#fglskJs)eYz4ktPpTA%J`2s)=U+D-54A-CR
+zWw+d>?-aLmXadm#`BY}hvbvYu*g0@ZzCdKot9t&tz)(6<6wsDxyRL;Hm^Q+Q2wZZ!
+zs=MB*?6{3Bxl?upVot3j%SGAn)VjN=`TJf|V8rQjSs;7G_4jML0=Lr6sqam{;Z^qv
+zgFBg`fl*pDOSQT?V_-}`59ZQ9qIZxpFy1@JNgXMHu?~65_sZFYMnfJtUemX58K#bF
+z0^{dhFSfk$uG_G112=WNdL}V}I2*6wbvk(}%Pn`~8-dCG0D|NdGJ_FVxQYptx;F(9
+z{U+U*Gew2CWh0FY<B|2cTV;BtFM<xRcV!n8#T`X4C2%dhGAN@Tcvk_l=Un`60R5IT
+zHY@3E0mH8a>ILHIL1zUM_b{vD{@FAhHhs5Z<6S&pZPi*VwL}n*SIa);{rlu}Wre{M
+z@Scvj-X)$rwlS|#sn?Z7xoY5j>gkk3?hXrNQNZl2SP35pjGk7)BiY<vlXVMAFjdMv
+zQki(9Qnor6MKAC$`$zp*0wFo0s{MTNu&hHeCm=ljuLy*zHLuCOhz7_`5vuwlPHWa>
+zg{W24N2kIliigRweRNpw_0mKiR1wYfN$6hOJnirG!N_<4>SDW*O<$It(4yPA)@H5M
+zD7nj?YHqvxT-;S^*#o@0PC7!I@jc+EbDiZ^@Eg8;4C6OWLa;chW5B>LM>_!UJHnNT
+zS8$0tG#39r>!6>-qHD3(`p|vtS1iTi`EV?mk37fa?PFZY>(6m@d+HBdKgJuWa2u1U
+z2#18$#_g2e#&jER<&EF*PReK_|E(qxTGaaK<S%oUWXrLK`ABR*aV(MS!@Qx$rn_W{
+zM^Q{BNw%!)J7lIJGf9@zEIF$swK!J3`{CqRMHlE@#wh3NZ5(E#b|<nZ<BBt~>xg23
+z=PTUZ#2B`@`!y1fNa6tFIO1FMJ@<dXl}>h!Xa_vQ$8h*nvo+3CvVSIv!+b{YBk_)U
+ziLr`xY*0lM56J28BI0bhan2(2JcY;jgqdAn=0D}0fg;iC)S*#BU=g8`z(S`UWwAxv
+zQP;x6XVj3S*MO}^wgB}x5nu3Z0@_R1I&SbM9-c7DaIgqQ4fq#})W1z^2w(mOPXBh_
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/classes/pkg/TestLVTScoping.class b/testData/classes/pkg/TestLVTScoping.class
+new file mode 100644
+index 0000000000000000000000000000000000000000..b13a2da2070ddc93780406d9b74262fec5610576
+GIT binary patch
+literal 1024
+zcma)4U2hUW6g>l5mZeZWODkY&>ldIFZPgcyNn>I{N?Q{M34L4WNVkPu0!yR+#<xD}
+z0~#Ov0sbaqJhKpxRHK<>=H8h*=bU?HzW@CC4Ztp*>+lIA`WKy2T@Kx9qh4z}ear6X
+z&;(-V=A~Kcns%pj+&Y(SS0M1hvMu+efInYo2xzaIQyGFEMi@&72t=!vEssXMmK@a0
+zR#y_d>a@*n!yH&DpKfaInKcwhRj)IbNz#+<nR6OK3<(`^f%sfV#dc*!4#G$xC7@rL
+z-H|+gE0E4t3e{_6WrdLrV-4#9LCba<s@_vy2_nOwx!(*T$KYtcX<!4lbZjnkUVA@u
+zWiN~^Y_rN4(S+3rk>!-$42W5C2h!}3>JIMdxGRwKbSxf+aUXdK?yDPJn;`k$<Pw6W
+zmzAZ$RG!T{nH~v5YOdM7I5hj7hdLfD%JdLOF!6487VRlrPZT}(wET(3aUu|^Iio>a
+zzP8jOB^O_RN71umHq37VXpH#0oONa;u7c}Q@iT%S8Tb(5td3RbGUxE5fNO-AftA_i
+zA*)qgPSd_1I>zb;7>OGPR|q7s2cK}WIL2*->Gv=*ya$plBS;JbaqgywnkBB{NfT{_
+zwFMNJrC2qI9xyZDi~oR6$3uoY{}vGWyMP$U;v`CN=D*{}lKTGy7!v`dnSggw2e#)9
+zM71(o&y4Z-3V)Qb;TgY9$_zWtQb3M>dV|>}pJ{6*CBnJ__Sk*Ki<B$M3k|+CgT6my
+H?8CEPwhyta
+
+literal 0
+HcmV?d00001
+
+diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
+new file mode 100644
+index 0000000000000000000000000000000000000000..b1b7e2e3d96ae555cb0fec2901968fb1b366b2a5
+--- /dev/null
++++ b/testData/results/TestLVT.dec
+@@ -0,0 +1,29 @@
++package pkg;
++
++import java.util.ArrayList;
++import java.util.HashMap;
++
++public class TestLVT {
++
++
++   public static void method(String a1, String a2) {
++      String scope1 = "scope1";
++      String scope1a = "scope1a";
++      for(int i = 0; i < 10; ++i) {
++         String scope2 = "scope2";
++         String scope2a = "scope2a";
++         ArrayList noise = new ArrayList();
++         String spam = scope1 + scope2 + scope2a + i + noise;
++         System.out.println(spam);
++      }
++      for (long i = 0L; i < 10L; ++i) {
++         String scope2 = "scope2+1";
++         String scope2a = "scope2+1a";
++         HashMap noise = new HashMap();
++         String spam = scope1a + scope2 + scope2a + i + noise;
++         System.out.println(spam);
++      }
++        
++   }
++}
++
+diff --git a/testData/results/TestLVTScoping.dec b/testData/results/TestLVTScoping.dec
+new file mode 100644
+index 0000000000000000000000000000000000000000..7bbf62484e40f9f00b4028029c6c0862d08e750c
+--- /dev/null
++++ b/testData/results/TestLVTScoping.dec
+@@ -0,0 +1,35 @@
++package pkg;
++
++public class TestLVTScoping {
++
++
++   public static void method() {      String a;
++      if(1 == Integer.valueOf(1).intValue()) {
++         a = "YAY";
++      } else {
++         a = "NAY";      }
++
++      System.out.println(a);
++   }
++
++   public static void method2() {      String a;
++      if(1 == Integer.valueOf(1).intValue()) {
++         a = "YAY";
++      } else {
++         a = "NAY";
++         System.out.println(a);
++      }   }
++
++   public static void method3() {
++      if(1 == Integer.valueOf(1).intValue()) {
++
++         boolean a = true;
++         System.out.println(a);
++      } else {
++
++         String a = "NAY";
++         System.out.println(a);
++      }
++
++   }
++}
+diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..05b5228e223eb20be14622126efdb7461c0e1bdf
+--- /dev/null
++++ b/testData/src/pkg/TestLVT.java
+@@ -0,0 +1,27 @@
++package pkg;
++
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++
++public class TestLVT {
++    public static void method(String a1, String a2) {
++        String scope1 = "scope1";
++        String scope1a = "scope1a";
++        for (int i=0; i<10; i++) {
++            String scope2 = "scope2";
++            String scope2a = "scope2a";
++            List<Object> noise = new ArrayList<Object>();
++            String spam = scope1 + scope2 + scope2a + i + noise;
++            System.out.println(spam);
++        }
++        for (long i=0; i<10; i++) {
++            String scope2 = "scope2+1";
++            String scope2a = "scope2+1a";
++            Map<Object,Object> noise = new HashMap<Object,Object>();
++            String spam = scope1a + scope2 + scope2a + i + noise;
++            System.out.println(spam);
++        }
++    }
++}
+diff --git a/testData/src/pkg/TestLVTScoping.java b/testData/src/pkg/TestLVTScoping.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..ab57832c2f3df13a4ae9da2af193c2d6a79067ab
+--- /dev/null
++++ b/testData/src/pkg/TestLVTScoping.java
+@@ -0,0 +1,34 @@
++package pkg;
++
++
++public class TestLVTScoping {
++    public static void method() {
++        String a;
++        if (1 == Integer.valueOf(1)) {
++            a = "YAY";
++        } else {
++            a = "NAY";
++        }
++        System.out.println(a);
++    }
++    public static void method2() {
++        String a;
++        if (1 == Integer.valueOf(1)) {
++            a = "YAY";
++        } else {
++            a = "NAY";
++            System.out.println(a);
++        }
++    }
++    public static void method3() {
++        if (1 == Integer.valueOf(1)) {
++            boolean a;
++            a = true;
++            System.out.println(a);
++        } else {
++            String a;
++            a = "NAY";
++            System.out.println(a);
++        }
++    }
++}

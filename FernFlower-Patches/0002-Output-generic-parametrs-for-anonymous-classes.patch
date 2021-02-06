@@ -3,9 +3,12 @@ From: Lex Manos <LexManos@gmail.com>
 Date: Sat, 1 Aug 2015 13:45:25 -0700
 Subject: [PATCH] Output generic parametrs for anonymous classes.
 
+Squashed with commit c8cfdcfd:
+Some synthetic anon classes are being detected as member classes.
+Unknown why, however this fixes the consturctor argument.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index b5ecd9e66750f7f392c111e9254ad97430d780b1..24facc9d80857d3eacbc7b5aaf1ad9a62cd7fd91 100644
+index b5ecd9e66750f7f392c111e9254ad97430d780b1..0297a55fc16eb3eddc0e458bfa49325f563fd613 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -26,7 +26,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -40,3 +43,12 @@ index b5ecd9e66750f7f392c111e9254ad97430d780b1..24facc9d80857d3eacbc7b5aaf1ad9a6
          buf.prepend("new " + typename);
  
          if (enclosing != null) {
+@@ -310,7 +327,7 @@ public class NewExprent extends Exprent {
+ 
+                 if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+                   ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
+-                  if (node != null && node.namelessConstructorStub) {
++                  if (node != null && (node.namelessConstructorStub || node.type == ClassNode.CLASS_ANONYMOUS)) {
+                     break;  // skip last parameter of synthetic constructor call
+                   }
+                 }

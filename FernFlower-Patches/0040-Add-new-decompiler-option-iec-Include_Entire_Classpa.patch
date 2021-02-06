@@ -1,0 +1,100 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Fri, 9 Oct 2015 13:22:13 -0700
+Subject: [PATCH] Add new decompiler option -iec Include_Entire_Classpath which
+ will read the current JVM's classpath and parse all libraries for metadata.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index e355ee9ff5bc6e5c3a9dd2262c1c33b2dc826f83..6afe975fe2034ad25b7810a0bdc59ebcff8453e1 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
+ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
+ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
+@@ -27,7 +28,10 @@ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+ 
++import java.io.File;
++import java.util.HashSet;
+ import java.util.Map;
++import java.util.Set;
+ 
+ public class Fernflower implements IDecompiledData {
+ 
+@@ -39,6 +43,10 @@ public class Fernflower implements IDecompiledData {
+     DecompilerContext.initContext(options);
+     DecompilerContext.setCounterContainer(new CounterContainer());
+     DecompilerContext.setLogger(logger);
++
++    if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
++      addAllClasspath();
++    }
+   }
+ 
+   public void decompileContext() {
+@@ -92,4 +100,26 @@ public class Fernflower implements IDecompiledData {
+       return null;
+     }
+   }
++
++  private void addAllClasspath() {
++    Set<String> found = new HashSet<String>();
++    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
++    for (String prop : props) {
++      if (prop == null)
++        continue;
++
++      for (final String path : prop.split(File.pathSeparator)) {
++        File file = new File(path);
++        if (found.contains(file.getAbsolutePath()))
++          continue;
++
++        // only add .class files from classpath
++        if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
++          DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
++          structContext.addSpace(file, false);
++          found.add(file.getAbsolutePath());
++        }
++      }
++    }
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 31871c5d945034a810fa9f866446e14c40cd9b18..79dd8e890cd37e88bfbe9f0c22c825b3c2549bb8 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -60,6 +60,8 @@ public interface IFernflowerPreferences {
+   String LINE_SEPARATOR_WIN = "\r\n";
+   String LINE_SEPARATOR_LIN = "\n";
+ 
++  String INCLUDE_ENTIRE_CLASSPATH = "iec";
++
+   Map<String, Object> DEFAULTS = Collections.unmodifiableMap(new HashMap<String, Object>() {{
+     put(REMOVE_BRIDGE, "1");
+     put(REMOVE_SYNTHETIC, "0");
+@@ -93,5 +95,6 @@ public interface IFernflowerPreferences {
+     put(BANNER, "");
+     put(UNIT_TEST_MODE, "0");
+     put(DUMP_ORIGINAL_LINES, "0");
++    put(INCLUDE_ENTIRE_CLASSPATH, "0");
+   }});
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+index 850c3d84888d95343abd8a3c297baac58783a8c3..e3043962de86e4823458766ff2afda4eb3e71e5f 100644
+--- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
++++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+@@ -110,6 +110,7 @@ public class ContextUnit {
+         // classes
+         for (int i = 0; i < classes.size(); i++) {
+           StructClass cl = classes.get(i);
++          if (!cl.isOwn()) continue;
+           String entryName = decompiledData.getClassEntryName(cl, classEntries.get(i));
+           if (entryName != null) {
+             String content = decompiledData.getClassContent(cl);

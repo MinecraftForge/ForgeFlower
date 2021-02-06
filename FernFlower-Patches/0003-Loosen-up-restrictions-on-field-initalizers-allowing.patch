@@ -6,7 +6,7 @@ Subject: [PATCH] Loosen up restrictions on field initalizers allowing for some
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index d9a0a3d828be573cf474d22d836c21ece546e424..d916b1951e026f239028e52f75199e784a7a9639 100644
+index d9a0a3d828be573cf474d22d836c21ece546e424..e64feea59b43cd41ad42ace70ebf78dec4ffb54e 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -29,7 +29,10 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -38,14 +38,15 @@ index d9a0a3d828be573cf474d22d836c21ece546e424..d916b1951e026f239028e52f75199e78
  
          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
            AssignmentExprent asexpr = (AssignmentExprent)exprent;
-@@ -139,22 +142,18 @@ public class InitializerProcessor {
+@@ -139,22 +142,17 @@ public class InitializerProcessor {
              if (fexpr.isStatic() && fexpr.getClassname().equals(cl.qualifiedName) &&
                  cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) {
  
 -              if (isExprentIndependent(asexpr.getRight(), meth)) {
-+              if (isExprentIndependent(asexpr.getRight(), meth, cl, whitelist)) {
- 
-                 String keyField = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+-
+-                String keyField = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
++              String keyField = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
++              if (isExprentIndependent(asexpr.getRight(), meth, cl, whitelist, cl.getFields().getIndexByKey(keyField))) {
                  if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
                    wrapper.getStaticFieldInitializers().addWithKey(asexpr.getRight(), keyField);
 -                  firstdata.getExprents().remove(0);
@@ -64,7 +65,7 @@ index d9a0a3d828be573cf474d22d836c21ece546e424..d916b1951e026f239028e52f75199e78
        }
      }
    }
-@@ -191,6 +190,8 @@ public class InitializerProcessor {
+@@ -191,6 +189,8 @@ public class InitializerProcessor {
        return;
      }
  
@@ -73,34 +74,38 @@ index d9a0a3d828be573cf474d22d836c21ece546e424..d916b1951e026f239028e52f75199e78
      while (true) {
  
        String fieldWithDescr = null;
-@@ -216,7 +217,7 @@ public class InitializerProcessor {
+@@ -216,8 +216,8 @@ public class InitializerProcessor {
                  cl.hasField(fexpr.getName(), fexpr
                    .getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
  
 -              if (isExprentIndependent(asexpr.getRight(), lstMethWrappers.get(i))) {
-+              if (isExprentIndependent(asexpr.getRight(), lstMethWrappers.get(i), cl, whitelist)) {
-                 String fieldKey = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
+-                String fieldKey = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
++              String fieldKey = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
++              if (isExprentIndependent(asexpr.getRight(), lstMethWrappers.get(i), cl, whitelist, cl.getFields().getIndexByKey(fieldKey))) {
                  if (fieldWithDescr == null) {
                    fieldWithDescr = fieldKey;
-@@ -252,7 +253,7 @@ public class InitializerProcessor {
+                   value = asexpr.getRight();
+@@ -252,7 +252,7 @@ public class InitializerProcessor {
      }
    }
  
 -  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper meth) {
-+  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper meth, StructClass cl, Set<String> whitelist) {
++  private static boolean isExprentIndependent(Exprent exprent, MethodWrapper meth, StructClass cl, Set<String> whitelist, int fidx) {
  
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
-@@ -270,7 +271,15 @@ public class InitializerProcessor {
+@@ -270,7 +270,17 @@ public class InitializerProcessor {
            }
            break;
          case Exprent.EXPRENT_FIELD:
 -          return false;
 +          FieldExprent fexpr = (FieldExprent)expr;
 +          if (cl.qualifiedName.equals(fexpr.getClassname())) {
-+            if (!whitelist.contains(InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString))) {
++            String key = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
++            if (!whitelist.contains(key)) {
 +              return false;
 +            }
++            return cl.getFields().getIndexByKey(key) < fidx;
 +          }
 +          else if (!fexpr.isStatic()) {
 +            return false;

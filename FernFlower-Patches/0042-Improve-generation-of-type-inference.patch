@@ -1,0 +1,502 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: RainWarrior <rainwarrior@fry.su>
+Date: Mon, 12 Oct 2015 09:21:36 +0300
+Subject: [PATCH] Improve generation of type inference
+
+- Foo.<Bar>baz() generation
+- concentrated changes to Exprent.getInferredExprType
+- passing information from InvocationExprent's inferred type arguments to the parameters
+- pushed remapping to the VarType, added type inference to a couple more places
+- handle generic lists with multiple arguments in method invocations
+- using the generic info from InvocationExprent correctly, 1 more error down
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 4ec7fe9d7d34fe35fcd379d608a102d8f40e1734..7c8276c8dd60eac7022378d4b0700d272a333705 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -435,6 +435,7 @@ public class ClassWriter {
+       else {
+         buffer.append(" = ");
+         // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
++        initializer.getInferredExprType(descriptor == null? fieldType : descriptor.type);
+         buffer.append(initializer.toJava(indent, tracer));
+       }
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 162d9cb6953a6501771750e82f7de0a6b855c75c..60832d3af2925a806c852e72209e676fb293d882 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -853,6 +853,7 @@ public class ExprProcessor implements CodeConstants {
+     lst = Exprent.sortIndexed(lst);
+ 
+     for (Exprent expr : lst) {
++      expr.getInferredExprType(null);
+       TextBuffer content = expr.toJava(indent, tracer);
+       if (content.length() > 0) {
+         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassDef()) {
+@@ -912,7 +913,7 @@ public class ExprProcessor implements CodeConstants {
+                                          boolean castAlways,
+                                          BytecodeMappingTracer tracer) {
+ 
+-    VarType rightType = exprent.getExprType();
++    VarType rightType = exprent.getInferredExprType(leftType);
+ 
+     TextBuffer res = exprent.toJava(indent, tracer);
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+index efc64b9d98005572eb9752e36d472f7a65358203..68f58305f21314d969c79cd0bdcdc14c5b0ae003 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+@@ -65,6 +65,12 @@ public class AssignmentExprent extends Exprent {
+     return left.getExprType();
+   }
+ 
++  @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    //System.out.println("infer: " + upperBound + " = " + getExprType());
++    return getExprType();
++  }
++
+   @Override
+   public CheckTypesResult checkExprTypeBounds() {
+     CheckTypesResult result = new CheckTypesResult();
+@@ -106,7 +112,7 @@ public class AssignmentExprent extends Exprent {
+   @Override
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+     VarType leftType = left.getExprType();
+-    VarType rightType = right.getExprType();
++    VarType rightType = right.getInferredExprType(left.getInferredExprType(null));
+ 
+     boolean fieldInClassInit = false, hiddenField = false;
+     if (left.type == Exprent.EXPRENT_FIELD) { // first assignment to a final field. Field name without "this" in front of it
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index ca9c1ed566e423e9169e2b7f72bfec128010f68f..bda80a0333129fd0e1d476e00cd1e6dee18ce98b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -74,6 +74,10 @@ public abstract class Exprent implements IMatchable {
+     return VarType.VARTYPE_VOID;
+   }
+ 
++  public VarType getInferredExprType(VarType upperBound) {
++    return getExprType();
++  }
++
+   public int getExprentUse() {
+     return 0;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+index fdc9cec54252976b63964d039875e0229ff93172..be95dc1f6242dc3a12cc433384d34700d8c602b3 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+@@ -23,6 +23,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
++import org.jetbrains.java.decompiler.struct.StructClass;
++import org.jetbrains.java.decompiler.struct.StructField;
+ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+ import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+@@ -65,6 +67,20 @@ public class FieldExprent extends Exprent {
+     return descriptor.type;
+   }
+ 
++  @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
++    while(cl != null) {
++      StructField ft = cl.getField(name, descriptor.descriptorString);
++      if(ft != null && ft.getSignature() != null) {
++        return ft.getSignature().type;
++      }
++      if(cl.superClass == null) cl = null;
++      else cl = DecompilerContext.getStructContext().getClass((String)cl.superClass.value);
++    }
++    return getExprType();
++  }
++
+   @Override
+   public int getExprentUse() {
+     return instance == null ? Exprent.MULTIPLE_USES : instance.getExprentUse() & Exprent.MULTIPLE_USES;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 9d16de2d5ab160c76a9a3efff83b4e0f011f5a12..e6152070d2b155d98fc0b8155db12c12ca3864e0 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -19,7 +19,9 @@ import java.util.ArrayList;
+ import java.util.BitSet;
+ import java.util.Collections;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Map.Entry;
++import java.util.HashMap;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+@@ -37,6 +39,7 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
+ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+@@ -69,6 +72,8 @@ public class InvocationExprent extends Exprent {
+   private int invocationTyp = INVOKE_VIRTUAL;
+   private List<Exprent> lstParameters = new ArrayList<Exprent>();
+ 
++  private List<VarType> genericArgs = new ArrayList<VarType>();
++
+   public InvocationExprent() {
+     super(EXPRENT_INVOCATION);
+   }
+@@ -160,6 +165,56 @@ public class InvocationExprent extends Exprent {
+     return descriptor.ret;
+   }
+ 
++  @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    List<StructMethod> matches = getMatchedDescriptors();
++    StructMethod desc = null;
++    if(matches.size() == 1) desc = matches.get(0);
++
++    VarType type = getExprType();
++
++    genericArgs.clear();
++
++    if(desc != null && desc.getSignature() != null) {
++      VarType ret = desc.getSignature().ret;
++      Map<VarType, VarType> map = new HashMap<VarType, VarType>();
++      // more harm than gain
++      // T -> String
++      /*if(upperBound != null && desc.getSignature().fparameters.size() == 1 && desc.getSignature().fparameters.get(0).equals(ret.value)) {
++        genericArgs.add(upperBound);
++      }*/
++      // List<T> -> List<String>
++      if(upperBound != null && upperBound.isGeneric() && ret.isGeneric()) {
++        List<VarType> leftArgs = ((GenericType)upperBound).getArguments();
++        List<VarType> rightArgs = ((GenericType)ret).getArguments();
++        List<String> fparams = desc.getSignature().fparameters;
++        if(leftArgs.size() == rightArgs.size() && rightArgs.size() == fparams.size()) {
++          for(int i = 0; i < leftArgs.size(); i++) {
++            VarType l = leftArgs.get(i);
++            VarType r = rightArgs.get(i);
++            if(l != null && r.value.equals(fparams.get(i))) {
++              genericArgs.add(l);
++              map.put(r, l);
++            }
++            else {
++              genericArgs.clear();
++              map.clear();
++              break;
++            }
++          }
++        }
++      }
++
++      if(!map.isEmpty()) {
++        // remap and return generic type
++        VarType newType = ret.remap(map);
++        if(ret != newType) return newType;
++      }
++      return ret;
++    }
++    return type;
++  }
++
+   @Override
+   public CheckTypesResult checkExprTypeBounds() {
+     CheckTypesResult result = new CheckTypesResult();
+@@ -276,8 +331,18 @@ public class InvocationExprent extends Exprent {
+ 
+         if (buf.length() > 0) {
+           buf.append(".");
+-        }
+ 
++          if(genericArgs.size() != 0) {
++            buf.append("<");
++            for(int i = 0; i < genericArgs.size(); i++) {
++              buf.append(ExprProcessor.getCastTypeName(genericArgs.get(i)));
++              if(i + 1 < genericArgs.size()) {
++                buf.append(", ");
++              }
++            }
++            buf.append(">");
++          }
++        }
+         buf.append(name);
+         if (invocationTyp == INVOKE_DYNAMIC) {
+           buf.append("<invokedynamic>");
+@@ -318,8 +383,27 @@ public class InvocationExprent extends Exprent {
+       }
+     }
+ 
+-    BitSet setAmbiguousParameters = getAmbiguousParameters();
++    List<StructMethod> matches = getMatchedDescriptors();
++    BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
++    StructMethod desc = null;
++    if(matches.size() == 1) desc = matches.get(0);
+ 
++    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
++    Map<VarType, VarType> genArgs = new HashMap<VarType, VarType>();
++
++    // building generic info from the instance
++    if(cl != null && cl.getSignature() != null && instance != null && instance.getInferredExprType(null).isGeneric()) {
++      GenericType genType = (GenericType)instance.getInferredExprType(null);
++      if(genType.getArguments().size() == cl.getSignature().fparameters.size()) {
++        for(int i = 0; i < cl.getSignature().fparameters.size(); i++) {
++          VarType from = GenericType.parse("T" + cl.getSignature().fparameters.get(i) + ";");
++          VarType to = genType.getArguments().get(i);
++          if(from != null && to != null) {
++            genArgs.put(from, to);
++          }
++        }
++      }
++    }
+     boolean firstParameter = true;
+     int start = isEnum ? 2 : 0;
+     for (int i = start; i < lstParameters.size(); i++) {
+@@ -330,7 +414,32 @@ public class InvocationExprent extends Exprent {
+ 
+         TextBuffer buff = new TextBuffer();
+         boolean ambiguous = setAmbiguousParameters.get(i);
+-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
++        VarType type = descriptor.params[i];
++        // using info from the generic signature
++        if(desc != null && desc.getSignature() != null && desc.getSignature().params.size() == lstParameters.size()) {
++          type = desc.getSignature().params.get(i);
++        }
++        // applying generic info from the signature
++        VarType remappedType = type.remap(genArgs);
++        if(type != remappedType) {
++          type = remappedType;
++        }
++        // and from the inferred generic arguments
++        else if(desc != null && desc.getSignature() != null && genericArgs.size() != 0) {
++          Map<VarType, VarType> genMap = new HashMap<VarType, VarType>();
++          for(int j = 0; j < genericArgs.size(); j++) {
++            VarType from = GenericType.parse("T" + desc.getSignature().fparameters.get(j) + ";");
++            VarType to = genericArgs.get(j);
++            genMap.put(from, to);
++          }
++          type = type.remap(genMap);
++        }
++        // not passing it along if what we get back is more specific
++        VarType exprType = lstParameters.get(i).getInferredExprType(type);
++        if(exprType != null && type != null && type.type == CodeConstants.TYPE_GENVAR) {
++          type = exprType;
++        }
++        ExprProcessor.getCastedExprent(lstParameters.get(i), type, buff, indent, type.type != CodeConstants.TYPE_NULL, ambiguous, tracer);
+         buf.append(buff);
+ 
+         firstParameter = false;
+@@ -342,12 +451,12 @@ public class InvocationExprent extends Exprent {
+     return buf;
+   }
+ 
+-  private BitSet getAmbiguousParameters() {
++  private List<StructMethod> getMatchedDescriptors() {
++    List<StructMethod> matches = new ArrayList<StructMethod>();
++
+     StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+-    if (cl == null) return EMPTY_BIT_SET;
++    if (cl == null) return matches;
+ 
+-    // check number of matches
+-    List<MethodDescriptor> matches = new ArrayList<MethodDescriptor>();
+     nextMethod:
+     for (StructMethod mt : cl.getMethods()) {
+       if (name.equals(mt.getName())) {
+@@ -358,10 +467,17 @@ public class InvocationExprent extends Exprent {
+               continue nextMethod;
+             }
+           }
+-          matches.add(md);
+-        }
++          matches.add(mt);
++       }
+       }
+     }
++    return matches;
++  }
++
++  private BitSet getAmbiguousParameters(List<StructMethod> matches) {
++    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
++    if (cl == null) return EMPTY_BIT_SET;
++
+     if (matches.size() == 1) return EMPTY_BIT_SET;
+ 
+     // check if a call is unambiguous
+@@ -384,7 +500,9 @@ public class InvocationExprent extends Exprent {
+     BitSet ambiguous = new BitSet(descriptor.params.length);
+     for (int i = 0; i < descriptor.params.length; i++) {
+       VarType paramType = descriptor.params[i];
+-      for (MethodDescriptor md : matches) {
++      for (StructMethod mtt : matches) {
++        if(mtt.getSignature() != null && mtt.getSignature().params.get(i).isGeneric()) break;
++        MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
+         if (!paramType.equals(md.params[i])) {
+           ambiguous.set(i);
+           break;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 4784e030332e1ea0ce87a4bfa69432cfa0906b73..0d417258f78e649b034a680374610a961ed21257 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -65,6 +65,21 @@ public class VarExprent extends Exprent {
+     return getVarType();
+   }
+ 
++  @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    if (lvt != null && lvt.getSig() != null) {
++      // TODO; figure out why it's crashing, ugly fix for now
++      try {
++        return GenericType.parse(lvt.getSig());
++      } catch (StringIndexOutOfBoundsException ex) {
++      }
++    }
++    else if (lvt != null) {
++      return lvt.getVarType();
++    }
++    return getVarType();
++  }
++
+   @Override
+   public int getExprentUse() {
+     return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
+diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
+index 1b0df9d2e710cb6d1bee94eb1dddfe2c06135941..81342ed8f18463360e9c31f77e5091aa68ec7cdb 100644
+--- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
++++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
+@@ -19,6 +19,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
++import java.util.Map;
++
+ public class VarType {  // TODO: optimize switch
+ 
+   public static final VarType[] EMPTY_ARRAY = {};
+@@ -269,6 +271,15 @@ public class VarType {  // TODO: optimize switch
+     return res;
+   }
+ 
++  @Override
++  public int hashCode() {
++    int result = 1;
++    result = 37 * result + type;
++    result = 37 * result + arrayDim;
++    result = 37 * result + value == null ? 0 : value.hashCode();
++    return result;
++  }
++
+   @Override
+   public boolean equals(Object o) {
+     if (o == this) {
+@@ -419,4 +430,11 @@ public class VarType {  // TODO: optimize switch
+         throw new IllegalArgumentException("Invalid type: " + c);
+     }
+   }
++
++  public VarType remap(Map<VarType, VarType> map) {
++    if(map.containsKey(this)) {
++      return map.get(this);
++    }
++    return this;
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
+index 2ed5574e1638339c62ab849de86600c366d1ced9..9b111e572b474328818f044002d50dc22e946c5c 100644
+--- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
++++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
+@@ -23,6 +23,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
++import java.util.Map;
+ 
+ public class GenericType extends VarType {
+ 
+@@ -35,7 +36,7 @@ public class GenericType extends VarType {
+   private final List<VarType> arguments;
+   private final int wildcard;
+ 
+-  private GenericType(int type, int arrayDim, String value, VarType parent, List<VarType> arguments, int wildcard) {
++  public GenericType(int type, int arrayDim, String value, VarType parent, List<VarType> arguments, int wildcard) {
+     super(type, arrayDim, value, getFamily(type, arrayDim), getStackSize(type, arrayDim), false);
+     this.parent = parent;
+     this.arguments = arguments == null ? Collections.<VarType>emptyList() : arguments;
+@@ -256,6 +257,10 @@ public class GenericType extends VarType {
+     return new GenericType(type, arrayDim - 1, value, parent, arguments, wildcard);
+   }
+ 
++  public VarType getParent() {
++    return parent;
++  }
++
+   public List<VarType> getArguments() {
+     return arguments;
+   }
+@@ -318,4 +323,51 @@ public class GenericType extends VarType {
+     }
+     return buffer.toString();
+   }
++
++  @Override
++  public String toString() {
++    StringBuilder buf = new StringBuilder();
++    switch(getWildcard()) {
++      case GenericType.WILDCARD_EXTENDS:
++        buf.append("? extends ");
++        break;
++      case GenericType.WILDCARD_SUPER:
++        buf.append("? super ");
++      break;
++    }
++    buf.append(super.toString());
++    buf.append(getTypeArguments());
++    return buf.toString();
++  }
++
++  @Override
++  public VarType remap(Map<VarType, VarType> map) {
++    VarType main = super.remap(map);
++    if(main != this) {
++      return main;
++    }
++    boolean changed = false;
++    VarType parent = getParent();
++    if(map.containsKey(parent)) {
++      parent = map.get(parent);
++      changed = true;
++    }
++    List<VarType> newArgs = new ArrayList<VarType>();
++    for(VarType arg : getArguments()) {
++      VarType newArg = null;
++      if(arg != null) {
++        newArg = arg.remap(map);
++      }
++      if(newArg != arg) {
++        newArgs.add(newArg);
++        changed = true;
++      } else {
++        newArgs.add(arg);
++      }
++    }
++    if(changed) {
++      return new GenericType(main.type, main.arrayDim, main.value, parent, newArgs, getWildcard());
++    }
++    return this;
++  }
+ }
+diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
+index c7e781e4172f736a831b857ca7fd3060d95e6186..2afd2e6f60ee5cc191b6eaf535e0fa12f25ea275 100644
+--- a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
++++ b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
+@@ -47,6 +47,7 @@ public class MinecraftDecompilationTest {
+         put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1");
+         put(IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1");
+         put(IFernflowerPreferences.REMOVE_SYNTHETIC,"0");
++        put(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1");
+     }};
+     fixture.setUp(mcFFOptions);
+     if (!new File(fixture.getTestDataDir(), MC_JAR).exists()) {

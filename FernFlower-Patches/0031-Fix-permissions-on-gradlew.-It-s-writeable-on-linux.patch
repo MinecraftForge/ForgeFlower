@@ -1,9 +1,0 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: cpw <cpw@weeksfamily.ca>
-Date: Thu, 13 Aug 2015 17:06:24 -0700
-Subject: [PATCH] Fix permissions on gradlew. It's writeable on linux.
-
-
-diff --git a/gradlew b/gradlew
-old mode 100644
-new mode 100755
