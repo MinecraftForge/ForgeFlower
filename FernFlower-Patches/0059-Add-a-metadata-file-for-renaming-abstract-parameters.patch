@@ -1,0 +1,125 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sciwhiz12 <sciwhiz12@sciwhiz12.tk>
+Date: Thu, 4 Feb 2021 02:11:22 +0800
+Subject: [PATCH] Add a metadata file for renaming abstract parameters
+
+The file is named 'fernflower_abstract_parameter_names.txt', with the format of:
+
+ClassName MethodName Descriptor Param1[ Param2...]
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index b90f2ec58cc54cdd9b72257824ec6ceaefbc536e..581ef65be27be38883be48fc6758642953c12468 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -731,7 +731,8 @@ public class ClassWriter {
+             buffer.append(' ');
+             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+             if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {
+-                parameterName = methodWrapper.methodStruct.getRenamer().renameAbstractParameter(parameterName, index);
++              String newParameterName = methodWrapper.methodStruct.getRenamer().renameAbstractParameter(parameterName, index);
++              parameterName = !newParameterName.equals(parameterName) ? newParameterName : DecompilerContext.getStructContext().renameAbstractParameter(methodWrapper.methodStruct.getClassStruct().qualifiedName, mt.getName(), mt.getDescriptor(), index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0), parameterName);
+             }
+             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
+ 
+diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+index db51534cb8ac1012460c6de7a6f0ad04101244af..1c2603c2a02ca4ac0da5a0c309ffb8fe3c21e9e2 100644
+--- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
++++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+@@ -21,12 +21,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader.Link;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
++import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
++import java.io.File;
+ import java.io.IOException;
++import java.nio.charset.StandardCharsets;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.jar.JarFile;
+ import java.util.jar.Manifest;
++import java.util.zip.ZipFile;
+ 
+ public class ContextUnit {
+ 
+@@ -68,6 +72,24 @@ public class ContextUnit {
+   }
+ 
+   public void addOtherEntry(String fullPath, String entry) {
++    if ("fernflower_abstract_parameter_names.txt".equals(entry)) {
++      byte[] data;
++      try {
++        if (type == TYPE_JAR || type == TYPE_ZIP) {
++          try (ZipFile archive = new ZipFile(fullPath)) {
++            data = InterpreterUtil.getBytes(archive, archive.getEntry(entry));
++          }
++        }
++        else {
++          data = InterpreterUtil.getBytes(new File(fullPath));
++        }
++        DecompilerContext.getStructContext().loadAbstractMetadata(new String(data, StandardCharsets.UTF_8));
++      }
++      catch (IOException e) {
++        String message = "Cannot read fernflower_abstract_parameter_names.txt from " + fullPath;
++        DecompilerContext.getLogger().writeMessage(message, e);
++      }
++    }
+     if (DecompilerContext.getOption(IFernflowerPreferences.SKIP_EXTRA_FILES))
+       return;
+     otherEntries.add(new String[]{fullPath, entry});
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index 93f8cc7ac1c178de4f2cc1fe86db82c1784b416f..a154193f9b9f698873c62af08d1211d0e79b8ae4 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -17,14 +17,18 @@ package org.jetbrains.java.decompiler.struct;
+ 
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.io.File;
+ import java.io.IOException;
++import java.util.ArrayList;
+ import java.util.Enumeration;
+ import java.util.HashMap;
++import java.util.List;
+ import java.util.Map;
+ import java.util.jar.JarFile;
+ import java.util.zip.ZipEntry;
+@@ -37,6 +41,7 @@ public class StructContext {
+   private final LazyLoader loader;
+   private final Map<String, ContextUnit> units = new HashMap<String, ContextUnit>();
+   private final Map<String, StructClass> classes = new HashMap<String, StructClass>();
++  private final Map<String, List<String>> abstractNames = new HashMap<>();
+ 
+   public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
+     this.saver = saver;
+@@ -188,4 +193,24 @@ public class StructContext {
+   public Map<String, StructClass> getClasses() {
+     return classes;
+   }
++
++  public void loadAbstractMetadata(String string) {
++    for (String line : string.split("\\n")) {
++      String[] pts = line.split(" ");
++      if (pts.length < 4) //class method desc [args...]
++        continue;
++      GenericMethodDescriptor desc = GenericMain.parseMethodSignature(pts[2]);
++      List<String> params = new ArrayList<>();
++      for (int x = 0; x < pts.length - 3; x++) {
++        for (int y = 0; y < desc.params.get(x).stackSize; y++)
++          params.add(pts[x+3]);
++      }
++      this.abstractNames.put(pts[0] + ' ' + pts[1] + ' ' + pts[2], params);
++    }
++  }
++
++  public String renameAbstractParameter(String className, String methodName, String descriptor, int index, String _default) {
++    List<String> params = this.abstractNames.get(className + ' ' + methodName + ' ' + descriptor);
++    return params != null && index < params.size() ? params.get(index) : _default;
++  }
+ }
