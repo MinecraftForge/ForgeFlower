@@ -31,7 +31,7 @@ index 581ef65be27be38883be48fc6758642953c12468..538e85107cc68079240d04c801e22295
      CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_ABSTRACT |
      CodeConstants.ACC_STATIC | CodeConstants.ACC_FINAL | CodeConstants.ACC_STRICT;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index e0fdaacc5d6f16c5eea148540b2c90758779deae..f79f8cd98f555b003a2f185980de3250c31ce417 100644
+index e0fdaacc5d6f16c5eea148540b2c90758779deae..917c804858922a2997e4e5cc1f67baaefab00f09 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -48,9 +48,29 @@ public class ClassesProcessor {
@@ -104,7 +104,7 @@ index e0fdaacc5d6f16c5eea148540b2c90758779deae..f79f8cd98f555b003a2f185980de3250
                }
  
                // original simple name
-@@ -109,10 +129,10 @@ public class ClassesProcessor {
+@@ -109,10 +129,11 @@ public class ClassesProcessor {
                  }
                }
  
@@ -114,10 +114,11 @@ index e0fdaacc5d6f16c5eea148540b2c90758779deae..f79f8cd98f555b003a2f185980de3250
                // original access flags
 -              arr[3] = entry.access;
 +              rec.accessFlags = entry.access;
++              rec.source = cl.qualifiedName;
  
                // enclosing class
                String enclClassName;
-@@ -127,13 +147,20 @@ public class ClassesProcessor {
+@@ -127,13 +148,20 @@ public class ClassesProcessor {
                  StructClass enclosing_class = context.getClasses().get(enclClassName);
                  if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
  
@@ -142,7 +143,7 @@ index e0fdaacc5d6f16c5eea148540b2c90758779deae..f79f8cd98f555b003a2f185980de3250
                    }
  
                    // reference to the nested class
-@@ -206,15 +233,15 @@ public class ClassesProcessor {
+@@ -206,15 +234,15 @@ public class ClassesProcessor {
                    continue;
                  }
  
