@@ -196,7 +196,7 @@ index c12605070b1de0bd65ebed44eacb25467666efbc..f71ed84bc4ad195a97b4c535f21b55a9
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 59164900d91a1d02526de1ab32958fac7083357b..3e272016903de00ee47c55fad62db4b0687a04b5 100644
+index 97880cd0c8c820f5a157a6e206d7156f7433aa56..f4acbd4fb624b6d818fa78cdbdbe2f39ad1dc9aa 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -207,7 +207,7 @@ index 59164900d91a1d02526de1ab32958fac7083357b..3e272016903de00ee47c55fad62db4b0
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  
  import java.util.*;
-@@ -365,4 +366,15 @@ public class SwitchStatement extends Statement {
+@@ -373,4 +374,15 @@ public class SwitchStatement extends Statement {
    public List<List<ConstExprent>> getCaseValues() {
      return caseValues;
    }

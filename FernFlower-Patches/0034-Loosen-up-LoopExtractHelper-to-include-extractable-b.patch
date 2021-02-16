@@ -138,7 +138,7 @@ index ef7e97a5e99899896b11376fd31e3511fb5b06b5..eca34134bf72cb0ddc9e3b245ca38474
        return sb.toString();
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index c93be38f6abaabfe2704a3fd7c8f0d17a1b9ff52..67d16d5c139033d4774acc22c54b8866594c3ec5 100644
+index ac920538381ad0db746f31c1f026c9c6c8883156..e044890242dd7998a4414ac44da2ec045fed88a8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -20,9 +20,12 @@ import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
@@ -154,7 +154,7 @@ index c93be38f6abaabfe2704a3fd7c8f0d17a1b9ff52..67d16d5c139033d4774acc22c54b8866
  import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
  import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -207,17 +210,11 @@ public class DomHelper {
+@@ -207,17 +210,12 @@ public class DomHelper {
      return ret;
    }
  
@@ -162,8 +162,8 @@ index c93be38f6abaabfe2704a3fd7c8f0d17a1b9ff52..67d16d5c139033d4774acc22c54b8866
 +  public static RootStatement parseGraph(ControlFlowGraph graph, StructMethod mt) {
  
      RootStatement root = graphToStatement(graph);
--
-     if (!processStatement(root, new HashMap<Integer, Set<Integer>>())) {
+ 
+     if (!processStatement(root, new LinkedHashMap<Integer, Set<Integer>>())) {
 -
 -      //			try {
 -      //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));

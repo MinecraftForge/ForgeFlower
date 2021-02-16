@@ -58,10 +58,10 @@ index acc74a60fd6a90ad15959f6c3164757390542ada..6636d1dab67c0ad87b98fd6b9ebfeca7
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index 4f22cf710a67e5f0d69951fb4bee6fa194e5a4ea..499894a572629a0e14aba0ebfae4929d6e0eec18 100644
+index c0455987e9e8c7d2c99c155f997d378179dcb4c8..dc9789593e86b85d293c7620e4255fa9bafe3e81 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-@@ -57,7 +57,7 @@ public class GeneralStatement extends Statement {
+@@ -58,7 +58,7 @@ public class GeneralStatement extends Statement {
      TextBuffer buf = new TextBuffer();
  
      if (isLabeled()) {
@@ -106,10 +106,10 @@ index 7d2ee435ce1c153b6da410d825d697d9790e35fe..92588febd470b2cf9db2d9f7ff3ae4e2
      }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index f8eec64ce7edbb2ff9e4d76c7d9e59c42060e57f..2a2930908a9051cea5f590d0a6e66d38689d1753 100644
+index fec1d7552348fca1d200e164219f1cf542c2c3ad..1624ce778d827671f916cc822335febaa1df60cf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -118,7 +118,7 @@ public class SwitchStatement extends Statement {
+@@ -126,7 +126,7 @@ public class SwitchStatement extends Statement {
      buf.append(first.toJava(indent, tracer));
  
      if (isLabeled()) {

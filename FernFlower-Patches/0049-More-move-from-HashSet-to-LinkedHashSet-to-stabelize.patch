@@ -6,25 +6,19 @@ Subject: [PATCH] More move from HashSet to LinkedHashSet to stabelize
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22ceeede7b 100644
+index e044890242dd7998a4414ac44da2ec045fed88a8..7434b14c7c6d2d9ff2a10f66c9da848cf25b3a9e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-@@ -213,12 +213,12 @@ public class DomHelper {
-   public static RootStatement parseGraph(ControlFlowGraph graph, StructMethod mt) {
+@@ -214,7 +214,7 @@ public class DomHelper {
  
      RootStatement root = graphToStatement(graph);
--    if (!processStatement(root, new HashMap<Integer, Set<Integer>>())) {
-+    if (!processStatement(root, new HashMap<Integer, LinkedHashSet<Integer>>())) {
+ 
+-    if (!processStatement(root, new LinkedHashMap<Integer, Set<Integer>>())) {
++    if (!processStatement(root, new LinkedHashMap<Integer, LinkedHashSet<Integer>>())) {
        DotExporter.toDotFile(graph, mt, "parseGraphFail", true);
        throw new RuntimeException("parsing failure!");
      }
- 
--    LabelHelper.lowContinueLabels(root, new HashSet<StatEdge>());
-+    LabelHelper.lowContinueLabels(root, new LinkedHashSet<StatEdge>());
- 
-     SequenceHelper.condenseSequences(root);
-     root.buildMonitorFlags();
-@@ -309,7 +309,7 @@ public class DomHelper {
+@@ -310,7 +310,7 @@ public class DomHelper {
      }
    }
  
@@ -33,7 +27,7 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
  
      if (general.type == Statement.TYPE_ROOT) {
        Statement stat = general.getFirst();
-@@ -358,7 +358,7 @@ public class DomHelper {
+@@ -359,7 +359,7 @@ public class DomHelper {
            //						DotExporter.toDotFile(general, new File("c:\\Temp\\stat1.dot"));
            //					} catch(Exception ex) {ex.printStackTrace();}
  
@@ -42,7 +36,7 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
            mapRefreshed = true;
          }
  
-@@ -379,7 +379,7 @@ public class DomHelper {
+@@ -380,7 +380,7 @@ public class DomHelper {
              Statement stat = findGeneralStatement(general, forceall, mapExtPost);
  
              if (stat != null) {
@@ -51,7 +45,7 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
  
                if (complete) {
                  // replace general purpose statement with simple one
-@@ -389,7 +389,7 @@ public class DomHelper {
+@@ -390,7 +390,7 @@ public class DomHelper {
                  return false;
                }
  
@@ -60,7 +54,7 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
                mapRefreshed = true;
                reducibility = 0;
              }
-@@ -410,14 +410,14 @@ public class DomHelper {
+@@ -411,14 +411,14 @@ public class DomHelper {
          break;
        }
        else {
@@ -77,7 +71,7 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
  
      VBStyleCollection<Statement, Integer> stats = stat.getStats();
      VBStyleCollection<List<Integer>, Integer> vbPost;
-@@ -595,7 +595,7 @@ public class DomHelper {
+@@ -596,7 +596,7 @@ public class DomHelper {
      return true;
    }
  
@@ -86,19 +80,16 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
  
      boolean found, success = false;
  
-@@ -633,9 +633,9 @@ public class DomHelper {
+@@ -634,7 +634,7 @@ public class DomHelper {
                set.removeAll(setOldNodes);
  
                if (setOldNodes.contains(key)) {
 -                Set<Integer> setNew = mapExtPost.get(newid);
 +                LinkedHashSet<Integer> setNew = mapExtPost.get(newid);
                  if (setNew == null) {
--                  mapExtPost.put(newid, setNew = new HashSet<Integer>());
-+                  mapExtPost.put(newid, setNew = new LinkedHashSet<Integer>());
+                   mapExtPost.put(newid, setNew = new LinkedHashSet<Integer>());
                  }
-                 setNew.addAll(set);
- 
-@@ -666,7 +666,6 @@ public class DomHelper {
+@@ -667,7 +667,6 @@ public class DomHelper {
  
  
    private static Statement detectStatement(Statement head) {
@@ -107,18 +98,9 @@ index 67d16d5c139033d4774acc22c54b8866594c3ec5..c45f5e06dba0607232dd1fac4c089a22
  
      if ((res = DoStatement.isHead(head)) != null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-index 26cc638aacb1ae120a4f0000bf224eb01cefe1f1..9bf29358c5c3c36c1fa69198ad17587a21d66823 100644
+index 8ec889c05a77f344d011cb95ab9646a2cd217958..9bf29358c5c3c36c1fa69198ad17587a21d66823 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-@@ -33,7 +33,7 @@ public class LabelHelper {
- 
-     liftClosures(root);
- 
--    lowContinueLabels(root, new HashSet<StatEdge>());
-+    lowContinueLabels(root, new LinkedHashSet<StatEdge>());
- 
-     lowClosures(root);
-   }
 @@ -99,7 +99,7 @@ public class LabelHelper {
      }
    }
@@ -128,17 +110,8 @@ index 26cc638aacb1ae120a4f0000bf224eb01cefe1f1..9bf29358c5c3c36c1fa69198ad17587a
  
      boolean ok = (stat.type != Statement.TYPE_DO);
      if (!ok) {
-@@ -131,7 +131,7 @@ public class LabelHelper {
-         lowContinueLabels(st, edges);
-       }
-       else {
--        lowContinueLabels(st, new HashSet<StatEdge>());
-+        lowContinueLabels(st, new LinkedHashSet<StatEdge>());
-       }
-     }
-   }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-index 52338f909228f21a19a2a6e31cc734bdbcd024ff..eee7b15dc347c9582f49f13c41106f76ff14b064 100644
+index 84d1d9bbd2d07a0f18fa0fdcd7dba6e348e33134..3fd6bf4d788b9110f362d477ee273057d18ae819 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 @@ -36,7 +36,7 @@ public class FastExtendedPostdominanceHelper {
@@ -150,21 +123,16 @@ index 52338f909228f21a19a2a6e31cc734bdbcd024ff..eee7b15dc347c9582f49f13c41106f76
  
      this.statement = statement;
  
-@@ -65,9 +65,11 @@ public class FastExtendedPostdominanceHelper {
+@@ -65,7 +65,7 @@ public class FastExtendedPostdominanceHelper {
  
      filterOnDominance(filter);
  
 -    HashMap<Integer, Set<Integer>> res = new HashMap<Integer, Set<Integer>>();
 +    HashMap<Integer, LinkedHashSet<Integer>> res = new HashMap<Integer, LinkedHashSet<Integer>>();
      for (Entry<Integer, FastFixedSet<Integer>> entry : mapExtPostdominators.entrySet()) {
--      res.put(entry.getKey(), entry.getValue().toPlainSet());
-+      List<Integer> lst =  new ArrayList<Integer>(entry.getValue().toPlainSet());
-+      Collections.sort(lst); // Order matters!
-+      res.put(entry.getKey(), new LinkedHashSet<Integer>(lst));
-     }
- 
-     return res;
-@@ -91,7 +93,7 @@ public class FastExtendedPostdominanceHelper {
+       List<Integer> lst = new ArrayList<>(entry.getValue().toPlainSet());
+       Collections.sort(lst);
+@@ -93,7 +93,7 @@ public class FastExtendedPostdominanceHelper {
        Set<Statement> setVisited = new HashSet<Statement>();
  
        setVisited.add(stack.getFirst());
@@ -173,7 +141,7 @@ index 52338f909228f21a19a2a6e31cc734bdbcd024ff..eee7b15dc347c9582f49f13c41106f76
        while (!stack.isEmpty()) {
  
          Statement stat = stack.removeFirst();
-@@ -109,17 +111,17 @@ public class FastExtendedPostdominanceHelper {
+@@ -111,17 +111,17 @@ public class FastExtendedPostdominanceHelper {
            setPostdoms.complement(path);
            continue;
          }

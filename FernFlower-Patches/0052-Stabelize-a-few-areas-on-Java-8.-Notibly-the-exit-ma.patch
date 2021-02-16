@@ -31,113 +31,36 @@ index 16d778867677249c16b38fcfbca16618b1fa4ac0..9bcd3ba461d73cb139bca4fc0756130d
          System.out.print(" t:"+((DoStatement)statement).getLooptype());
      } else if (statement.type == Statement.TYPE_BASICBLOCK) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index c45f5e06dba0607232dd1fac4c089a22ceeede7b..e780bd6642f5ebca0af8971bb209630e44bb3b0a 100644
+index 7434b14c7c6d2d9ff2a10f66c9da848cf25b3a9e..3c5a86d8ecb45644c65b4507cdf87d91b8aaa1c3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-@@ -483,11 +483,11 @@ public class DomHelper {
+@@ -484,7 +484,7 @@ public class DomHelper {
  
          boolean same = (post == head);
  
--        HashSet<Statement> setNodes = new HashSet<Statement>();
+-        HashSet<Statement> setNodes = new LinkedHashSet<Statement>();
 +        LinkedHashSet<Statement> setNodes = new LinkedHashSet<Statement>();
          HashSet<Statement> setPreds = new HashSet<Statement>();
  
          // collect statement nodes
--        HashSet<Statement> setHandlers = new HashSet<Statement>();
-+        HashSet<Statement> setHandlers = new LinkedHashSet<Statement>();
-         setHandlers.add(head);
-         while (true) {
- 
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-index 89e684930084f603339ce2cb067ec9719532110c..1c3a8e13df680240d0a6638115bf9a7f6982b5c9 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-@@ -27,10 +27,10 @@ public class DominatorTreeExceptionFilter {
-   private final Statement statement;
- 
-   // idom, nodes
--  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<Integer, Set<Integer>>();
-+  private final Map<Integer, Set<Integer>> mapTreeBranches = new LinkedHashMap<Integer, Set<Integer>>();
- 
-   // handler, range nodes
--  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<Integer, Set<Integer>>();
-+  private final Map<Integer, Set<Integer>> mapExceptionRanges = new LinkedHashMap<Integer, Set<Integer>>();
- 
-   // handler, head dom
-   private Map<Integer, Integer> mapExceptionDoms = new HashMap<Integer, Integer>();
-@@ -86,7 +86,7 @@ public class DominatorTreeExceptionFilter {
- 
-       Set<Integer> set = mapTreeBranches.get(idom);
-       if (set == null) {
--        mapTreeBranches.put(idom, set = new HashSet<Integer>());
-+        mapTreeBranches.put(idom, set = new LinkedHashSet<Integer>());
-       }
-       set.add(key);
-     }
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-index eee7b15dc347c9582f49f13c41106f76ff14b064..349f522b2fe170c57b55d4812cbc56086f6a1502 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-@@ -28,9 +28,9 @@ public class FastExtendedPostdominanceHelper {
- 
-   private List<Statement> lstReversePostOrderList;
- 
--  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<Integer, FastFixedSet<Integer>>();
-+  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new LinkedHashMap<Integer, FastFixedSet<Integer>>();
- 
--  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<Integer, FastFixedSet<Integer>>();
-+  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new LinkedHashMap<Integer, FastFixedSet<Integer>>();
- 
-   private Statement statement;
- 
-@@ -40,7 +40,7 @@ public class FastExtendedPostdominanceHelper {
- 
-     this.statement = statement;
- 
--    HashSet<Integer> set = new HashSet<Integer>();
-+    HashSet<Integer> set = new LinkedHashSet<Integer>();
-     for (Statement st : statement.getStats()) {
-       set.add(st.id);
-     }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index 499894a572629a0e14aba0ebfae4929d6e0eec18..f7e00804a046ad4992f918396b9ca53c6872b01c 100644
+index dc9789593e86b85d293c7620e4255fa9bafe3e81..722d6cb6c9ad3d18212e127787287d9fc504ad7d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-@@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
- 
+@@ -21,7 +21,6 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import java.util.Collection;
  import java.util.HashSet;
-+import java.util.LinkedHashSet;
- 
+ import java.util.LinkedHashSet;
+-import java.util.Set;
  
  public class GeneralStatement extends Statement {
-@@ -39,7 +40,7 @@ public class GeneralStatement extends Statement {
+ 
+@@ -40,7 +39,7 @@ public class GeneralStatement extends Statement {
      first = head;
      stats.addWithKey(head, head.id);
  
--    HashSet<Statement> set = new HashSet<Statement>(statements);
+-    Set<Statement> set = new LinkedHashSet<Statement>(statements);
 +    LinkedHashSet<Statement> set = new LinkedHashSet<Statement>(statements);
      set.remove(head);
  
      for (Statement st : set) {
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 2a2930908a9051cea5f590d0a6e66d38689d1753..af522d97a6198ba50a5eae7b69232d9e4ac5eec6 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -80,7 +80,15 @@ public class SwitchStatement extends Statement {
- 
-     default_edge = head.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
- 
--    for (Statement st : lstNodes) {
-+    //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
-+    List<Statement> sorted = new ArrayList<Statement>(lstNodes);
-+    Collections.sort(sorted, new Comparator<Statement>() {
-+      @Override
-+      public int compare(Statement o1, Statement o2) {
-+        return o1.id - o2.id;
-+      }
-+    });
-+    for (Statement st : sorted) {
-       stats.addWithKey(st, st.id);
-     }
-   }

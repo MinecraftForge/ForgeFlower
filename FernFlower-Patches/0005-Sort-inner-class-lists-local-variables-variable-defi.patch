@@ -40,10 +40,10 @@ index 5a56641c6f614fdf677f8e1900f803f73397867c..b3e9d81eaa3a4d86e4714adf2f8e007a
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-index 0704efd84bdbd29cb6c9f5db79337147ac0b2be7..809af6d88b5f7c232539e0dbc4c7c8d7c5e26e3b 100644
+index 0704efd84bdbd29cb6c9f5db79337147ac0b2be7..e5f6d7235f27ed41754c534ec758a6c0502a51fa 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-@@ -119,6 +119,7 @@ public class LambdaProcessor {
+@@ -119,11 +119,14 @@ public class LambdaProcessor {
              }
            }
          }
@@ -51,7 +51,14 @@ index 0704efd84bdbd29cb6c9f5db79337147ac0b2be7..809af6d88b5f7c232539e0dbc4c7c8d7
        }
  
        mt.releaseResources();
-@@ -133,6 +134,7 @@ public class LambdaProcessor {
+     }
+ 
++    Collections.sort(node.nested);
++
+     // build class hierarchy on lambda
+     for (ClassNode nd : node.nested) {
+       if (nd.type == ClassNode.CLASS_LAMBDA) {
+@@ -133,6 +136,7 @@ public class LambdaProcessor {
  
            parent_class.nested.add(nd);
            nd.parent = parent_class;
@@ -71,6 +78,51 @@ index 798010e24206ffcfb76b1f4936f9b5d3709a7275..9aedf22af1f60b3e17752769462aee91
  
          return true;
        }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+index c93be38f6abaabfe2704a3fd7c8f0d17a1b9ff52..ac920538381ad0db746f31c1f026c9c6c8883156 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+@@ -211,7 +211,7 @@ public class DomHelper {
+ 
+     RootStatement root = graphToStatement(graph);
+ 
+-    if (!processStatement(root, new HashMap<Integer, Set<Integer>>())) {
++    if (!processStatement(root, new LinkedHashMap<Integer, Set<Integer>>())) {
+ 
+       //			try {
+       //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
+@@ -221,7 +221,7 @@ public class DomHelper {
+       throw new RuntimeException("parsing failure!");
+     }
+ 
+-    LabelHelper.lowContinueLabels(root, new HashSet<StatEdge>());
++    LabelHelper.lowContinueLabels(root, new LinkedHashSet<StatEdge>());
+ 
+     SequenceHelper.condenseSequences(root);
+     root.buildMonitorFlags();
+@@ -486,11 +486,11 @@ public class DomHelper {
+ 
+         boolean same = (post == head);
+ 
+-        HashSet<Statement> setNodes = new HashSet<Statement>();
++        HashSet<Statement> setNodes = new LinkedHashSet<Statement>();
+         HashSet<Statement> setPreds = new HashSet<Statement>();
+ 
+         // collect statement nodes
+-        HashSet<Statement> setHandlers = new HashSet<Statement>();
++        HashSet<Statement> setHandlers = new LinkedHashSet<Statement>();
+         setHandlers.add(head);
+         while (true) {
+ 
+@@ -638,7 +638,7 @@ public class DomHelper {
+               if (setOldNodes.contains(key)) {
+                 Set<Integer> setNew = mapExtPost.get(newid);
+                 if (setNew == null) {
+-                  mapExtPost.put(newid, setNew = new HashSet<Integer>());
++                  mapExtPost.put(newid, setNew = new LinkedHashSet<Integer>());
+                 }
+                 setNew.addAll(set);
+ 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 index 9296bb3f6007bda9647e2f0d919cdfd311567222..205b1876758155132600148f61f641b64e42369c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
@@ -123,6 +175,99 @@ index 9f1c11b318b128a3bf8dc17e3a6d343ef07800d7..ee8d4cee6cbb439907fb9d9c3f7f61a1
        BasicBlock last = entry.getKey();
  
        if (entry.getValue()) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
+index 26cc638aacb1ae120a4f0000bf224eb01cefe1f1..8ec889c05a77f344d011cb95ab9646a2cd217958 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
+@@ -33,7 +33,7 @@ public class LabelHelper {
+ 
+     liftClosures(root);
+ 
+-    lowContinueLabels(root, new HashSet<StatEdge>());
++    lowContinueLabels(root, new LinkedHashSet<StatEdge>());
+ 
+     lowClosures(root);
+   }
+@@ -131,7 +131,7 @@ public class LabelHelper {
+         lowContinueLabels(st, edges);
+       }
+       else {
+-        lowContinueLabels(st, new HashSet<StatEdge>());
++        lowContinueLabels(st, new LinkedHashSet<StatEdge>());
+       }
+     }
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
+index 89e684930084f603339ce2cb067ec9719532110c..1aa61c4c7e866da335ab96177283a702153cb748 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
+@@ -27,10 +27,10 @@ public class DominatorTreeExceptionFilter {
+   private final Statement statement;
+ 
+   // idom, nodes
+-  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<Integer, Set<Integer>>();
++  private final Map<Integer, Set<Integer>> mapTreeBranches = new LinkedHashMap<Integer, Set<Integer>>();
+ 
+   // handler, range nodes
+-  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<Integer, Set<Integer>>();
++  private final Map<Integer, Set<Integer>> mapExceptionRanges = new LinkedHashMap<Integer, Set<Integer>>();
+ 
+   // handler, head dom
+   private Map<Integer, Integer> mapExceptionDoms = new HashMap<Integer, Integer>();
+@@ -86,7 +86,7 @@ public class DominatorTreeExceptionFilter {
+ 
+       Set<Integer> set = mapTreeBranches.get(idom);
+       if (set == null) {
+-        mapTreeBranches.put(idom, set = new HashSet<Integer>());
++        mapTreeBranches.put(idom, set = new LinkedHashSet<Integer>());
+       }
+       set.add(key);
+     }
+@@ -101,7 +101,7 @@ public class DominatorTreeExceptionFilter {
+       List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
+       if (!lstPreds.isEmpty()) {
+ 
+-        Set<Integer> set = new HashSet<Integer>();
++        Set<Integer> set = new LinkedHashSet<Integer>();
+ 
+         for (Statement st : lstPreds) {
+           set.add(st.id);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
+index 52338f909228f21a19a2a6e31cc734bdbcd024ff..84d1d9bbd2d07a0f18fa0fdcd7dba6e348e33134 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
+@@ -28,9 +28,9 @@ public class FastExtendedPostdominanceHelper {
+ 
+   private List<Statement> lstReversePostOrderList;
+ 
+-  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<Integer, FastFixedSet<Integer>>();
++  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new LinkedHashMap<Integer, FastFixedSet<Integer>>();
+ 
+-  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<Integer, FastFixedSet<Integer>>();
++  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new LinkedHashMap<Integer, FastFixedSet<Integer>>();
+ 
+   private Statement statement;
+ 
+@@ -40,7 +40,7 @@ public class FastExtendedPostdominanceHelper {
+ 
+     this.statement = statement;
+ 
+-    HashSet<Integer> set = new HashSet<Integer>();
++    HashSet<Integer> set = new LinkedHashSet<Integer>();
+     for (Statement st : statement.getStats()) {
+       set.add(st.id);
+     }
+@@ -67,7 +67,9 @@ public class FastExtendedPostdominanceHelper {
+ 
+     HashMap<Integer, Set<Integer>> res = new HashMap<Integer, Set<Integer>>();
+     for (Entry<Integer, FastFixedSet<Integer>> entry : mapExtPostdominators.entrySet()) {
+-      res.put(entry.getKey(), entry.getValue().toPlainSet());
++      List<Integer> lst = new ArrayList<>(entry.getValue().toPlainSet());
++      Collections.sort(lst);
++      res.put(entry.getKey(), new LinkedHashSet<>(lst));
+     }
+ 
+     return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 index fbd146eca6b7efc4d56e96121a7c6d91748d077c..5f2cb56a85b9ac61141de1c17b457e5847eb8fff 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
@@ -224,6 +369,76 @@ index fbd146eca6b7efc4d56e96121a7c6d91748d077c..5f2cb56a85b9ac61141de1c17b457e58
 +    return ret;
 +  }
  }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+index 76a973f9d5813db6c4422b588ec910662dc634a2..2b2167a215106c1024115a9c98b9e67f9cce1ad6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+@@ -73,7 +73,7 @@ public class SSAConstructorSparseEx {
+     // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
+     // } catch(Exception ex) {ex.printStackTrace();}
+ 
+-    HashSet<Integer> setInit = new HashSet<Integer>();
++    List<Integer> setInit = new ArrayList<Integer>();
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+index 95cefcfeef4cbbd2c6e863ae31efd74ee48cd724..220da75f37dde2eab94c042c0e0929b004e7f8ed 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+@@ -88,7 +88,7 @@ public class SSAUConstructorSparseEx {
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+ 
+-    HashSet<Integer> setInit = new HashSet<Integer>();
++    List<Integer> setInit = new ArrayList<Integer>();
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+index 4f22cf710a67e5f0d69951fb4bee6fa194e5a4ea..c0455987e9e8c7d2c99c155f997d378179dcb4c8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+@@ -20,7 +20,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ 
+ import java.util.Collection;
+ import java.util.HashSet;
+-
++import java.util.LinkedHashSet;
++import java.util.Set;
+ 
+ public class GeneralStatement extends Statement {
+ 
+@@ -39,7 +40,7 @@ public class GeneralStatement extends Statement {
+     first = head;
+     stats.addWithKey(head, head.id);
+ 
+-    HashSet<Statement> set = new HashSet<Statement>(statements);
++    Set<Statement> set = new LinkedHashSet<Statement>(statements);
+     set.remove(head);
+ 
+     for (Statement st : set) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+index 59164900d91a1d02526de1ab32958fac7083357b..97880cd0c8c820f5a157a6e206d7156f7433aa56 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+@@ -75,7 +75,15 @@ public class SwitchStatement extends Statement {
+ 
+     default_edge = head.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
+ 
+-    for (Statement st : lstNodes) {
++    // We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
++    List<Statement> sorted = new ArrayList<>(lstNodes);
++    Collections.sort(sorted, new Comparator<Statement>() {
++      @Override
++      public int compare(Statement o1, Statement o2) {
++        return o1.id - o2.id;
++      }
++    });
++    for (Statement st : sorted) {
+       stats.addWithKey(st, st.id);
+     }
+   }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 index 31f0f86d4423ac537faf31b7f16833f263801b23..4751052a5468ffc469d7166bce648d5b658e040d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java

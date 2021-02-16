@@ -539,7 +539,7 @@ index 971ace503b1289a07195289a8e951ae192d9123a..d88480ef7133b0c27ff18518599127ec
  
                  DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 76a973f9d5813db6c4422b588ec910662dc634a2..7f4118cd58c31d58c3715e67bbe2ad8f227da8b8 100644
+index 2b2167a215106c1024115a9c98b9e67f9cce1ad6..ea50bd65b736dfd71f65de2e635330b0ce8db0a6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -59,6 +59,7 @@ public class SSAConstructorSparseEx {
@@ -550,7 +550,7 @@ index 76a973f9d5813db6c4422b588ec910662dc634a2..7f4118cd58c31d58c3715e67bbe2ad8f
    private final List<VarVersionPair> startVars = new ArrayList<VarVersionPair>();
  
    // set factory
-@@ -69,11 +70,9 @@ public class SSAConstructorSparseEx {
+@@ -69,9 +70,7 @@ public class SSAConstructorSparseEx {
      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
      DirectGraph dgraph = flatthelper.buildDirectGraph(root);
  
@@ -559,11 +559,8 @@ index 76a973f9d5813db6c4422b588ec910662dc634a2..7f4118cd58c31d58c3715e67bbe2ad8f
 -    // } catch(Exception ex) {ex.printStackTrace();}
 +    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(dgraph, mt, "ssaSplitVariables");
  
--    HashSet<Integer> setInit = new HashSet<Integer>();
-+    List<Integer> setInit = new ArrayList<Integer>(); //Important: HashSets have undefined order, so use a ordered list.
+     List<Integer> setInit = new ArrayList<Integer>();
      for (int i = 0; i < 64; i++) {
-       setInit.add(i);
-     }
 @@ -84,20 +83,19 @@ public class SSAConstructorSparseEx {
  
      setCatchMaps(root, dgraph, flatthelper);
@@ -598,21 +595,18 @@ index 76a973f9d5813db6c4422b588ec910662dc634a2..7f4118cd58c31d58c3715e67bbe2ad8f
      return startVars;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 95cefcfeef4cbbd2c6e863ae31efd74ee48cd724..9ba8195cd90a7d7c78fca7fa28cf7370d319768c 100644
+index 220da75f37dde2eab94c042c0e0929b004e7f8ed..94b4cbac5f02ace7ba2f1505fdb6794b182312f5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-@@ -88,7 +88,9 @@ public class SSAUConstructorSparseEx {
-     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+@@ -89,6 +89,7 @@ public class SSAUConstructorSparseEx {
      DirectGraph dgraph = flatthelper.buildDirectGraph(root);
  
--    HashSet<Integer> setInit = new HashSet<Integer>();
+     List<Integer> setInit = new ArrayList<Integer>();
 +    org.jetbrains.java.decompiler.util.DotExporter.toDotFile(dgraph, mt, "ssauSplitVariables");
-+
-+    List<Integer> setInit = new ArrayList<Integer>(); //Important: HashSets have undefined order, so use a ordered list.
      for (int i = 0; i < 64; i++) {
        setInit.add(i);
      }
-@@ -98,25 +100,25 @@ public class SSAUConstructorSparseEx {
+@@ -98,25 +99,25 @@ public class SSAUConstructorSparseEx {
  
      setCatchMaps(root, dgraph, flatthelper);
  

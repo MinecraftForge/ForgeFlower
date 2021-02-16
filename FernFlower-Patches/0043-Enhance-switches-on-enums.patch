@@ -179,7 +179,7 @@ index 33785497b358346846ce58824ce3c2f0aa2be815..1eaeaa6519574c4defe41c789743631f
  
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 3e272016903de00ee47c55fad62db4b0687a04b5..f8eec64ce7edbb2ff9e4d76c7d9e59c42060e57f 100644
+index f4acbd4fb624b6d818fa78cdbdbe2f39ad1dc9aa..fec1d7552348fca1d200e164219f1cf542c2c3ad 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -24,10 +24,14 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
@@ -197,7 +197,7 @@ index 3e272016903de00ee47c55fad62db4b0687a04b5..f8eec64ce7edbb2ff9e4d76c7d9e59c4
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  
  import java.util.*;
-@@ -118,7 +122,12 @@ public class SwitchStatement extends Statement {
+@@ -126,7 +130,12 @@ public class SwitchStatement extends Statement {
        tracer.incrementCurrentSourceLine();
      }
  
@@ -211,7 +211,7 @@ index 3e272016903de00ee47c55fad62db4b0687a04b5..f8eec64ce7edbb2ff9e4d76c7d9e59c4
      tracer.incrementCurrentSourceLine();
  
      VarType switch_type = headexprent.get(0).getExprType();
-@@ -138,7 +147,14 @@ public class SwitchStatement extends Statement {
+@@ -146,7 +155,14 @@ public class SwitchStatement extends Statement {
            ConstExprent value = (ConstExprent)values.get(j).copy();
            value.setConstType(switch_type);
  
@@ -227,7 +227,7 @@ index 3e272016903de00ee47c55fad62db4b0687a04b5..f8eec64ce7edbb2ff9e4d76c7d9e59c4
            tracer.incrementCurrentSourceLine();
          }
        }
-@@ -152,6 +168,41 @@ public class SwitchStatement extends Statement {
+@@ -160,6 +176,41 @@ public class SwitchStatement extends Statement {
      return buf;
    }
  
