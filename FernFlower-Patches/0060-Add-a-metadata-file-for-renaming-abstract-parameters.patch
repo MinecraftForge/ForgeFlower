@@ -22,7 +22,7 @@ index b90f2ec58cc54cdd9b72257824ec6ceaefbc536e..581ef65be27be38883be48fc67586429
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index db51534cb8ac1012460c6de7a6f0ad04101244af..1c2603c2a02ca4ac0da5a0c309ffb8fe3c21e9e2 100644
+index db51534cb8ac1012460c6de7a6f0ad04101244af..6ba6cc291f07a1f0839fa21fc5c3765815bdd635 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -21,12 +21,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -42,7 +42,7 @@ index db51534cb8ac1012460c6de7a6f0ad04101244af..1c2603c2a02ca4ac0da5a0c309ffb8fe
  
  public class ContextUnit {
  
-@@ -68,6 +72,24 @@ public class ContextUnit {
+@@ -68,6 +72,25 @@ public class ContextUnit {
    }
  
    public void addOtherEntry(String fullPath, String entry) {
@@ -63,6 +63,7 @@ index db51534cb8ac1012460c6de7a6f0ad04101244af..1c2603c2a02ca4ac0da5a0c309ffb8fe
 +        String message = "Cannot read fernflower_abstract_parameter_names.txt from " + fullPath;
 +        DecompilerContext.getLogger().writeMessage(message, e);
 +      }
++      return;
 +    }
      if (DecompilerContext.getOption(IFernflowerPreferences.SKIP_EXTRA_FILES))
        return;
