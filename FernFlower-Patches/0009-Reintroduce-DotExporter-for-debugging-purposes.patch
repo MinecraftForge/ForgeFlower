@@ -148,7 +148,7 @@ index c211d680fe9d488b302c92e0ad1ba37f233675ec..eca0d0fb9ef15db26e9de38ebda2bf9e
      typeProcessor.calculateVarTypes(root, graph);
 diff --git a/src/org/jetbrains/java/decompiler/util/DotExporter.java b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d3c6f92fbe0e8304f4f3e8d110dbee77eb04fe56
+index 0000000000000000000000000000000000000000..561342ed571c2dd99fb28a99d168d9932a4f4e27
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 @@ -0,0 +1,238 @@
@@ -330,7 +330,7 @@ index 0000000000000000000000000000000000000000..d3c6f92fbe0e8304f4f3e8d110dbee77
 +  }
 +
 +  private static File getFile(StructMethod mt, String suffix) {
-+    File root = new File(DOTS_FOLDER + mt.getClassStruct().qualifiedName);
++    File root = new File(DOTS_FOLDER + mt.getClassQualifiedName());
 +    if (!root.isDirectory())
 +      root.mkdirs();
 +    return new File(root,

@@ -7,22 +7,22 @@ Subject: [PATCH] Add a metadata file named
 Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 4817f055906bfa4bfa4f7bfa9b590f88e984c3a1..615b7a37610e6498e04eb971768df0ea57284383 100644
+index 632a12c7bee16de80b5edc011d4aac783b4dc76a..124cdd01c4b531937373127576b7f6db90ed48ed 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -703,7 +703,9 @@ public class ClassWriter {
+@@ -870,7 +870,9 @@ public class ClassWriter {
              }
  
              if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {
 -              parameterName = methodWrapper.methodStruct.getVariableNamer().renameAbstractParameter(parameterName, index);
 +              String newParameterName = methodWrapper.methodStruct.getVariableNamer().renameAbstractParameter(parameterName, index);
-+              parameterName = !newParameterName.equals(parameterName) ? newParameterName : DecompilerContext.getStructContext().renameAbstractParameter(methodWrapper.methodStruct.getClassStruct().qualifiedName, mt.getName(), mt.getDescriptor(), index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0), parameterName);
++              parameterName = !newParameterName.equals(parameterName) ? newParameterName : DecompilerContext.getStructContext().renameAbstractParameter(methodWrapper.methodStruct.getClassQualifiedName(), mt.getName(), mt.getDescriptor(), index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0), parameterName);
 +
              }
  
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f7b253bc942cd00f64505ce1424c6d5e8d0225d8..fde588174ace52b073d205bd0fa045632a725df5 100644
+index 57c74fd4bdd195287f616c9b5138bad87b2a96da..c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -7,12 +7,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -68,7 +68,7 @@ index f7b253bc942cd00f64505ce1424c6d5e8d0225d8..fde588174ace52b073d205bd0fa04563
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index cc4e357fb8b7adeeb76858813f5ee329d17497d5..68cf259230cd82298c36b391e0ea91d111fca9ab 100644
+index b586ffec22dae82846c1ce335e91c495ae7f11bc..83be1cad514f1a48f93db75a1e85dacae14cd105 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -90,7 +90,7 @@ index cc4e357fb8b7adeeb76858813f5ee329d17497d5..68cf259230cd82298c36b391e0ea91d1
  import java.util.Map;
  import java.util.jar.JarFile;
  import java.util.zip.ZipEntry;
-@@ -24,6 +28,7 @@ public class StructContext {
+@@ -23,6 +27,7 @@ public class StructContext {
    private final LazyLoader loader;
    private final Map<String, ContextUnit> units = new HashMap<>();
    private final Map<String, StructClass> classes = new HashMap<>();
@@ -98,7 +98,7 @@ index cc4e357fb8b7adeeb76858813f5ee329d17497d5..68cf259230cd82298c36b391e0ea91d1
  
    public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
      this.saver = saver;
-@@ -204,4 +209,24 @@ public class StructContext {
+@@ -203,4 +208,24 @@ public class StructContext {
  
      return false;
    }

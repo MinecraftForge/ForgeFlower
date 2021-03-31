@@ -27,7 +27,7 @@ index 206f62766c52572b6d5583c7822da22a25130adc..d91d9faebf718192a679c436792a54c2
      return Collections.unmodifiableMap(defaults);
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index f9cd2af9307678da1214a3553a8790018a8699f6..f7b253bc942cd00f64505ce1424c6d5e8d0225d8 100644
+index c77cfaaebf859586a7201e481cf328044f860dcf..57c74fd4bdd195287f616c9b5138bad87b2a96da 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -54,6 +54,8 @@ public class ContextUnit {
@@ -39,7 +39,7 @@ index f9cd2af9307678da1214a3553a8790018a8699f6..f7b253bc942cd00f64505ce1424c6d5e
      otherEntries.add(new String[]{fullPath, entry});
    }
  
-@@ -150,4 +152,4 @@ public class ContextUnit {
+@@ -153,4 +155,4 @@ public class ContextUnit {
    public List<StructClass> getClasses() {
      return classes;
    }

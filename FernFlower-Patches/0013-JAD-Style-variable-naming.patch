@@ -5,10 +5,10 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 2fcabdcd9ce1130a778754b318bf874922f02e12..4817f055906bfa4bfa4f7bfa9b590f88e984c3a1 100644
+index 88ce62444af95efcef19fb1c754cb45db00d4392..632a12c7bee16de80b5edc011d4aac783b4dc76a 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -701,6 +701,11 @@ public class ClassWriter {
+@@ -868,6 +868,11 @@ public class ClassWriter {
              else {
                parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
              }
@@ -21,7 +21,7 @@ index 2fcabdcd9ce1130a778754b318bf874922f02e12..4817f055906bfa4bfa4f7bfa9b590f88
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 69bea8bea9e989e4db58e0eec1868ee06f9f2872..fd860970374feb092ece0f93c03d056d662efe91 100644
+index f1dc102772e3cb5aa227057276c95b4402447fab..26ccf4b2124ab617bfeec45ebbf3451ab2e7aa6d 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -32,7 +32,7 @@ index 69bea8bea9e989e4db58e0eec1868ee06f9f2872..fd860970374feb092ece0f93c03d056d
  import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
  import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
  import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
-@@ -434,6 +435,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -444,6 +445,7 @@ public class ClassesProcessor implements CodeConstants {
    private static void destroyWrappers(ClassNode node) {
      node.wrapper = null;
      node.classStruct.releaseResources();
@@ -40,7 +40,7 @@ index 69bea8bea9e989e4db58e0eec1868ee06f9f2872..fd860970374feb092ece0f93c03d056d
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -492,7 +494,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -502,7 +504,7 @@ public class ClassesProcessor implements CodeConstants {
  
        anonymousClassType = new VarType(lambda_class_name, true);
  
@@ -49,7 +49,7 @@ index 69bea8bea9e989e4db58e0eec1868ee06f9f2872..fd860970374feb092ece0f93c03d056d
        if (!is_method_reference) { // content method in the same class, check synthetic flag
          StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
          is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
-@@ -547,4 +549,4 @@ public class ClassesProcessor implements CodeConstants {
+@@ -557,4 +559,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
    }
@@ -403,7 +403,7 @@ index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620c
          this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
        else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index cd9ac7edea0f4c840527cc526712a8f67f2c8a95..195e8d55b6c32bb1be7acadb76dc13ba1a33e44c 100644
+index 61984e6af43043db7fd29c1b79e16e67789ca707..a7a8e048b074dbbe08b28237e8855c35b282882a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -411,18 +411,18 @@ index cd9ac7edea0f4c840527cc526712a8f67f2c8a95..195e8d55b6c32bb1be7acadb76dc13ba
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 +import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
+ import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
- import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
-@@ -47,6 +48,7 @@ public class StructMethod extends StructMember {
-   private InstructionSequence seq;
+@@ -70,6 +71,7 @@ public class StructMethod extends StructMember {
    private boolean expanded = false;
-   private Map<String, StructGeneralAttribute> codeAttributes;
+   private final String classQualifiedName;
+   private final GenericMethodDescriptor signature;
 +  private IVariableNameProvider renamer;
  
-   public StructMethod(DataInputFullStream in, StructClass clStruct) throws IOException {
-     classStruct = clStruct;
-@@ -391,6 +393,17 @@ public class StructMethod extends StructMember {
+   private StructMethod(int accessFlags,
+                        Map<String, StructGeneralAttribute> attributes,
+@@ -382,6 +384,17 @@ public class StructMethod extends StructMember {
      return seq;
    }
  

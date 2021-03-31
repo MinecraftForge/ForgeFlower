@@ -16,7 +16,7 @@ public interface Test {
 }
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
-index 302d62fd14906a1ba75dcb8a044e7f909054ccc3..195d3655eff47fa3dcb57f131ca2aa9a148a0cce 100644
+index 58a653a79f3dd3215b65b75ccdee314e7e71f3ad..7db79c9324a3cbe50878f18a4e398731d6047edb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 @@ -8,6 +8,9 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -29,7 +29,7 @@ index 302d62fd14906a1ba75dcb8a044e7f909054ccc3..195d3655eff47fa3dcb57f131ca2aa9a
  
  import java.util.ArrayList;
  import java.util.Collections;
-@@ -34,7 +37,7 @@ public class ExprUtil {
+@@ -34,7 +37,7 @@ public final class ExprUtil {
        }
        mask = methodWrapper.synthParameters;
      }
@@ -38,7 +38,7 @@ index 302d62fd14906a1ba75dcb8a044e7f909054ccc3..195d3655eff47fa3dcb57f131ca2aa9a
        // non-static member class
        mask = new ArrayList<>(Collections.nCopies(parameters, null));
        mask.set(0, new VarVersionPair(-1, 0));
-@@ -42,4 +45,18 @@ public class ExprUtil {
+@@ -42,4 +45,18 @@ public final class ExprUtil {
  
      return mask;
    }

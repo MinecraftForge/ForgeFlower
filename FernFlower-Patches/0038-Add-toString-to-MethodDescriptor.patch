@@ -5,11 +5,11 @@ Subject: [PATCH] Add toString to MethodDescriptor
 
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 49bb8c809a273cfd4f268b5e01badc468f895f75..4995d41f7cca01876d8dc925fa7b02df2e24fcc2 100644
+index 79bd5b3f70510c85a2908fcadeb57119224082bb..327a5bce4f414e0ff7a6dcbf2e02f583d85a7157 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -19,11 +19,13 @@ import java.util.Objects;
- public class MethodDescriptor {
+ public final class MethodDescriptor {
    public final VarType[] params;
    public final VarType ret;
 +  private final String descriptor;
@@ -23,7 +23,7 @@ index 49bb8c809a273cfd4f268b5e01badc468f895f75..4995d41f7cca01876d8dc925fa7b02df
    }
  
    public static MethodDescriptor parseDescriptor(String descriptor) {
-@@ -70,7 +72,7 @@ public class MethodDescriptor {
+@@ -70,7 +72,7 @@ public final class MethodDescriptor {
  
      VarType ret = new VarType(descriptor.substring(parenth + 1));
  
@@ -32,7 +32,7 @@ index 49bb8c809a273cfd4f268b5e01badc468f895f75..4995d41f7cca01876d8dc925fa7b02df
    }
  
    public static MethodDescriptor parseDescriptor(StructMethod struct, ClassNode node) {
-@@ -152,6 +154,11 @@ public class MethodDescriptor {
+@@ -155,6 +157,11 @@ public final class MethodDescriptor {
      return null;
    }
  

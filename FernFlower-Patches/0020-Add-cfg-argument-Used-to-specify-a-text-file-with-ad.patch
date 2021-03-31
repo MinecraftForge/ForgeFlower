@@ -71,10 +71,10 @@ index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..06e362987a3917976627fc1f0b6aad30
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 684026371c3a8314055a30ae6dafbd02f2c79240..cc4e357fb8b7adeeb76858813f5ee329d17497d5 100644
+index 7c91206d1b64b9873fa24d6d3ad38e736413c0a3..b586ffec22dae82846c1ce335e91c495ae7f11bc 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-@@ -94,6 +94,7 @@ public class StructContext {
+@@ -93,6 +93,7 @@ public class StructContext {
        catch (IOException ex) {
          String message = "Corrupted archive file: " + file;
          DecompilerContext.getLogger().writeMessage(message, ex);
@@ -82,7 +82,7 @@ index 684026371c3a8314055a30ae6dafbd02f2c79240..cc4e357fb8b7adeeb76858813f5ee329
        }
        if (isArchive) {
          return;
-@@ -115,6 +116,7 @@ public class StructContext {
+@@ -114,6 +115,7 @@ public class StructContext {
          catch (IOException ex) {
            String message = "Corrupted class file: " + file;
            DecompilerContext.getLogger().writeMessage(message, ex);
@@ -90,10 +90,3 @@ index 684026371c3a8314055a30ae6dafbd02f2c79240..cc4e357fb8b7adeeb76858813f5ee329
          }
        }
        else {
-@@ -202,4 +204,4 @@ public class StructContext {
- 
-     return false;
-   }
--}
-\ No newline at end of file
-+}

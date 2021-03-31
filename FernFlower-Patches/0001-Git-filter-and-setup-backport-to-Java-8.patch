@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 20:44:39 -0700
-Subject: [PATCH] Git filter and setup
+Subject: [PATCH] Git filter and setup, backport to Java 8
 
 
 diff --git a/.gitattributes b/.gitattributes
@@ -295,16 +295,16 @@ index 3537b26a5b9d0579ae764825988f08a14d29517b..c52eb2e815432be8d1f1e6b61cffdcce
 +!testData/classes/**
 diff --git a/build.gradle b/build.gradle
 deleted file mode 100644
-index 9694117119040d9a0c060dab67d1d5a36973d040..0000000000000000000000000000000000000000
+index 9ce3662ad49f82511cfb2604752dac02d714325f..0000000000000000000000000000000000000000
 --- a/build.gradle
 +++ /dev/null
 @@ -1,25 +0,0 @@
--// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 -apply plugin: 'java'
 -
 -compileJava {
--  sourceCompatibility '1.8'
--  targetCompatibility '1.8'
+-  sourceCompatibility '11'
+-  targetCompatibility '11'
 -}
 -
 -sourceSets {
@@ -312,7 +312,7 @@ index 9694117119040d9a0c060dab67d1d5a36973d040..00000000000000000000000000000000
 -  test.java.srcDirs 'test'
 -}
 -
--repositories { jcenter() }
+-repositories { mavenCentral() }
 -dependencies {
 -  testCompile 'junit:junit:4.12'
 -  testCompile 'org.assertj:assertj-core:3.12.2'
@@ -324,7 +324,6 @@ index 9694117119040d9a0c060dab67d1d5a36973d040..00000000000000000000000000000000
 -    attributes 'Main-Class': 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
 -  }
 -}
-\ No newline at end of file
 diff --git a/gradle/wrapper/gradle-wrapper.jar b/gradle/wrapper/gradle-wrapper.jar
 index cd13592d068005179bd9e3c58ef9024b2a14337f..490fda8577df6c95960ba7077c43220e5bb2c0d9 100644
 GIT binary patch
@@ -2302,7 +2301,7 @@ z#GlBA?SDu9eedGme!&YL*H4~~&cE@zoOb?cmheA5<1hU#KWSpS|8Gk7-@GvYsq=q)
 oE`N5K{P4N_EZYFE|K@>tBMk;v2mOd$WCD5z@VD^x{P^qt0dz#mIsgCw
 
 diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
-index 657de8507468e0ce75005e8870f2a95ae849b5ce..a4b4429748d92848a3d820c7b099fbeb941066ae 100644
+index 56a6b165675b7de0752a0777092b4f34e36ec445..a4b4429748d92848a3d820c7b099fbeb941066ae 100644
 --- a/gradle/wrapper/gradle-wrapper.properties
 +++ b/gradle/wrapper/gradle-wrapper.properties
 @@ -1,6 +1,5 @@
@@ -2312,7 +2311,7 @@ index 657de8507468e0ce75005e8870f2a95ae849b5ce..a4b4429748d92848a3d820c7b099fbeb
 +distributionUrl=https\://services.gradle.org/distributions/gradle-6.3-bin.zip
  zipStoreBase=GRADLE_USER_HOME
  zipStorePath=wrapper/dists
--distributionUrl=https\://services.gradle.org/distributions/gradle-4.0-all.zip
+-distributionUrl=https\://services.gradle.org/distributions/gradle-5.5-all.zip
 diff --git a/gradlew b/gradlew
 index cccdd3d517fc5249beaefa600691cf150f2fa3e6..2fe81a7d95e4f9ad2c9b2a046707d36ceb3980b3 100755
 --- a/gradlew
@@ -2443,3 +2442,34 @@ index f9553162f122c71b34635112e717c3e733b5b212..62bd9b9ccefea2b65ae41e5d9a545e20
  
  @rem Find java.exe
  if defined JAVA_HOME goto findJavaFromJavaHome
+diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
+index 3280038cb409ed7f96e99da714dc5127b74fd1ca..1dedf68f53090579fc197d85800b4f7b62d9a1e6 100644
+--- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
++++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
+@@ -213,7 +213,12 @@ public class ConstantPool implements NewClassNameBuilder {
+     if (newName != null) {
+       StringBuilder buffer = new StringBuilder();
+       if (vt.arrayDim > 0) {
+-        buffer.append("[".repeat(vt.arrayDim)).append('L').append(newName).append(';');
++        // No functional change, just a revert for J8 compatibility
++        for (int i = 0; i < vt.arrayDim; i++) {
++          buffer.append('[');
++        }
++
++        buffer.append('L').append(newName).append(';');
+       }
+       else {
+         buffer.append(newName);
+diff --git a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
+index bb8b4dd9b866ec54491da50310b09b6fcb0bdf3f..7143281598c9273e847cc8aa5d86178c3b2b6bab 100644
+--- a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
++++ b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
+@@ -342,7 +342,7 @@ public class SFormsFastMapDirect {
+         if (ent != null) {
+           final int key = i == 0 ? ikey : (i == 1 ? ikey + VarExprent.STACK_BASE : -ikey);
+ 
+-          list.add(new Entry<>() {
++          list.add(new Entry<Integer, FastSparseSet<Integer>>() {
+ 
+             private final Integer var = key;
+             private final FastSparseSet<Integer> val = ent;

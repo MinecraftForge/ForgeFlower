@@ -92,10 +92,10 @@ index 0000000000000000000000000000000000000000..ad9f8c22d02565f22720a4fa88195111
 +    }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java b/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java
-index 41b5a9ac58d639397b6204540eb957fdc0eb2ec5..bce783516cc17ef1bf2ddcf91d4ae94f4bfb8acc 100644
+index e082267cf9e2f20df662ff3565d69d0966df1126..425c2e4480f2c57993e3d4a38f66cfdcbb920047 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java
-@@ -34,7 +34,7 @@ public class ClassReference14Processor {
+@@ -34,7 +34,7 @@ public final class ClassReference14Processor {
      invFor.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/String;)Ljava/lang/Class;"));
      invFor.setStatic(true);
      invFor.setLstParameters(Collections.singletonList(new VarExprent(0, VarType.VARTYPE_STRING, null)));
@@ -104,7 +104,7 @@ index 41b5a9ac58d639397b6204540eb957fdc0eb2ec5..bce783516cc17ef1bf2ddcf91d4ae94f
  
      InvocationExprent ctor = new InvocationExprent();
      ctor.setName(CodeConstants.INIT_NAME);
-@@ -52,7 +52,7 @@ public class ClassReference14Processor {
+@@ -52,7 +52,7 @@ public final class ClassReference14Processor {
      invCause.setInstance(newExpr);
      invCause.setLstParameters(
        Collections.singletonList(new VarExprent(2, new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"), null)));
@@ -113,7 +113,7 @@ index 41b5a9ac58d639397b6204540eb957fdc0eb2ec5..bce783516cc17ef1bf2ddcf91d4ae94f
    }
  
    public static void processClassReferences(ClassNode node) {
-@@ -235,4 +235,4 @@ public class ClassReference14Processor {
+@@ -235,4 +235,4 @@ public final class ClassReference14Processor {
  
      return null;
    }
@@ -121,11 +121,11 @@ index 41b5a9ac58d639397b6204540eb957fdc0eb2ec5..bce783516cc17ef1bf2ddcf91d4ae94f
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf874922f02e12 100644
+index 16a7cfebe26dfe0f6244a46f9af271758be274da..88ce62444af95efcef19fb1c754cb45db00d4392 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -320,7 +320,7 @@ public class ClassWriter {
- 
+@@ -446,7 +446,7 @@ public class ClassWriter {
+     }
      buffer.append(node.simpleName);
  
 -    GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
@@ -133,7 +133,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
      if (descriptor != null && !descriptor.fparameters.isEmpty()) {
        appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds);
      }
-@@ -331,12 +331,7 @@ public class ClassWriter {
+@@ -470,12 +470,7 @@ public class ClassWriter {
        VarType supertype = new VarType(cl.superClass.getString(), true);
        if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
          buffer.append("extends ");
@@ -147,7 +147,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
          buffer.append(' ');
        }
      }
-@@ -349,12 +344,7 @@ public class ClassWriter {
+@@ -488,12 +483,7 @@ public class ClassWriter {
            if (i > 0) {
              buffer.append(", ");
            }
@@ -161,18 +161,8 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
          }
          buffer.append(' ');
        }
-@@ -392,21 +382,10 @@ public class ClassWriter {
- 
-     VarType fieldType = new VarType(fd.getDescriptor(), false);
- 
--    GenericFieldDescriptor descriptor = null;
--    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
--      StructGenericSignatureAttribute attr = fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_SIGNATURE);
--      if (attr != null) {
--        descriptor = GenericMain.parseFieldSignature(attr.getSignature());
--      }
--    }
-+    GenericFieldDescriptor descriptor = fd.getSignature();
+@@ -541,12 +531,7 @@ public class ClassWriter {
+     GenericFieldDescriptor descriptor = fieldTypeData.getValue();
  
      if (!isEnum) {
 -      if (descriptor != null) {
@@ -185,7 +175,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
        buffer.append(' ');
      }
  
-@@ -434,8 +413,8 @@ public class ClassWriter {
+@@ -574,8 +559,8 @@ public class ClassWriter {
            ((ConstExprent) initializer).adjustConstType(fieldType);
          }
  
@@ -196,17 +186,26 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
        }
      }
      else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
-@@ -582,7 +561,7 @@ public class ClassWriter {
+@@ -601,7 +586,7 @@ public class ClassWriter {
+     GenericFieldDescriptor descriptor = fieldTypeData.getValue();
+ 
+     if (descriptor != null) {
+-      buffer.append(GenericMain.getGenericCastTypeName(varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type));
++      buffer.append(ExprProcessor.getCastTypeName(varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type));
+     }
+     else {
+       buffer.append(ExprProcessor.getCastTypeName(varArgComponent ? fieldType.decreaseArrayDim() : fieldType));
+@@ -743,7 +728,7 @@ public class ClassWriter {
        boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
-       boolean clinit = false, init = false, dinit = false;
+       boolean clInit = false, init = false, dInit = false;
  
 -      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 +      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, node);
  
        int flags = mt.getAccessFlags();
        if ((flags & CodeConstants.ACC_NATIVE) != 0) {
-@@ -637,29 +616,7 @@ public class ClassWriter {
-         clinit = true;
+@@ -798,29 +783,7 @@ public class ClassWriter {
+         clInit = true;
        }
  
 -      GenericMethodDescriptor descriptor = null;
@@ -236,7 +235,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
        boolean throwsExceptions = false;
        int paramCount = 0;
  
-@@ -672,12 +629,7 @@ public class ClassWriter {
+@@ -833,12 +796,7 @@ public class ClassWriter {
          }
  
          if (!init) {
@@ -250,7 +249,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
            buffer.append(' ');
          }
  
-@@ -703,7 +655,13 @@ public class ClassWriter {
+@@ -864,7 +822,13 @@ public class ClassWriter {
  
          int index = isEnum && init ? 3 : thisVar ? 1 : 0;
          int start = isEnum && init ? 2 : 0;
@@ -264,7 +263,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
            if (mask == null || mask.get(i) == null) {
              if (paramCount > 0) {
                buffer.append(", ");
-@@ -719,24 +677,11 @@ public class ClassWriter {
+@@ -880,24 +844,11 @@ public class ClassWriter {
              }
  
              String typeName;
@@ -292,7 +291,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
  
              if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
                  DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-@@ -761,7 +706,7 @@ public class ClassWriter {
+@@ -922,7 +873,7 @@ public class ClassWriter {
              paramCount++;
            }
  
@@ -301,7 +300,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
          }
  
          buffer.append(')');
-@@ -771,18 +716,13 @@ public class ClassWriter {
+@@ -932,18 +883,13 @@ public class ClassWriter {
            throwsExceptions = true;
            buffer.append(" throws ");
  
@@ -323,7 +322,23 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
            }
          }
        }
-@@ -1053,17 +993,7 @@ public class ClassWriter {
+@@ -1050,14 +996,7 @@ public class ClassWriter {
+   private static Map.Entry<VarType, GenericFieldDescriptor> getFieldTypeData(StructField fd) {
+     VarType fieldType = new VarType(fd.getDescriptor(), false);
+ 
+-    GenericFieldDescriptor descriptor = null;
+-    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+-      StructGenericSignatureAttribute attr = fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_SIGNATURE);
+-      if (attr != null) {
+-        descriptor = GenericMain.parseFieldSignature(attr.getSignature());
+-      }
+-    }
+-
++    GenericFieldDescriptor descriptor = fd.getSignature();
+     return new AbstractMap.SimpleImmutableEntry<>(fieldType, descriptor);
+   }
+ 
+@@ -1234,17 +1173,7 @@ public class ClassWriter {
      }
    }
  
@@ -342,7 +357,7 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
      buffer.append('<');
  
      for (int i = 0; i < parameters.size(); i++) {
-@@ -1073,17 +1003,17 @@ public class ClassWriter {
+@@ -1254,13 +1183,13 @@ public class ClassWriter {
  
        buffer.append(parameters.get(i));
  
@@ -359,8 +374,9 @@ index 1182bd193cb0aef1ebacbcd8d6427dd79af9715f..2fcabdcd9ce1130a778754b318bf8749
          }
        }
      }
- 
-     buffer.append('>');
+@@ -1277,4 +1206,4 @@ public class ClassWriter {
+       }
+     }
    }
 -}
 \ No newline at end of file
@@ -435,7 +451,7 @@ index 5448e7900953da79b2bc01f99fd7e8f3080148e7..bdd34f0382b06687ef7fb3237bbc96ac
      defaults.put(MAX_PROCESSING_METHOD, "0");
      defaults.put(RENAME_ENTITIES, "0");
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index fa7961777d41bc0845f741689c33143851eabf63..3ebc65082b733a0153e665e346cea5c44eb9042b 100644
+index cdadca37d0b24cf3feb1c0e200a113dae53ed51c..438b04c518f193ac3b229701ddfdaf7cde5cad6e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -2,6 +2,7 @@
@@ -1236,7 +1252,7 @@ index 7914279296b8aaa495f85bed6439676c15963411..f99fdc492e9ca76a1f14695e832ea193
  
            boolean firstParam = true;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7..b681b11cad3899d90c5f04df50b2ae021bea3021 100644
+index 60048a473001b72b6eb6b8d903a257c043d76902..899ca15489fb70ff5f81aa3c947ca4c228ba1d31 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAtt
@@ -1247,7 +1263,7 @@ index 8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7..b681b11cad3899d90c5f04df50b2ae02
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-@@ -65,6 +66,22 @@ public class VarExprent extends Exprent {
+@@ -64,6 +65,22 @@ public class VarExprent extends Exprent {
      return getVarType();
    }
  
@@ -1270,7 +1286,7 @@ index 8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7..b681b11cad3899d90c5f04df50b2ae02
    @Override
    public int getExprentUse() {
      return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
-@@ -142,7 +159,7 @@ public class VarExprent extends Exprent {
+@@ -141,7 +158,7 @@ public class VarExprent extends Exprent {
            if (lvt.getSignature() != null) {
              GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
              if (descriptor != null) {
@@ -1279,7 +1295,7 @@ index 8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7..b681b11cad3899d90c5f04df50b2ae02
                return;
              }
            }
-@@ -168,7 +185,7 @@ public class VarExprent extends Exprent {
+@@ -167,7 +184,7 @@ public class VarExprent extends Exprent {
                if (signature != null) {
                  GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                  if (descriptor != null) {
@@ -1289,10 +1305,10 @@ index 8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7..b681b11cad3899d90c5f04df50b2ae02
                  }
                }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index d4ccb5ecd7c9cfa2d76d9364a907f374bc1f5ba7..e35051b07919366db7fb532fd5e0eaba1121a2ae 100644
+index e86b2959dc7c3add12cc82f59f8cb6ab50a53252..989a9aa6e34c2ac1f8644d84564c7b1ad8468e11 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-@@ -126,6 +126,7 @@ public class DoStatement extends Statement {
+@@ -126,6 +126,7 @@ public final class DoStatement extends Statement {
          break;
        case LOOP_FOREACH:
          buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
@@ -1314,17 +1330,18 @@ index fa326a4a190012b9e121baa61880c172836e22db..89f1c9709d9002701c3ec8b4563d3453
          this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
        else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 0bb370cbf9542a9bebb7978a4d9c4dab5c96a247..c9bfe7bea082a4acc673acf821ef20a3659065a5 100644
+index 134813e5a764ec4c0cbd2f9efb0a0a2a4e69e1d1..6813dc6c8909900d3f21eb91532bdfa19fb1d83d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-@@ -2,14 +2,28 @@
+@@ -2,18 +2,30 @@
  package org.jetbrains.java.decompiler.struct;
  
  import org.jetbrains.java.decompiler.code.CodeConstants;
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 +import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructRecordAttribute;
  import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
  import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 +import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -1340,37 +1357,64 @@ index 0bb370cbf9542a9bebb7978a4d9c4dab5c96a247..c9bfe7bea082a4acc673acf821ef20a3
 +import java.util.Collections;
 +import java.util.HashMap;
 +import java.util.HashSet;
-+import java.util.Map;
+ import java.util.List;
+ import java.util.Map;
 +import java.util.Map.Entry;
 +import java.util.Set;
  
  /*
    class_file {
-@@ -44,6 +58,7 @@ public class StructClass extends StructMember {
+@@ -74,8 +86,16 @@ public class StructClass extends StructMember {
+ 
+     Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
+ 
++    GenericClassDescriptor signature = null;
++    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
++      StructGenericSignatureAttribute signatureAttr = (StructGenericSignatureAttribute)attributes.get(StructGeneralAttribute.ATTRIBUTE_SIGNATURE.name);
++      if (signatureAttr != null) {
++        signature = GenericMain.parseClassSignature(qualifiedName, signatureAttr.getSignature());
++      }
++    }
++
+     StructClass cl = new StructClass(
+-      accessFlags, attributes, qualifiedName, superClass, own, loader, minorVersion, majorVersion, interfaces, interfaceNames, fields, methods);
++      accessFlags, attributes, qualifiedName, superClass, own, loader, minorVersion, majorVersion, interfaces, interfaceNames, fields, methods, signature);
+     if (loader == null) cl.pool = pool;
+     return cl;
+   }
+@@ -90,6 +110,7 @@ public class StructClass extends StructMember {
    private final String[] interfaceNames;
    private final VBStyleCollection<StructField, String> fields;
    private final VBStyleCollection<StructMethod, String> methods;
-+  private GenericClassDescriptor signature = null;
++  private final GenericClassDescriptor signature;
  
    private ConstantPool pool;
  
-@@ -173,4 +188,116 @@ public class StructClass extends StructMember {
+@@ -104,7 +125,8 @@ public class StructClass extends StructMember {
+                       int[] interfaces,
+                       String[] interfaceNames,
+                       VBStyleCollection<StructField, String> fields,
+-                      VBStyleCollection<StructMethod, String> methods) {
++                      VBStyleCollection<StructMethod, String> methods,
++                      GenericClassDescriptor signature) {
+     super(accessFlags, attributes);
+     this.qualifiedName = qualifiedName;
+     this.superClass = superClass;
+@@ -116,6 +138,7 @@ public class StructClass extends StructMember {
+     this.interfaceNames = interfaceNames;
+     this.fields = fields;
+     this.methods = methods;
++    this.signature = signature;
+   }
+ 
+   public boolean hasField(String name, String descriptor) {
+@@ -197,4 +220,106 @@ public class StructClass extends StructMember {
    public String toString() {
      return qualifiedName;
    }
 +
 +  public GenericClassDescriptor getSignature() {
 +    return signature;
-+  }
-+
-+  @Override
-+  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
-+    StructGeneralAttribute attribute = super.readAttribute(in, pool, name);
-+    if ("Signature".equals(name) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-+      StructGenericSignatureAttribute signature = (StructGenericSignatureAttribute)attribute;
-+      this.signature = GenericMain.parseClassSignature(qualifiedName, signature.getSignature());
-+    }
-+    return attribute;
 +  }
 +
 +  private Map<VarType, VarType> getGenericMap(VarType type) {
@@ -1472,10 +1516,10 @@ index 0bb370cbf9542a9bebb7978a4d9c4dab5c96a247..c9bfe7bea082a4acc673acf821ef20a3
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index aea1b21ae67cc410fa514aeb079f5f58b6d0ae1a..87afc93ad6361ba6c8a45fa082bcf8d59db11f0d 100644
+index 7f9127710be02e07bcbb08be650cd41bff732abf..36d1d6c4ae8e3b9f1a64dae514d9efa65722033a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-@@ -157,6 +157,19 @@ public class StructContext {
+@@ -156,6 +156,19 @@ public class StructContext {
      }
    }
  
@@ -1486,7 +1530,7 @@ index aea1b21ae67cc410fa514aeb079f5f58b6d0ae1a..87afc93ad6361ba6c8a45fa082bcf8d5
 +          units.put(path, unit);
 +        }
 +
-+        StructClass cl = new StructClass(data, isOwn, loader);
++        StructClass cl = StructClass.create(new DataInputFullStream(data), isOwn, loader);
 +        classes.put(cl.qualifiedName, cl);
 +        unit.addClass(cl, cls);
 +        loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(path, cls, data));
@@ -1496,33 +1540,57 @@ index aea1b21ae67cc410fa514aeb079f5f58b6d0ae1a..87afc93ad6361ba6c8a45fa082bcf8d5
      return classes;
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructField.java b/src/org/jetbrains/java/decompiler/struct/StructField.java
-index 6c85ca46b50be7aa7cbf782f5c8aad4bd4564b80..3b1e5cce6c2483db98d49b66d66ecc892c92bab9 100644
+index cfa64d2087246cc980bb25f0d80779e11da04232..232f47dd8d559f1cedb39b49bfd04bdec2d6c1b5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructField.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructField.java
-@@ -1,7 +1,13 @@
- // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@@ -1,8 +1,14 @@
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  package org.jetbrains.java.decompiler.struct;
  
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 +import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
  import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 +import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
 +import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  
  import java.io.IOException;
-@@ -19,7 +25,7 @@ public class StructField extends StructMember {
+@@ -26,17 +32,30 @@ public class StructField extends StructMember {
+     String[] values = pool.getClassElement(ConstantPool.FIELD, clQualifiedName, nameIndex, descriptorIndex);
+ 
+     Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
++    GenericFieldDescriptor signature = null;
++    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
++      StructGenericSignatureAttribute signatureAttr = (StructGenericSignatureAttribute)attributes.get(StructGeneralAttribute.ATTRIBUTE_SIGNATURE.name);
++      if (signatureAttr != null) {
++        signature = GenericMain.parseFieldSignature(signatureAttr.getSignature());
++      }
++    }
+ 
+-    return new StructField(accessFlags, attributes, values[0], values[1]);
++    return new StructField(accessFlags, attributes, values[0], values[1], signature);
+   }
  
    private final String name;
    private final String descriptor;
--
-+  private GenericFieldDescriptor signature;
++  private final GenericFieldDescriptor signature;
  
-   public StructField(DataInputFullStream in, StructClass clStruct) throws IOException {
-     accessFlags = in.readUnsignedShort();
-@@ -46,4 +52,18 @@ public class StructField extends StructMember {
+   protected StructField(int accessFlags, Map<String, StructGeneralAttribute> attributes, String name, String descriptor) {
++    this(accessFlags, attributes, name, descriptor, null);
++  }
++
++  protected StructField(int accessFlags, Map<String, StructGeneralAttribute> attributes, String name, String descriptor, GenericFieldDescriptor signature) {
+     super(accessFlags, attributes);
+     this.name = name;
+     this.descriptor = descriptor;
++    this.signature = signature;
+   }
+ 
+   public final String getName() {
+@@ -51,4 +70,8 @@ public class StructField extends StructMember {
    public String toString() {
      return name;
    }
@@ -1530,27 +1598,18 @@ index 6c85ca46b50be7aa7cbf782f5c8aad4bd4564b80..3b1e5cce6c2483db98d49b66d66ecc89
 +  public GenericFieldDescriptor getSignature() {
 +    return signature;
 +  }
-+
-+  @Override
-+  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
-+    StructGeneralAttribute attribute = super.readAttribute(in, pool, name);
-+    if ("Signature".equals(name) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-+      StructGenericSignatureAttribute signature = (StructGenericSignatureAttribute)attribute;
-+      this.signature = GenericMain.parseFieldSignature(signature.getSignature());
-+    }
-+    return attribute;
-+  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index dbfcc2cd5cb3cf326612bbc0f6496b83d5992de2..cd9ac7edea0f4c840527cc526712a8f67f2c8a95 100644
+index 3b14d7fc755a2d9c33a022aaa2ab728c4a12a4e8..61984e6af43043db7fd29c1b79e16e67789ca707 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-@@ -2,9 +2,14 @@
+@@ -2,10 +2,15 @@
  package org.jetbrains.java.decompiler.struct;
  
  import org.jetbrains.java.decompiler.code.*;
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 +import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
@@ -1560,42 +1619,101 @@ index dbfcc2cd5cb3cf326612bbc0f6496b83d5992de2..cd9ac7edea0f4c840527cc526712a8f6
  import org.jetbrains.java.decompiler.util.DataInputFullStream;
  import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
-@@ -33,6 +38,7 @@ public class StructMethod extends StructMember {
-   private final StructClass classStruct;
-   private final String name;
-   private final String descriptor;
-+  private GenericMethodDescriptor signature;
- 
-   private boolean containsCode = false;
-   private int localVariables = 0;
-@@ -86,7 +92,13 @@ public class StructMethod extends StructMember {
-       return null;
+@@ -39,7 +44,15 @@ public class StructMethod extends StructMember {
+       attributes.putAll(code.codeAttributes);
      }
  
--    return super.readAttribute(in, pool, name);
-+    StructGeneralAttribute attribute = super.readAttribute(in, pool, name);
-+    if ("Signature".equals(name) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-+      StructGenericSignatureAttribute signature = (StructGenericSignatureAttribute)attribute;
-+      this.signature = GenericMain.parseMethodSignature(signature.getSignature());
+-    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null, clQualifiedName);
++    GenericMethodDescriptor signature = null;
++    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
++      StructGenericSignatureAttribute signatureAttr = (StructGenericSignatureAttribute)attributes.get(StructGeneralAttribute.ATTRIBUTE_SIGNATURE.name);
++      if (signatureAttr != null) {
++        signature = GenericMain.parseMethodSignature(signatureAttr.getSignature());
++      }
 +    }
 +
-+    return attribute;
++    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null, clQualifiedName, signature);
    }
  
-   public void expandData() throws IOException {
-@@ -387,4 +399,8 @@ public class StructMethod extends StructMember {
-   public String toString() {
-     return name;
+   private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
+@@ -56,6 +69,7 @@ public class StructMethod extends StructMember {
+   private InstructionSequence seq = null;
+   private boolean expanded = false;
+   private final String classQualifiedName;
++  private final GenericMethodDescriptor signature;
+ 
+   private StructMethod(int accessFlags,
+                        Map<String, StructGeneralAttribute> attributes,
+@@ -63,7 +77,8 @@ public class StructMethod extends StructMember {
+                        String descriptor,
+                        int bytecodeVersion,
+                        StructCodeAttribute code,
+-                       String classQualifiedName) {
++                       String classQualifiedName,
++                       GenericMethodDescriptor signature) {
+     super(accessFlags, attributes);
+     this.name = name;
+     this.descriptor = descriptor;
+@@ -77,6 +92,7 @@ public class StructMethod extends StructMember {
+       this.localVariables = this.codeLength = this.codeFullLength = -1;
+     }
+     this.classQualifiedName = classQualifiedName;
++    this.signature = signature;
    }
--}
+ 
+   public void expandData(StructClass classStruct) throws IOException {
+@@ -378,4 +394,8 @@ public class StructMethod extends StructMember {
+   public String getClassQualifiedName() {
+     return classQualifiedName;
+   }
 +
 +  public GenericMethodDescriptor getSignature() {
 +    return signature;
 +  }
-+}
-\ No newline at end of file
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructRecordComponent.java b/src/org/jetbrains/java/decompiler/struct/StructRecordComponent.java
+index e50983daf2a1bf6c93ec92c99221587d7c4f7c6a..11fa1a3e621221a09c0e611a7f912932f5890fc6 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructRecordComponent.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructRecordComponent.java
+@@ -1,9 +1,14 @@
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package org.jetbrains.java.decompiler.struct;
+ 
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
+ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ 
+ import java.io.IOException;
+@@ -26,11 +31,18 @@ public class StructRecordComponent extends StructField {
+     String descriptor = ((PrimitiveConstant)pool.getConstant(descriptorIndex)).getString();
+ 
+     Map<String, StructGeneralAttribute> attributes = readAttributes(in, pool);
++    GenericFieldDescriptor signature = null;
++    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
++      StructGenericSignatureAttribute signatureAttr = (StructGenericSignatureAttribute)attributes.get(StructGeneralAttribute.ATTRIBUTE_SIGNATURE.name);
++      if (signatureAttr != null) {
++        signature = GenericMain.parseFieldSignature(signatureAttr.getSignature());
++      }
++    }
+ 
+-    return new StructRecordComponent(0, attributes, name, descriptor);
++    return new StructRecordComponent(0, attributes, name, descriptor, signature);
+   }
+ 
+-  private StructRecordComponent(int flags, Map<String, StructGeneralAttribute> attributes, String name, String descriptor) {
+-    super(flags, attributes, name, descriptor);
++  private StructRecordComponent(int flags, Map<String, StructGeneralAttribute> attributes, String name, String descriptor, GenericFieldDescriptor signature) {
++    super(flags, attributes, name, descriptor, signature);
+   }
+ }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 102393c8c7da549f2432e591406a2aceed778778..49bb8c809a273cfd4f268b5e01badc468f895f75 100644
+index 2ad7c680a30eecee8b4359c3d4ac1fc5fa094682..79bd5b3f70510c85a2908fcadeb57119224082bb 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -2,14 +2,24 @@
@@ -1616,14 +1734,14 @@ index 102393c8c7da549f2432e591406a2aceed778778..49bb8c809a273cfd4f268b5e01badc46
  import java.util.List;
 +import java.util.Objects;
  
- public class MethodDescriptor {
+ public final class MethodDescriptor {
    public final VarType[] params;
    public final VarType ret;
 +  public GenericMethodDescriptor genericInfo;
  
    private MethodDescriptor(VarType[] params, VarType ret) {
      this.params = params;
-@@ -63,6 +73,37 @@ public class MethodDescriptor {
+@@ -63,6 +73,41 @@ public final class MethodDescriptor {
      return new MethodDescriptor(params, ret);
    }
  
@@ -1634,16 +1752,20 @@ index 102393c8c7da549f2432e591406a2aceed778778..49bb8c809a273cfd4f268b5e01badc46
 +    if (sig != null) {
 +      if (node != null) {
 +        MethodWrapper methodWrapper = node.getWrapper().getMethodWrapper(struct.getName(), struct.getDescriptor());
-+        boolean isEnum = struct.getClassStruct().hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 +        boolean init = CodeConstants.INIT_NAME.equals(struct.getName()) && node.type != ClassNode.CLASS_ANONYMOUS;
 +        long actualParams = md.params.length;
 +        List<VarVersionPair> sigFields = methodWrapper == null ? null : methodWrapper.synthParameters;
 +        if (sigFields != null) {
 +          actualParams = sigFields.stream().filter(Objects::isNull).count();
 +        }
-+        else if (isEnum && init) actualParams -= 2;
++        else if (init) {
++          // && isEnum
++          if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && DecompilerContext.getStructContext().getClass(struct.getClassQualifiedName()).hasModifier(CodeConstants.ACC_ENUM)) {
++            actualParams -= 2;
++          }
++        }
 +        if (actualParams != sig.parameterTypes.size()) {
-+          String message = "Inconsistent generic signature in method " + struct.getName() + " " + struct.getDescriptor() + " in " + struct.getClassStruct().qualifiedName;
++          String message = "Inconsistent generic signature in method " + struct.getName() + " " + struct.getDescriptor() + " in " + struct.getClassQualifiedName();
 +          DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
 +          sig = null;
 +        }
@@ -1661,7 +1783,7 @@ index 102393c8c7da549f2432e591406a2aceed778778..49bb8c809a273cfd4f268b5e01badc46
    public String buildNewDescriptor(NewClassNameBuilder builder) {
      boolean updated = false;
  
-@@ -126,4 +167,4 @@ public class MethodDescriptor {
+@@ -125,4 +170,4 @@ public final class MethodDescriptor {
      result = 31 * result + params.length;
      return result;
    }
@@ -1788,7 +1910,7 @@ index a65181762765bfdc9d2ee5695f3ffa68b7768b74..2b0fdf1dad01ec62f3e21f372297c124
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
-index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e62475216 100644
+index 8af6b5068bc844d49a3761e9d9d472e7febccd00..5a128724fab153cc4864fbcef7e60ab25f7c8480 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 @@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -1799,7 +1921,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
  
  import java.util.ArrayList;
  import java.util.List;
-@@ -22,7 +23,7 @@ public class GenericMain {
+@@ -22,7 +23,7 @@ public final class GenericMain {
      "boolean",
    };
  
@@ -1808,7 +1930,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
      String original = signature;
      try {
        GenericClassDescriptor descriptor = new GenericClassDescriptor();
-@@ -30,15 +31,23 @@ public class GenericMain {
+@@ -30,15 +31,23 @@ public final class GenericMain {
        signature = parseFormalParameters(signature, descriptor.fparameters, descriptor.fbounds);
  
        String superCl = GenericType.getNextType(signature);
@@ -1834,7 +1956,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
        return descriptor;
      }
      catch (RuntimeException e) {
-@@ -49,7 +58,7 @@ public class GenericMain {
+@@ -49,7 +58,7 @@ public final class GenericMain {
  
    public static GenericFieldDescriptor parseFieldSignature(String signature) {
      try {
@@ -1843,7 +1965,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
      }
      catch (RuntimeException e) {
        DecompilerContext.getLogger().writeMessage("Invalid signature: " + signature, IFernflowerLogger.Severity.WARN);
-@@ -61,29 +70,29 @@ public class GenericMain {
+@@ -61,29 +70,29 @@ public final class GenericMain {
      String original = signature;
      try {
        List<String> typeParameters = new ArrayList<>();
@@ -1879,7 +2001,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
          }
        }
  
-@@ -95,7 +104,7 @@ public class GenericMain {
+@@ -95,7 +104,7 @@ public final class GenericMain {
      }
    }
  
@@ -1888,7 +2010,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
      if (signature.charAt(0) != '<') {
        return signature;
      }
-@@ -128,7 +137,7 @@ public class GenericMain {
+@@ -128,7 +137,7 @@ public final class GenericMain {
        String param = value.substring(0, to);
        value = value.substring(to + 1);
  
@@ -1897,7 +2019,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
  
        while (true) {
          if (value.charAt(0) == ':') {
-@@ -137,7 +146,7 @@ public class GenericMain {
+@@ -137,7 +146,7 @@ public final class GenericMain {
          }
  
          String bound = GenericType.getNextType(value);
@@ -1906,7 +2028,7 @@ index 3e4e1f14553927f521e79154d9ad97414d08813d..16316179dd5d277fc1722d5cc8695b6e
          value = value.substring(bound.length());
  
  
-@@ -174,69 +183,9 @@ public class GenericMain {
+@@ -174,69 +183,9 @@ public final class GenericMain {
        return type.value;
      }
      else if (tp == CodeConstants.TYPE_OBJECT) {
@@ -2343,10 +2465,10 @@ index 60bffdb70108c9e035109d77dca48262fa216b32..13cca7906fb5810a0bf70b4b6ce18408
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
-index 63c0f8ef5da6a25541129b5019a02427d0a9938c..b3dbda9d1c91ca75f316230102c54adde37cb452 100644
+index 8b6105dbbfea358241702acbc691976d51f0d726..4261dce0b37505d22c6e9ee7c3e0bdb7e5331cfb 100644
 --- a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
 +++ b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
-@@ -118,7 +118,7 @@ public class LazyLoader {
+@@ -119,7 +119,7 @@ public class LazyLoader {
  
    public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
      Link link = mapClassLinks.get(qualifiedClassName);
@@ -2355,7 +2477,7 @@ index 63c0f8ef5da6a25541129b5019a02427d0a9938c..b3dbda9d1c91ca75f316230102c54add
    }
  
    public static void skipAttributes(DataInputFullStream in) throws IOException {
-@@ -132,10 +132,16 @@ public class LazyLoader {
+@@ -133,10 +133,16 @@ public class LazyLoader {
    public static class Link {
      public final String externalPath;
      public final String internalPath;
@@ -2372,7 +2494,6 @@ index 63c0f8ef5da6a25541129b5019a02427d0a9938c..b3dbda9d1c91ca75f316230102c54add
      }
    }
  }
-\ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969850b8087
@@ -2415,7 +2536,7 @@ index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969
 +    }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index c30d55435debfe3df8eb7821f3e53b70d89f114e..d8d31d9731a658a692d17b27c82a7afdb9093cb9 100644
+index bd4868ea4c65503b6f3f983d2d860f50fa55444a..b17be32cc74e95701a299fc031e1daa93e49eb5f 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -14,9 +14,11 @@ public class SingleClassesTest extends SingleClassesTestBase {

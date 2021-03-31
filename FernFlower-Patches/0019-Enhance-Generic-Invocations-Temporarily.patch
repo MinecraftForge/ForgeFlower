@@ -92,7 +92,7 @@ index 068e44b80f9972be77bfd9fe095a5549edf40a2f..8f69e433dce5541e5f42693c67fbb9f8
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 1c822f357c117f4bc8af4ced1842421d2224af18..a16aa2923136edd2ee5c4a4c45203bdab6e652b6 100644
+index 1c822f357c117f4bc8af4ced1842421d2224af18..4c68bdd8a434ecc0b4dfe2804c1c9c1e1c819626 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -406,6 +406,7 @@ public class InvocationExprent extends Exprent {
@@ -223,14 +223,14 @@ index 1c822f357c117f4bc8af4ced1842421d2224af18..a16aa2923136edd2ee5c4a4c45203bda
 +      return true;
 +    }
 +    else if (mt.hasModifier(CodeConstants.ACC_PRIVATE)) {
-+      return mt.getClassStruct().qualifiedName.equals(currCls.qualifiedName);
++      return mt.getClassQualifiedName().equals(currCls.qualifiedName);
 +    }
 +    else if (mt.hasModifier(CodeConstants.ACC_PROTECTED)) {
-+      boolean samePackage = isInSamePackage(currCls.qualifiedName, mt.getClassStruct().qualifiedName);
-+      return samePackage || DecompilerContext.getStructContext().instanceOf(currCls.qualifiedName, mt.getClassStruct().qualifiedName);
++      boolean samePackage = isInSamePackage(currCls.qualifiedName, mt.getClassQualifiedName());
++      return samePackage || DecompilerContext.getStructContext().instanceOf(currCls.qualifiedName, mt.getClassQualifiedName());
 +    }
 +    else {
-+      return isInSamePackage(currCls.qualifiedName, mt.getClassStruct().qualifiedName);
++      return isInSamePackage(currCls.qualifiedName, mt.getClassQualifiedName());
 +    }
 +  }
 +
@@ -254,10 +254,10 @@ index 1c822f357c117f4bc8af4ced1842421d2224af18..a16aa2923136edd2ee5c4a4c45203bda
      StructClass cl = DecompilerContext.getStructContext().getClass(classname);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index c9bfe7bea082a4acc673acf821ef20a3659065a5..6729ac6feb7d822c3786b1864dc12cf779c3d30d 100644
+index 6813dc6c8909900d3f21eb91532bdfa19fb1d83d..8753a258b8a93d487a3bc268a5bb3bd53e86cb1d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-@@ -130,6 +130,35 @@ public class StructClass extends StructMember {
+@@ -157,6 +157,35 @@ public class StructClass extends StructMember {
      return methods.getWithKey(InterpreterUtil.makeUniqueKey(name, descriptor));
    }
  

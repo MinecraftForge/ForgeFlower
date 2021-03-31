@@ -71,11 +71,11 @@ index 4c5641fec76837a51094d4a54800d5b7475446ca..7d29c198014cbfee8092fd31461208ce
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 1d0dc62d75e0ece79fd0af5757c202360fa800e0..2b60ca149c39b5dbe8a6191be44d1d607b9cbe18 100644
+index feea5aad81ebdff6221e13cfc8472b4b5c2d78c0..1e8014083efc7c0fdfad40747cccbcd0bf33c608 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -1,37 +1,20 @@
- // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  package org.jetbrains.java.decompiler;
  
 -import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -123,10 +123,10 @@ index 1d0dc62d75e0ece79fd0af5757c202360fa800e0..2b60ca149c39b5dbe8a6191be44d1d60
    }
  
    @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
-@@ -128,45 +111,4 @@ public class SingleClassesTest {
-   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
-   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
-   @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
+@@ -134,45 +117,4 @@ public class SingleClassesTest {
+   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
+   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
+   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
 -
 -  private void doTest(String testFile, String... companionFiles) {
 -    ConsoleDecompiler decompiler = fixture.getDecompiler();
@@ -169,13 +169,12 @@ index 1d0dc62d75e0ece79fd0af5757c202360fa800e0..2b60ca149c39b5dbe8a6191be44d1d60
 -    return files;
 -  }
  }
-\ No newline at end of file
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..9f073c2625764dd865f162420264e27ac923318d
+index 0000000000000000000000000000000000000000..081bb55728a0e759bb510c983a56c27b4f39c4d6
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,90 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -224,6 +223,7 @@ index 0000000000000000000000000000000000000000..9f073c2625764dd865f162420264e27a
 +    fixture = null;
 +  }
 +
++
 +  protected void doTest(String testFile, String... companionFiles) {
 +    ConsoleDecompiler decompiler = fixture.getDecompiler();
 +
@@ -251,7 +251,7 @@ index 0000000000000000000000000000000000000000..9f073c2625764dd865f162420264e27a
 +    assertFilesEqual(referenceFile, decompiledFile);
 +  }
 +
-+  protected static List<File> collectClasses(File classFile) {
++  private static List<File> collectClasses(File classFile) {
 +    List<File> files = new ArrayList<>();
 +    files.add(classFile);
 +

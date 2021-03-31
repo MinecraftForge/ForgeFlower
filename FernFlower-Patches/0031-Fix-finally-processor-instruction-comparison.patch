@@ -5,10 +5,10 @@ Subject: [PATCH] Fix finally processor instruction comparison
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index c3e37329d651b983484736154c6fccbe8b851218..8641cbe298e1c7cbcae287bcf5c26b4f78a12266 100644
+index 171d9bdba69a4701bb7396f2bbe6b5f53cb3bb2b..14da709f122333476cc1482c00f94e6a3ed7cbac 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-@@ -859,13 +859,17 @@ public class FinallyProcessor {
+@@ -854,13 +854,17 @@ public class FinallyProcessor {
          int secondOp = second.operand(i);
          if (firstOp != secondOp) {
            // a-load/store instructions

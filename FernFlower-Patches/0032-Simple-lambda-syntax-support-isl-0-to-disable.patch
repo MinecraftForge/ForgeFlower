@@ -5,7 +5,7 @@ Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 69b1dc49a54a4f114e04dee27c019d7b09028220..58aaa9d4dafc0b873fac77c6c9fa653ebf76d3cf 100644
+index 908ec69d788adf63487106715f82141cc1c43dac..beeeead1e0507eb80016eb5e071f90ec91086333 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -16,7 +16,7 @@ index 69b1dc49a54a4f114e04dee27c019d7b09028220..58aaa9d4dafc0b873fac77c6c9fa653e
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
-@@ -80,7 +81,15 @@ public class ClassWriter {
+@@ -77,7 +78,15 @@ public class ClassWriter {
        if (node.lambdaInformation.is_method_reference) {
          if (!node.lambdaInformation.is_content_method_static && method_object != null) {
            // reference to a virtual method
@@ -33,7 +33,7 @@ index 69b1dc49a54a4f114e04dee27c019d7b09028220..58aaa9d4dafc0b873fac77c6c9fa653e
          }
          else {
            // reference to a static method
-@@ -97,6 +106,8 @@ public class ClassWriter {
+@@ -94,6 +103,8 @@ public class ClassWriter {
          MethodDescriptor md_content = MethodDescriptor.parseDescriptor(node.lambdaInformation.content_method_descriptor);
          MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(node.lambdaInformation.method_descriptor);
  
@@ -42,7 +42,7 @@ index 69b1dc49a54a4f114e04dee27c019d7b09028220..58aaa9d4dafc0b873fac77c6c9fa653e
          if (!lambdaToAnonymous) {
            buffer.append('(');
  
-@@ -120,16 +131,60 @@ public class ClassWriter {
+@@ -117,16 +128,60 @@ public class ClassWriter {
            }
  
            buffer.append(") ->");
@@ -129,7 +129,7 @@ index 01b9cef3bb535025f816f18acab5951083e4ec55..41f7389f3931a6a3c87647f7fde98f04
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 0272fd6eecc7083a8dea6e1382d61c89f9a171e6..96f2f05f948fbd55e937e02ff6630d460fab7427 100644
+index b53a17c2ba86fe16917e0c6b3e0ae346c87c2547..381a1ecc559e59b38c28a6a10df465384cd40d0e 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -14,7 +14,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
