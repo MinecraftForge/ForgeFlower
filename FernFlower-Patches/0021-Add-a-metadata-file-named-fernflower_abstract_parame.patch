@@ -68,7 +68,7 @@ index f7b253bc942cd00f64505ce1424c6d5e8d0225d8..fde588174ace52b073d205bd0fa04563
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index cc4e357fb8b7adeeb76858813f5ee329d17497d5..68cf259230cd82298c36b391e0ea91d111fca9ab 100644
+index cc4e357fb8b7adeeb76858813f5ee329d17497d5..d6d545b3cd24125c5c737756c28f82ccb3f2c2ef 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -104,7 +104,7 @@ index cc4e357fb8b7adeeb76858813f5ee329d17497d5..68cf259230cd82298c36b391e0ea91d1
    }
 +
 +  public void loadAbstractMetadata(String string) {
-+    for (String line : string.split("\n")) {
++    for (String line : string.split(DecompilerContext.getNewLineSeparator())) {
 +      String[] pts = line.split(" ");
 +      if (pts.length < 4) //class method desc [args...]
 +        continue;

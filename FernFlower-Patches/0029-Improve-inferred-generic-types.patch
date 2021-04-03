@@ -1463,7 +1463,7 @@ index 6729ac6feb7d822c3786b1864dc12cf779c3d30d..868ccb525924c30ad17539d97b9a984c
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 68cf259230cd82298c36b391e0ea91d111fca9ab..9226d9d8e8f34fcc5c43a67f914ff7683a6be50b 100644
+index d6d545b3cd24125c5c737756c28f82ccb3f2c2ef..0d87d7ad97e2a8afff3abdee4abcf4cc45c9eb2d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -210,6 +210,24 @@ public class StructContext {
@@ -1489,7 +1489,7 @@ index 68cf259230cd82298c36b391e0ea91d111fca9ab..9226d9d8e8f34fcc5c43a67f914ff768
 +  }
 +
    public void loadAbstractMetadata(String string) {
-     for (String line : string.split("\n")) {
+     for (String line : string.split(DecompilerContext.getNewLineSeparator())) {
        String[] pts = line.split(" ");
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 index af6b8995f8396efdcaa82fae195dd8c3d107b5a7..88bf2ef12b66bf190249ed8d3703c43be11c7c33 100644
