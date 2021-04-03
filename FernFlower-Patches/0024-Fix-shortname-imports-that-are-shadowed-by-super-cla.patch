@@ -6,7 +6,7 @@ Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-index 7b8c3b45c374a15c22b35054ff4cc78c6bbfe182..4ddb75547417339f61426ed55810966a9fabbb7d 100644
+index 647ac7c3dd15323b0580cc42a6ca046c64c01138..464e41a3cd428e1883230bda55fa64172697d1c2 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 @@ -20,7 +20,7 @@ public class ImportCollector {
@@ -92,10 +92,11 @@ index 7b8c3b45c374a15c22b35054ff4cc78c6bbfe182..4ddb75547417339f61426ed55810966a
  
      if (existsDefaultClass ||
          (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
-@@ -181,4 +186,43 @@ public class ImportCollector {
+@@ -174,4 +179,43 @@ public class ImportCollector {
        .map(ent -> ent.getValue() + "." + ent.getKey())
        .collect(Collectors.toList());
    }
+-}
 +
 +  private void collectConflictingShortNames(ClassNode root, Map<String, String> rootNames) {
 +    Map<String, String> names = new HashMap<>(rootNames);
@@ -135,5 +136,5 @@ index 7b8c3b45c374a15c22b35054ff4cc78c6bbfe182..4ddb75547417339f61426ed55810966a
 +      }
 +    }
 +  }
- }
++}
 \ No newline at end of file

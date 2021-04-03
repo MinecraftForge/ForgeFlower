@@ -94,7 +94,7 @@ index 986a8a72ec138ea637d3446ed2e823f6100c31cc..767f6bdb92ecf0ba0bc4a437b8bf8482
                String classname = newExpr.getNewType().value;
                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a16aa2923136edd2ee5c4a4c45203bdab6e652b6..593a5bec560f71215ff23207c79a8648f84c3c0d 100644
+index 4c68bdd8a434ecc0b4dfe2804c1c9c1e1c819626..0f539b755ab019c0dd3845c22a7721eaa2a37195 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {

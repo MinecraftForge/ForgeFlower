@@ -5,10 +5,10 @@ Subject: [PATCH] Add try with resource support
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 65712f684520590db2682ad8f9b67c993212662e..57498b1549f381c9af185e5a35293b25758bf585 100644
+index 76d057fb3970d07a2fc7c07efc756e77e2d53222..bb246173b89d733e01ef4a03b59759c8663a20ff 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -178,6 +178,10 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -179,6 +179,10 @@ public class MethodProcessorRunnable implements Runnable {
  
        LabelHelper.identifyLabels(root);
  
@@ -289,7 +289,7 @@ index 0000000000000000000000000000000000000000..7e18ff4d3c83fe4d844be3547c567b5f
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index 23713c94c72373f76284bc7a8615f74419531651..bdafd77466aacfeb3499eff76052054b4856df31 100644
+index 2883c91e705ea07717350f813e0bf41638fc0e09..b6754ef09179b8e7028a98248f6bff2b100b94af 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -126,6 +126,13 @@ public class FlattenStatementsHelper {
@@ -307,7 +307,7 @@ index 23713c94c72373f76284bc7a8615f74419531651..bdafd77466aacfeb3499eff76052054b
              graph.nodes.putWithKey(firstnd, firstnd.id);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 5582b3781f6ff71684d6802c11d4d361899c196e..5ca160553acd8e5992f7cd676a34269ea982e81d 100644
+index 7e41176d17729f6acdf5420c9ed98eb7ffb6f3ae..d7a975db4e5ee5800c426e62f76be2777c02af6f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
@@ -327,7 +327,7 @@ index 5582b3781f6ff71684d6802c11d4d361899c196e..5ca160553acd8e5992f7cd676a34269e
  import java.util.List;
  import java.util.Set;
  
- public class CatchStatement extends Statement {
+ public final class CatchStatement extends Statement {
 +  public static final int NORMAL = 0;
 +  public static final int RESORCES = 1;
 +
@@ -339,7 +339,7 @@ index 5582b3781f6ff71684d6802c11d4d361899c196e..5ca160553acd8e5992f7cd676a34269e
  
    // *****************************************************************************
    // constructors
-@@ -27,6 +36,7 @@ public class CatchStatement extends Statement {
+@@ -27,6 +36,7 @@ public final class CatchStatement extends Statement {
  
    private CatchStatement() {
      type = TYPE_TRYCATCH;
@@ -347,7 +347,7 @@ index 5582b3781f6ff71684d6802c11d4d361899c196e..5ca160553acd8e5992f7cd676a34269e
    }
  
    private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
-@@ -141,8 +151,25 @@ public class CatchStatement extends Statement {
+@@ -141,8 +151,25 @@ public final class CatchStatement extends Statement {
        tracer.incrementCurrentSourceLine();
      }
  
@@ -375,7 +375,7 @@ index 5582b3781f6ff71684d6802c11d4d361899c196e..5ca160553acd8e5992f7cd676a34269e
  
      buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
      buf.appendIndent(indent).append("}");
-@@ -179,6 +206,15 @@ public class CatchStatement extends Statement {
+@@ -179,6 +206,15 @@ public final class CatchStatement extends Statement {
      return buf;
    }
  
@@ -391,7 +391,7 @@ index 5582b3781f6ff71684d6802c11d4d361899c196e..5ca160553acd8e5992f7cd676a34269e
    @Override
    public Statement getSimpleCopy() {
      CatchStatement cs = new CatchStatement();
-@@ -193,11 +229,35 @@ public class CatchStatement extends Statement {
+@@ -193,11 +229,35 @@ public final class CatchStatement extends Statement {
      return cs;
    }
  
@@ -446,16 +446,15 @@ index 06d6cbad98176e0b86eaa464e799620ca51fd25c..8574fe25782da90f36888186fb3d977c
  
        if (lstVars != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index d8d31d9731a658a692d17b27c82a7afdb9093cb9..118ae98159989e154d228b196ca13c90ab907eb2 100644
+index b17be32cc74e95701a299fc031e1daa93e49eb5f..b53a17c2ba86fe16917e0c6b3e0ae346c87c2547 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -114,4 +114,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testSuspendLambda() { doTest("pkg/TestSuspendLambdaKt"); }
-   @Test public void testNamedSuspendFun2Kt() { doTest("pkg/TestNamedSuspendFun2Kt"); }
-   @Test public void testGenericArgs() { doTest("pkg/TestGenericArgs"); }
+@@ -120,4 +120,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
+   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
+   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
 +  @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
  }
-\ No newline at end of file
 diff --git a/testData/classes/pkg/TestTryWithResources.class b/testData/classes/pkg/TestTryWithResources.class
 new file mode 100644
 index 0000000000000000000000000000000000000000..dba49d9ec1c81714d3b6d7debe6db5697fc5a9bc

@@ -5,7 +5,7 @@ Subject: [PATCH] Enhance switch on enum and string output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index a34758940dbce0c5bac8dff269386af752c63d91..69bea8bea9e989e4db58e0eec1868ee06f9f2872 100644
+index 3dc1f5130dcd0889690078da5bb718256e0780d9..f1dc102772e3cb5aa227057276c95b4402447fab 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
@@ -16,7 +16,7 @@ index a34758940dbce0c5bac8dff269386af752c63d91..69bea8bea9e989e4db58e0eec1868ee0
  import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.struct.StructClass;
-@@ -391,16 +392,35 @@ public class ClassesProcessor implements CodeConstants {
+@@ -401,16 +402,35 @@ public class ClassesProcessor implements CodeConstants {
        return;
      }
  
@@ -50,14 +50,14 @@ index a34758940dbce0c5bac8dff269386af752c63d91..69bea8bea9e989e4db58e0eec1868ee0
 +    return false;
 +  }
 +
-   private static void addClassnameToImport(ClassNode node, ImportCollector imp) {
+   private static void addClassNameToImport(ClassNode node, ImportCollector imp) {
      if (node.simpleName != null && node.simpleName.length() > 0) {
        imp.getShortName(node.type == ClassNode.CLASS_ROOT ? node.classStruct.qualifiedName : node.simpleName, false);
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 726d7474416cfea5c21483e06d3e8ac19f500c20..a64bc6c349c8f04419056bd42c22c79757aa3fda 100644
+index d9de3d584a63ba323914e165410ba8c63a118d2c..a5fe09983d491f671fdbb80ebc1c570c81c77c0c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -176,6 +176,11 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -177,6 +177,11 @@ public class MethodProcessorRunnable implements Runnable {
        //}
      }
  
@@ -220,7 +220,7 @@ index 5606e91f5ea92b921d73ea9d85360a8d924c14fc..983298ea03a14f6b1911b5e43be3538d
    private static void setLambdaVars(ClassNode parent, ClassNode child) {
      if (child.lambdaInformation.is_method_reference) { // method reference, no code and no parameters
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index b49bf394176bd007bb7aa3571370ca281ea56024..fe77dd7ea6ac6c877230b0c8d4b138a5e49d60dc 100644
+index 1e08a6d935a9c292f836d542a98914d209a62a38..5e9a0d721e8826694c7ba005bcf89127f22b0900 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 @@ -7,15 +7,37 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -238,7 +238,7 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..fe77dd7ea6ac6c877230b0c8d4b138a5
  import java.util.Map;
 +import java.util.stream.Collectors;
  
- public class SwitchHelper {
+ public final class SwitchHelper {
 -  public static void simplify(SwitchStatement switchStatement) {
 +  public static boolean simplifySwitches(Statement stat) {
 +    boolean ret = false;
@@ -263,7 +263,7 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..fe77dd7ea6ac6c877230b0c8d4b138a5
      SwitchExprent switchExprent = (SwitchExprent)switchStatement.getHeadexprent();
      Exprent value = switchExprent.getValue();
      if (isEnumArray(value)) {
-@@ -55,7 +77,7 @@ public class SwitchHelper {
+@@ -55,7 +77,7 @@ public final class SwitchHelper {
                DecompilerContext.getLogger()
                  .writeMessage("Unable to simplify switch on enum: " + exprent + " not found, available: " + mapping,
                                IFernflowerLogger.Severity.ERROR);
@@ -272,7 +272,7 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..fe77dd7ea6ac6c877230b0c8d4b138a5
              }
              values.add(realConst.copy());
            }
-@@ -64,17 +86,177 @@ public class SwitchHelper {
+@@ -64,17 +86,177 @@ public final class SwitchHelper {
        caseValues.clear();
        caseValues.addAll(realCaseValues);
        switchExprent.replaceExprent(value, ((InvocationExprent)array.getIndex()).getInstance().copy());
@@ -456,10 +456,10 @@ index b49bf394176bd007bb7aa3571370ca281ea56024..fe77dd7ea6ac6c877230b0c8d4b138a5
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 0f12b13c14272a923540ff71f59b41b1b1295f07..38725c1ab2878730ffbc3680375cf29d999472e0 100644
+index 3a809094b3852f05db829f8fef729dd87749324e..ace61bee430c2afb9ffd11b3e7af2dcc5fdd5b46 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -106,7 +106,6 @@ public class SwitchStatement extends Statement {
+@@ -106,7 +106,6 @@ public final class SwitchStatement extends Statement {
  
    @Override
    public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
@@ -468,7 +468,7 @@ index 0f12b13c14272a923540ff71f59b41b1b1295f07..38725c1ab2878730ffbc3680375cf29d
      TextBuffer buf = new TextBuffer();
      buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2b60ca149c39b5dbe8a6191be44d1d607b9cbe18..08ec9d424eecccf20eef8ed443a374cf7f516d70 100644
+index 1e8014083efc7c0fdfad40747cccbcd0bf33c608..dc34cc358594ff94e5abab1733336c1eb1f4d30e 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -81,6 +81,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
@@ -479,10 +479,10 @@ index 2b60ca149c39b5dbe8a6191be44d1d607b9cbe18..08ec9d424eecccf20eef8ed443a374cf
    @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
    @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
    @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
-@@ -100,7 +101,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -101,7 +102,6 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testPackageInfo() { doTest("pkg/package-info"); }
  
    // TODO: fix all below
-   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
 -  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
    //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
    //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }

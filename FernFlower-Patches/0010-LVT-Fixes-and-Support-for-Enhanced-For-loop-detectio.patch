@@ -5,7 +5,7 @@ Subject: [PATCH] LVT Fixes and Support for Enhanced For loop detection.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index ca63ad5131641e1ce917afabf84700cd9121d987..fa7961777d41bc0845f741689c33143851eabf63 100644
+index d0b73c07d62ceedf205d020166e170249b5bb93a..cdadca37d0b24cf3feb1c0e200a113dae53ed51c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -8,7 +8,6 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
@@ -44,7 +44,7 @@ index ca63ad5131641e1ce917afabf84700cd9121d987..fa7961777d41bc0845f741689c331438
          }
        }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index a64bc6c349c8f04419056bd42c22c79757aa3fda..65712f684520590db2682ad8f9b67c993212662e 100644
+index a5fe09983d491f671fdbb80ebc1c570c81c77c0c..76d057fb3970d07a2fc7c07efc756e77e2d53222 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -11,7 +11,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -61,21 +61,21 @@ index a64bc6c349c8f04419056bd42c22c79757aa3fda..65712f684520590db2682ad8f9b67c99
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
  import org.jetbrains.java.decompiler.struct.StructClass;
  import org.jetbrains.java.decompiler.struct.StructMethod;
-@@ -113,11 +119,11 @@ public class MethodProcessorRunnable implements Runnable {
-       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, cl.getBytecodeVersion());
+@@ -114,11 +120,11 @@ public class MethodProcessorRunnable implements Runnable {
+       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
      }
  
 -    RootStatement root = DomHelper.parseGraph(graph);
 +    RootStatement root = DomHelper.parseGraph(graph, mt);
  
      FinallyProcessor fProc = new FinallyProcessor(md, varProc);
-     while (fProc.iterateGraph(mt, root, graph)) {
+     while (fProc.iterateGraph(cl, mt, root, graph)) {
 -      root = DomHelper.parseGraph(graph);
 +      root = DomHelper.parseGraph(graph, mt);
      }
  
      // remove synchronized exception handler
-@@ -141,15 +147,26 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -142,15 +148,26 @@ public class MethodProcessorRunnable implements Runnable {
        stackProc.simplifyStackVars(root, mt, cl);
        varProc.setVarVersions(root);
      }
@@ -105,7 +105,7 @@ index a64bc6c349c8f04419056bd42c22c79757aa3fda..65712f684520590db2682ad8f9b67c99
  
        if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
          if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
-@@ -165,6 +182,12 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -166,6 +183,12 @@ public class MethodProcessorRunnable implements Runnable {
          continue;
        }
  
@@ -118,7 +118,7 @@ index a64bc6c349c8f04419056bd42c22c79757aa3fda..65712f684520590db2682ad8f9b67c99
        // initializer may have at most one return point, so no transformation of method exits permitted
        if (isInitializer || !ExitHelper.condenseExits(root)) {
          break;
-@@ -185,6 +208,8 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -186,6 +209,8 @@ public class MethodProcessorRunnable implements Runnable {
  
      SecondaryFunctionsHelper.identifySecondaryFunctions(root, varProc);
  
@@ -127,11 +127,10 @@ index a64bc6c349c8f04419056bd42c22c79757aa3fda..65712f684520590db2682ad8f9b67c99
      varProc.setVarDefinitions(root);
  
      // must be the last invocation, because it makes the statement structure inconsistent
-@@ -205,4 +230,30 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -206,4 +231,29 @@ public class MethodProcessorRunnable implements Runnable {
    public boolean isFinished() {
      return finished;
    }
-+
 +
 +  public static void cleanSynchronizedVar(Statement stat) {
 +    for (Statement st : stat.getStats()) {
@@ -158,7 +157,6 @@ index a64bc6c349c8f04419056bd42c22c79757aa3fda..65712f684520590db2682ad8f9b67c99
 +    }
 +  }
  }
-\ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 index 5c7be12a1097a6464fe674cf62823418d2644e99..fb9c7a961ec3cfc1f50c3fd902c299e097988997 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
@@ -421,7 +419,7 @@ index 5c7be12a1097a6464fe674cf62823418d2644e99..fb9c7a961ec3cfc1f50c3fd902c299e0
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index bc3cb3311e6b132f46025ed498a6fc7e6d583d02..63b4b35ab95a3ba989109c19aaec494290b4bcd9 100644
+index 8d0100d6e80a3b8dd743a6c21139348217d742b7..653b7697906788ebd61ce5b113803c8dc943e1a8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -9,6 +9,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -433,7 +431,7 @@ index bc3cb3311e6b132f46025ed498a6fc7e6d583d02..63b4b35ab95a3ba989109c19aaec4942
  import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
  import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
-@@ -189,17 +191,12 @@ public class DomHelper {
+@@ -189,17 +191,12 @@ public final class DomHelper {
      return ret;
    }
  
@@ -659,10 +657,10 @@ index 0000000000000000000000000000000000000000..adc78392c4a82692b32a603e7c0aa90d
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
-index 3b9847f569e2f820e2fe3d9648ba0cbff7f9cb30..3d458f93edaa8351fcad19f8453be6699c6f9ab0 100644
+index 8e0ac9c07218f5efa5915c67550a66e3cd235ef8..d6b44b8bacc2088a63c13f3ffc6af3fa4d119311 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExitHelper.java
-@@ -171,7 +171,7 @@ public class ExitHelper {
+@@ -171,7 +171,7 @@ public final class ExitHelper {
    private static Statement isExitEdge(StatEdge edge) {
      Statement dest = edge.getDestination();
  
@@ -707,10 +705,10 @@ index 6aa061689f525158f31aee3fdcc114ac89f11ae5..f19e321da5e392eff9c87da6018aa140
              instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD, Arrays
              .asList(vevar.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null)),
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
-index f6ee600ab9fde26b8849bb081cd04b68ed95faa7..b7fa59c05e7e403287d65d8ee3918fdf427eadf5 100644
+index 0c947611f683d78793463aadb950377399664a82..15293498a8a1833a9023f87fcbff330ccb94f805 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/InlineSingleBlockHelper.java
-@@ -118,6 +118,9 @@ public class InlineSingleBlockHelper {
+@@ -118,6 +118,9 @@ public final class InlineSingleBlockHelper {
        StatEdge edge = lst.get(0);
  
        if (sameCatchRanges(edge)) {
@@ -721,7 +719,7 @@ index f6ee600ab9fde26b8849bb081cd04b68ed95faa7..b7fa59c05e7e403287d65d8ee3918fdf
            for (int i = index; i < seq.getStats().size(); i++) {
              if (!noExitLabels(seq.getStats().get(i), seq)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
-index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce8367a2f3c7 100644
+index b82562e5f1884df165c6d2793a3daba0a6faab16..04b82fc67fca471f6c868c227df24160e57edb5f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
 @@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -732,7 +730,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce83
  import java.util.Set;
  
  
-@@ -63,16 +64,33 @@ public class LoopExtractHelper {
+@@ -63,16 +64,33 @@ public final class LoopExtractHelper {
        return false;
      }
  
@@ -768,7 +766,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce83
  
      // search for an if condition at the end of the loop
      Statement last = stat.getFirst();
-@@ -93,6 +111,19 @@ public class LoopExtractHelper {
+@@ -93,6 +111,19 @@ public final class LoopExtractHelper {
  
            if (set.isEmpty()) { // no direct continues in a do{}while loop
              if (isExternStatement(stat, ifstat, ifstat)) {
@@ -788,7 +786,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce83
                extractIfBlock(stat, lastif);
                return true;
              }
-@@ -103,7 +134,7 @@ public class LoopExtractHelper {
+@@ -103,7 +134,7 @@ public final class LoopExtractHelper {
      return false;
    }
  
@@ -797,7 +795,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce83
  
      // search for an if condition at the entrance of the loop
      Statement first = stat.getFirst();
-@@ -121,6 +152,11 @@ public class LoopExtractHelper {
+@@ -121,6 +152,11 @@ public final class LoopExtractHelper {
            Statement ifstat = firstif.getIfstat();
  
            if (isExternStatement(stat, ifstat, ifstat)) {
@@ -809,7 +807,7 @@ index 822912795072fc94b32ffd368b8c5ebe61403e3f..52796181c35878da2c5053c88432ce83
              extractIfBlock(stat, firstif);
              return true;
            }
-@@ -181,5 +217,10 @@ public class LoopExtractHelper {
+@@ -181,5 +217,10 @@ public final class LoopExtractHelper {
          loop.addPredecessor(edge);
        }
      }
@@ -1022,7 +1020,7 @@ index 0000000000000000000000000000000000000000..c62c74da3925db6820facb219ee93163
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215cf3eaec22 100644
+index c9ca96373685aa74c10f79b1050cca012484bfb2..ef3ab0ed07a435f4fbf2dc1be1117bc2ffa554d1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -4,11 +4,17 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -1043,7 +1041,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
  import java.util.List;
  import java.util.Set;
  
-@@ -42,17 +48,20 @@ public class MergeHelper {
+@@ -42,17 +48,20 @@ public final class MergeHelper {
  
          // identify a while loop
          if (matchWhile(stat)) {
@@ -1068,7 +1066,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
      }
  
      return (stat.getLooptype() != oldloop);
-@@ -142,13 +151,14 @@ public class MergeHelper {
+@@ -142,13 +151,14 @@ public final class MergeHelper {
          if (firstif.iftype == IfStatement.IFTYPE_IF) {
            if (firstif.getIfstat() == null) {
              StatEdge ifedge = firstif.getIfEdge();
@@ -1085,7 +1083,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
  
                if (stat.getConditionExprent() != null) {
                  ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-@@ -186,7 +196,7 @@ public class MergeHelper {
+@@ -186,7 +196,7 @@ public final class MergeHelper {
                return true;
              }
            }
@@ -1094,7 +1092,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
              StatEdge elseedge = firstif.getAllSuccessorEdges().get(0);
              if (isDirectPath(stat, elseedge.getDestination())) {
                // exit condition identified
-@@ -240,7 +250,7 @@ public class MergeHelper {
+@@ -240,7 +250,7 @@ public final class MergeHelper {
  
                return true;
              }
@@ -1103,7 +1101,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
          }
        }
      }
-@@ -325,6 +335,8 @@ public class MergeHelper {
+@@ -325,6 +335,8 @@ public final class MergeHelper {
          }
          else {
            preData = current.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).get(0);
@@ -1112,7 +1110,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
            preData = getLastDirectData(preData);
            if (preData != null && !preData.getExprents().isEmpty()) {
              initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
-@@ -363,12 +375,16 @@ public class MergeHelper {
+@@ -363,12 +375,16 @@ public final class MergeHelper {
        stat.setIncExprent(exp);
      }
  
@@ -1133,7 +1131,7 @@ index 3f351c1c9c1d646854e4dff428c1f065296b1291..104805ba1867dc217c2299eac354215c
      }
    }
  
-@@ -401,14 +417,346 @@ public class MergeHelper {
+@@ -401,14 +417,346 @@ public final class MergeHelper {
        return stat;
      }
  
@@ -1635,7 +1633,7 @@ index 87522af363670f27a69bf5dee95a954ae14ed594..9803a215b8c5bc40658c8210c10e6164
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f1e3288f7 100644
+index c6f0eaccf94c55175c19bfc6a4beee9569ab9dc0..60048a473001b72b6eb6b8d903a257c043d76902 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -9,12 +9,15 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1661,8 +1659,8 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
 +import java.util.stream.Collectors;
  
  public class VarExprent extends Exprent {
- 
-@@ -42,6 +46,7 @@ public class VarExprent extends Exprent {
+   public static final int STACK_BASE = 10000;
+@@ -41,6 +45,7 @@ public class VarExprent extends Exprent {
    private int version = 0;
    private boolean classDef = false;
    private boolean stack = false;
@@ -1670,7 +1668,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
  
    public VarExprent(int index, VarType varType, VarProcessor processor) {
      this(index, varType, processor, null);
-@@ -77,6 +82,7 @@ public class VarExprent extends Exprent {
+@@ -76,6 +81,7 @@ public class VarExprent extends Exprent {
      var.setVersion(version);
      var.setClassDef(classDef);
      var.setStack(stack);
@@ -1678,7 +1676,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
      return var;
    }
  
-@@ -93,10 +99,6 @@ public class VarExprent extends Exprent {
+@@ -92,10 +98,6 @@ public class VarExprent extends Exprent {
      }
      else {
        VarVersionPair varVersion = getVarVersionPair();
@@ -1689,7 +1687,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
  
        if (definition) {
          if (processor != null && processor.getVarFinal(varVersion) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
-@@ -106,7 +108,7 @@ public class VarExprent extends Exprent {
+@@ -105,7 +107,7 @@ public class VarExprent extends Exprent {
          buffer.append(" ");
        }
  
@@ -1698,7 +1696,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
      }
  
      return buffer;
-@@ -116,6 +118,7 @@ public class VarExprent extends Exprent {
+@@ -115,6 +117,7 @@ public class VarExprent extends Exprent {
      return new VarVersionPair(index, version);
    }
  
@@ -1706,7 +1704,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
    public String getDebugName(StructMethod method) {
      StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
      if (attr != null && processor != null) {
-@@ -129,9 +132,25 @@ public class VarExprent extends Exprent {
+@@ -128,9 +131,25 @@ public class VarExprent extends Exprent {
      }
      return null;
    }
@@ -1732,7 +1730,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
        if (method != null) {
          Integer originalIndex = null;
-@@ -197,6 +216,10 @@ public class VarExprent extends Exprent {
+@@ -196,6 +215,10 @@ public class VarExprent extends Exprent {
    }
  
    public VarType getVarType() {
@@ -1743,7 +1741,7 @@ index e3b253c9526436c1dab974cac21680a571998f43..8e3dbf6eb41b9fd14754ab5406eb9a4f
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -249,6 +272,93 @@ public class VarExprent extends Exprent {
+@@ -248,6 +271,93 @@ public class VarExprent extends Exprent {
      this.stack = stack;
    }
  
@@ -1864,7 +1862,7 @@ index aa2fae88906858a3c8bd05508db963edbaf0de07..fc6fc93f29c8e8c9e4319d3c6777562b
      // 0 - success, do nothing
      // 1 - cancel iteration
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index b9abd119f2e49cb5c87f8cb9c530e49a760fcbbb..23713c94c72373f76284bc7a8615f74419531651 100644
+index ca43d660a8ab602fbc317cc3078c6def53902899..2883c91e705ea07717350f813e0bf41638fc0e09 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -201,6 +201,7 @@ public class FlattenStatementsHelper {
@@ -1887,7 +1885,7 @@ index b9abd119f2e49cb5c87f8cb9c530e49a760fcbbb..23713c94c72373f76284bc7a8615f744
  
                  DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index 376abe530eac85cf1aaed38835afb19724262ed9..3cb030a94b2ad4c4928ecb7a7a58a32e618c7f36 100644
+index 2fa2d9011729151d59f06cda9542539fad0804d9..25e20bf5a3474103c4ea9b56c795fe28e108a692 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 @@ -2,6 +2,7 @@
@@ -1898,7 +1896,7 @@ index 376abe530eac85cf1aaed38835afb19724262ed9..3cb030a94b2ad4c4928ecb7a7a58a32e
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-@@ -52,7 +53,7 @@ public class CatchAllStatement extends Statement {
+@@ -52,7 +53,7 @@ public final class CatchAllStatement extends Statement {
          post = edge.getDestination();
        }
      }
@@ -1908,10 +1906,10 @@ index 376abe530eac85cf1aaed38835afb19724262ed9..3cb030a94b2ad4c4928ecb7a7a58a32e
                              new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
                              DecompilerContext.getVarProcessor()));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 652931af32774c5cf7f63e50443c4096254ae6c5..5582b3781f6ff71684d6802c11d4d361899c196e 100644
+index 5168f05b5f073d661ca39c4446c8edbcbf1ccc00..7e41176d17729f6acdf5420c9ed98eb7ffb6f3ae 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-@@ -41,7 +41,7 @@ public class CatchStatement extends Statement {
+@@ -41,7 +41,7 @@ public final class CatchStatement extends Statement {
        if (setHandlers.contains(stat)) {
          stats.addWithKey(stat, stat.id);
          exctstrings.add(new ArrayList<>(edge.getExceptions()));
@@ -1921,10 +1919,10 @@ index 652931af32774c5cf7f63e50443c4096254ae6c5..5582b3781f6ff71684d6802c11d4d361
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index f9a149f3be6ac414781a988f9cc57d97ad685199..d4ccb5ecd7c9cfa2d76d9364a907f374bc1f5ba7 100644
+index 46b2f2c2bab6bc401205c3a3523267927beae652..e86b2959dc7c3add12cc82f59f8cb6ab50a53252 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-@@ -17,6 +17,7 @@ public class DoStatement extends Statement {
+@@ -17,6 +17,7 @@ public final class DoStatement extends Statement {
    public static final int LOOP_DOWHILE = 1;
    public static final int LOOP_WHILE = 2;
    public static final int LOOP_FOR = 3;
@@ -1932,7 +1930,7 @@ index f9a149f3be6ac414781a988f9cc57d97ad685199..d4ccb5ecd7c9cfa2d76d9364a907f374
  
    private int looptype;
  
-@@ -122,6 +123,13 @@ public class DoStatement extends Statement {
+@@ -122,6 +123,13 @@ public final class DoStatement extends Statement {
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, false, tracer));
          buf.appendIndent(indent).append("}").appendLineSeparator();
          tracer.incrementCurrentSourceLine();
@@ -1946,7 +1944,7 @@ index f9a149f3be6ac414781a988f9cc57d97ad685199..d4ccb5ecd7c9cfa2d76d9364a907f374
      }
  
      return buf;
-@@ -139,6 +147,10 @@ public class DoStatement extends Statement {
+@@ -139,6 +147,10 @@ public final class DoStatement extends Statement {
          }
        case LOOP_WHILE:
          lst.add(getConditionExprent());
@@ -2842,7 +2840,7 @@ index 0402097b50b89cd8092915db381abfb61be7f495..fa326a4a190012b9e121baa61880c172
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 9999b50b14518caeb2ab042c0826c6049885fe40..ec60c001a0c56aadf71b7badf0284ed656121153 100644
+index 8d766e0412cc952c42d53eae5cec74db5c992c0d..bc8fa493167a5fabf772403550511855bd24de1a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -2,21 +2,26 @@
@@ -2898,7 +2896,7 @@ index 9999b50b14518caeb2ab042c0826c6049885fe40..ec60c001a0c56aadf71b7badf0284ed6
 +      VarVersionPair key = mapOriginalVarIndices.get(pair.var);
 +      if (key != null) {
 +        String debugName = mapDebugVarNames.get(key);
-         if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getClassStruct().getBytecodeVersion())) {
+         if (debugName != null && TextUtil.isValidIdentifier(debugName, method.getBytecodeVersion())) {
            name = debugName;
 +          lvtName = true;
          }
@@ -2912,16 +2910,20 @@ index 9999b50b14518caeb2ab042c0826c6049885fe40..ec60c001a0c56aadf71b7badf0284ed6
          name += String.valueOf(counter);
        }
  
-@@ -76,7 +83,7 @@ public class VarProcessor {
-       return null;
-     }
+@@ -72,7 +79,11 @@ public class VarProcessor {
+   }
  
--    return varVersions.getMapOriginalVarIndices().get(index);
-+    return varVersions.getMapOriginalVarIndices().get(index).var;
+   public Integer getVarOriginalIndex(int index) {
+-    return varVersions == null ? null : varVersions.getMapOriginalVarIndices().get(index);
++    if (varVersions == null) {
++      return null;
++    }
++    final VarVersionPair pair = varVersions.getMapOriginalVarIndices().get(index);
++    return pair == null ? null : pair.var;
    }
  
    public void refreshVarNames(VarNamesCollector vc) {
-@@ -95,7 +102,9 @@ public class VarProcessor {
+@@ -91,7 +102,9 @@ public class VarProcessor {
    }
  
    public void setVarType(VarVersionPair pair, VarType type) {
@@ -2932,7 +2934,7 @@ index 9999b50b14518caeb2ab042c0826c6049885fe40..ec60c001a0c56aadf71b7badf0284ed6
    }
  
    public String getVarName(VarVersionPair pair) {
-@@ -125,4 +134,68 @@ public class VarProcessor {
+@@ -121,4 +134,68 @@ public class VarProcessor {
    public Set<VarVersionPair> getExternalVars() {
      return externalVars;
    }
@@ -3001,7 +3003,6 @@ index 9999b50b14518caeb2ab042c0826c6049885fe40..ec60c001a0c56aadf71b7badf0284ed6
 +    return mapVarLVTs.get(var);
 +  }
  }
-\ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 index c31cfad036b4b2de11449c54ded7864e394d5f91..78b5302cba6fc90f7f32520f637a740d21ed7fab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
@@ -3092,10 +3093,10 @@ index eca0d0fb9ef15db26e9de38ebda2bf9ee19857df..47e7e0c04f6114a9d64b1d86c1e26430
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 6d070968a661a1fc36c4b7fe348e20e5997009a0..aea1b21ae67cc410fa514aeb079f5f58b6d0ae1a 100644
+index 61486aa06985324eb48a931d50cec4749719a0a1..7f9127710be02e07bcbb08be650cd41bff732abf 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-@@ -160,4 +160,30 @@ public class StructContext {
+@@ -159,4 +159,30 @@ public class StructContext {
    public Map<String, StructClass> getClasses() {
      return classes;
    }
@@ -3126,42 +3127,51 @@ index 6d070968a661a1fc36c4b7fe348e20e5997009a0..aea1b21ae67cc410fa514aeb079f5f58
 +    return false;
 +  }
  }
-\ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-index a5b87f1f1d3d9eaf5646ab8a6d31efda2b9e426e..7ead7d6f93a0a60d41e1c1276bfcde7b75e9ab5f 100644
+index 920e7f9af2c86e1e20cee2f167026097bd828ae0..c0964877be1156aa93cf90a6c4d919757555d3d8 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-@@ -12,6 +12,8 @@ import java.io.IOException;
+@@ -12,9 +12,11 @@ import java.io.IOException;
  import java.util.HashMap;
  import java.util.Map;
  
 +import static org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute.*;
 +
- public class StructMember {
+ public abstract class StructMember {
+-  private final int accessFlags;
+-  private final Map<String, StructGeneralAttribute> attributes;
++  protected int accessFlags;
++  protected Map<String, StructGeneralAttribute> attributes;
  
-   protected int accessFlags;
-@@ -66,6 +68,8 @@ public class StructMember {
+   protected StructMember(int accessFlags, Map<String, StructGeneralAttribute> attributes) {
+     this.accessFlags = accessFlags;
+@@ -73,6 +75,20 @@ public abstract class StructMember {
        }
      }
  
-+    if (attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE.getName()) && attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.getName()))
-+      ((StructLocalVariableTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TABLE.getName())).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.getName()));
++    if (attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TABLE.name) && attributes.containsKey(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.name))
++      ((StructLocalVariableTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TABLE.name)).mergeSignatures((StructLocalVariableTypeTableAttribute)attributes.get(ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE.name));
      return attributes;
    }
- 
-@@ -80,4 +84,4 @@ public class StructMember {
-     }
-     return attribute;
-   }
--}
-\ No newline at end of file
-+}
++
++  protected StructGeneralAttribute readAttribute(DataInputFullStream in, ConstantPool pool, String name) throws IOException {
++    StructGeneralAttribute attribute = StructGeneralAttribute.createAttribute(name);
++    int length = in.readInt();
++    if (attribute == null) {
++      in.discard(length);
++    }
++    else {
++      attribute.initContent(in, pool);
++    }
++    return attribute;
++  }
+ }
 diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
-index 15fb317f2693e2edc8164519af3c25e2df3e59b4..c72d18adf8c923674331178c8832f02359850700 100644
+index 66eb5934e4bf29dced9c3d59bff8d47360e4d061..dfdec3252fd252a260a9c2d8e84736c0afd92e17 100644
 --- a/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 +++ b/src/org/jetbrains/java/decompiler/struct/attr/StructLocalVariableTableAttribute.java
 @@ -1,7 +1,10 @@
- // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  package org.jetbrains.java.decompiler.struct.attr;
  
 +import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -3237,7 +3247,7 @@ index 15fb317f2693e2edc8164519af3c25e2df3e59b4..c72d18adf8c923674331178c8832f023
 +    return localVariables.stream().collect(Collectors.toMap(v -> v.version, v -> v.name, (n1, n2) -> n2));
    }
  
--  private static class LocalVariable {
+-  private static final class LocalVariable {
 +  public Stream<LocalVariable> getVariables() {
 +    return localVariables.stream();
 +  }
@@ -3488,7 +3498,7 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 08ec9d424eecccf20eef8ed443a374cf7f516d70..c30d55435debfe3df8eb7821f3e53b70d89f114e 100644
+index dc34cc358594ff94e5abab1733336c1eb1f4d30e..bd4868ea4c65503b6f3f983d2d860f50fa55444a 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -17,6 +17,7 @@ public class SingleClassesTest extends SingleClassesTestBase {

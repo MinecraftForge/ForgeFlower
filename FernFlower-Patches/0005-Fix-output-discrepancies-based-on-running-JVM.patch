@@ -5,7 +5,7 @@ Subject: [PATCH] Fix output discrepancies based on running JVM
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 0041f13df8b5336da5b9891df0e399cbc2de4e3c..a34758940dbce0c5bac8dff269386af752c63d91 100644
+index e380664d46356ec909049293a89bc4be6823dca8..3dc1f5130dcd0889690078da5bb718256e0780d9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -229,6 +229,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -16,7 +16,7 @@ index 0041f13df8b5336da5b9891df0e399cbc2de4e3c..a34758940dbce0c5bac8dff269386af7
            }
          }
        }
-@@ -424,7 +425,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -434,7 +435,7 @@ public class ClassesProcessor implements CodeConstants {
    }
  
  
@@ -25,7 +25,7 @@ index 0041f13df8b5336da5b9891df0e399cbc2de4e3c..a34758940dbce0c5bac8dff269386af7
      public static final int CLASS_ROOT = 0;
      public static final int CLASS_MEMBER = 1;
      public static final int CLASS_ANONYMOUS = 2;
-@@ -506,6 +507,12 @@ public class ClassesProcessor implements CodeConstants {
+@@ -516,6 +517,12 @@ public class ClassesProcessor implements CodeConstants {
        return node.wrapper;
      }
  
@@ -39,10 +39,10 @@ index 0041f13df8b5336da5b9891df0e399cbc2de4e3c..a34758940dbce0c5bac8dff269386af7
        public String method_name;
        public String method_descriptor;
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-index fd0f261cf8fb07c523b5a870e8a4c3a54a96f2ef..36156fe90fcde67b25a50af529eca1209cfbce55 100644
+index 2ad5b20116396973442a5e956a9c30f0a1bada13..77371c62159055cb97cfdd207ece9d852f38a441 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-@@ -108,6 +108,8 @@ public class LambdaProcessor {
+@@ -107,6 +107,8 @@ public class LambdaProcessor {
        mt.releaseResources();
      }
  
@@ -51,7 +51,7 @@ index fd0f261cf8fb07c523b5a870e8a4c3a54a96f2ef..36156fe90fcde67b25a50af529eca120
      // build class hierarchy on lambda
      for (ClassNode nd : node.nested) {
        if (nd.type == ClassNode.CLASS_LAMBDA) {
-@@ -117,6 +119,7 @@ public class LambdaProcessor {
+@@ -116,6 +118,7 @@ public class LambdaProcessor {
  
            parent_class.nested.add(nd);
            nd.parent = parent_class;
@@ -72,10 +72,10 @@ index da175324e5b04e7980225f97d1b30d729d5d46a2..3625c482744fe98f41fda3736355c50b
          return true;
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index 2c5e3eb49c1e030cb847c803bcf984909b37e414..bc3cb3311e6b132f46025ed498a6fc7e6d583d02 100644
+index 7ef6d2f64c10d9543977690f19ff0f6bea2a3615..8d0100d6e80a3b8dd743a6c21139348217d742b7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-@@ -193,7 +193,7 @@ public class DomHelper {
+@@ -193,7 +193,7 @@ public final class DomHelper {
  
      RootStatement root = graphToStatement(graph);
  
@@ -84,7 +84,7 @@ index 2c5e3eb49c1e030cb847c803bcf984909b37e414..bc3cb3311e6b132f46025ed498a6fc7e
  
        //			try {
        //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
-@@ -203,7 +203,7 @@ public class DomHelper {
+@@ -203,7 +203,7 @@ public final class DomHelper {
        throw new RuntimeException("parsing failure!");
      }
  
@@ -93,7 +93,7 @@ index 2c5e3eb49c1e030cb847c803bcf984909b37e414..bc3cb3311e6b132f46025ed498a6fc7e
  
      SequenceHelper.condenseSequences(root);
      root.buildMonitorFlags();
-@@ -466,11 +466,11 @@ public class DomHelper {
+@@ -466,11 +466,11 @@ public final class DomHelper {
  
          boolean same = (post == head);
  
@@ -107,7 +107,7 @@ index 2c5e3eb49c1e030cb847c803bcf984909b37e414..bc3cb3311e6b132f46025ed498a6fc7e
          setHandlers.add(head);
          while (true) {
  
-@@ -615,7 +615,7 @@ public class DomHelper {
+@@ -615,7 +615,7 @@ public final class DomHelper {
                set.removeAll(setOldNodes);
  
                if (setOldNodes.contains(key)) {
@@ -129,10 +129,10 @@ index 966cd442c8b991aeae0055a114f01426debb59da..010566ba18cc005e72ddcbf7eea17f0f
      for (Exprent expr : lst) {
        if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 240ee3e49c333d052cad169661a1e241042ee55b..bcd6a6c52620e19cf9f7cba7679dfe493ee54528 100644
+index 9f5289507e7d8f25b4f2f269ee239643b3cd7698..3682bbb940e6855019cb5b10b7a7de6d703e5b62 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-@@ -486,10 +486,17 @@ public class FinallyProcessor {
+@@ -481,10 +481,17 @@ public class FinallyProcessor {
      // so remove dummy exit
      startBlocks.remove(graph.getLast());
      startBlocks.removeAll(tryBlocks);
@@ -151,7 +151,7 @@ index 240ee3e49c333d052cad169661a1e241042ee55b..bcd6a6c52620e19cf9f7cba7679dfe49
  
        Area arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
        if (arr == null) {
-@@ -512,8 +519,17 @@ public class FinallyProcessor {
+@@ -507,8 +514,17 @@ public class FinallyProcessor {
      //			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
      //		} catch(Exception ex){ex.printStackTrace();}
  
@@ -171,10 +171,10 @@ index 240ee3e49c333d052cad169661a1e241042ee55b..bcd6a6c52620e19cf9f7cba7679dfe49
  
        if (entry.getValue()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-index 9c150b51644beabafdf832a7fdcdbddecbfe9500..017218b7bee3fbf993b890b4e007f65c0a84f177 100644
+index bf4d889cea52307dede26a398ac9a81ec4577934..05e945fa82190610c0147389204d579d3d1d61e4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-@@ -19,7 +19,7 @@ public class LabelHelper {
+@@ -19,7 +19,7 @@ public final class LabelHelper {
  
      liftClosures(root);
  
@@ -183,7 +183,7 @@ index 9c150b51644beabafdf832a7fdcdbddecbfe9500..017218b7bee3fbf993b890b4e007f65c
  
      lowClosures(root);
    }
-@@ -117,7 +117,7 @@ public class LabelHelper {
+@@ -117,7 +117,7 @@ public final class LabelHelper {
          lowContinueLabels(st, edges);
        }
        else {
@@ -438,10 +438,10 @@ index 0891a4758e43affe4c8f7df991a79bd9475cafc8..c098f3be7e2b67de21ea499ca5e12f12
  
      for (Statement st : set) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index ab48eccfcad8e5b0f58ad6bb401587b1d71bab2d..e14648190ba6e309992149b9a60105a53caacf9f 100644
+index a5b9d3aa23c0f50d4504ab67de8ccf01d072ae73..28c2f2c8bf29d0d12f2a63be231399adf9030935 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -63,7 +63,15 @@ public class SwitchStatement extends Statement {
+@@ -63,7 +63,15 @@ public final class SwitchStatement extends Statement {
  
      default_edge = head.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
  

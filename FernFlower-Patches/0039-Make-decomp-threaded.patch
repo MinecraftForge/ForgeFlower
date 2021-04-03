@@ -7,7 +7,7 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index ef3f17f98e3a313c0d519dbe02ffd3822642759b..48842474f1a975761b0d0d4a1dd904dde9028250 100644
+index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e57a6a1349 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -36,7 +36,8 @@ public class ClassesProcessor implements CodeConstants {
@@ -20,7 +20,7 @@ index ef3f17f98e3a313c0d519dbe02ffd3822642759b..48842474f1a975761b0d0d4a1dd904dd
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
-@@ -361,14 +362,13 @@ public class ClassesProcessor implements CodeConstants {
+@@ -361,7 +362,7 @@ public class ClassesProcessor implements CodeConstants {
      return true;
    }
  
@@ -29,8 +29,10 @@ index ef3f17f98e3a313c0d519dbe02ffd3822642759b..48842474f1a975761b0d0d4a1dd904dd
      ClassNode root = mapRootClasses.get(cl.qualifiedName);
      if (root.type != ClassNode.CLASS_ROOT) {
        return;
-     }
--
+@@ -370,25 +371,12 @@ public class ClassesProcessor implements CodeConstants {
+     boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
+     boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
+ 
 -    DecompilerContext.getLogger().startReadingClass(cl.qualifiedName);
 -    try {
 +    DecompilerContext.getLogger().startProcessingClass(cl.qualifiedName);
@@ -38,12 +40,32 @@ index ef3f17f98e3a313c0d519dbe02ffd3822642759b..48842474f1a975761b0d0d4a1dd904dd
        ImportCollector importCollector = new ImportCollector(root);
        DecompilerContext.startClass(importCollector);
  
-@@ -383,7 +383,18 @@ public class ClassesProcessor implements CodeConstants {
-       new NestedClassProcessor().processClass(root, root);
+-      if (packageInfo) {
+-        ClassWriter.packageInfoToJava(cl, buffer);
+-
+-        importCollector.writeImports(buffer, false);
+-      }
+-      else if (moduleInfo) {
+-        TextBuffer moduleBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
+-        ClassWriter.moduleInfoToJava(cl, moduleBuffer);
+-
+-        importCollector.writeImports(buffer, true);
+-
+-        buffer.append(moduleBuffer);
+-      }
+-      else {
++      if (!packageInfo && !moduleInfo) {
+         new LambdaProcessor().processClass(root);
  
-       new NestedMemberAccess().propagateMemberAccess(root);
+         // add simple class names to implicit import
+@@ -400,7 +388,36 @@ public class ClassesProcessor implements CodeConstants {
+         new NestedClassProcessor().processClass(root, root);
+ 
+         new NestedMemberAccess().propagateMemberAccess(root);
++      }
+ 
++      DecompilerContext.getLogger().endProcessingClass();
 +    }
-+    DecompilerContext.getLogger().endProcessingClass();
 +  }
 +
 +  public void writeClass(StructClass cl, TextBuffer buffer) throws IOException {
@@ -51,21 +73,37 @@ index ef3f17f98e3a313c0d519dbe02ffd3822642759b..48842474f1a975761b0d0d4a1dd904dd
 +    if (root.type != ClassNode.CLASS_ROOT) {
 +      return;
 +    }
- 
++
++    boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
++    boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
 +    DecompilerContext.getLogger().startReadingClass(cl.qualifiedName);
 +    try {
-       TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
-       new ClassWriter().classToJava(root, classBuffer, 0, null);
++      if (packageInfo) {
++        ClassWriter.packageInfoToJava(cl, buffer);
++
++        DecompilerContext.getImportCollector().writeImports(buffer, false);
++      }
++      else if (moduleInfo) {
++        TextBuffer moduleBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
++        ClassWriter.moduleInfoToJava(cl, moduleBuffer);
++
++        DecompilerContext.getImportCollector().writeImports(buffer, true);
++
++        buffer.append(moduleBuffer);
++      }
++      else {
+         TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
+         new ClassWriter().classToJava(root, classBuffer, 0, null);
  
-@@ -398,7 +409,7 @@ public class ClassesProcessor implements CodeConstants {
-         buffer.appendLineSeparator();
-       }
+@@ -410,7 +427,7 @@ public class ClassesProcessor implements CodeConstants {
+           buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
+         }
  
--      int import_lines_written = importCollector.writeImports(buffer);
-+      int import_lines_written = DecompilerContext.getImportCollector().writeImports(buffer);
-       if (import_lines_written > 0) {
-         buffer.appendLineSeparator();
-       }
+-        importCollector.writeImports(buffer, true);
++        DecompilerContext.getImportCollector().writeImports(buffer, true);
+ 
+         int offsetLines = buffer.countLines();
+ 
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b69a2ad93 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
@@ -652,7 +690,7 @@ index 41f7389f3931a6a3c87647f7fde98f04c37af5c0..a2be81c2a329812c30ffe2606cae2b5f
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index fde588174ace52b073d205bd0fa045632a725df5..dfdf9837e0aebbdbfcb862a384e5a787971478bb 100644
+index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..9eb1e3b71ee54001c902f11f6fa6c132c5a670fc 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -14,8 +14,14 @@ import java.io.IOException;
@@ -670,8 +708,8 @@ index fde588174ace52b073d205bd0fa045632a725df5..dfdf9837e0aebbdbfcb862a384e5a787
  import java.util.zip.ZipFile;
  
  public class ContextUnit {
-@@ -118,7 +124,10 @@ public class ContextUnit {
-           StructClass cl = classes.get(i);
+@@ -121,7 +127,10 @@ public class ContextUnit {
+           }
            String entryName = decompiledData.getClassEntryName(cl, classEntries.get(i));
            if (entryName != null) {
 -            String content = decompiledData.getClassContent(cl);
@@ -682,7 +720,7 @@ index fde588174ace52b073d205bd0fa045632a725df5..dfdf9837e0aebbdbfcb862a384e5a787
              if (content != null) {
                int[] mapping = null;
                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
-@@ -149,13 +158,64 @@ public class ContextUnit {
+@@ -152,13 +161,64 @@ public class ContextUnit {
            }
          }
  
@@ -754,7 +792,7 @@ index fde588174ace52b073d205bd0fa045632a725df5..dfdf9837e0aebbdbfcb862a384e5a787
            }
          }
  
-@@ -163,6 +223,16 @@ public class ContextUnit {
+@@ -166,6 +226,16 @@ public class ContextUnit {
      }
    }
  
@@ -771,7 +809,7 @@ index fde588174ace52b073d205bd0fa045632a725df5..dfdf9837e0aebbdbfcb862a384e5a787
    public void setManifest(Manifest manifest) {
      this.manifest = manifest;
    }
-@@ -174,4 +244,17 @@ public class ContextUnit {
+@@ -177,4 +247,17 @@ public class ContextUnit {
    public List<StructClass> getClasses() {
      return classes;
    }

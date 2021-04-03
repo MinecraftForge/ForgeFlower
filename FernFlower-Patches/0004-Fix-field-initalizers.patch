@@ -5,7 +5,7 @@ Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad814c4ffc5 100644
+index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba08af7a91 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -28,9 +28,9 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
 +import java.util.Map;
 +import java.util.Set;
  
- public class InitializerProcessor {
+ public final class InitializerProcessor {
    public static void extractInitializers(ClassWrapper wrapper) {
-@@ -148,14 +155,16 @@ public class InitializerProcessor {
+@@ -148,14 +155,16 @@ public final class InitializerProcessor {
    private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
      RootStatement root = method.root;
      StructClass cl = wrapper.getClassStruct();
@@ -52,7 +52,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
  
          if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
            AssignmentExprent assignExpr = (AssignmentExprent)exprent;
-@@ -165,21 +174,49 @@ public class InitializerProcessor {
+@@ -165,21 +174,49 @@ public final class InitializerProcessor {
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
  
                // interfaces fields should always be initialized inline
@@ -111,7 +111,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
        }
      }
    }
-@@ -196,18 +233,18 @@ public class InitializerProcessor {
+@@ -196,18 +233,18 @@ public final class InitializerProcessor {
        if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
          Statement firstData = Statements.findFirstData(method.root);
          if (firstData == null || firstData.getExprents().isEmpty()) {
@@ -134,7 +134,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
        }
      }
  
-@@ -215,6 +252,9 @@ public class InitializerProcessor {
+@@ -215,6 +252,9 @@ public final class InitializerProcessor {
        return;
      }
  
@@ -144,7 +144,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
      while (true) {
        String fieldWithDescr = null;
        Exprent value = null;
-@@ -237,8 +277,10 @@ public class InitializerProcessor {
+@@ -237,8 +277,10 @@ public final class InitializerProcessor {
              if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
  
@@ -157,7 +157,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
                  if (fieldWithDescr == null) {
                    fieldWithDescr = fieldKey;
                    value = assignExpr.getRight();
-@@ -262,6 +304,7 @@ public class InitializerProcessor {
+@@ -262,6 +304,7 @@ public final class InitializerProcessor {
  
        if (!wrapper.getDynamicFieldInitializers().containsKey(fieldWithDescr)) {
          wrapper.getDynamicFieldInitializers().addWithKey(value, fieldWithDescr);
@@ -165,7 +165,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
  
          for (List<Exprent> lst : lstFirst) {
            lst.remove(isAnonymous ? 0 : 1);
-@@ -273,7 +316,7 @@ public class InitializerProcessor {
+@@ -273,7 +316,7 @@ public final class InitializerProcessor {
      }
    }
  
@@ -174,7 +174,7 @@ index ba039e6c83007aca9bce0a33229b28c7b82dc398..0bfe8adc334822dc880d69164106bad8
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
  
-@@ -289,10 +332,71 @@ public class InitializerProcessor {
+@@ -289,10 +332,71 @@ public final class InitializerProcessor {
            }
            break;
          case Exprent.EXPRENT_FIELD:

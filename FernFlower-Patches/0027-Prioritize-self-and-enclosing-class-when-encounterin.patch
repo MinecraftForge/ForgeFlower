@@ -8,18 +8,10 @@ The compiler encodes all REFERENCED inner classes into the class. The first foun
 Fixes AccessTransformers.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 615b7a37610e6498e04eb971768df0ea57284383..69b1dc49a54a4f114e04dee27c019d7b09028220 100644
+index 124cdd01c4b531937373127576b7f6db90ed48ed..908ec69d788adf63487106715f82141cc1c43dac 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -28,6 +28,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
- import org.jetbrains.java.decompiler.util.TextBuffer;
- 
- import java.util.*;
-+import java.util.stream.Collectors;
- 
- public class ClassWriter {
-   private final PoolInterceptor interceptor;
-@@ -1000,6 +1001,10 @@ public class ClassWriter {
+@@ -1180,6 +1180,10 @@ public class ClassWriter {
      }
    }
  
@@ -31,7 +23,7 @@ index 615b7a37610e6498e04eb971768df0ea57284383..69b1dc49a54a4f114e04dee27c019d7b
      buffer.append('<');
  
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index fd860970374feb092ece0f93c03d056d662efe91..e190689539e3270e8eb6d83f2befd8610f2132d9 100644
+index 26ccf4b2124ab617bfeec45ebbf3451ab2e7aa6d..8ce3a2575b4c9c8268ba9956ea008027982a03fb 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -42,10 +42,20 @@ public class ClassesProcessor implements CodeConstants {

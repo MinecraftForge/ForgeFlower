@@ -5,10 +5,10 @@ Subject: [PATCH] Improve stack var processor output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 57498b1549f381c9af185e5a35293b25758bf585..b58eff8cddf9603abae42b3e0367987fe8cfff27 100644
+index bb246173b89d733e01ef4a03b59759c8663a20ff..12d737b747fe5fa60a5c449fd91dda9a39fb4387 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -171,11 +171,12 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -172,11 +172,12 @@ public class MethodProcessorRunnable implements Runnable {
        if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
          if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
            SequenceHelper.condenseSequences(root);
@@ -320,7 +320,7 @@ index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..1a085709ed7a120d109542e4bf710101
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 25b88c34b98821413c947cf597a46e1dfe16c762..9bbdb537498de8dd02f0638760e24a37444e26e4 100644
+index c29602144dd59be01d42a31a12c3b6fc8ceabe1c..af6e0b9fdfb93a1e11f44a1a122f351deb988e5a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -166,6 +166,11 @@ public class InvocationExprent extends Exprent {
@@ -336,10 +336,10 @@ index 25b88c34b98821413c947cf597a46e1dfe16c762..9bbdb537498de8dd02f0638760e24a37
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index eb9beb2b6e71170d5aced6432365ab33ed361bb3..4767d4c7d2923b86df789d84667a842468af7e50 100644
+index f4f21c900d1e0763eeb049a550847d0497e0e7c5..c8bf497f5cac2bb9e3c7b2187a4b70d392ef9e7c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -49,6 +49,7 @@ public class VarExprent extends Exprent {
+@@ -48,6 +48,7 @@ public class VarExprent extends Exprent {
    private boolean classDef = false;
    private boolean stack = false;
    private LocalVariable lvt = null;
@@ -347,7 +347,7 @@ index eb9beb2b6e71170d5aced6432365ab33ed361bb3..4767d4c7d2923b86df789d84667a8424
  
    public VarExprent(int index, VarType varType, VarProcessor processor) {
      this(index, varType, processor, null);
-@@ -101,6 +102,7 @@ public class VarExprent extends Exprent {
+@@ -100,6 +101,7 @@ public class VarExprent extends Exprent {
      var.setClassDef(classDef);
      var.setStack(stack);
      var.setLVT(lvt);
@@ -355,7 +355,7 @@ index eb9beb2b6e71170d5aced6432365ab33ed361bb3..4767d4c7d2923b86df789d84667a8424
      return var;
    }
  
-@@ -315,6 +317,14 @@ public class VarExprent extends Exprent {
+@@ -314,6 +316,14 @@ public class VarExprent extends Exprent {
      return lvt;
    }
  

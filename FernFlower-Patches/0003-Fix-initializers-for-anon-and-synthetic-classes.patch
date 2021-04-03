@@ -5,19 +5,19 @@ Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 72fefe4c1c0aa322154541d54b1ccb35cc2154d1..1182bd193cb0aef1ebacbcd8d6427dd79af9715f 100644
+index 2d57c02d34e186e440ee0afccac79545b5a190cf..16a7cfebe26dfe0f6244a46f9af271758be274da 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -41,6 +41,7 @@ public class ClassWriter {
+@@ -39,6 +39,7 @@ public class ClassWriter {
      StructClass cl = wrapper.getClassStruct();
  
      InitializerProcessor.extractInitializers(wrapper);
 +    InitializerProcessor.hideInitalizers(wrapper);
  
      if (node.type == ClassNode.CLASS_ROOT &&
-         !cl.isVersionGE_1_5() &&
+         !cl.isVersion5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 1ee22f210c1828c5ce7adc09a468e5bd649cc637..0041f13df8b5336da5b9891df0e399cbc2de4e3c 100644
+index 7bb50aaeb939930ea8c9679d88cf9a2cc5f0b4af..e380664d46356ec909049293a89bc4be6823dca8 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -87,6 +87,31 @@ public class ClassesProcessor implements CodeConstants {
@@ -53,7 +53,7 @@ index 1ee22f210c1828c5ce7adc09a468e5bd649cc637..0041f13df8b5336da5b9891df0e399cb
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index b929d0d142711abdcd3f67cb429c91b7260d6e2b..ba039e6c83007aca9bce0a33229b28c7b82dc398 100644
+index d3696ddeda3a7df15242d613d6cde5c936642509..55badb664d4a52620710e97e040929ce5414eb9e 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -66,7 +66,7 @@ index b929d0d142711abdcd3f67cb429c91b7260d6e2b..ba039e6c83007aca9bce0a33229b28c7
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
  import java.util.ArrayList;
-@@ -90,8 +93,52 @@ public class InitializerProcessor {
+@@ -90,8 +93,52 @@ public final class InitializerProcessor {
          Exprent exprent = firstData.getExprents().get(0);
          if (exprent.type == Exprent.EXPRENT_INVOCATION) {
            InvocationExprent invExpr = (InvocationExprent)exprent;
@@ -121,7 +121,7 @@ index b929d0d142711abdcd3f67cb429c91b7260d6e2b..ba039e6c83007aca9bce0a33229b28c7
            }
          }
        }
-@@ -248,4 +295,4 @@ public class InitializerProcessor {
+@@ -248,4 +295,4 @@ public final class InitializerProcessor {
  
      return true;
    }

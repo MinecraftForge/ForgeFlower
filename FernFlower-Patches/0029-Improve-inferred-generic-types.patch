@@ -264,7 +264,7 @@ index 8f69e433dce5541e5f42693c67fbb9f8610821d2..1f27ed6c5ab25460b0e67c728c7fdcaa
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 43db4dcfe8e32f8809a2a8743eb04a49e6942f18..25b88c34b98821413c947cf597a46e1dfe16c762 100644
+index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc8ceabe1c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -317,10 +317,10 @@ index 43db4dcfe8e32f8809a2a8743eb04a49e6942f18..25b88c34b98821413c947cf597a46e1d
 +        Map<VarType, VarType> upperBoundsMap = new HashMap<>();
 +        Map<VarType, VarType> hierarchyMap = new HashMap<>();
 +
-+        if (!classname.equals(desc.getClassStruct().qualifiedName)) {
++        if (!classname.equals(desc.getClassQualifiedName())) {
 +          Map<String, Map<VarType, VarType>> hierarchy = mthCls.getAllGenerics();
-+          if (hierarchy.containsKey(desc.getClassStruct().qualifiedName)) {
-+            hierarchyMap = hierarchy.get(desc.getClassStruct().qualifiedName);
++          if (hierarchy.containsKey(desc.getClassQualifiedName())) {
++            hierarchyMap = hierarchy.get(desc.getClassQualifiedName());
 +            hierarchyMap.forEach((from, to) -> {
 +              if (to.type == CodeConstants.TYPE_GENVAR) {
 +                if (bounds.containsKey(to) && !bounds.containsKey(from)) {
@@ -909,7 +909,7 @@ index 43db4dcfe8e32f8809a2a8743eb04a49e6942f18..25b88c34b98821413c947cf597a46e1d
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstParameters);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef8336db0c66 100644
+index bf254b8d843526d872092f4b0a000b13baef518a..2bf3ce1584a2926a628318b7dacb21290803108b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -5,7 +5,16 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -929,7 +929,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
  import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-@@ -21,9 +30,14 @@ import org.jetbrains.java.decompiler.util.ListStack;
+@@ -21,9 +30,13 @@ import org.jetbrains.java.decompiler.util.ListStack;
  import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.ArrayList;
@@ -937,14 +937,13 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
  import java.util.BitSet;
  import java.util.Collections;
 +import java.util.HashMap;
-+import java.util.HashSet;
 +import java.util.LinkedList;
  import java.util.List;
 +import java.util.Map;
  
  public class NewExprent extends Exprent {
    private InvocationExprent constructor;
-@@ -37,6 +51,7 @@ public class NewExprent extends Exprent {
+@@ -37,6 +50,7 @@ public class NewExprent extends Exprent {
    private boolean methodReference = false;
    private boolean enumConst;
    private List<VarType> genericArgs = new ArrayList<>();
@@ -952,7 +951,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
  
    public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
      this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
-@@ -79,18 +94,162 @@ public class NewExprent extends Exprent {
+@@ -79,18 +93,162 @@ public class NewExprent extends Exprent {
    @Override
    public VarType getInferredExprType(VarType upperBound) {
      genericArgs.clear();
@@ -1002,10 +1001,9 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
 +          if (matches) {
 +            return first.resizeArrayDim(newType.arrayDim);
 +          }
-         }
-       }
-     }
--    
++        }
++      }
++    }
 +
 +    if (lambda) {
 +      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.value);
@@ -1114,14 +1112,15 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
 +        }
 +        else {
 +          inferredLambdaType = classType;
-+        }
-+      }
-+    }
+         }
+       }
+     }
+-    
 +
      return getExprType();
    }
  
-@@ -214,30 +373,13 @@ public class NewExprent extends Exprent {
+@@ -214,30 +372,13 @@ public class NewExprent extends Exprent {
          }
        }
  
@@ -1158,7 +1157,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
        }
  
        buf.append(')');
-@@ -250,6 +392,7 @@ public class NewExprent extends Exprent {
+@@ -250,6 +391,7 @@ public class NewExprent extends Exprent {
          if (!DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
            buf.setLength(0);  // remove the usual 'new <class>()', it will be replaced with lambda style '() ->'
          }
@@ -1166,7 +1165,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
          Exprent methodObject = constructor == null ? null : constructor.getInstance();
          TextBuffer clsBuf = new TextBuffer();
          new ClassWriter().classLambdaToJava(child, clsBuf, methodObject, indent, tracer);
-@@ -301,35 +444,10 @@ public class NewExprent extends Exprent {
+@@ -301,35 +443,10 @@ public class NewExprent extends Exprent {
        }
  
        if (constructor != null) {
@@ -1205,7 +1204,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
          }
        }
      }
-@@ -389,7 +507,8 @@ public class NewExprent extends Exprent {
+@@ -389,7 +506,8 @@ public class NewExprent extends Exprent {
      return buf;
    }
  
@@ -1215,7 +1214,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
      ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(className);
      return node != null && node.type == ClassNode.CLASS_ANONYMOUS;
    }
-@@ -427,6 +546,155 @@ public class NewExprent extends Exprent {
+@@ -427,6 +545,158 @@ public class NewExprent extends Exprent {
      return null;
    }
  
@@ -1291,9 +1290,12 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
 +        MethodWrapper methodWrapper = wrapper != null ? wrapper.getMethodWrapper(node.lambdaInformation.content_method_name, node.lambdaInformation.content_method_descriptor) : null;
 +
 +        if (desc != null && desc.getSignature() != null && methodWrapper != null && methodWrapper.root != null) {
-+          if (!desc.getClassStruct().qualifiedName.equals(inferredLambdaType.value) && desc.getClassStruct().getSignature() != null) {
-+            cls = desc.getClassStruct();
-+            inferredLambdaType = GenericType.getGenericSuperType(inferredLambdaType, desc.getClassStruct().getSignature().genericType);
++          if (!desc.getClassQualifiedName().equals(inferredLambdaType.value)) {
++            StructClass candidate = DecompilerContext.getStructContext().getClass(desc.getClassQualifiedName());
++            if (candidate.getSignature() != null) {
++              cls = candidate;
++              inferredLambdaType = GenericType.getGenericSuperType(inferredLambdaType, candidate.getSignature().genericType);
++            }
 +          }
 +
 +          Map<VarType, VarType> tempMap = new HashMap<>();
@@ -1371,7 +1373,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == constructor) {
-@@ -531,4 +799,10 @@ public class NewExprent extends Exprent {
+@@ -531,4 +801,10 @@ public class NewExprent extends Exprent {
      }
      return "";
    }
@@ -1383,7 +1385,7 @@ index bf254b8d843526d872092f4b0a000b13baef518a..d6b2cc514e99d037dcdf2143839fef83
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index b681b11cad3899d90c5f04df50b2ae021bea3021..eb9beb2b6e71170d5aced6432365ab33ed361bb3 100644
+index 899ca15489fb70ff5f81aa3c947ca4c228ba1d31..f4f21c900d1e0763eeb049a550847d0497e0e7c5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -1394,7 +1396,7 @@ index b681b11cad3899d90c5f04df50b2ae021bea3021..eb9beb2b6e71170d5aced6432365ab33
  import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
-@@ -239,7 +240,21 @@ public class VarExprent extends Exprent {
+@@ -238,7 +239,21 @@ public class VarExprent extends Exprent {
  
      VarType vt = null;
      if (processor != null) {
@@ -1418,10 +1420,10 @@ index b681b11cad3899d90c5f04df50b2ae021bea3021..eb9beb2b6e71170d5aced6432365ab33
  
      if (vt == null || (varType != null && varType.type != CodeConstants.TYPE_UNKNOWN)) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 6729ac6feb7d822c3786b1864dc12cf779c3d30d..868ccb525924c30ad17539d97b9a984c2f0c7ab8 100644
+index 8753a258b8a93d487a3bc268a5bb3bd53e86cb1d..0a6e5b74b7a8b07368a0c1970faab818cea6a9d8 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-@@ -18,9 +18,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
  import org.jetbrains.java.decompiler.util.VBStyleCollection;
  
  import java.io.IOException;
@@ -1429,11 +1431,7 @@ index 6729ac6feb7d822c3786b1864dc12cf779c3d30d..868ccb525924c30ad17539d97b9a984c
  import java.util.Collections;
  import java.util.HashMap;
  import java.util.HashSet;
-+import java.util.List;
- import java.util.Map;
- import java.util.Map.Entry;
- import java.util.Set;
-@@ -329,4 +331,28 @@ public class StructClass extends StructMember {
+@@ -351,4 +352,28 @@ public class StructClass extends StructMember {
      this.genericHiarachy = ret.isEmpty() ? Collections.emptyMap() : ret;
      return this.genericHiarachy;
    }
@@ -1463,10 +1461,10 @@ index 6729ac6feb7d822c3786b1864dc12cf779c3d30d..868ccb525924c30ad17539d97b9a984c
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 68cf259230cd82298c36b391e0ea91d111fca9ab..9226d9d8e8f34fcc5c43a67f914ff7683a6be50b 100644
+index 83be1cad514f1a48f93db75a1e85dacae14cd105..5aa59c4d71dc73bbc8875879ac4c90ab030d6920 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-@@ -210,6 +210,24 @@ public class StructContext {
+@@ -209,6 +209,24 @@ public class StructContext {
      return false;
    }
  
