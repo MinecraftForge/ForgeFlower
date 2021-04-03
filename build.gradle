@@ -2,16 +2,12 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
         maven { url = 'https://files.minecraftforge.net/maven/'}
     }
     dependencies {
         classpath 'net.minecraftforge:gitpatcher:0.10.+'
+        classpath 'org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r'
     }
-}
-
-plugins {
-    id 'org.ajoberstar.grgit' version '4.1.0'
 }
 
 apply plugin: 'net.minecraftforge.gitpatcher'
@@ -31,13 +27,54 @@ allprojects {
     }
 }
 
+def gitInfo(dir) {
+    String.metaClass.rsplit = { String del, int limit = -1 ->
+        def lst = new ArrayList()
+        def x = 0, idx
+        def tmp = delegate
+        while ((idx = tmp.lastIndexOf(del)) != -1 && (limit == -1 || x++ < limit)) {
+            lst.add(0, tmp.substring(idx + del.length(), tmp.length()))
+            tmp = tmp.substring(0, idx)
+        }
+        lst.add(0, tmp)
+        return lst
+    }
+    
+    def git = null
+    try {
+        git = org.eclipse.jgit.api.Git.open(dir)
+    } catch (org.eclipse.jgit.errors.RepositoryNotFoundException e) {
+        return [
+            tag: '0.0',
+            offset: '0',
+            hash: '00000000',
+            branch: 'master',
+            commit: '0000000000000000000000',
+            abbreviatedId: '00000000'
+        ]
+    }
+    def desc = git.describe().setLong(true).setTags(true).call().rsplit('-', 2)
+    def head = git.repository.resolve('HEAD')
+    
+    def ret = [:]
+    ret.tag = desc[0]
+    ret.offset = desc[1]
+    ret.hash = desc[2]
+    ret.branch = git.repository.branch
+    ret.commit = org.eclipse.jgit.lib.ObjectId.toString(head)
+    ret.abbreviatedId = head.abbreviate(8).name()
+    
+    return ret
+}
+
 def gitVersion() {
-    def desc = grgit.describe(longDescr: true, tags: true).split('-') as List
-    def hash = desc.remove(desc.size() - 1)
-    def offset = desc.remove(desc.size() - 1)
-    def tag = desc.join('-')
-    def branch = grgit.branch.current().name
-    return "${tag}.${offset}${t -> if (branch != 'master' && branch != 'HEAD') t << '-' + branch}"
+    def info = gitInfo(rootProject.file('.'))
+    def branch = info.branch
+    if (branch != null && branch.startsWith('pulls/'))
+        branch = 'pr' + branch.rsplit('/', 1)[1]
+    if (branch in [null, 'master', 'HEAD'])
+        return "${info.tag}.${info.offset}".toString()
+    return "${info.tag}.${info.offset}-${branch}".toString()
 }
 
 project(':ForgeFlower') {
