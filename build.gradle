@@ -54,15 +54,16 @@ def gitInfo(dir) {
         ]
     }
     def desc = git.describe().setLong(true).setTags(true).call().rsplit('-', 2)
-    def head = git.repository.resolve('HEAD')
-    
+    def head = git.repository.exactRef('HEAD')
+    def longBranch = head.symbolic ? head?.target?.name : null // matches Repository.getFullBranch() but returning null when on a detached HEAD
+
     def ret = [:]
     ret.tag = desc[0]
     ret.offset = desc[1]
     ret.hash = desc[2]
-    ret.branch = git.repository.branch
-    ret.commit = org.eclipse.jgit.lib.ObjectId.toString(head)
-    ret.abbreviatedId = head.abbreviate(8).name()
+    ret.branch = longBranch != null ? org.eclipse.jgit.lib.Repository.shortenRefName(longBranch) : null
+    ret.commit = org.eclipse.jgit.lib.ObjectId.toString(head.objectId)
+    ret.abbreviatedId = head.objectId.abbreviate(8).name()
     
     return ret
 }
