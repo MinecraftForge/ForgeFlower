@@ -3,7 +3,7 @@
 pipeline {
     agent {
         docker {
-            image 'gradlewrapper:j10'
+            image 'gradle:jdk8'
             args '-v gradlecache:/gradlecache'
         }
     }
@@ -15,25 +15,6 @@ pipeline {
     }
 
     stages {
-        stage('fetch') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: scm.branches,
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [[
-                        $class: 'SubmoduleOption',
-                        disableSubmodules: false,
-                        parentCredentials: true,
-                        recursiveSubmodules: true,
-                        reference: '',
-                        trackingSubmodules: false
-                    ], [$class: 'WipeWorkspace']],
-                    submoduleCfg: [],
-                    userRemoteConfigs: scm.userRemoteConfigs
-                ])
-            }
-        }
         stage('notify_start') {
             when {
                 not {
@@ -52,8 +33,12 @@ pipeline {
         }
         stage('buildandtest') {
             steps {
-                sh './gradlew ${GRADLE_ARGS} --refresh-dependencies --continue ForgeFlower:build -x ForgeFlower:test' //Skip tests because we change so much about FF
+                withGradle {
+                    sh './gradlew ${GRADLE_ARGS} --refresh-dependencies --continue ForgeFlower:build -x ForgeFlower:test' //Skip tests because we change so much about FF
+                }
                 script {
+                    env.MYGROUP = sh(returnStdout: true, script: './gradlew properties -q | grep "group:" | awk \'{print $2}\'').trim()
+                    env.MYARTIFACT = sh(returnStdout: true, script: './gradlew properties -q | grep "name:" | awk \'{print $2}\'').trim()
                     env.MYVERSION = sh(returnStdout: true, script: './gradlew properties -q | grep "version:" | awk \'{print $2}\'').trim()
                 }
             }
@@ -78,17 +63,22 @@ pipeline {
                 FORGE_MAVEN = credentials('forge-maven-forge-user')
             }
             steps {
-                sh './gradlew ${GRADLE_ARGS} ForgeFlower:publish -PmavenUser=${FORGE_MAVEN_USR} -PmavenPassword=${FORGE_MAVEN_PSW}'
-                sh 'curl --user ${FORGE_MAVEN} http://files.minecraftforge.net/maven/manage/promote/latest/net.minecraftforge.forgeflower/${BUILD_NUMBER}'
+                withCredentials([usernamePassword(credentialsId: 'maven-forge-user', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')]) {
+                    withGradle {
+                        sh './gradlew ${GRADLE_ARGS} ForgeFlower:publish'
+                    }
+                }
+            }
+            post {
+                success {
+                    build job: 'filegenerator', parameters: [string(name: 'COMMAND', value: "promote ${env.MYGROUP}:${env.MYARTIFACT} ${env.MYVERSION} latest")], propagate: false, wait: false
+                }
             }
         }
     }
     post {
         always {
             script {
-                archiveArtifacts artifacts: 'ForgeFlower/build/libs/**/*.jar', fingerprint: true
-                //junit 'build/test-results/*/*.xml'
-                //jacoco sourcePattern: '**/src/*/java'
                 if (env.CHANGE_ID == null) { // This is unset for non-PRs
                     discordSend(
                         title: "${DISCORD_PREFIX} Finished ${currentBuild.currentResult}",
