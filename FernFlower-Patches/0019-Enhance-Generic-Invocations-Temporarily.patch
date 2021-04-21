@@ -92,7 +92,7 @@ index 068e44b80f9972be77bfd9fe095a5549edf40a2f..8f69e433dce5541e5f42693c67fbb9f8
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 1c822f357c117f4bc8af4ced1842421d2224af18..4c68bdd8a434ecc0b4dfe2804c1c9c1e1c819626 100644
+index a557614a3a59a270f2a6917b5eb0cf9046db98e8..9d4eae94966f13ef56e710f53f67f84ef5a50cd3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -406,6 +406,7 @@ public class InvocationExprent extends Exprent {
@@ -112,16 +112,16 @@ index 1c822f357c117f4bc8af4ced1842421d2224af18..4c68bdd8a434ecc0b4dfe2804c1c9c1e
                  MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
                  if (md.params.length == descriptor.params.length) {
                    for (int x = 0; x < md.params.length; x++) {
-@@ -500,7 +501,7 @@ public class InvocationExprent extends Exprent {
-         else if (inv.isUnboxingCall() && !inv.shouldForceUnboxing()) {
+@@ -501,7 +502,7 @@ public class InvocationExprent extends Exprent {
            StructClass stClass = DecompilerContext.getStructContext().getClass(classname);
-           for (StructMethod mt : stClass.getMethods()) {
--            if (name.equals(mt.getName()) && !stringDescriptor.equals(mt.getDescriptor())) {
-+            if (name.equals(mt.getName()) && (currCls == null || canAccess(currCls.classStruct, mt)) && !stringDescriptor.equals(mt.getDescriptor())) {
-               MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-               if (md.params.length == descriptor.params.length) {
-                 if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
-@@ -516,6 +517,22 @@ public class InvocationExprent extends Exprent {
+           if (stClass != null) {
+             for (StructMethod mt : stClass.getMethods()) {
+-              if (name.equals(mt.getName()) && !stringDescriptor.equals(mt.getDescriptor())) {
++              if (name.equals(mt.getName()) && (currCls == null || canAccess(currCls.classStruct, mt)) && !stringDescriptor.equals(mt.getDescriptor())) {
+                 MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+                 if (md.params.length == descriptor.params.length) {
+                   if (md.params[i].type == CodeConstants.TYPE_OBJECT) {
+@@ -518,6 +519,22 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -144,7 +144,7 @@ index 1c822f357c117f4bc8af4ced1842421d2224af18..4c68bdd8a434ecc0b4dfe2804c1c9c1e
  
      boolean firstParameter = true;
      for (int i = start; i < lstParameters.size(); i++) {
-@@ -678,27 +695,98 @@ public class InvocationExprent extends Exprent {
+@@ -680,27 +697,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();

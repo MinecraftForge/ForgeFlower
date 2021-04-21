@@ -264,7 +264,7 @@ index 8f69e433dce5541e5f42693c67fbb9f8610821d2..1f27ed6c5ab25460b0e67c728c7fdcaa
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc8ceabe1c 100644
+index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c29c858e27 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -660,7 +660,7 @@ index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -519,20 +746,32 @@ public class InvocationExprent extends Exprent {
+@@ -521,20 +748,32 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -706,7 +706,7 @@ index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc
      }
  
  
-@@ -570,6 +809,10 @@ public class InvocationExprent extends Exprent {
+@@ -572,6 +811,10 @@ public class InvocationExprent extends Exprent {
          }
          */
  
@@ -717,7 +717,7 @@ index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(lstParameters.get(i), types[i], buff, indent, true, ambiguous, true, true, tracer);
  
-@@ -585,8 +828,6 @@ public class InvocationExprent extends Exprent {
+@@ -587,8 +830,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -726,7 +726,7 @@ index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc
      return buf;
    }
  
-@@ -882,6 +1123,162 @@ public class InvocationExprent extends Exprent {
+@@ -884,6 +1125,162 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -889,7 +889,7 @@ index a6a375df951afafd57c739b6585bbf3a1a4e985d..c29602144dd59be01d42a31a12c3b6fc
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -994,6 +1391,18 @@ public class InvocationExprent extends Exprent {
+@@ -996,6 +1393,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticGetClass;
    }
  

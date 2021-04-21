@@ -320,7 +320,7 @@ index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..1a085709ed7a120d109542e4bf710101
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index c29602144dd59be01d42a31a12c3b6fc8ceabe1c..af6e0b9fdfb93a1e11f44a1a122f351deb988e5a 100644
+index a02c40a8a8a2ad1a1888d8a5370625c29c858e27..44927da60f640d940d0ccb6c52d8e4eba42ed2aa 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -166,6 +166,11 @@ public class InvocationExprent extends Exprent {
