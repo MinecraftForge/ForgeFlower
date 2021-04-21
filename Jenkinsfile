@@ -37,9 +37,9 @@ pipeline {
                     sh './gradlew ${GRADLE_ARGS} --refresh-dependencies --continue ForgeFlower:build -x ForgeFlower:test' //Skip tests because we change so much about FF
                 }
                 script {
-                    env.MYGROUP = sh(returnStdout: true, script: './gradlew properties -q | grep "group:" | awk \'{print $2}\'').trim()
-                    env.MYARTIFACT = sh(returnStdout: true, script: './gradlew properties -q | grep "name:" | awk \'{print $2}\'').trim()
-                    env.MYVERSION = sh(returnStdout: true, script: './gradlew properties -q | grep "version:" | awk \'{print $2}\'').trim()
+                    env.MYGROUP = sh(returnStdout: true, script: './gradlew ForgeFlower:properties -q | grep "group:" | awk \'{print $2}\'').trim()
+                    env.MYARTIFACT = sh(returnStdout: true, script: './gradlew ForgeFlower:properties -q | grep "archivesBaseName:" | awk \'{print $2}\'').trim()
+                    env.MYVERSION = sh(returnStdout: true, script: './gradlew ForgeFlower:properties -q | grep "version:" | awk \'{print $2}\'').trim()
                 }
             }
         }
@@ -58,9 +58,6 @@ pipeline {
                 not {
                     changeRequest()
                 }
-            }
-            environment {
-                FORGE_MAVEN = credentials('forge-maven-forge-user')
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'maven-forge-user', usernameVariable: 'MAVEN_USER', passwordVariable: 'MAVEN_PASSWORD')]) {
