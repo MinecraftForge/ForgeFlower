@@ -1,0 +1,61 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: zml <zml@stellardrift.ca>
+Date: Fri, 23 Apr 2021 14:59:09 -0700
+Subject: [PATCH] Expose line mapping information in archive mode
+
+This allows modifying the input classes to have line numbers that match
+the decompiled source, allowing for easier debugging.
+
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
+index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..3ff9f2a770ac93ca28d5d32dff24318d1e271f48 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
+@@ -8,6 +8,7 @@ public interface IResultSaver {
+ 
+   void copyFile(String source, String path, String entryName);
+ 
++  // mapping: a flat array of pairs of (input line number, output line number). null when -bsm=0
+   void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping);
+ 
+   void createArchive(String path, String archiveName, Manifest manifest);
+@@ -18,5 +19,10 @@ public interface IResultSaver {
+ 
+   void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content);
+ 
++  // mapping: a flat array of pairs of (input line number, output line number). null when -bsm=0
++  default void saveClassEntry(String path, String archiveName, String qualifiedName, String entryName, String content, int[] mapping) {
++    this.saveClassEntry(path, archiveName, qualifiedName, entryName, content);
++  }
++
+   void closeArchive(String path, String archiveName);
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+index 9eb1e3b71ee54001c902f11f6fa6c132c5a670fc..5e119e5030efab2bccc1bd96601075c081056339 100644
+--- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
++++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
+@@ -201,7 +201,11 @@ public class ContextUnit {
+               futures.add(executor.submit(() -> {
+                 DecompilerContext.setCurrentContext(clCtx.ctx);
+                 String content = decompiledData.getClassContent(clCtx.cl);
+-                resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, content);
++                int[] mapping = null;
++                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
++                  mapping = DecompilerContext.getBytecodeSourceMapper().getOriginalLinesMapping();
++                }
++                resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, content, mapping);
+                 DecompilerContext.setCurrentContext(null);
+               }));
+             }
+@@ -216,7 +220,11 @@ public class ContextUnit {
+             if (entryName != null) {
+               if (decompiledData.processClass(cl)) {
+                 String content = decompiledData.getClassContent(cl);
+-                resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content);
++                int[] mapping = null;
++                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
++                  mapping = DecompilerContext.getBytecodeSourceMapper().getOriginalLinesMapping();
++                }
++                resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content, mapping);
+               }
+             }
+           }
