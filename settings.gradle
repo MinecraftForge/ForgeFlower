@@ -6,5 +6,6 @@ pluginManagement {
 }
 
 include 'ForgeFlower'
+include 'ForgeFlower9'
 
 project(':ForgeFlower').buildFileName = 'TeamCityIsAnnoying'
