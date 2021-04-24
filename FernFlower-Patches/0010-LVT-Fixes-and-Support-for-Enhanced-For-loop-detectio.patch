@@ -1919,7 +1919,7 @@ index 5168f05b5f073d661ca39c4446c8edbcbf1ccc00..7e41176d17729f6acdf5420c9ed98eb7
                                  new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
                                  // FIXME: for now simply the first type. Should get the first common superclass when possible.
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 46b2f2c2bab6bc401205c3a3523267927beae652..e86b2959dc7c3add12cc82f59f8cb6ab50a53252 100644
+index 46b2f2c2bab6bc401205c3a3523267927beae652..76009831d84f399b9a9dc1b8afc09eff519e000a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -17,6 +17,7 @@ public final class DoStatement extends Statement {
@@ -1930,7 +1930,7 @@ index 46b2f2c2bab6bc401205c3a3523267927beae652..e86b2959dc7c3add12cc82f59f8cb6ab
  
    private int looptype;
  
-@@ -122,6 +123,13 @@ public final class DoStatement extends Statement {
+@@ -122,6 +123,14 @@ public final class DoStatement extends Statement {
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, false, tracer));
          buf.appendIndent(indent).append("}").appendLineSeparator();
          tracer.incrementCurrentSourceLine();
@@ -1941,10 +1941,11 @@ index 46b2f2c2bab6bc401205c3a3523267927beae652..e86b2959dc7c3add12cc82f59f8cb6ab
 +        tracer.incrementCurrentSourceLine();
 +        buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 +        buf.appendIndent(indent).append("}").appendLineSeparator();
++        tracer.incrementCurrentSourceLine();
      }
  
      return buf;
-@@ -139,6 +147,10 @@ public final class DoStatement extends Statement {
+@@ -139,6 +148,10 @@ public final class DoStatement extends Statement {
          }
        case LOOP_WHILE:
          lst.add(getConditionExprent());

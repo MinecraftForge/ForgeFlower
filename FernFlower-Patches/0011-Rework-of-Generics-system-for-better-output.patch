@@ -1305,7 +1305,7 @@ index 60048a473001b72b6eb6b8d903a257c043d76902..899ca15489fb70ff5f81aa3c947ca4c2
                  }
                }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index e86b2959dc7c3add12cc82f59f8cb6ab50a53252..989a9aa6e34c2ac1f8644d84564c7b1ad8468e11 100644
+index 76009831d84f399b9a9dc1b8afc09eff519e000a..46635ec712d20adf9dd3396d2c62846aa8ef6bee 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 @@ -126,6 +126,7 @@ public final class DoStatement extends Statement {
