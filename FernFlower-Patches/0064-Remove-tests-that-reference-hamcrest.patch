@@ -1,0 +1,396 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Curle <curle@gemwire.uk>
+Date: Thu, 29 Apr 2021 00:22:07 +0100
+Subject: [PATCH] Remove tests that reference hamcrest
+
+
+diff --git a/test/org/jetbrains/java/decompiler/BulkDecompilationTest.java b/test/org/jetbrains/java/decompiler/BulkDecompilationTest.java
+deleted file mode 100644
+index 1b5353b37a497db848f47d9aa15459ad3fff3066..0000000000000000000000000000000000000000
+--- a/test/org/jetbrains/java/decompiler/BulkDecompilationTest.java
++++ /dev/null
+@@ -1,110 +0,0 @@
+-/*
+- * Copyright 2000-2014 JetBrains s.r.o.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- * http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.jetbrains.java.decompiler;
+-
+-import org.hamcrest.Matchers;
+-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+-import org.junit.After;
+-import org.junit.Before;
+-import org.junit.Test;
+-
+-import java.io.*;
+-import java.util.Enumeration;
+-import java.util.zip.ZipEntry;
+-import java.util.zip.ZipFile;
+-
+-import static org.junit.Assert.assertThat;
+-import static org.junit.Assert.assertTrue;
+-
+-public class BulkDecompilationTest {
+-  private DecompilerTestFixture fixture;
+-
+-  @Before
+-  public void setUp() throws IOException {
+-    fixture = new DecompilerTestFixture();
+-    fixture.setUp();
+-  }
+-
+-  @After
+-  public void tearDown() {
+-    fixture.tearDown();
+-    fixture = null;
+-  }
+-
+-  @Test
+-  public void testDirectory() {
+-    File classes = new File(fixture.getTempDir(), "classes");
+-    unpack(new File(fixture.getTestDataDir(), "bulk.jar"), classes);
+-
+-    ConsoleDecompiler decompiler = fixture.getDecompiler();
+-    decompiler.addSpace(classes, true);
+-    decompiler.decompileContext();
+-
+-    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
+-  }
+-
+-  @Test
+-  public void testJar() {
+-    ConsoleDecompiler decompiler = fixture.getDecompiler();
+-    decompiler.addSpace(new File(fixture.getTestDataDir(), "bulk.jar"), true);
+-    decompiler.decompileContext();
+-
+-    File unpacked = new File(fixture.getTempDir(), "unpacked");
+-    unpack(new File(fixture.getTargetDir(), "bulk.jar"), unpacked);
+-
+-    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), unpacked);
+-  }
+-
+-  private static void unpack(File archive, File targetDir) {
+-    try {
+-      ZipFile zip = new ZipFile(archive);
+-      try {
+-        Enumeration<? extends ZipEntry> entries = zip.entries();
+-        while (entries.hasMoreElements()) {
+-          ZipEntry entry = entries.nextElement();
+-          if (!entry.isDirectory()) {
+-            File file = new File(targetDir, entry.getName());
+-            assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
+-            InputStream in = zip.getInputStream(entry);
+-            OutputStream out = new FileOutputStream(file);
+-            InterpreterUtil.copyStream(in, out);
+-            out.close();
+-            in.close();
+-          }
+-        }
+-      }
+-      finally {
+-        zip.close();
+-      }
+-    }
+-    catch (IOException e) {
+-      throw new RuntimeException(e);
+-    }
+-  }
+-
+-  private static void compareDirectories(File expected, File actual) {
+-    String[] expectedList = expected.list();
+-    String[] actualList = actual.list();
+-    assertThat(actualList, Matchers.arrayContainingInAnyOrder(expectedList));
+-    for (String name : expectedList) {
+-      File child = new File(expected, name);
+-      if (child.isDirectory()) {
+-        compareDirectories(child, new File(actual, name));
+-      }
+-    }
+-  }
+-}
+diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
+deleted file mode 100644
+index b4af1f7cfd661fe456121f999a495c89dffb1d0f..0000000000000000000000000000000000000000
+--- a/test/org/jetbrains/java/decompiler/LVTTest.java
++++ /dev/null
+@@ -1,63 +0,0 @@
+-/*
+- * Copyright 2000-2014 JetBrains s.r.o.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- * http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.jetbrains.java.decompiler;
+-
+-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+-import org.junit.Test;
+-
+-import java.io.IOException;
+-import java.util.HashMap;
+-import java.util.Map;
+-
+-public class LVTTest extends SingleClassesTestBase {
+-  @Override
+-  protected Map<String, Object> getDecompilerOptions() {
+-    return new HashMap<String, Object>() {{
+-      put(IFernflowerPreferences.DECOMPILE_INNER,"1");
+-      put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1");
+-      put(IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1");
+-      put(IFernflowerPreferences.LOG_LEVEL, "TRACE");
+-      put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
+-      put(IFernflowerPreferences.REMOVE_BRIDGE, "1");
+-      put(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1");
+-    }};
+-  }
+-
+-  @Override
+-    public void setUp() throws IOException {
+-        super.setUp();
+-        fixture.cleanup = false;
+-    }
+-//  @Test public void testMatch1() { doTest("pkg/TestPPMM"); }
+-//  @Test public void testMatchLM() { doTest("pkg/TestLexManosLVT"); }
+-//  @Test public void testMatch1() { doTest("pkg/TestLVT"); }
+-//  @Test public void testMatch1() { doTest("pkg/TestLoopMerging"); }
+-//  @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
+-//  @Test public void testMCWorld() { doTest("net/minecraft/world/World"); }
+-//  @Test public void testMCGuiCmdBlock() { doTest("net/minecraft/client/gui/GuiCommandBlock"); }
+-
+-//  @Test public void testMCWorld() { doTest("net/minecraft/world/World"); }
+-
+-//  @Test public void testMCGuiCmdBlock() { doTest("net/minecraft/client/gui/GuiCommandBlock"); }
+-
+-//  @Test public void testMCBlockFence() { doTest("net/minecraft/block/BlockFence"); }
+-
+-//  @Test public void testMCAbstractTexture() { doTest("net/minecraft/client/multiplayer/ServerAddress"); }
+-//  @Test public void testMCAbstractResourcePack() { doTest("net/minecraft/client/resources/AbstractResourcePack"); }
+-//  @Test public void testMCGuiShareToLan() { doTest("net/minecraft/client/gui/GuiShareToLan"); }
+-//  @Test public void testMCContainerPlayer() { doTest("net/minecraft/inventory/ContainerPlayer"); }
+-  @Test public void testMCContainerPlayer() { doTest("net/minecraft/command/PlayerSelector"); }
+-}
+diff --git a/test/org/jetbrains/java/decompiler/LineNumbersMatchTest.java b/test/org/jetbrains/java/decompiler/LineNumbersMatchTest.java
+deleted file mode 100644
+index 758aa5f3222dfb0b24890ec2225881b7ebf8c898..0000000000000000000000000000000000000000
+--- a/test/org/jetbrains/java/decompiler/LineNumbersMatchTest.java
++++ /dev/null
+@@ -1,33 +0,0 @@
+-/*
+- * Copyright 2000-2014 JetBrains s.r.o.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- * http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.jetbrains.java.decompiler;
+-
+-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+-import org.junit.Test;
+-
+-import java.util.HashMap;
+-import java.util.Map;
+-
+-public class LineNumbersMatchTest extends SingleClassesTestBase {
+-  @Override
+-  protected Map<String, Object> getDecompilerOptions() {
+-    return new HashMap<String, Object>() {{
+-      put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
+-    }};
+-  }
+-
+-  @Test public void testMatch1() { doTest("pkg/TestLineNumbersMatch"); }
+-}
+diff --git a/test/org/jetbrains/java/decompiler/LoopMergingTests.java b/test/org/jetbrains/java/decompiler/LoopMergingTests.java
+deleted file mode 100644
+index ddc15d14e9efaca03115795dbce9266d361b565e..0000000000000000000000000000000000000000
+--- a/test/org/jetbrains/java/decompiler/LoopMergingTests.java
++++ /dev/null
+@@ -1,30 +0,0 @@
+-package org.jetbrains.java.decompiler;
+-
+-import java.io.IOException;
+-import java.util.HashMap;
+-import java.util.Map;
+-
+-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+-import org.junit.Test;
+-
+-public class LoopMergingTests extends SingleClassesTestBase {
+-    @SuppressWarnings("serial")
+-    @Override
+-    protected Map<String, Object> getDecompilerOptions() {
+-      return new HashMap<String, Object>() {{
+-        put(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS, "1");
+-      }};
+-    }
+-
+-    @Override
+-      public void setUp() throws IOException {
+-          super.setUp();
+-          fixture.cleanup = false;
+-      }
+-
+-    @Test
+-    public void testLoopMerging() {
+-        doTest("pkg/TestLoopMerging");
+-    }
+-
+-}
+diff --git a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java b/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
+deleted file mode 100644
+index 087c8102c11b1258d8e3f1615fe64f745b8587d6..0000000000000000000000000000000000000000
+--- a/test/org/jetbrains/java/decompiler/MinecraftDecompilationTest.java
++++ /dev/null
+@@ -1,124 +0,0 @@
+-/*
+- * Copyright 2000-2014 JetBrains s.r.o.
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- * http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-package org.jetbrains.java.decompiler;
+-
+-import org.hamcrest.Matchers;
+-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+-import org.junit.After;
+-import org.junit.Before;
+-import org.junit.Test;
+-
+-import java.io.*;
+-import java.util.Enumeration;
+-import java.util.HashMap;
+-import java.util.Map;
+-import java.util.zip.ZipEntry;
+-import java.util.zip.ZipFile;
+-
+-import static org.junit.Assert.assertThat;
+-import static org.junit.Assert.assertTrue;
+-
+-public class MinecraftDecompilationTest {
+-  private DecompilerTestFixture fixture;
+-
+-  private static final String MC_JAR = "minecraft_ff_in.jar";
+-  @Before
+-  public void setUp() throws IOException {
+-    fixture = new DecompilerTestFixture();
+-    // -din=1 -rbr=0 -dgs=1 -asc=1 -rsy=0
+-    Map<String,Object> mcFFOptions = new HashMap<String,Object>() {{
+-        put(IFernflowerPreferences.DECOMPILE_INNER,"1");
+-        put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1");
+-        put(IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1");
+-        put(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1");
+-    }};
+-    fixture.setUp(mcFFOptions);
+-    if (!new File(fixture.getTestDataDir(), MC_JAR).exists()) {
+-        throw new RuntimeException("Missing "+MC_JAR+" in testData dir - aborting");
+-    }
+-  }
+-
+-  @After
+-  public void tearDown() {
+-//    fixture.tearDown();
+-//    fixture = null;
+-  }
+-
+-//  @Test
+-//  public void testDirectory() {
+-//    File classes = new File(fixture.getTempDir(), "classes");
+-//    unpack(new File(fixture.getTestDataDir(), "mc-fernflower-in.jar"), classes);
+-//
+-//    ConsoleDecompiler decompiler = fixture.getDecompiler();
+-//    decompiler.addSpace(classes, true);
+-//    decompiler.decompileContext();
+-//
+-//    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
+-//  }
+-
+-  @Test
+-  public void testJar() {
+-    ConsoleDecompiler decompiler = fixture.getDecompiler();
+-    decompiler.addSpace(new File(fixture.getTestDataDir(), MC_JAR), true);
+-    decompiler.decompileContext();
+-
+-    File unpacked = new File(fixture.getTempDir(), "unpacked");
+-    unpack(new File(fixture.getTargetDir(), "bulk.jar"), unpacked);
+-
+-//    compareDirectories(new File(fixture.getTestDataDir(), "bulk"), unpacked);
+-  }
+-
+-  private static void unpack(File archive, File targetDir) {
+-    try {
+-      ZipFile zip = new ZipFile(archive);
+-      try {
+-        Enumeration<? extends ZipEntry> entries = zip.entries();
+-        while (entries.hasMoreElements()) {
+-          ZipEntry entry = entries.nextElement();
+-          if (!entry.isDirectory()) {
+-            File file = new File(targetDir, entry.getName());
+-            assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
+-            InputStream in = zip.getInputStream(entry);
+-            OutputStream out = new FileOutputStream(file);
+-            InterpreterUtil.copyStream(in, out);
+-            out.close();
+-            in.close();
+-          }
+-        }
+-      }
+-      finally {
+-        zip.close();
+-      }
+-    }
+-    catch (IOException e) {
+-      throw new RuntimeException(e);
+-    }
+-  }
+-
+-  private static void compareDirectories(File expected, File actual) {
+-    String[] expectedList = expected.list();
+-    String[] actualList = actual.list();
+-    assertThat(actualList, Matchers.arrayContainingInAnyOrder(expectedList));
+-    for (String name : expectedList) {
+-      File child = new File(expected, name);
+-      if (child.isDirectory()) {
+-        compareDirectories(child, new File(actual, name));
+-      }
+-    }
+-  }
+-}
