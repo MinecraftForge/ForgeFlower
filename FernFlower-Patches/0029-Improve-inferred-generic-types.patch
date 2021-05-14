@@ -264,7 +264,7 @@ index 8f69e433dce5541e5f42693c67fbb9f8610821d2..1f27ed6c5ab25460b0e67c728c7fdcaa
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c29c858e27 100644
+index 4dc461a2da1073a74d9df787ff21d9f27a5a59f2..7848ea1ea8169049f2b7e43eafba3fc7cdb9ed90 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -283,7 +283,7 @@ index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c2
 +  private boolean isInvocationInstance = false;
    private boolean forceBoxing = false;
    private boolean forceUnboxing = false;
-   private boolean isSyntheticGetClass = false;
+   private boolean isSyntheticNullCheck = false;
 @@ -173,45 +176,272 @@ public class InvocationExprent extends Exprent {
  
    @Override
@@ -890,7 +890,7 @@ index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c2
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
 @@ -996,6 +1393,18 @@ public class InvocationExprent extends Exprent {
-     return isSyntheticGetClass;
+     return isSyntheticNullCheck;
    }
  
 +  public List<VarType> getGenericArgs() {
