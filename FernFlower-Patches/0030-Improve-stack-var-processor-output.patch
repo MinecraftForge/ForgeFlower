@@ -38,7 +38,7 @@ index 9942e125766f6162506ff6418f00e8bcbe6d8072..7f80109f80ec5686fd6934504022be51
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 767f6bdb92ecf0ba0bc4a437b8bf8482fa47bdea..261756b9e05f7e11d1c77e52e924cfefad988f45 100644
+index fa48cab3cb2b7da418322db7c10952f2f965e495..172e8a21885bb07dbbbeacf1f548d19605b079d5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 @@ -132,6 +132,11 @@ public class SimplifyExprentsHelper {
@@ -320,13 +320,13 @@ index 1232e643fae990a7a3a9ee5f2e2ece46e607f934..1a085709ed7a120d109542e4bf710101
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a02c40a8a8a2ad1a1888d8a5370625c29c858e27..44927da60f640d940d0ccb6c52d8e4eba42ed2aa 100644
+index 7848ea1ea8169049f2b7e43eafba3fc7cdb9ed90..64e0373955a977a5c4de9aa804b4ee9736f6b821 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -166,6 +166,11 @@ public class InvocationExprent extends Exprent {
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
-     isSyntheticGetClass = expr.isSyntheticGetClass();
+     isSyntheticNullCheck = expr.isSyntheticNullCheck();
 +
 +    if (invocationTyp == INVOKE_DYNAMIC && !isStatic && instance != null && !lstParameters.isEmpty()) {
 +      // method reference, instance and first param are expected to be the same var object
