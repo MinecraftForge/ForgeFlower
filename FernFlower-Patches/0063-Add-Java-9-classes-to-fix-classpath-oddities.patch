@@ -155,7 +155,7 @@ index d75c93deecbdd8c43a5f9d1a2a7a7f4e7e13e8cf..789060ca39b7ff5f897c3150554f97d0
        this.type = type;
        this.externalPath = externalPath;
        this.internalPath = internalPath;
-+      this.data = new byte[] {};
++      this.data = null;
      }
    }
  }
