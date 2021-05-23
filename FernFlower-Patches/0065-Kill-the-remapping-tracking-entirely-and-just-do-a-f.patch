@@ -1,0 +1,99 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Fri, 21 May 2021 16:08:27 +0100
+Subject: [PATCH] Kill the remapping tracking entirely, and just do a full
+ graph replace on contraction. Not as efficient, but guaranteed to work.. Ref:
+ https://github.com/MinecraftForge/FernFlowerLegacy/commit/58f09199efda8b5923200b57f1e7c22c63f61b4d
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
+index db70f64a91a21c04b1277b6da9b38ef7f60c1cf4..4f8701bcc88ab069e45c07e07e60753884caf95a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
+@@ -40,7 +40,7 @@ public class PPandMMHelper {
+ 
+   private boolean exprentReplaced;
+   private VarProcessor varProc;
+-  private Map<VarVersionPair, VarVersionPair> remaps = new HashMap<VarVersionPair, VarVersionPair>();
++  private DirectGraph dgraph;
+ 
+   public PPandMMHelper(VarProcessor varProc) {
+     this.varProc = varProc;
+@@ -49,7 +49,7 @@ public class PPandMMHelper {
+   public boolean findPPandMM(RootStatement root) {
+ 
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+-    DirectGraph dgraph = flatthelper.buildDirectGraph(root);
++    dgraph = flatthelper.buildDirectGraph(root);
+ 
+     LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
+     stack.add(dgraph.first);
+@@ -72,13 +72,10 @@ public class PPandMMHelper {
+       stack.addAll(node.succs);
+     }
+ 
+-    updateVersions(dgraph);
+-
+     return res;
+   }
+ 
+   private boolean processExprentList(List<Exprent> lst) {
+-
+     boolean result = false;
+ 
+     for (int i = 0; i < lst.size(); i++) {
+@@ -148,7 +145,7 @@ public class PPandMMHelper {
+           if (econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
+             Exprent left = as.getLeft();
+ 
+-            VarType condtype = econd.getExprType();
++            VarType condtype = left.getExprType();
+             if (exprsEqual(left, econd) && (midlayer == null || midlayer.equals(condtype))) {
+               FunctionExprent ret = new FunctionExprent(
+                 func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
+@@ -157,11 +154,7 @@ public class PPandMMHelper {
+ 
+               exprentReplaced = true;
+               if (!left.equals(econd)) {
+-                VarVersionPair _old = new VarVersionPair((VarExprent)left);
+-                VarVersionPair _new = new VarVersionPair((VarExprent)econd);
+-                if (_old.var > _new.var) { // Try and prevent infinite loops here by only merging 'down'
+-                  remaps.put(_old, _new);
+-                }
++                updateVersions(dgraph, new VarVersionPair((VarExprent) left), new VarVersionPair((VarExprent) econd));
+               }
+               return ret;
+             }
+@@ -194,17 +187,7 @@ public class PPandMMHelper {
+   }
+ 
+ 
+-  private void updateVersions(DirectGraph graph) {
+-    if (remaps.isEmpty()) return;
+-
+-    for (Entry<VarVersionPair, VarVersionPair> remap : remaps.entrySet()) {
+-      VarVersionPair target = remap.getValue();
+-      while (remaps.containsKey(target)) {
+-        target = remaps.get(target);
+-      }
+-      remaps.put(remap.getKey(), target);
+-    }
+-
++  private void updateVersions(DirectGraph graph, final VarVersionPair oldVVP, final VarVersionPair newVVP) {
+     graph.iterateExprents(new DirectGraph.ExprentIterator() {
+       @Override
+       public int processExprent(Exprent exprent) {
+@@ -214,10 +197,9 @@ public class PPandMMHelper {
+         for (Exprent expr : lst) {
+           if (expr.type == Exprent.EXPRENT_VAR) {
+             VarExprent var = (VarExprent)expr;
+-            VarVersionPair nvar = remaps.get(new VarVersionPair(var));
+-            if (nvar != null) {
+-              var.setIndex(nvar.var);
+-              var.setVersion(nvar.version);
++            if (var.getIndex() == oldVVP.var && var.getVersion() == oldVVP.version) {
++              var.setIndex(newVVP.var);
++              var.setVersion(newVVP.version);
+             }
+           }
+         }

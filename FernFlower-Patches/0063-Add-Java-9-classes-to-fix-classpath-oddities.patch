@@ -126,7 +126,7 @@ index a154193f9b9f698873c62af08d1211d0e79b8ae4..5106daba215d0bf458bf57db4f4209b6
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
-index d75c93deecbdd8c43a5f9d1a2a7a7f4e7e13e8cf..789060ca39b7ff5f897c3150554f97d00bdbf41e 100644
+index d75c93deecbdd8c43a5f9d1a2a7a7f4e7e13e8cf..9b82853162f9d0a55dc14c59c774ec65090079b2 100644
 --- a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
 +++ b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
 @@ -144,7 +144,7 @@ public class LazyLoader {
