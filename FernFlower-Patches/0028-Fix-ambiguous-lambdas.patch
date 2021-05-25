@@ -5,10 +5,10 @@ Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 4933b5c1d375b7beacbb521bc8770cf295e7d98c..cc67f34aeede9a41bd78aeefdf6ac4a88d79348c 100644
+index eef5cdaf7fa5c425abddea9ab0717f6844c97460..7b554126313ad7abc3c1a6773a8f1ee69549ca93 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -910,6 +910,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -913,6 +913,9 @@ public class ExprProcessor implements CodeConstants {
        (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
        (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
  
@@ -18,7 +18,7 @@ index 4933b5c1d375b7beacbb521bc8770cf295e7d98c..cc67f34aeede9a41bd78aeefdf6ac4a8
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
      // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-@@ -924,6 +927,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -927,6 +930,8 @@ public class ExprProcessor implements CodeConstants {
  
      if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
  
@@ -27,7 +27,7 @@ index 4933b5c1d375b7beacbb521bc8770cf295e7d98c..cc67f34aeede9a41bd78aeefdf6ac4a8
      if (quote) buffer.append('(');
  
      if (exprent.type == Exprent.EXPRENT_CONST) {
-@@ -956,4 +961,12 @@ public class ExprProcessor implements CodeConstants {
+@@ -959,4 +964,12 @@ public class ExprProcessor implements CodeConstants {
      return VarType.VARTYPE_INT.isStrictSuperset(type) ||
             type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
    }
@@ -41,7 +41,7 @@ index 4933b5c1d375b7beacbb521bc8770cf295e7d98c..cc67f34aeede9a41bd78aeefdf6ac4a8
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index c5152f9053b274870b5da08acbddb89b12ac0516..ebb845dff674965ff3e0e8011db33dae5270e24d 100644
+index 16158a3d134c7af2ecdf58a539ff1d33ba80c6b9..4dc461a2da1073a74d9df787ff21d9f27a5a59f2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -806,7 +806,8 @@ public class InvocationExprent extends Exprent {

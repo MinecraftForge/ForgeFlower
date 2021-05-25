@@ -1,27 +1,30 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Justin <jrd2558@gmail.com>
 Date: Thu, 26 Jul 2018 13:28:40 -0700
-Subject: [PATCH] Synthetic getClass cleanup
+Subject: [PATCH] Synthetic getClass/Objects.requireNonNull cleanup
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 474ffda1b9d610968bd12160f2153713b37f2db9..4933b5c1d375b7beacbb521bc8770cf295e7d98c 100644
+index 474ffda1b9d610968bd12160f2153713b37f2db9..eef5cdaf7fa5c425abddea9ab0717f6844c97460 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -617,6 +617,20 @@ public class ExprProcessor implements CodeConstants {
+@@ -617,6 +617,23 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_pop:
            stack.pop();
-+          // check for synthetic getClass calls added by the compiler
++          // check for synthetic getClass (J8) / Objects.requireNonNull() (J9+) calls added by the compiler
 +          // see https://stackoverflow.com/a/20130641
 +          if (i > 0) {
 +            Exprent last = exprlist.get(exprlist.size() - 1);
 +            if (last.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)last).getRight().type == Exprent.EXPRENT_INVOCATION) {
-+              InvocationExprent invocation = (InvocationExprent)((AssignmentExprent)last).getRight();
-+              if (i + 1 < seq.length() && !invocation.isStatic() && invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
-+                int nextOpc = seq.getInstr(i + 1).opcode;
-+                if (nextOpc >= opc_aconst_null && nextOpc <= opc_ldc2_w) {
-+                  invocation.setSyntheticGetClass();
++              InvocationExprent invocation = (InvocationExprent) ((AssignmentExprent) last).getRight();
++              if (i + 1 < seq.length()) {
++                if ((!invocation.isStatic() && invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) // J8
++                  || (invocation.isStatic() && invocation.getClassname().equals("java/util/Objects") && invocation.getName().equals("requireNonNull") && invocation.getStringDescriptor().equals("(Ljava/lang/Object;)Ljava/lang/Object;"))) { // J9+
++                  int nextOpc = seq.getInstr(i + 1).opcode;
++                  if (nextOpc >= opc_aconst_null && nextOpc <= opc_ldc2_w) {
++                    invocation.setSyntheticNullCheck();
++                  }
 +                }
 +              }
 +            }
@@ -30,7 +33,7 @@ index 474ffda1b9d610968bd12160f2153713b37f2db9..4933b5c1d375b7beacbb521bc8770cf2
          case opc_pop2:
            if (stack.getByOffset(-1).getExprType().stackSize == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 986a8a72ec138ea637d3446ed2e823f6100c31cc..767f6bdb92ecf0ba0bc4a437b8bf8482fa47bdea 100644
+index 986a8a72ec138ea637d3446ed2e823f6100c31cc..fa48cab3cb2b7da418322db7c10952f2f965e495 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 @@ -71,6 +71,10 @@ public class SimplifyExprentsHelper {
@@ -44,7 +47,7 @@ index 986a8a72ec138ea637d3446ed2e823f6100c31cc..767f6bdb92ecf0ba0bc4a437b8bf8482
          }
  
          res |= changed;
-@@ -505,21 +509,43 @@ public class SimplifyExprentsHelper {
+@@ -505,21 +509,53 @@ public class SimplifyExprentsHelper {
      return false;
    }
  
@@ -69,10 +72,12 @@ index 986a8a72ec138ea637d3446ed2e823f6100c31cc..767f6bdb92ecf0ba0bc4a437b8bf8482
  
 -      if (!invocation.isStatic() && invocation.getInstance().type == Exprent.EXPRENT_VAR && invocation.getName().equals("getClass") &&
 -          invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
-+      if (!invocation.isStatic() &&
-+           invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) {
++      if ((!invocation.isStatic() &&
++           invocation.getName().equals("getClass") && invocation.getStringDescriptor().equals("()Ljava/lang/Class;")) // J8
++        || (invocation.isStatic() && invocation.getClassname().equals("java/util/Objects") && invocation.getName().equals("requireNonNull")
++            && invocation.getStringDescriptor().equals("(Ljava/lang/Object;)Ljava/lang/Object;"))) { // J9+
 +
-+        if (invocation.isSyntheticGetClass()) {
++        if (invocation.isSyntheticNullCheck()) {
 +          return true;
 +        }
  
@@ -81,27 +86,35 @@ index 986a8a72ec138ea637d3446ed2e823f6100c31cc..767f6bdb92ecf0ba0bc4a437b8bf8482
          lstExprents.add(second);
  
 -        for (Exprent expr : lstExprents) {
-+        while (!lstExprents.isEmpty()){
++        final Exprent target;
++        if (invocation.isStatic()) { // Objects.requireNonNull(target) (J9+)
++          // detect target type
++          target = invocation.getLstParameters().get(0);
++        } else { // target.getClass() (J8)
++          target = invocation.getInstance();
++        }
++
++        while (!lstExprents.isEmpty()) {
 +          Exprent expr = lstExprents.removeFirst();
 +          lstExprents.addAll(expr.getAllExprents());
            if (expr.type == Exprent.EXPRENT_NEW) {
              NewExprent newExpr = (NewExprent)expr;
              if (newExpr.getConstructor() != null && !newExpr.getConstructor().getLstParameters().isEmpty() &&
 -                newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance())) {
-+              (newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance()) ||
-+                newExpr.getConstructor().getLstParameters().get(0).getExprType().equals(invocation.getInstance().getExprType()))) {
++              (newExpr.getConstructor().getLstParameters().get(0).equals(target) ||
++                newExpr.getConstructor().getLstParameters().get(0).getExprType().equals(target.getExprType()))) {
  
                String classname = newExpr.getNewType().value;
                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 9d4eae94966f13ef56e710f53f67f84ef5a50cd3..c5152f9053b274870b5da08acbddb89b12ac0516 100644
+index 9d4eae94966f13ef56e710f53f67f84ef5a50cd3..16158a3d134c7af2ecdf58a539ff1d33ba80c6b9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
    private List<VarType> genericArgs = new ArrayList<>();
    private boolean forceBoxing = false;
    private boolean forceUnboxing = false;
-+  private boolean isSyntheticGetClass = false;
++  private boolean isSyntheticNullCheck = false;
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
@@ -109,7 +122,7 @@ index 9d4eae94966f13ef56e710f53f67f84ef5a50cd3..c5152f9053b274870b5da08acbddb89b
  
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
-+    isSyntheticGetClass = expr.isSyntheticGetClass();
++    isSyntheticNullCheck = expr.isSyntheticNullCheck();
    }
  
    @Override
@@ -117,12 +130,12 @@ index 9d4eae94966f13ef56e710f53f67f84ef5a50cd3..c5152f9053b274870b5da08acbddb89b
      return bootstrapArguments;
    }
  
-+  public void setSyntheticGetClass() {
-+    isSyntheticGetClass = true;
++  public void setSyntheticNullCheck() {
++    isSyntheticNullCheck = true;
 +  }
 +
-+  public boolean isSyntheticGetClass() {
-+    return isSyntheticGetClass;
++  public boolean isSyntheticNullCheck() {
++    return isSyntheticNullCheck;
 +  }
 +
    @Override

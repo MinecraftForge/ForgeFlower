@@ -1,0 +1,155 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: zml <zml@stellardrift.ca>
+Date: Thu, 13 May 2021 23:55:33 -0700
+Subject: [PATCH] More correctly handle inner class synthetic parameters
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index fe372662be3fbd310f94831b47f21b92033a851c..f50e767ab81de739cad2059b5a8279fcd7cdba25 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -35,6 +35,8 @@ import java.util.*;
+ import java.util.Map.Entry;
+ 
+ public class NestedClassProcessor {
++  public static final String ENUM_SYNTHETIC_SUPER = "<synthetic_super>";
++
+   public void processClass(ClassNode root, ClassNode node) {
+     // hide synthetic lambda content methods
+     if (node.type == ClassNode.CLASS_LAMBDA && !node.lambdaInformation.is_method_reference) {
+@@ -386,7 +388,6 @@ public class NestedClassProcessor {
+     for (ClassNode nd : node.nested) {
+       if (nd.type != ClassNode.CLASS_LAMBDA &&
+           !nd.classStruct.isSynthetic() &&
+-          (nd.access & CodeConstants.ACC_STATIC) == 0 &&
+           (nd.access & CodeConstants.ACC_INTERFACE) == 0) {
+         clTypes |= nd.type;
+ 
+@@ -503,23 +504,12 @@ public class NestedClassProcessor {
+ 
+       if (interPairMask == null) { // member or local and never instantiated
+         interPairMask = interMask != null ? new ArrayList<>(interMask) : new ArrayList<>();
+-
+-        boolean found = false;
+-
+-        for (int i = 0; i < interPairMask.size(); i++) {
+-          if (interPairMask.get(i) != null) {
+-            if (found) {
+-              interPairMask.set(i, null);
+-            }
+-            found = true;
+-          }
+-        }
++      } else {
++        mergeListSignatures(interPairMask, interMask, true);
+       }
+ 
+-      mergeListSignatures(interPairMask, interMask, true);
+-
+       for (VarFieldPair pair : interPairMask) {
+-        if (pair != null && !pair.fieldKey.isEmpty()) {
++        if (pair != null && !pair.fieldKey.isEmpty() && !NestedClassProcessor.ENUM_SYNTHETIC_SUPER.equals(pair.fieldKey)) {
+           nestedNode.mapFieldsToVars.put(pair.fieldKey, pair.varPair);
+         }
+       }
+@@ -764,7 +754,14 @@ public class NestedClassProcessor {
+           List<VarFieldPair> fields = new ArrayList<>(md.params.length);
+ 
+           int varIndex = 1;
+-          for (int i = 0; i < md.params.length; i++) {  // no static methods allowed
++          int start = 0;
++          if ((wrapper.getClassStruct().getAccessFlags() & CodeConstants.ACC_ENUM) != 0) { // enums have 2x synthetic params. not handled by normal detection because they go to the superclass constructor rather than to synthetic fields
++            fields.add(new VarFieldPair(NestedClassProcessor.ENUM_SYNTHETIC_SUPER, new VarVersionPair(-1, 0)));
++            fields.add(new VarFieldPair(NestedClassProcessor.ENUM_SYNTHETIC_SUPER, new VarVersionPair(-1, 0)));
++            varIndex += 2;
++            start += 2;
++          }
++          for (int i = start; i < md.params.length; i++) {  // no static methods allowed
+             String keyField = getEnclosingVarField(cl, method, graph, varIndex);
+             fields.add(keyField == null ? null : new VarFieldPair(keyField, new VarVersionPair(-1, 0))); // TODO: null?
+             varIndex += md.params[i].stackSize;
+@@ -819,17 +816,31 @@ public class NestedClassProcessor {
+     return fd.getName().contains("$") && fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_PRIVATE);
+   }
+ 
++  /**
++   * Merge two sets of method signatures.
++   *
++   * This ensures that synthetic parameters are properly captured when field writes may go through another constructor.
++   *
++   * @param first the list to modify
++   * @param second the list compared against
++   * @param both if the comparison list should also be modified to align
++   */
+   private static void mergeListSignatures(List<VarFieldPair> first, List<VarFieldPair> second, boolean both) {
+-    int i = 1;
++    // Upstream this merges from the end of the list forwards
++    // However, synthetic parameters are added at the beginnings of method signatures (at least usually)
++    // so we really want to start from the beginning
++    // if it ends up that this assumption is not true, we'd have to do some sort of fuzzy matching here, or earlier
++    // on traverse multiple steps in the graph in getEnclosingVarField
++    int i = 0;
+ 
+-    while (first.size() > i && second.size() > i) {
+-      VarFieldPair fObj = first.get(first.size() - i);
+-      VarFieldPair sObj = second.get(second.size() - i);
++    while (i < first.size() && i < second.size()) {
++      VarFieldPair fObj = first.get(i);
++      VarFieldPair sObj = second.get(i);
+ 
+       if (!isEqual(both, fObj, sObj)) {
+-        first.set(first.size() - i, null);
++        first.set(i, null);
+         if (both) {
+-          second.set(second.size() - i, null);
++          second.set(i, null);
+         }
+       }
+       else if (fObj != null) {
+@@ -844,44 +855,15 @@ public class NestedClassProcessor {
+       i++;
+     }
+ 
+-    for (int j = 1; j <= first.size() - i; j++) {
++    for (int j = i; j < first.size(); j++) {
+       first.set(j, null);
+     }
+ 
+     if (both) {
+-      for (int j = 1; j <= second.size() - i; j++) {
++      for (int j = i; j < second.size(); j++) {
+         second.set(j, null);
+       }
+     }
+-
+-    // first
+-    if (first.isEmpty()) {
+-      if (!second.isEmpty() && both) {
+-        second.set(0, null);
+-      }
+-    }
+-    else if (second.isEmpty()) {
+-      first.set(0, null);
+-    }
+-    else {
+-      VarFieldPair fObj = first.get(0);
+-      VarFieldPair sObj = second.get(0);
+-
+-      if (!isEqual(both, fObj, sObj)) {
+-        first.set(0, null);
+-        if (both) {
+-          second.set(0, null);
+-        }
+-      }
+-      else if (fObj != null) {
+-        if (fObj.varPair.var == -1) {
+-          fObj.varPair = sObj.varPair;
+-        }
+-        else {
+-          sObj.varPair = fObj.varPair;
+-        }
+-      }
+-    }
+   }
+ 
+   private static boolean isEqual(boolean both, VarFieldPair fObj, VarFieldPair sObj) {

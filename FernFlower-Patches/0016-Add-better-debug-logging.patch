@@ -4,6 +4,32 @@ Date: Mon, 25 Sep 2017 13:46:14 -0700
 Subject: [PATCH] Add better debug logging
 
 
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 632a12c7bee16de80b5edc011d4aac783b4dc76a..490c01566b62aab791ef7be41ec0852fbb966ccc 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -939,7 +939,7 @@ public class ClassWriter {
+             tracer.addTracer(codeTracer);
+           }
+           catch (Throwable t) {
+-            String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.";
++            String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + node.classStruct.qualifiedName + " couldn't be written.";
+             DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
+             methodWrapper.decompiledWithErrors = true;
+           }
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+index 438b04c518f193ac3b229701ddfdaf7cde5cad6e..9ce662b88d6a7406784b8aa1b4e1dc6700cebaa6 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+@@ -122,7 +122,7 @@ public class ClassWrapper {
+         }
+       }
+       catch (Throwable t) {
+-        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
++        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
+         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
+         isError = true;
+       }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 index 36d1d6c4ae8e3b9f1a64dae514d9efa65722033a..7c91206d1b64b9873fa24d6d3ad38e736413c0a3 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java

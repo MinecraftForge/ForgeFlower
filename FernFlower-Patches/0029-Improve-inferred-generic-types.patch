@@ -5,7 +5,7 @@ Subject: [PATCH] Improve inferred generic types
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index d91d9faebf718192a679c436792a54c24bed8c63..01b9cef3bb535025f816f18acab5951083e4ec55 100644
+index 9c6dd387cce2377ffb3eefd7e55aa4b5a04953e7..2ee52fc024823932bbbe01d99928cb95287456cf 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
@@ -16,7 +16,7 @@ index d91d9faebf718192a679c436792a54c24bed8c63..01b9cef3bb535025f816f18acab59510
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -88,6 +89,7 @@ public interface IFernflowerPreferences {
+@@ -90,6 +91,7 @@ public interface IFernflowerPreferences {
      defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
  
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
@@ -264,7 +264,7 @@ index 8f69e433dce5541e5f42693c67fbb9f8610821d2..1f27ed6c5ab25460b0e67c728c7fdcaa
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c29c858e27 100644
+index 4dc461a2da1073a74d9df787ff21d9f27a5a59f2..286c050b26e0b5e46f846e670b0e84911d208c64 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -283,7 +283,7 @@ index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c2
 +  private boolean isInvocationInstance = false;
    private boolean forceBoxing = false;
    private boolean forceUnboxing = false;
-   private boolean isSyntheticGetClass = false;
+   private boolean isSyntheticNullCheck = false;
 @@ -173,45 +176,272 @@ public class InvocationExprent extends Exprent {
  
    @Override
@@ -303,7 +303,7 @@ index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c2
 +    StructClass mthCls = DecompilerContext.getStructContext().getClass(classname);
 +
 +    if (desc != null && mthCls != null) {
-+      boolean isNew = functype == TYP_INIT && mthCls.getSignature() != null;
++      boolean isNew = functype == TYP_INIT;
 +      boolean isGenNew = isNew && mthCls.getSignature() != null;
 +      if (desc.getSignature() != null || isGenNew) {
 +        Map<VarType, List<VarType>> named = getNamedGenerics();
@@ -463,7 +463,7 @@ index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c2
 +
 +          int j = 0;
 +          for (int i = start; i < lstParameters.size(); ++i) {
-+            if (mask == null || mask.get(i) != null) {
++            if (mask == null || mask.get(i) == null) {
 +              VarType paramType = desc.getSignature().parameterTypes.get(j++);
 +              if (paramType.isGeneric()) {
 +
@@ -890,7 +890,7 @@ index ebb845dff674965ff3e0e8011db33dae5270e24d..a02c40a8a8a2ad1a1888d8a5370625c2
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
 @@ -996,6 +1393,18 @@ public class InvocationExprent extends Exprent {
-     return isSyntheticGetClass;
+     return isSyntheticNullCheck;
    }
  
 +  public List<VarType> getGenericArgs() {
