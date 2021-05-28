@@ -264,7 +264,7 @@ index 8f69e433dce5541e5f42693c67fbb9f8610821d2..1f27ed6c5ab25460b0e67c728c7fdcaa
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 4dc461a2da1073a74d9df787ff21d9f27a5a59f2..7848ea1ea8169049f2b7e43eafba3fc7cdb9ed90 100644
+index 4dc461a2da1073a74d9df787ff21d9f27a5a59f2..286c050b26e0b5e46f846e670b0e84911d208c64 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -303,7 +303,7 @@ index 4dc461a2da1073a74d9df787ff21d9f27a5a59f2..7848ea1ea8169049f2b7e43eafba3fc7
 +    StructClass mthCls = DecompilerContext.getStructContext().getClass(classname);
 +
 +    if (desc != null && mthCls != null) {
-+      boolean isNew = functype == TYP_INIT && mthCls.getSignature() != null;
++      boolean isNew = functype == TYP_INIT;
 +      boolean isGenNew = isNew && mthCls.getSignature() != null;
 +      if (desc.getSignature() != null || isGenNew) {
 +        Map<VarType, List<VarType>> named = getNamedGenerics();
@@ -463,7 +463,7 @@ index 4dc461a2da1073a74d9df787ff21d9f27a5a59f2..7848ea1ea8169049f2b7e43eafba3fc7
 +
 +          int j = 0;
 +          for (int i = start; i < lstParameters.size(); ++i) {
-+            if (mask == null || mask.get(i) != null) {
++            if (mask == null || mask.get(i) == null) {
 +              VarType paramType = desc.getSignature().parameterTypes.get(j++);
 +              if (paramType.isGeneric()) {
 +
