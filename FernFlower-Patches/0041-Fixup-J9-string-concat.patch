@@ -1,0 +1,304 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: JDLogic <jrd2558@gmail.com>
+Date: Mon, 31 May 2021 21:28:33 -0600
+Subject: [PATCH] Fixup J9 string concat
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
+index a41e8de55f8edf43d7271ec02b6bca1e14138a1b..26c425162a7d00d3ad72b3c5c6f4e582a3a18216 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
+@@ -44,7 +44,10 @@ public final class ConcatenationHelper {
+       }
+       else if ("makeConcatWithConstants".equals(iex.getName())) { // java 9 style
+         List<Exprent> parameters = extractParameters(iex.getBootstrapArguments(), iex);
+-        if (parameters.size() >= 2) {
++        if (parameters.size() >= 1) {
++          if (!parameters.get(0).getExprType().equals(VarType.VARTYPE_STRING)) {
++            parameters.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
++          }
+           return createConcatExprent(parameters, expr.bytecode);
+         }
+       }
+diff --git a/testData/classes/java11/TestJava11StringConcat.class b/testData/classes/java11/TestJava11StringConcat.class
+index 8ec1fbd7849ee94217014605f9d8e94f18806fb7..f785e9117ce15ca6cb0359dc7daf24a37d8c2bd6 100644
+GIT binary patch
+delta 474
+zcmZXP%TB^j5QhJ0r9IpP+JXX=i#Lh|yr41Bjd4eUD<8m^NYsrO=vtnEoELDbD>rVs
+zU~A%|_z=c94bcS8V*Z&k-<*HWm+>K*pWopOz%jZBm?&7Bmn;xm3mPgGbkt1LO{`C=
+z&&gOY7zbTK!|Tb8R&g$a(fz~iDIsbc67pVe`g(RE5GQ2Mhr?hTjIJLq2EpC%W}Gpw
+zA+VXk7SaOSN;3itr8xmlsVyBk(wo?keex}WPHiF(nebJ6S5Bx&`|^d}=|Em-ecRxr
+z)rs-S?8-4AXIf#B<U4~aKz$~KwCZqG<6r5l!goVX@y0pfk9N3PMrKaenO$Nc?z`<!
+z%`M`q3}%s=<G+uWpIV_BT*O@lE!cCs%E~LiEQh@RKe)z*4!1Sr(P2$6-ohT*C}M@{
+Q5<4jWVie0!T#I7$2cSYQ?*IS*
+
+delta 280
+zcmYLDJ5Iw;5S;aM>=)<%gE%2^eg-A3qbLmpJ!e2jAki5SAAk!`z`Fofpg^D$X(MqI
+zdMFX|++>TH-I>+S?)A49ef@2B09H5)P(Z!OzTJf2$j7md?(_WB^d(t%@CEgYG|e{I
+z!}a~;ZFZO5Y-%1tjb0gjlr&B(SIna<)c`~DDT($GS#fH9WG=CZoOkzB5WlFQ`E`<W
+zmyxy<1DQb7oCahe7Zx9oH#UMI(aS~qTYwT#n=2J|4o;g|8I|05QoZ%T=`x_o3l3_S
+VkOS_FFvA!j8l0<i?A=z5oqw%tARYh!
+
+diff --git a/testData/classes/java9/TestJava9StringConcat.class b/testData/classes/java9/TestJava9StringConcat.class
+index 721a0ed9499e46d3ea2ea1853198faba1186a168..a918e551dcc37746fc03616a678b01e0fb1f8062 100644
+GIT binary patch
+delta 492
+zcmZXPy-osA5QWdMvb+2VET965fPXA3_=h%HnAnkMWou(1Q5!L^r3ueK_64jgth6vD
+zTUc57BEE(3+zqjSTbwg@=DT-he)KQ1`TZMw0ysoB4g*UT<B|n|Z6ShH3mR$$>IT*(
+z)u%+%>yNyypyBj<H?o?)@P>EyH^+joa3Cl+y~)eTk%^cfb2=D!BX4;1aNhTB2iK#t
+zj&&0oNo*ozVoQ12L_>Mjgrhv?=cKDO(eiuZS^`ZvA`mg)s`8HiC{5Y(pXFWl{maPN
+zSm)5{L^(3MQscZ;=%TW%56Bw>L4vA>Nwr-PDXKziTvMZ)t{pJM>kOSIw}|wVu9ICL
+z5p(TMz<4~zuaL|jJLUg>FSi5raQ1hboQ2$!uF^RIjB>z*=HMC|=2?!QfNgpl;-HOP
+VbWp@H6D77#{fnWNL#>2b{R43FF*yJL
+
+delta 264
+zcmYjLyAr`r5Ir}S<cfDZ;}vg%%Ft-_{y<}f8C?wN^*VEZz)z%6s8oJLPtDkyhAqzS
+zp0m4WZ{ndl_s``DV1k~BFj5xPSqlt#0|f)cQ~xZ>Y%tJaFr;R#>+QYWaywsp8+Wx&
+z>aYb$F_aM%sHhy52R7za)TGab!hoa5mVB~4>&S}chq??M`PORkr42J7@>Idekt_&>
+z9PxZELYz(=pnfqC4U`49|CB6oF~kGq$V=1TPLb{<XjelLP0A+C)X_!*Hqz85NKtn)
+G0p`99+8_%6
+
+diff --git a/testData/classes/pkg/TestStringConcat.class b/testData/classes/pkg/TestStringConcat.class
+index 029207376cef59555729fc47605dda16cd3b41b5..edc657d27ad166c0348698b9b840e17e06a563d5 100644
+GIT binary patch
+delta 387
+zcmZ8cOHRWu6rAUf#0sI%q-lUQP$0Ak#1x6L;UlqO(Idc~6VQFnQ27EJfmIM7u|`~=
+z7wEQEKs-lOR9N!ZGxOd&duG47H(%dx9{>h8^-x3NV#k9(Vqn)m$H1P%zQln<YS^Jf
+zSEA=4bCFN3pH}VB!{g|T(94E;PHF9uP)P$qlnp1J7tT612(cy+=RS^bY@qO=a6+Jr
+zw<1_dDWmt9<^<?lnucrqD6?!3IE1mT`=S{ItU1hpfH6d)a_&XC<QOeNvvRb!8vpfd
+zvKGT&ofFRaPZpoaJH*`!tiUg^(kfvGk}pLGuY~i=1;oP^W82KOu>BiRaD-s5@jqgz
+OGhDQGxT(d(0_`6J-zr4_
+
+delta 237
+zcmYj~PY%IA7{%W=O|@x?s+OYlw?&)GMl2EMa4VU$#1+^G3kPrk7qD{&@l7{OGQT(P
+zy?ozXt(Uoed~SCDOB4>Oh%9s*2t*oPjh;qqBeBu9G0<*kV`O1$VY1&I)q*mkhPv8O
+zoTkWJq?o#xVNM`@CBcwV>O5zgs{=hZF8`&E0Rj&*J$4Bzv6{sNbm9l0!K{>_&-Bq`
+adg?6F@Ye*K1qjRLEmnU`#950s2(-V0j}}z`
+
+diff --git a/testData/results/TestJava11StringConcat.dec b/testData/results/TestJava11StringConcat.dec
+index 68ab9c2d173d033cf8a88c0f1e9237a73e966155..68b7715fad640d811287b7c5ffded98d0dd4450d 100644
+--- a/testData/results/TestJava11StringConcat.dec
++++ b/testData/results/TestJava11StringConcat.dec
+@@ -8,20 +8,64 @@ public class TestJava11StringConcat {
+    public String test2(String var1, int var2, Object var3) {
+       return "(" + var1 + "-" + var2 + "---" + var3 + ")";// 24
+    }
++
++   public String test3(int var1, Object var2) {
++      return "" + var1 + "-" + var2;// 28
++   }
++
++   public String test4(int var1) {
++      return "" + var1;// 32
++   }
+ }
+ 
+ class 'java11/TestJava11StringConcat' {
+    method 'test1 (Ljava/lang/String;I)Ljava/lang/String;' {
++      0      4
++      1      4
+       2      4
++      3      4
++      4      4
++      5      4
++      6      4
+       7      4
+    }
+ 
+    method 'test2 (Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;' {
++      0      8
++      1      8
++      2      8
+       3      8
++      4      8
++      5      8
++      6      8
++      7      8
+       8      8
+    }
++
++   method 'test3 (ILjava/lang/Object;)Ljava/lang/String;' {
++      0      12
++      1      12
++      2      12
++      3      12
++      4      12
++      5      12
++      6      12
++      7      12
++   }
++
++   method 'test4 (I)Ljava/lang/String;' {
++      0      16
++      1      16
++      2      16
++      3      16
++      4      16
++      5      16
++      6      16
++   }
+ }
+ 
+ Lines mapping:
+ 20 <-> 5
+ 24 <-> 9
++28 <-> 13
++32 <-> 17
+diff --git a/testData/results/TestJava9StringConcat.dec b/testData/results/TestJava9StringConcat.dec
+index 29890ed8d641519f957d34981fc41e678a7caf2f..9a60dab673bfcf450b164993a19eb646befc8648 100644
+--- a/testData/results/TestJava9StringConcat.dec
++++ b/testData/results/TestJava9StringConcat.dec
+@@ -8,6 +8,14 @@ public class TestJava9StringConcat {
+    public String test2(String var1, int var2, Object var3) {
+       return "(" + var1 + "-" + var2 + "---" + var3 + ")";// 24
+    }
++
++   public String test3(int var1, Object var2) {
++      return "" + var1 + "-" + var2;// 28
++   }
++
++   public String test4(int var1) {
++      return "" + var1;// 32
++   }
+ }
+ 
+ class 'java9/TestJava9StringConcat' {
+@@ -33,8 +41,31 @@ class 'java9/TestJava9StringConcat' {
+       7      8
+       8      8
+    }
++
++   method 'test3 (ILjava/lang/Object;)Ljava/lang/String;' {
++      0      12
++      1      12
++      2      12
++      3      12
++      4      12
++      5      12
++      6      12
++      7      12
++   }
++
++   method 'test4 (I)Ljava/lang/String;' {
++      0      16
++      1      16
++      2      16
++      3      16
++      4      16
++      5      16
++      6      16
++   }
+ }
+ 
+ Lines mapping:
+ 20 <-> 5
+ 24 <-> 9
++28 <-> 13
++32 <-> 17
+diff --git a/testData/results/TestStringConcat.dec b/testData/results/TestStringConcat.dec
+index 951a761c030b7d6e62e309019b361722ebdd40d9..dba78cfa023128b3fd3257774390607d6a072b15 100644
+--- a/testData/results/TestStringConcat.dec
++++ b/testData/results/TestStringConcat.dec
+@@ -8,6 +8,14 @@ public class TestStringConcat {
+    public String test2(String var1, int var2, Object var3) {
+       return "(" + var1 + "-" + var2 + "---" + var3 + ")";// 24
+    }
++
++   public String test3(int var1, Object var2) {
++      return "" + var1 + "-" + var2;// 28
++   }
++
++   public String test4(int var1) {
++      return "" + var1;// 32
++   }
+ }
+ 
+ class 'pkg/TestStringConcat' {
+@@ -37,8 +45,33 @@ class 'pkg/TestStringConcat' {
+       29      8
+       2a      8
+    }
++
++   method 'test3 (ILjava/lang/Object;)Ljava/lang/String;' {
++      7      12
++      8      12
++      c      12
++      10      12
++      11      12
++      15      12
++      19      12
++      1a      12
++      1b      12
++      1c      12
++   }
++
++   method 'test4 (I)Ljava/lang/String;' {
++      7      16
++      8      16
++      c      16
++      10      16
++      11      16
++      12      16
++      13      16
++   }
+ }
+ 
+ Lines mapping:
+ 20 <-> 5
+ 24 <-> 9
++28 <-> 13
++32 <-> 17
+diff --git a/testData/src/java11/TestJava11StringConcat.java b/testData/src/java11/TestJava11StringConcat.java
+index 3f9e04047c6b2edcaa9eb84bbae8df1ec9fa1836..66315a8c59c1886d7591ec5fce056e963436f605 100644
+--- a/testData/src/java11/TestJava11StringConcat.java
++++ b/testData/src/java11/TestJava11StringConcat.java
+@@ -23,4 +23,12 @@ public class TestJava11StringConcat {
+   public String test2(String var, int b, Object c) {
+     return "(" + var + "-" + b + "---" + c + ")";
+   }
++
++  public String test3(int b, Object c) {
++    return "" + b + "-" + c;
++  }
++
++  public String test4(int b) {
++    return "" + b;
++  }
+ }
+\ No newline at end of file
+diff --git a/testData/src/java9/TestJava9StringConcat.java b/testData/src/java9/TestJava9StringConcat.java
+index 9e1959649e53304be2f23689824b4bcf77c56f0a..d0d4fc3392fad108b20270d989d423969d57ae62 100644
+--- a/testData/src/java9/TestJava9StringConcat.java
++++ b/testData/src/java9/TestJava9StringConcat.java
+@@ -23,4 +23,12 @@ public class TestJava9StringConcat {
+   public String test2(String var, int b, Object c) {
+     return "(" + var + "-" + b + "---" + c + ")";
+   }
++
++  public String test3(int b, Object c) {
++    return "" + b + "-" + c;
++  }
++
++  public String test4(int b) {
++    return "" + b;
++  }
+ }
+\ No newline at end of file
+diff --git a/testData/src/pkg/TestStringConcat.java b/testData/src/pkg/TestStringConcat.java
+index 1a77677ad523807401c4269ca0296c1fa45d265e..9c52c104eadb6cede28aa4a2cd9d863bbb7881bf 100644
+--- a/testData/src/pkg/TestStringConcat.java
++++ b/testData/src/pkg/TestStringConcat.java
+@@ -23,4 +23,12 @@ public class TestStringConcat {
+   public String test2(String var, int b, Object c) {
+     return "(" + var + "-" + b + "---" + c + ")";
+   }
++
++  public String test3(int b, Object c) {
++    return "" + b + "-" + c;
++  }
++
++  public String test4(int b) {
++    return "" + b;
++  }
+ }
+\ No newline at end of file
