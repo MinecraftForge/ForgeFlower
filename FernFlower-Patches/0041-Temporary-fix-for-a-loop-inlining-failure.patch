@@ -1,0 +1,96 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: zml <zml@stellardrift.ca>
+Date: Wed, 26 May 2021 21:48:01 -0700
+Subject: [PATCH] Temporary fix for a loop inlining failure
+
+This masks a failure to properly inline conditions in a do {} while();
+loop, but allows producing a compilable result for now.
+
+Co-Authored-By: Geolykt <admin@geolykt.de>
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/IfHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/IfHelper.java
+index afcf55e1429a880ca5d945cd127ef90de25daee2..725951ff0d0350720ab0f92601e1db7767d73f2b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/IfHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/IfHelper.java
+@@ -109,7 +109,7 @@ public final class IfHelper {
+   private static boolean collapseIfIf(IfNode rtnode) {
+     if (rtnode.edgetypes.get(0) == 0) {
+       IfNode ifbranch = rtnode.succs.get(0);
+-      if (ifbranch.succs.size() == 2) {
++      if (ifbranch.succs.size() == 2 && rtnode.succs.size() >= 2) {
+ 
+         // if-if branch
+         if (ifbranch.succs.get(1).value == rtnode.succs.get(1).value) {
+@@ -181,7 +181,7 @@ public final class IfHelper {
+   private static boolean collapseIfElse(IfNode rtnode) {
+     if (rtnode.edgetypes.get(0) == 0) {
+       IfNode ifbranch = rtnode.succs.get(0);
+-      if (ifbranch.succs.size() == 2) {
++      if (ifbranch.succs.size() == 2 && rtnode.succs.size() >= 2) {
+         // if-else branch
+         if (ifbranch.succs.get(0).value == rtnode.succs.get(1).value) {
+ 
+@@ -230,7 +230,7 @@ public final class IfHelper {
+   }
+ 
+   private static boolean collapseElse(IfNode rtnode) {
+-    if (rtnode.edgetypes.get(1) == 0) {
++    if (rtnode.edgetypes.size() >= 2 && rtnode.edgetypes.get(1) == 0) {
+       IfNode elsebranch = rtnode.succs.get(1);
+       if (elsebranch.succs.size() == 2) {
+ 
+@@ -363,7 +363,11 @@ public final class IfHelper {
+     }
+ 
+     // else branch
+-    StatEdge edge = stat.getAllSuccessorEdges().get(0);
++    final List<StatEdge> successorEdges = stat.getAllSuccessorEdges();
++    if (successorEdges.isEmpty()) {
++      return res;
++    }
++    StatEdge edge = successorEdges.get(0);
+     Statement elsechild = edge.getDestination();
+     IfNode elsenode = new IfNode(elsechild);
+ 
+@@ -494,7 +498,7 @@ public final class IfHelper {
+ 
+       ifstat.iftype = IfStatement.IFTYPE_IFELSE;
+     }
+-    else if (ifdirect && (!elsedirect || (noifstat && !noelsestat))) {  // if - then
++    else if (ifdirect && (!elsedirect || (noifstat && !noelsestat)) && !ifstat.getAllSuccessorEdges().isEmpty()) {  // if - then
+ 
+       // negate the if condition
+       IfExprent statexpr = ifstat.getHeadexprent();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
+index 04b82fc67fca471f6c868c227df24160e57edb5f..4bdc50263e88ec2857661aaae9ef6d21b4add97c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LoopExtractHelper.java
+@@ -102,9 +102,13 @@ public final class LoopExtractHelper {
+       IfStatement lastif = (IfStatement)last;
+       if (lastif.iftype == IfStatement.IFTYPE_IF && lastif.getIfstat() != null) {
+         Statement ifstat = lastif.getIfstat();
+-        StatEdge elseedge = lastif.getAllSuccessorEdges().get(0);
++        final List<StatEdge> successorEdges = lastif.getAllSuccessorEdges();
++        if (successorEdges.isEmpty()) {
++          return false;
++        }
++        StatEdge elseedge = successorEdges.get(0);
+ 
+-        if (elseedge.getType() == StatEdge.TYPE_CONTINUE && elseedge.closure == stat) {
++        if (elseedge == null || elseedge.getType() == StatEdge.TYPE_CONTINUE && elseedge.closure == stat) {
+ 
+           Set<Statement> set = stat.getNeighboursSet(StatEdge.TYPE_CONTINUE, Statement.DIRECTION_BACKWARD);
+           set.remove(last);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
+index b6754ef09179b8e7028a98248f6bff2b100b94af..3f15c35b5cec992393c52bbfaba023844cd4a94e 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
+@@ -283,7 +283,7 @@ public class FlattenStatementsHelper {
+               node = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
+               mapDestinationNodes.put(stat.id, new String[]{node.id, null});
+ 
+-              if (stat.type == Statement.TYPE_IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
++              if (stat.type == Statement.TYPE_IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF && !stat.getAllSuccessorEdges().isEmpty()) {
+                 lstSuccEdges.add(stat.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0));  // exactly one edge
+                 sourcenode = tailexprlst.get(0) == null ? node : graph.nodes.getWithKey(node.id + "_tail");
+               }
