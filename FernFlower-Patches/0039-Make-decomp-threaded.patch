@@ -7,7 +7,7 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e57a6a1349 100644
+index 7323887590542fdfb4791dee3c929651baa3a092..dc5b67108878c4f37fa245699f977097f7fe5a4e 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -36,7 +36,8 @@ public class ClassesProcessor implements CodeConstants {
@@ -20,7 +20,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
-@@ -361,7 +362,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -363,7 +364,7 @@ public class ClassesProcessor implements CodeConstants {
      return true;
    }
  
@@ -29,7 +29,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
      ClassNode root = mapRootClasses.get(cl.qualifiedName);
      if (root.type != ClassNode.CLASS_ROOT) {
        return;
-@@ -370,25 +371,12 @@ public class ClassesProcessor implements CodeConstants {
+@@ -372,25 +373,12 @@ public class ClassesProcessor implements CodeConstants {
      boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
      boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
  
@@ -58,7 +58,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
          new LambdaProcessor().processClass(root);
  
          // add simple class names to implicit import
-@@ -400,7 +388,36 @@ public class ClassesProcessor implements CodeConstants {
+@@ -402,7 +390,36 @@ public class ClassesProcessor implements CodeConstants {
          new NestedClassProcessor().processClass(root, root);
  
          new NestedMemberAccess().propagateMemberAccess(root);
@@ -95,7 +95,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
          TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
          new ClassWriter().classToJava(root, classBuffer, 0, null);
  
-@@ -410,7 +427,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -412,7 +429,7 @@ public class ClassesProcessor implements CodeConstants {
            buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
          }
  
@@ -670,7 +670,7 @@ index c9ece039b0d986c1d84b62426a65e6780ddc80e1..3ca43800b47e1d26a1dc036f21cb6e6e
  
    public void endReadingClass() { }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 41f7389f3931a6a3c87647f7fde98f04c37af5c0..a2be81c2a329812c30ffe2606cae2b5f7ab43c3c 100644
+index d216cf9669b44a7d2cfdd6e95225535cdad55ca7..94d285522b4444dab8eb2c15d869aef7ea3b48b1 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -38,6 +38,7 @@ public interface IFernflowerPreferences {
@@ -681,7 +681,7 @@ index 41f7389f3931a6a3c87647f7fde98f04c37af5c0..a2be81c2a329812c30ffe2606cae2b5f
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -92,6 +93,7 @@ public interface IFernflowerPreferences {
+@@ -94,6 +95,7 @@ public interface IFernflowerPreferences {
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
      defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
      defaults.put(INLINE_SIMPLE_LAMBDAS, "1");

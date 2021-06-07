@@ -109,7 +109,7 @@ index 6f22466edd1c87e6786ff08498b69005aca41e3e..0f33bafca987e5e736d602ebff88efb8
      }
      finally {
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 01b9cef3bb535025f816f18acab5951083e4ec55..41f7389f3931a6a3c87647f7fde98f04c37af5c0 100644
+index 2ee52fc024823932bbbe01d99928cb95287456cf..d216cf9669b44a7d2cfdd6e95225535cdad55ca7 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -37,6 +37,7 @@ public interface IFernflowerPreferences {
@@ -120,7 +120,7 @@ index 01b9cef3bb535025f816f18acab5951083e4ec55..41f7389f3931a6a3c87647f7fde98f04
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -90,6 +91,7 @@ public interface IFernflowerPreferences {
+@@ -92,6 +93,7 @@ public interface IFernflowerPreferences {
  
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
      defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
