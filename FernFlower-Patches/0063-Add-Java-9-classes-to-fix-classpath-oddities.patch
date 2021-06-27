@@ -89,10 +89,18 @@ index 0000000000000000000000000000000000000000..c21b75cdf2afbca3076fcaf4a36bc53c
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index bc92f349c0d49038f113fd3cd11e9a52fd2763a1..f2fca86b4ec2d585e76f1dbf72c8d3528989e75c 100644
+index bc92f349c0d49038f113fd3cd11e9a52fd2763a1..ed5d519846fe1ec39efa711288d27c7709c363f6 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-@@ -45,6 +45,10 @@ public class Fernflower implements IDecompiledData {
+@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
++import org.jetbrains.java.decompiler.util.ClasspathScanner;
+ import org.jetbrains.java.decompiler.util.JADNameProvider;
+ 
+ import java.io.File;
+@@ -45,9 +46,13 @@ public class Fernflower implements IDecompiledData {
      DecompilerContext.setCounterContainer(new CounterContainer());
      
      DecompilerContext.setStructContext(structContext);
@@ -102,7 +110,38 @@ index bc92f349c0d49038f113fd3cd11e9a52fd2763a1..f2fca86b4ec2d585e76f1dbf72c8d352
 +    logger.writeMessage(String.format("JVM info: %s - %s - %s", vendor, javaVersion, jvmVersion), IFernflowerLogger.Severity.INFO);
  
      if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
-       addAllClasspath();
+-      addAllClasspath();
++      ClasspathScanner.addAllClasspath(structContext);
+     }
+   }
+ 
+@@ -101,26 +106,4 @@ public class Fernflower implements IDecompiledData {
+       return null;
+     }
+   }
+-
+-  private void addAllClasspath() {
+-    Set<String> found = new HashSet<String>();
+-    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
+-    for (String prop : props) {
+-      if (prop == null)
+-        continue;
+-
+-      for (final String path : prop.split(File.pathSeparator)) {
+-        File file = new File(path);
+-        if (found.contains(file.getAbsolutePath()))
+-          continue;
+-
+-        // only add .class files from classpath
+-        if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
+-          DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
+-          structContext.addSpace(file, false);
+-          found.add(file.getAbsolutePath());
+-        }
+-      }
+-    }
+-  }
+ }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 index a154193f9b9f698873c62af08d1211d0e79b8ae4..5106daba215d0bf458bf57db4f4209b6b7a08070 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
