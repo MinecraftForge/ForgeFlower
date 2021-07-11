@@ -453,7 +453,7 @@ index 8d0100d6e80a3b8dd743a6c21139348217d742b7..653b7697906788ebd61ce5b113803c8d
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..adc78392c4a82692b32a603e7c0aa90db86a800a
+index 0000000000000000000000000000000000000000..72f47fc52cfdb46543fabecfa6a074db4db4d7c3
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 @@ -0,0 +1,199 @@
@@ -648,9 +648,9 @@ index 0000000000000000000000000000000000000000..adc78392c4a82692b32a603e7c0aa90d
 +
 +    // remove the last break edge, if exists
 +    Statement loopcontent = loop.getFirst();
-+    if (!loopcontent.getAllSuccessorEdges().isEmpty()) {
-+      loopcontent.removeSuccessor(loopcontent.getAllSuccessorEdges().get(0));
-+    }
++//    if (!loopcontent.getAllSuccessorEdges().isEmpty()) {
++//      loopcontent.removeSuccessor(loopcontent.getAllSuccessorEdges().get(0));
++//    }
 +
 +    // replace loop with its content
 +    loop.getParent().replaceStatement(loop, loopcontent);
