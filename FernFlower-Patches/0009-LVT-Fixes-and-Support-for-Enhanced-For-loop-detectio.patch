@@ -648,9 +648,9 @@ index 0000000000000000000000000000000000000000..8f7984ec00e84aeca1902484f8f9b43c
 +
 +    // remove the last break edge, if exists
 +    Statement loopcontent = loop.getFirst();
-+    if (!loopcontent.getAllSuccessorEdges().isEmpty()) {
-+      loopcontent.removeSuccessor(loopcontent.getAllSuccessorEdges().get(0));
-+    }
++//    if (!loopcontent.getAllSuccessorEdges().isEmpty()) {
++//      loopcontent.removeSuccessor(loopcontent.getAllSuccessorEdges().get(0));
++//    }
 +
 +    // replace loop with its content
 +    loop.getParent().replaceStatement(loop, loopcontent);
