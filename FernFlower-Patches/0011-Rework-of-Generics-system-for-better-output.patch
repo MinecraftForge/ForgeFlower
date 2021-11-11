@@ -121,7 +121,7 @@ index e082267cf9e2f20df662ff3565d69d0966df1126..425c2e4480f2c57993e3d4a38f66cfdc
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 16a7cfebe26dfe0f6244a46f9af271758be274da..88ce62444af95efcef19fb1c754cb45db00d4392 100644
+index 16a7cfebe26dfe0f6244a46f9af271758be274da..c4bc77b593859f5f9bceff063414c31bedd1ff82 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -446,7 +446,7 @@ public class ClassWriter {
@@ -259,7 +259,7 @@ index 16a7cfebe26dfe0f6244a46f9af271758be274da..88ce62444af95efcef19fb1c754cb45d
 +        //    index++;
 +
          for (int i = start; i < md.params.length; i++) {
-+          VarType parameterType = hasDescriptor ? descriptor.parameterTypes.get(paramCount) : md.params[i];
++          VarType parameterType = hasDescriptor && !descriptor.parameterTypes.isEmpty() ? descriptor.parameterTypes.get(paramCount) : md.params[i];
            if (mask == null || mask.get(i) == null) {
              if (paramCount > 0) {
                buffer.append(", ");
