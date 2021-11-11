@@ -81,6 +81,7 @@ def gitVersion() {
 project(':ForgeFlower') {
     apply from: rootProject.file('fernflower.gradle')
     compileJava.dependsOn rootProject.tasks.applyPatches
+    sourcesJar.dependsOn rootProject.tasks.applyPatches
 }
 
 project(':ForgeFlower9') {
