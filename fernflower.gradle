@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 
@@ -66,14 +65,7 @@ jar {
     }
 }
 
-task sourceJar(type: Jar) {
-    classifier 'sources'
-    from sourceSets.main.allJava
-}
-
-artifacts {
-    archives sourceJar
-}
+java.withSourcesJar()
 
 publishing {
     publications {
@@ -82,7 +74,6 @@ publishing {
             if (CHANGELOG.exists()) {
                 artifact source: CHANGELOG, classifier: 'changelog'
             }
-            artifact tasks.sourceJar
 
             pom {
                 groupId = project.group
