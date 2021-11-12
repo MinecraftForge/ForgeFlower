@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Thu, 11 Nov 2021 23:44:28 -0800
+Subject: [PATCH] Filter out generated Record getters.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..1cf01714f6c93e87c7efea321e460f655c497c07 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -330,6 +330,16 @@ public class ClassWriter {
+           return str.startsWith("return this." + name + "<invokedynamic>(this");
+         }
+       }
++      for (StructRecordComponent rec : cl.getRecordComponents()) {
++        if (name.equals(rec.getName()) && descriptor.equals("()" + rec.getDescriptor())) {
++          if (code.countLines() == 1) {
++            String str = code.toString().trim();
++            return str.startsWith("return this." + mt.getName() + ';');
++          } else {
++            return false;
++          }
++        }
++      }
+     }
+     return false;
+   }
