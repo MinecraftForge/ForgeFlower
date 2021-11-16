@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: coehlrich <coehlrich@users.noreply.github.com>
+Date: Tue, 16 Nov 2021 18:22:31 +1300
+Subject: [PATCH] Remove default keyword from private interface methods
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 1cf01714f6c93e87c7efea321e460f655c497c07..d7294ac46709a2d429389b2d310c6dff82041795 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -827,7 +827,7 @@ public class ClassWriter {
+ 
+       appendModifiers(buffer, flags, METHOD_ALLOWED, isInterface, METHOD_EXCLUDED);
+ 
+-      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && mt.containsCode()) {
++      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && !mt.hasModifier(CodeConstants.ACC_PRIVATE) && mt.containsCode()) {
+         // 'default' modifier (Java 8)
+         buffer.append("default ");
+       }
