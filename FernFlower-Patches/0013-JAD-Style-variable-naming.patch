@@ -21,10 +21,18 @@ index c4bc77b593859f5f9bceff063414c31bedd1ff82..fe61544581f331327c08f026c6e2edbf
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index f1dc102772e3cb5aa227057276c95b4402447fab..26ccf4b2124ab617bfeec45ebbf3451ab2e7aa6d 100644
+index f1dc102772e3cb5aa227057276c95b4402447fab..aff6532ccecce0a06518797f3a3c8a6e5e29aeaa 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.main;
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.code.Instruction;
+ import org.jetbrains.java.decompiler.code.InstructionSequence;
++import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
+ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+@@ -11,6 +12,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
  import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
  import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
@@ -32,7 +40,41 @@ index f1dc102772e3cb5aa227057276c95b4402447fab..26ccf4b2124ab617bfeec45ebbf3451a
  import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
  import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
  import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
-@@ -444,6 +445,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -146,6 +148,7 @@ public class ClassesProcessor implements CodeConstants {
+         node.access = cl.getAccessFlags();
+         mapRootClasses.put(cl.qualifiedName, node);
+       }
++      linkEnclosingMethods(cl);
+     }
+ 
+     if (bDecompileInner) {
+@@ -237,6 +240,25 @@ public class ClassesProcessor implements CodeConstants {
+     }
+   }
+ 
++  private void linkEnclosingMethods(StructClass cl) {
++      StructEnclosingMethodAttribute attr = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
++      if (attr == null || attr.getMethodName() == null) {
++        return;
++      }
++      StructClass parent = context.getClasses().get(attr.getClassName());
++      if (parent == null) {
++        return;
++      }
++      StructMethod method = parent.getMethod(attr.getMethodName(), attr.getMethodDescriptor());
++      if (method == null) {
++        return;
++      }
++      if (method.enclosedClasses == null) {
++        method.enclosedClasses = new HashSet<>();
++      }
++      method.enclosedClasses.add(cl.qualifiedName);
++  }
++
+   private static boolean isAnonymous(StructClass cl, StructClass enclosingCl) {
+     // checking super class and interfaces
+     int[] interfaces = cl.getInterfaces();
+@@ -444,6 +466,7 @@ public class ClassesProcessor implements CodeConstants {
    private static void destroyWrappers(ClassNode node) {
      node.wrapper = null;
      node.classStruct.releaseResources();
@@ -40,7 +82,7 @@ index f1dc102772e3cb5aa227057276c95b4402447fab..26ccf4b2124ab617bfeec45ebbf3451a
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -502,7 +504,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -502,7 +525,7 @@ public class ClassesProcessor implements CodeConstants {
  
        anonymousClassType = new VarType(lambda_class_name, true);
  
@@ -49,7 +91,7 @@ index f1dc102772e3cb5aa227057276c95b4402447fab..26ccf4b2124ab617bfeec45ebbf3451a
        if (!is_method_reference) { // content method in the same class, check synthetic flag
          StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
          is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
-@@ -557,4 +559,4 @@ public class ClassesProcessor implements CodeConstants {
+@@ -557,4 +580,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
    }
@@ -284,25 +326,8 @@ index 0000000000000000000000000000000000000000..fc1d7d67864ab12e894fcdf0ed8e1297
 +public interface IVariableNamingFactory {
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
-diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 58bf5152299a7ca6f4d22a2e1f8b95b6393e6242..9942e125766f6162506ff6418f00e8bcbe6d8072 100644
---- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-+++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -545,7 +545,11 @@ public class NestedClassProcessor {
-         Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
-         Map<VarVersionPair, LocalVariable> mapNewLVTs = new HashMap<>(); // local var table entries
- 
--        Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
-+        if (enclosingMethod != null) {
-+          method.methodStruct.getVariableNamer().addParentContext(enclosingMethod.methodStruct.getVariableNamer());
-+        }
-+
-+        final Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
-         if (method.synthParameters != null) {
-           int index = 0, varIndex = 1;
-           MethodDescriptor md = MethodDescriptor.parseDescriptor(method.methodStruct.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620ca51fd25c 100644
+index 89f1c9709d9002701c3ec8b4563d345337995dac..20651b7d66ad24404c15378da80bbd47e4178e0f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,6 +2,7 @@
@@ -323,7 +348,15 @@ index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620c
  import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
-@@ -24,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+@@ -19,11 +22,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
@@ -331,7 +364,7 @@ index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620c
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -848,6 +852,44 @@ public class VarDefinitionHelper {
+@@ -848,6 +855,53 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().getCast());
      }
@@ -373,10 +406,19 @@ index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620c
 +      return 0;
 +    });
 +
++    if (mt.enclosedClasses != null) {
++      for (String cls : mt.enclosedClasses) {
++        StructClass cl = DecompilerContext.getStructContext().getClass(cls);
++        for (StructMethod meth : cl.getMethods()) {
++          meth.getVariableNamer().addParentContext(this.mt.getVariableNamer());
++        }
++      }
++    }
++
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -857,7 +899,16 @@ public class VarDefinitionHelper {
+@@ -857,7 +911,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().getLVT();
@@ -393,7 +435,7 @@ index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620c
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -991,7 +1042,7 @@ public class VarDefinitionHelper {
+@@ -991,7 +1054,7 @@ public class VarDefinitionHelper {
  
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null)
@@ -403,7 +445,7 @@ index 89f1c9709d9002701c3ec8b4563d345337995dac..06d6cbad98176e0b86eaa464e799620c
          this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false);
        else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 61984e6af43043db7fd29c1b79e16e67789ca707..a7a8e048b074dbbe08b28237e8855c35b282882a 100644
+index 61984e6af43043db7fd29c1b79e16e67789ca707..b9ea275781604d74bb0f4f452ff554d79d8f68fd 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -414,15 +456,24 @@ index 61984e6af43043db7fd29c1b79e16e67789ca707..a7a8e048b074dbbe08b28237e8855c35
  import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
-@@ -70,6 +71,7 @@ public class StructMethod extends StructMember {
+@@ -18,6 +19,7 @@ import java.io.IOException;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Set;
+ 
+ import static org.jetbrains.java.decompiler.code.CodeConstants.*;
+ 
+@@ -70,6 +72,8 @@ public class StructMethod extends StructMember {
    private boolean expanded = false;
    private final String classQualifiedName;
    private final GenericMethodDescriptor signature;
 +  private IVariableNameProvider renamer;
++  public Set<String> enclosedClasses; // Dirty hack, but the management of nested classes is trash.
  
    private StructMethod(int accessFlags,
                         Map<String, StructGeneralAttribute> attributes,
-@@ -382,6 +384,17 @@ public class StructMethod extends StructMember {
+@@ -382,6 +386,17 @@ public class StructMethod extends StructMember {
      return seq;
    }
  
@@ -442,10 +493,10 @@ index 61984e6af43043db7fd29c1b79e16e67789ca707..a7a8e048b074dbbe08b28237e8855c35
    }
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..b29e693b22abb9c296a1b36fd3e050f41044f24c
+index 0000000000000000000000000000000000000000..5607fa993848027c570ad414c8098bf0be28868c
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,215 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -473,6 +524,7 @@ index 0000000000000000000000000000000000000000..b29e693b22abb9c296a1b36fd3e050f4
 +import java.util.Map;
 +import java.util.Map.Entry;
 +import java.util.regex.Pattern;
++import java.util.stream.Collectors;
 +
 +import org.jetbrains.java.decompiler.code.CodeConstants;
 +import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
@@ -520,8 +572,7 @@ index 0000000000000000000000000000000000000000..b29e693b22abb9c296a1b36fd3e050f4
 +    JADNameProvider parent = (JADNameProvider) iparent;
 +    HashMap<String, Holder> temp = new HashMap<String, Holder>();
 +    for (Entry<String, Holder> e : parent.last.entrySet()) {
-+      Holder v = e.getValue();
-+      temp.put(e.getKey(), new Holder(v.id, v.skip_zero, v.names));
++      temp.put(e.getKey(), e.getValue().copy());
 +    }
 +    this.last = temp;
 +    this.remap = new HashMap<>(parent.remap);
@@ -543,6 +594,15 @@ index 0000000000000000000000000000000000000000..b29e693b22abb9c296a1b36fd3e050f4
 +      this.skip_zero = skip_zero;
 +      this.names.addAll(names);
 +    }
++
++    @Override
++    public String toString() {
++      return "Holder[" + id + ", " + skip_zero + ", " + names.stream().collect(Collectors.joining(", ")) + "]";
++    }
++
++    public Holder copy() {
++        return new Holder(this.id, this.skip_zero, new ArrayList<>(this.names));
++    }
 +  }
 +
 +  @Override
@@ -558,13 +618,7 @@ index 0000000000000000000000000000000000000000..b29e693b22abb9c296a1b36fd3e050f4
 +    }
 +
 +    List<VarVersionPair> keys = new ArrayList<VarVersionPair>(entries.keySet());
-+    Collections.sort(keys, new Comparator<VarVersionPair>(){
-+      @Override
-+      public int compare(VarVersionPair o1, VarVersionPair o2) {
-+        if (o1.var != o2.var) return o1.var - o2.var;
-+        return o1.version - o2.version;
-+      }
-+    });
++    Collections.sort(keys, (o1, o2) -> (o1.var != o2.var) ? o1.var - o2.var : o1.version - o2.version);
 +
 +    Map<VarVersionPair, String> result = new LinkedHashMap<VarVersionPair, String>();
 +    for (VarVersionPair ver : keys) {
