@@ -24,7 +24,7 @@ index bb246173b89d733e01ef4a03b59759c8663a20ff..12d737b747fe5fa60a5c449fd91dda9a
  
        if (TryHelper.enhanceTryStats(root)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 9942e125766f6162506ff6418f00e8bcbe6d8072..7f80109f80ec5686fd6934504022be5135c0863a 100644
+index 58bf5152299a7ca6f4d22a2e1f8b95b6393e6242..2a80835a255c98616352259a8c8a7c733c2ca19e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -263,6 +263,9 @@ public class NestedClassProcessor {
@@ -485,7 +485,7 @@ index 3607a8dc6483775f12aa23420ffe447ec9e993bd..58169c235c1cf1d4862f3f515553bf0a
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 8574fe25782da90f36888186fb3d977c33eeaad1..1b1d911df7b6767a56f543980b3adbb05f7cdb5d 100644
+index 0f7ca6c558a05e02ea98bc17dca37a2d2e119640..b2c2139ab5c9c2d3aa235b3e2eb6cb5bb409a24e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
@@ -496,7 +496,7 @@ index 8574fe25782da90f36888186fb3d977c33eeaad1..1b1d911df7b6767a56f543980b3adbb0
  import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-@@ -226,6 +227,7 @@ public class VarDefinitionHelper {
+@@ -229,6 +230,7 @@ public class VarDefinitionHelper {
  
      mergeVars(root);
      propogateLVTs(root);
@@ -504,7 +504,7 @@ index 8574fe25782da90f36888186fb3d977c33eeaad1..1b1d911df7b6767a56f543980b3adbb0
    }
  
  
-@@ -1124,4 +1126,79 @@ public class VarDefinitionHelper {
+@@ -1136,4 +1138,79 @@ public class VarDefinitionHelper {
      }
      return false;
    }

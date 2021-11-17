@@ -429,10 +429,10 @@ index 7e41176d17729f6acdf5420c9ed98eb7ffb6f3ae..d7a975db4e5ee5800c426e62f76be277
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 06d6cbad98176e0b86eaa464e799620ca51fd25c..8574fe25782da90f36888186fb3d977c33eeaad1 100644
+index 20651b7d66ad24404c15378da80bbd47e4178e0f..0f7ca6c558a05e02ea98bc17dca37a2d2e119640 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -110,7 +110,11 @@ public class VarDefinitionHelper {
+@@ -113,7 +113,11 @@ public class VarDefinitionHelper {
          lstVars = ((CatchAllStatement)st).getVars();
        }
        else if (st.type == Statement.TYPE_TRYCATCH) {

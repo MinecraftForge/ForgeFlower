@@ -8,10 +8,10 @@ Uses a prefix system, so -only=net/minecraft/block/ will decompile all classes i
 Useful for debugging to limit scope/runtime.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 8ce3a2575b4c9c8268ba9956ea008027982a03fb..76b362a5f0bc04f74f26091a54d7f42d385c5037 100644
+index bb5ca5bae7c3ae47e2e824f3a0d24246bbd210ca..dc1e19187b9058f0193dbb86a7b4c77da8f0c5ec 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -37,6 +37,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -38,6 +38,7 @@ public class ClassesProcessor implements CodeConstants {
  
    private final StructContext context;
    private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
@@ -19,7 +19,7 @@ index 8ce3a2575b4c9c8268ba9956ea008027982a03fb..76b362a5f0bc04f74f26091a54d7f42d
  
    private static class Inner {
      private String simpleName;
-@@ -62,6 +63,22 @@ public class ClassesProcessor implements CodeConstants {
+@@ -63,6 +64,22 @@ public class ClassesProcessor implements CodeConstants {
      this.context = context;
    }
  
@@ -42,7 +42,7 @@ index 8ce3a2575b4c9c8268ba9956ea008027982a03fb..76b362a5f0bc04f74f26091a54d7f42d
    public void loadClasses(IIdentifierRenamer renamer) {
      Map<String, Inner> mapInnerClasses = new HashMap<>();
      Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
-@@ -161,9 +178,11 @@ public class ClassesProcessor implements CodeConstants {
+@@ -162,9 +179,11 @@ public class ClassesProcessor implements CodeConstants {
            }
          }
  
@@ -55,8 +55,8 @@ index 8ce3a2575b4c9c8268ba9956ea008027982a03fb..76b362a5f0bc04f74f26091a54d7f42d
 +          mapRootClasses.put(cl.qualifiedName, node);
 +        }
        }
+       linkEnclosingMethods(cl);
      }
- 
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 index ab8c1a60acfdef8c6ffb3082efbfbc1315d2c0bc..469b313a958cf8aca35fe98fc809880d12db671e 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java

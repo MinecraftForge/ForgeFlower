@@ -7,10 +7,10 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e57a6a1349 100644
+index dc1e19187b9058f0193dbb86a7b4c77da8f0c5ec..09d6175392dd0dcfa2ab3eb6371684ad65653d0d 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -36,7 +36,8 @@ public class ClassesProcessor implements CodeConstants {
+@@ -37,7 +37,8 @@ public class ClassesProcessor implements CodeConstants {
    public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
  
    private final StructContext context;
@@ -20,7 +20,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
-@@ -361,7 +362,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -382,7 +383,7 @@ public class ClassesProcessor implements CodeConstants {
      return true;
    }
  
@@ -29,7 +29,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
      ClassNode root = mapRootClasses.get(cl.qualifiedName);
      if (root.type != ClassNode.CLASS_ROOT) {
        return;
-@@ -370,25 +371,12 @@ public class ClassesProcessor implements CodeConstants {
+@@ -391,25 +392,12 @@ public class ClassesProcessor implements CodeConstants {
      boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
      boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
  
@@ -58,7 +58,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
          new LambdaProcessor().processClass(root);
  
          // add simple class names to implicit import
-@@ -400,7 +388,36 @@ public class ClassesProcessor implements CodeConstants {
+@@ -421,7 +409,36 @@ public class ClassesProcessor implements CodeConstants {
          new NestedClassProcessor().processClass(root, root);
  
          new NestedMemberAccess().propagateMemberAccess(root);
@@ -95,7 +95,7 @@ index 76b362a5f0bc04f74f26091a54d7f42d385c5037..366bc3195304ae80ff539041d01202e5
          TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
          new ClassWriter().classToJava(root, classBuffer, 0, null);
  
-@@ -410,7 +427,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -431,7 +448,7 @@ public class ClassesProcessor implements CodeConstants {
            buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
          }
  
