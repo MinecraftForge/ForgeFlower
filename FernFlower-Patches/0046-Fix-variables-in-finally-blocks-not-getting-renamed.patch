@@ -5,10 +5,48 @@ Subject: [PATCH] Fix variables in finally blocks not getting renamed
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 14da709f122333476cc1482c00f94e6a3ed7cbac..85fe997366e946515ebe8d6d198905e0b630c3f2 100644
+index 14da709f122333476cc1482c00f94e6a3ed7cbac..6fb6867aab76221d87d79195dbb7d468265bbac5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-@@ -969,26 +969,31 @@ public class FinallyProcessor {
+@@ -763,23 +763,29 @@ public class FinallyProcessor {
+                                        int finallytype,
+                                        List<int[]> lstStoreVars) {
+     InstructionSequence seqPattern = pattern.getSeq();
++    List<Integer> instrOldOffsetsPattern = pattern.getInstrOldOffsets();
+     InstructionSequence seqSample = sample.getSeq();
++    List<Integer> instrOldOffsetsSample = sample.getInstrOldOffsets();
+ 
+     if (type != 0) {
+       seqPattern = seqPattern.clone();
++      instrOldOffsetsPattern = new ArrayList<>(instrOldOffsetsPattern);
+ 
+       if ((type & 1) > 0) { // first
+         if (finallytype > 0) {
++          instrOldOffsetsPattern.remove(0);
+           seqPattern.removeInstruction(0);
+         }
+       }
+ 
+       if ((type & 2) > 0) { // last
+         if (finallytype == 0 || finallytype == 2) {
++          instrOldOffsetsPattern.remove(instrOldOffsetsPattern.size() - 1);
+           seqPattern.removeLast();
+         }
+ 
+         if (finallytype == 2) {
++          instrOldOffsetsPattern.remove(instrOldOffsetsPattern.size() - 1);
+           seqPattern.removeLast();
+         }
+       }
+@@ -806,6 +812,7 @@ public class FinallyProcessor {
+         seq.addInstruction(0, seqSample.getInstr(i), -1);
+         oldOffsets.addFirst(sample.getOldOffset(i));
+         seqSample.removeInstruction(i);
++        instrOldOffsetsSample.remove(i);
+       }
+ 
+       BasicBlock newblock = new BasicBlock(++graph.last_id);
+@@ -969,26 +976,31 @@ public class FinallyProcessor {
  
    private static void removeExceptionInstructionsEx(BasicBlock block, int blocktype, int finallytype) {
      InstructionSequence seq = block.getSeq();
