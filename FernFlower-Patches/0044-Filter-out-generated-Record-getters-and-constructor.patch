@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Thu, 11 Nov 2021 23:44:28 -0800
+Subject: [PATCH] Filter out generated Record getters and constructor.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..c35fbd0979b4181f3e50b27982a119d56a6df982 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -330,6 +330,41 @@ public class ClassWriter {
+           return str.startsWith("return this." + name + "<invokedynamic>(this");
+         }
+       }
++
++      // Default conical constructor
++      if (name.equals(CodeConstants.INIT_NAME) && code.countLines() == cl.getRecordComponents().size()) {
++        StringBuilder buf = new StringBuilder("(");
++        for (StructRecordComponent rec : cl.getRecordComponents()) {
++            buf.append(rec.getDescriptor());
++        }
++        String desc = buf.append(")V").toString();
++        if (desc.equals(descriptor)) {
++          String[] lines = code.toString().split(DecompilerContext.getNewLineSeparator());
++          boolean matched = true;
++          for (int x = 0; x < lines.length; x++) {
++            StructRecordComponent rec = cl.getRecordComponents().get(x);
++            if (!lines[x].trim().equals("this." + rec.getName() + " = " + rec.getName() + ";")) {
++              matched = false;
++              break;
++            }
++          }
++          if (matched) {
++            return true;
++          }
++        }
++      }
++
++      // Default getters
++      for (StructRecordComponent rec : cl.getRecordComponents()) {
++        if (name.equals(rec.getName()) && descriptor.equals("()" + rec.getDescriptor())) {
++          if (code.countLines() == 1) {
++            String str = code.toString().trim();
++            return str.startsWith("return this." + mt.getName() + ';');
++          } else {
++            return false;
++          }
++        }
++      }
+     }
+     return false;
+   }
