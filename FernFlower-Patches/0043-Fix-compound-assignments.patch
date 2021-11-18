@@ -5,7 +5,7 @@ Subject: [PATCH] Fix compound assignments
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 795cc200b44c547862cfb8742b216b1c7032f2e8..1de3ccd0d3966f82bd07d0b45e1692f6c22348db 100644
+index 38f002fb3f7921c6bebd855616f4f25d844d7c42..0acccb47ab0107a66925a940a3c7bbd2967a798a 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -222,6 +222,8 @@ public class MethodProcessorRunnable implements Runnable {
@@ -69,13 +69,13 @@ index beaa6c260a1e85e939556705f38b0bb16280a29d..e4056c4ae81eff96d2c4e84b86c81148
 +  }
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 381a1ecc559e59b38c28a6a10df465384cd40d0e..ee57e305da26b7678fb605f61e16f61f35e112c4 100644
+index 49d78d3a7a57b5980396c9540726d8e5f87b01e3..d5cea4f2713b1283270f59dec0bcd5f52d5da981 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -122,4 +122,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
-   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
-   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
-   @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
+@@ -130,4 +130,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+   @Test public void testTryWithResourcesNestedJ16() { doTest("java16/TestTryWithResourcesNestedJ16"); }
+   @Test public void testTryWithResourcesNullJ16() { doTest("java16/TestTryWithResourcesNullJ16"); }
+   @Test public void testTryWithResourcesOuterJ16() { doTest("java16/TestTryWithResourcesOuterJ16"); }
 +  @Test public void testCompoundAssignment() { doTest("pkg/TestCompoundAssignment"); }
  }
 diff --git a/testData/classes/pkg/TestCompoundAssignment.class b/testData/classes/pkg/TestCompoundAssignment.class

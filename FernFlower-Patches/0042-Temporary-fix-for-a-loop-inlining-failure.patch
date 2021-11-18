@@ -82,7 +82,7 @@ index 04b82fc67fca471f6c868c227df24160e57edb5f..4bdc50263e88ec2857661aaae9ef6d21
            Set<Statement> set = stat.getNeighboursSet(StatEdge.TYPE_CONTINUE, Statement.DIRECTION_BACKWARD);
            set.remove(last);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index b6754ef09179b8e7028a98248f6bff2b100b94af..3f15c35b5cec992393c52bbfaba023844cd4a94e 100644
+index 0463df5e7ab8dd45414d555d8fcc1a823b3818b1..6b24830e38d46c697fdafb300d3564ebaa63caa5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -283,7 +283,7 @@ public class FlattenStatementsHelper {

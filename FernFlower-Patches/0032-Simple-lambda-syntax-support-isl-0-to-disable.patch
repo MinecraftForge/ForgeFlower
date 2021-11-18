@@ -129,7 +129,7 @@ index 01b9cef3bb535025f816f18acab5951083e4ec55..41f7389f3931a6a3c87647f7fde98f04
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index b53a17c2ba86fe16917e0c6b3e0ae346c87c2547..381a1ecc559e59b38c28a6a10df465384cd40d0e 100644
+index 9e5ff7e2a47d4853c45bc76d4a09d7cb1a8a307d..49d78d3a7a57b5980396c9540726d8e5f87b01e3 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -14,7 +14,8 @@ public class SingleClassesTest extends SingleClassesTestBase {

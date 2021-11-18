@@ -5,7 +5,7 @@ Subject: [PATCH] Improve stack var processor output
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index bb246173b89d733e01ef4a03b59759c8663a20ff..12d737b747fe5fa60a5c449fd91dda9a39fb4387 100644
+index ff258b0e6a4d92b242932578d5529e3998634d7a..575fbff372bd3d3aa0afb814f5ec351bb1362035 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -172,11 +172,12 @@ public class MethodProcessorRunnable implements Runnable {
@@ -22,7 +22,7 @@ index bb246173b89d733e01ef4a03b59759c8663a20ff..12d737b747fe5fa60a5c449fd91dda9a
 +
        LabelHelper.identifyLabels(root);
  
-       if (TryHelper.enhanceTryStats(root)) {
+       if (TryHelper.enhanceTryStats(root, mt)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 index 58bf5152299a7ca6f4d22a2e1f8b95b6393e6242..2a80835a255c98616352259a8c8a7c733c2ca19e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
