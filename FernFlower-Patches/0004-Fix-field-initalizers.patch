@@ -5,7 +5,7 @@ Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba08af7a91 100644
+index 55badb664d4a52620710e97e040929ce5414eb9e..f1e02d4a1232fe1e98d554e034ec49601fa2be70 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -30,7 +30,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
  
  public final class InitializerProcessor {
    public static void extractInitializers(ClassWrapper wrapper) {
-@@ -148,14 +155,16 @@ public final class InitializerProcessor {
+@@ -148,12 +155,16 @@ public final class InitializerProcessor {
    private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
      RootStatement root = method.root;
      StructClass cl = wrapper.getClassStruct();
@@ -42,17 +42,15 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
 -
 -      while (!firstData.getExprents().isEmpty()) {
 -        Exprent exprent = firstData.getExprents().get(0);
--
--        boolean found = false;
 +      List<AssignmentExprent> exprentsToRemove = new LinkedList<>();//when we loop back through the list, stores ones we need to remove outside iterator loop
 +      Map<Integer, AssignmentExprent> nonFieldAssigns = new HashMap<>();
 +      Iterator<Exprent> itr = firstData.getExprents().iterator();
 +      while (itr.hasNext()) {
 +        Exprent exprent = itr.next();
  
-         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-           AssignmentExprent assignExpr = (AssignmentExprent)exprent;
-@@ -165,21 +174,49 @@ public final class InitializerProcessor {
+         boolean found = false;
+ 
+@@ -165,22 +176,55 @@ public final class InitializerProcessor {
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
  
                // interfaces fields should always be initialized inline
@@ -64,7 +62,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
                  if (!wrapper.getStaticFieldInitializers().containsKey(keyField)) {
 -                  wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
 -                  firstData.getExprents().remove(0);
--                  found = true;
+                   found = true;
 +                  if (exprentIndependent) {
 +                    wrapper.getStaticFieldInitializers().addWithKey(assignExpr.getRight(), keyField);
 +                    whitelist.add(keyField);
@@ -101,17 +99,18 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
 +        } else if (inlineInitializers && cl.hasModifier(CodeConstants.ACC_INTERFACE)){
 +          DecompilerContext.getLogger().writeMessage("Non assignment found in initialiser when we're needing to inline all", IFernflowerLogger.Severity.ERROR);
          }
--
--        if (!found) {
--          break;
--        }
-+      }
+ 
+         if (!found) {
+           break;
+         }
+       }
 +      if (exprentsToRemove.size() > 0){
 +        firstData.getExprents().removeAll(exprentsToRemove);
-       }
++      }
      }
    }
-@@ -196,18 +233,18 @@ public final class InitializerProcessor {
+ 
+@@ -196,18 +240,18 @@ public final class InitializerProcessor {
        if (CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) && method.root != null) { // successfully decompiled constructor
          Statement firstData = Statements.findFirstData(method.root);
          if (firstData == null || firstData.getExprents().isEmpty()) {
@@ -134,7 +133,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
        }
      }
  
-@@ -215,6 +252,9 @@ public final class InitializerProcessor {
+@@ -215,6 +259,9 @@ public final class InitializerProcessor {
        return;
      }
  
@@ -144,7 +143,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
      while (true) {
        String fieldWithDescr = null;
        Exprent value = null;
-@@ -237,8 +277,10 @@ public final class InitializerProcessor {
+@@ -237,8 +284,10 @@ public final class InitializerProcessor {
              if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
                  cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
  
@@ -157,7 +156,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
                  if (fieldWithDescr == null) {
                    fieldWithDescr = fieldKey;
                    value = assignExpr.getRight();
-@@ -262,6 +304,7 @@ public final class InitializerProcessor {
+@@ -262,6 +311,7 @@ public final class InitializerProcessor {
  
        if (!wrapper.getDynamicFieldInitializers().containsKey(fieldWithDescr)) {
          wrapper.getDynamicFieldInitializers().addWithKey(value, fieldWithDescr);
@@ -165,7 +164,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
  
          for (List<Exprent> lst : lstFirst) {
            lst.remove(isAnonymous ? 0 : 1);
-@@ -273,7 +316,7 @@ public final class InitializerProcessor {
+@@ -273,7 +323,7 @@ public final class InitializerProcessor {
      }
    }
  
@@ -174,7 +173,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
  
-@@ -289,10 +332,71 @@ public final class InitializerProcessor {
+@@ -289,10 +339,65 @@ public final class InitializerProcessor {
            }
            break;
          case Exprent.EXPRENT_FIELD:
@@ -202,18 +201,16 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
 +          }
 +          break;
 +        case Exprent.EXPRENT_NEW:
-+          if (!isNewExprentIndependent((NewExprent)expr, cl, fidx)) {
-+            return false;
-+          }
++          makeLaterFieldsInLambdaQualified((NewExprent)expr, cl, fidx);
        }
      }
  
      return true;
    }
 +
-+  // Verifies that a lambda used to initialize a static field does not reference
-+  // another static field defined later in the class
-+  private static boolean isNewExprentIndependent(NewExprent nexpr, StructClass cl, int fidx) {
++  // Makes lambdas that are used to initialize a static field only reference
++  // static fields defined later in the class by qualified name
++  private static void makeLaterFieldsInLambdaQualified(NewExprent nexpr, StructClass cl, int fidx) {
 +    boolean isStatic = cl.getFields().get(fidx).hasModifier(CodeConstants.ACC_STATIC);
 +    if (isStatic && nexpr.isLambda() && !nexpr.isMethodReference()) {
 +      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(nexpr.getNewType().value);
@@ -225,26 +222,22 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..276f29381aabda07a3a8870b6c9a09ba
 +          s.add(e);
 +        return 0;
 +      });
-+      return s.stream().allMatch(e -> {
++      s.stream().forEach(e -> {
 +        switch (e.type) {
 +          case Exprent.EXPRENT_FIELD:
 +            FieldExprent fe = (FieldExprent)e;
 +            if (fe.isStatic() && cl.hasField(fe.getName(), fe.getDescriptor().descriptorString)) {
 +              String key = InterpreterUtil.makeUniqueKey(fe.getName(), fe.getDescriptor().descriptorString);
 +              if (fe.getInstance() == null && cl.getFields().getIndexByKey(key) > fidx) {
-+                return false;
++                fe.forceQualified(true);
 +              }
 +            }
 +            break;
 +          case Exprent.EXPRENT_NEW:
-+            return isNewExprentIndependent((NewExprent)e, cl, fidx);
++            makeLaterFieldsInLambdaQualified((NewExprent)e, cl, fidx);
 +        }
-+
-+        return true;
 +      });
 +    }
-+
-+    return true;
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
