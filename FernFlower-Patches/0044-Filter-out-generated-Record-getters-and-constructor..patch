@@ -6,7 +6,7 @@ Subject: [PATCH] Filter out generated Record getters and constructor. Make
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..a43bb9809615438526bd082780af3db74782ba3e 100644
+index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..18e042dfff071da0efa578dc3966bc93ad116d47 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -330,6 +330,18 @@ public class ClassWriter {
@@ -79,12 +79,11 @@ index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..a43bb9809615438526bd082780af3db7
        }
        else if (CodeConstants.CLINIT_NAME.equals(name)) {
          name = "";
-@@ -856,90 +903,92 @@ public class ClassWriter {
+@@ -856,102 +903,104 @@ public class ClassWriter {
          }
  
          buffer.append(toValidJavaIdentifier(name));
 -        buffer.append('(');
-+        boolean hasDescriptor = descriptor != null;
 +        if (!compact) {
 +          buffer.append('(');
  
@@ -95,24 +94,18 @@ index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..a43bb9809615438526bd082780af3db7
 -        for (int i = 0; i < md.params.length; i++) {
 -          if (mask == null || mask.get(i) == null) {
 -            lastVisibleParameterIndex = i;
-+          int lastVisibleParameterIndex = -1;
-+          for (int i = 0; i < md.params.length; i++) {
-+            if (mask == null || mask.get(i) == null) {
-+              lastVisibleParameterIndex = i;
-+            }
-           }
+-          }
 -        }
- 
+-
 -        List<StructMethodParametersAttribute.Entry> methodParameters = null;
 -        if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
 -          StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
 -          if (attr != null) {
 -            methodParameters = attr.getEntries();
-+          List<StructMethodParametersAttribute.Entry> methodParameters = null;
-+          if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
-+            StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
-+            if (attr != null) {
-+              methodParameters = attr.getEntries();
++          int lastVisibleParameterIndex = -1;
++          for (int i = 0; i < md.params.length; i++) {
++            if (mask == null || mask.get(i) == null) {
++              lastVisibleParameterIndex = i;
 +            }
            }
 -        }
@@ -129,14 +122,22 @@ index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..a43bb9809615438526bd082780af3db7
 -          if (mask == null || mask.get(i) == null) {
 -            if (paramCount > 0) {
 -              buffer.append(", ");
--            }
++          List<StructMethodParametersAttribute.Entry> methodParameters = null;
++          if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
++            StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
++            if (attr != null) {
++              methodParameters = attr.getEntries();
+             }
++          }
+ 
+-            appendParameterAnnotations(buffer, mt, paramCount);
 +          int index = isEnum && init ? 3 : thisVar ? 1 : 0;
 +          int start = isEnum && init ? 2 : 0;
++          boolean hasDescriptor = descriptor != null;
 +          //mask should now have the Outer.this in it... so this *shouldn't* be nessasary.
 +          //if (init && !isEnum && ((node.access & CodeConstants.ACC_STATIC) == 0) && node.type == ClassNode.CLASS_MEMBER)
 +          //    index++;
- 
--            appendParameterAnnotations(buffer, mt, paramCount);
++
 +          for (int i = start; i < md.params.length; i++) {
 +            VarType parameterType = hasDescriptor && !descriptor.parameterTypes.isEmpty() ? descriptor.parameterTypes.get(paramCount) : md.params[i];
 +            if (mask == null || mask.get(i) == null) {
@@ -217,25 +218,48 @@ index 43199af10fde2770ee14b36ba5bbae23ebb5e2cc..a43bb9809615438526bd082780af3db7
  
 -            buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 +              }
-+
-+              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
  
 -            paramCount++;
-+              paramCount++;
-+            }
-+
-+            index += parameterType.stackSize;
-           }
+-          }
++              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
  
 -          index += parameterType.stackSize;
-+          buffer.append(')');
-         }
+-        }
++              paramCount++;
++            }
  
 -        buffer.append(')');
--
-         StructExceptionsAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_EXCEPTIONS);
-         if ((descriptor != null && !descriptor.exceptionTypes.isEmpty()) || attr != null) {
-           throwsExceptions = true;
++            index += parameterType.stackSize;
++          }
+ 
+-        StructExceptionsAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_EXCEPTIONS);
+-        if ((descriptor != null && !descriptor.exceptionTypes.isEmpty()) || attr != null) {
+-          throwsExceptions = true;
+-          buffer.append(" throws ");
++          buffer.append(')');
+ 
+-          boolean useDescriptor = hasDescriptor && !descriptor.exceptionTypes.isEmpty();
+-          for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
+-            if (i > 0) {
+-              buffer.append(", ");
++          StructExceptionsAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_EXCEPTIONS);
++          if ((descriptor != null && !descriptor.exceptionTypes.isEmpty()) || attr != null) {
++            throwsExceptions = true;
++            buffer.append(" throws ");
++  
++            boolean useDescriptor = hasDescriptor && !descriptor.exceptionTypes.isEmpty();
++            for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
++              if (i > 0) {
++                buffer.append(", ");
++              }
++              VarType type = useDescriptor ? descriptor.exceptionTypes.get(i) : new VarType(attr.getExcClassname(i, cl.getPool()), true);
++              buffer.append(ExprProcessor.getCastTypeName(type));
+             }
+-            VarType type = useDescriptor ? descriptor.exceptionTypes.get(i) : new VarType(attr.getExcClassname(i, cl.getPool()), true);
+-            buffer.append(ExprProcessor.getCastTypeName(type));
+           }
+         }
+       }
 @@ -987,7 +1036,7 @@ public class ClassWriter {
              BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
              TextBuffer code = root.toJava(indent + 1, codeTracer);

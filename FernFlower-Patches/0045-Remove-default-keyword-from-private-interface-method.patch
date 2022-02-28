@@ -5,7 +5,7 @@ Subject: [PATCH] Remove default keyword from private interface methods
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index a43bb9809615438526bd082780af3db74782ba3e..dc062c65aa4a228be0087d6b81a2cf9b2d18c083 100644
+index 18e042dfff071da0efa578dc3966bc93ad116d47..05deb2b78d448fee16329617571a0e07e13d8570 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -829,7 +829,7 @@ public class ClassWriter {
