@@ -662,10 +662,10 @@ index c5ccfd1a659461646494c3796528767d0ba089c8..ef96a3f610c7fe1af746aa1d8663ba7a
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 0355eb0b9dbb382236353a82f78ad6fd9c6775be..4664ac3312cb50710dde9735ff2e5e0b3c31638e 100644
+index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..ed376e7258ffe5701ab7f9d43e1c3756ce70569f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -311,7 +311,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -316,7 +316,9 @@ public class ExprProcessor implements CodeConstants {
          case opc_fload:
          case opc_dload:
          case opc_aload:
@@ -676,7 +676,7 @@ index 0355eb0b9dbb382236353a82f78ad6fd9c6775be..4664ac3312cb50710dde9735ff2e5e0b
            break;
          case opc_iaload:
          case opc_laload:
-@@ -337,8 +339,10 @@ public class ExprProcessor implements CodeConstants {
+@@ -342,8 +344,10 @@ public class ExprProcessor implements CodeConstants {
            if (offsets != null) { //TODO: Figure out why this nulls in some cases
              offsets.set(offset, offset + instr.length);
            }
@@ -689,7 +689,7 @@ index 0355eb0b9dbb382236353a82f78ad6fd9c6775be..4664ac3312cb50710dde9735ff2e5e0b
            break;
          }
          case opc_iastore:
-@@ -400,6 +404,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -405,6 +409,7 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_iinc: {
            VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, offsets);
@@ -1608,21 +1608,21 @@ index c3263800aba7cb93e7b879d0bd46888fb696e861..d7c81a5f8538cdb6c99c752a9dd0fba5
    public StatEdge(@NotNull EdgeType type, Statement source, Statement destination, Statement closure) {
      this(type, source, destination);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index f8ed702e7399dceaed723b580aefd186b9807b43..0839b20b8eaf73588ac58cf790b346c1ec945174 100644
+index 85d0610b3f756616fb276bcdec9a5ff3d4679943..d54328690977dccf72dbdfb5ae114fa9d91bde12 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -453,7 +453,7 @@ public class InvocationExprent extends Exprent {
- 
-   private static final Map<String, String> UNBOXING_METHODS = new HashMap<>();
+@@ -463,7 +463,7 @@ public class InvocationExprent extends Exprent {
+     UNBOXING_METHODS.put("charValue", "java/lang/Character");
+   }
  
 -  private boolean isUnboxingCall() {
 +  public boolean isUnboxingCall() {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
-@@ -665,4 +665,4 @@ public class InvocationExprent extends Exprent {
-     UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
-     UNBOXING_METHODS.put("charValue", "java/lang/Character");
+@@ -664,4 +664,4 @@ public class InvocationExprent extends Exprent {
+ 
+     return true;
    }
 -}
 \ No newline at end of file

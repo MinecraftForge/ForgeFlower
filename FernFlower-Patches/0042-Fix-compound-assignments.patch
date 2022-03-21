@@ -18,12 +18,12 @@ index 85d9b2b2752a20b381e0f5e6420e5419ac728f6f..fd6c22a4b18b2875a5f0f1b7d3f18fa2
      // FIXME: new edge type needed
      LabelHelper.replaceContinueWithBreak(root);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index 1e9e1aa233685efe9bc248eaa07a98101b85bd68..63b4a99c80fe650b01c23b75a799370ff208d2a6 100644
+index 3aa5956fbb79de630c5e9e600c9fd27ae7da0091..bd09bfc980b57c840c8b48ef2723a4ccc62910f7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-@@ -431,4 +431,46 @@ public final class SecondaryFunctionsHelper {
-     mapNumComparisons.put(FunctionExprent.FUNCTION_LT, new Integer[]{null, FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE});
-     mapNumComparisons.put(FunctionExprent.FUNCTION_LE, new Integer[]{FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE, null});
+@@ -430,4 +430,46 @@ public final class SecondaryFunctionsHelper {
+ 
+     return null;
    }
 +
 +  // Updates assignments to make them compound assignments if possible

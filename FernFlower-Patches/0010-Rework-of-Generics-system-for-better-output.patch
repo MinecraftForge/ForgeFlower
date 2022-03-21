@@ -498,7 +498,7 @@ index f82dfeb2851ab7e9ee249427e66776f789b4280b..f7a7f924d66ab3d6d57e74cc5a83fe53
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 4664ac3312cb50710dde9735ff2e5e0b3c31638e..0532235cedb612397b268778eba7bcd740b09ae6 100644
+index ed376e7258ffe5701ab7f9d43e1c3756ce70569f..0259483a968b5d474934879b3241a0d984b74c3b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -9,12 +9,28 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor;
@@ -540,7 +540,7 @@ index 4664ac3312cb50710dde9735ff2e5e0b3c31638e..0532235cedb612397b268778eba7bcd7
  import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.*;
-@@ -470,7 +487,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -475,7 +492,7 @@ public class ExprProcessor implements CodeConstants {
            exprList.add(new ExitExprent(instr.opcode == opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
                                         instr.opcode == opc_return ? null : stack.pop(),
                                         instr.opcode == opc_athrow ? null : methodDescriptor.ret,
@@ -549,7 +549,7 @@ index 4664ac3312cb50710dde9735ff2e5e0b3c31638e..0532235cedb612397b268778eba7bcd7
            break;
          case opc_monitorenter:
          case opc_monitorexit:
-@@ -686,7 +703,13 @@ public class ExprProcessor implements CodeConstants {
+@@ -691,7 +708,13 @@ public class ExprProcessor implements CodeConstants {
        sb.append("void");
        return sb.toString();
      }
@@ -563,7 +563,7 @@ index 4664ac3312cb50710dde9735ff2e5e0b3c31638e..0532235cedb612397b268778eba7bcd7
        String ret;
        if (getShort) {
          ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
-@@ -954,6 +977,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -958,6 +981,8 @@ public class ExprProcessor implements CodeConstants {
          tracer.incrementCurrentSourceLine();
        }
  
@@ -572,7 +572,7 @@ index 4664ac3312cb50710dde9735ff2e5e0b3c31638e..0532235cedb612397b268778eba7bcd7
        TextBuffer content = expr.toJava(indent, tracer);
  
        if (content.length() > 0) {
-@@ -1026,7 +1051,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -1030,7 +1055,7 @@ public class ExprProcessor implements CodeConstants {
        }
      }
  
@@ -1013,7 +1013,7 @@ index ff43667869005931c1b1aca8f2ef1b556aeba705..2849e5044d991e3ecbcc71e9d1080e11
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 0839b20b8eaf73588ac58cf790b346c1ec945174..107b3488287b47fa2d47dfaebeadeeaae3a1ba35 100644
+index d54328690977dccf72dbdfb5ae114fa9d91bde12..242d6e600e30fa43c9011ba52d34b5aaca116a5e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -19,6 +19,8 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -1164,7 +1164,7 @@ index 0839b20b8eaf73588ac58cf790b346c1ec945174..107b3488287b47fa2d47dfaebeadeeaa
  
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(parameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, tracer);
-@@ -457,12 +560,11 @@ public class InvocationExprent extends Exprent {
+@@ -467,12 +570,11 @@ public class InvocationExprent extends Exprent {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
@@ -1180,7 +1180,7 @@ index 0839b20b8eaf73588ac58cf790b346c1ec945174..107b3488287b47fa2d47dfaebeadeeaa
      nextMethod:
      for (StructMethod mt : cl.getMethods()) {
        if (name.equals(mt.getName())) {
-@@ -473,11 +575,19 @@ public class InvocationExprent extends Exprent {
+@@ -483,11 +585,19 @@ public class InvocationExprent extends Exprent {
                continue nextMethod;
              }
            }
@@ -1202,7 +1202,7 @@ index 0839b20b8eaf73588ac58cf790b346c1ec945174..107b3488287b47fa2d47dfaebeadeeaa
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -499,7 +609,14 @@ public class InvocationExprent extends Exprent {
+@@ -509,7 +619,14 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];

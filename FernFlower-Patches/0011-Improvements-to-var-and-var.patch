@@ -111,10 +111,10 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 8ca126e3744d34bb5b6e02821e432018f0d276ed..ada254ad759267db463e271aef366c98e921cc11 100644
+index 6542c5adf793250866d9b1d46403084c8db8bc97..cbaf9725b714d7fcccb5b1a149b2acc2be76a888 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -449,7 +449,12 @@ public class ConstExprent extends Exprent {
+@@ -458,7 +458,12 @@ public class ConstExprent extends Exprent {
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values);
    }

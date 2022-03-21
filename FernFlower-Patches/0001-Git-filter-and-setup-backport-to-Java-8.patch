@@ -54,10 +54,10 @@ index f1df734f9f0bc7080a99140482eedf28bfe6b166..972529aebd1f5daa057f1fe9606c79be
 + 
 \ No newline at end of file
 diff --git a/.gitignore b/.gitignore
-index 2b5420b0d76d97d25c4de444bc669891fd9ea4f3..996e244deeec2d9119c8bcbfb978b9ecff9df899 100644
+index 2b5420b0d76d97d25c4de444bc669891fd9ea4f3..c52eb2e815432be8d1f1e6b61cffdcce68af85bb 100644
 --- a/.gitignore
 +++ b/.gitignore
-@@ -1,4 +1,232 @@
+@@ -1,4 +1,231 @@
 -/.idea/
 -/.gradle/
 +
@@ -293,7 +293,6 @@ index 2b5420b0d76d97d25c4de444bc669891fd9ea4f3..996e244deeec2d9119c8bcbfb978b9ec
 +.idea/
 +repo
 +!testData/classes/**
-+>>>>>>> Git filter and setup, backport to Java 8
 diff --git a/build.gradle b/build.gradle
 deleted file mode 100644
 index efa9dfcfa2204db2314dc867ba995a6cfca37581..0000000000000000000000000000000000000000
@@ -682,39 +681,11 @@ index 2e6e5897b5285c749d75662c65ac5d2904c37bc6..41dfb87909a877d96c3af4adccce4c7a
 +distributionUrl=https\://services.gradle.org/distributions/gradle-7.4-bin.zip
  zipStoreBase=GRADLE_USER_HOME
  zipStorePath=wrapper/dists
-diff --git a/gradlew b/gradlew
-index c53aefaa5fc898b78c7265ea99a3bdc09349a7d0..1b6c787337ffb79f0e3cf8b1e9f00f680a959de1 100755
---- a/gradlew
-+++ b/gradlew
-@@ -1,7 +1,7 @@
- #!/bin/sh
- 
- #
--# Copyright © 2015-2021 the original authors.
-+# Copyright Â© 2015-2021 the original authors.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
-@@ -32,10 +32,10 @@
- #       Busybox and similar reduced shells will NOT work, because this script
- #       requires all of these POSIX shell features:
- #         * functions;
--#         * expansions «$var», «${var}», «${var:-default}», «${var+SET}»,
--#           «${var#prefix}», «${var%suffix}», and «$( cmd )»;
--#         * compound commands having a testable exit status, especially «case»;
--#         * various built-in commands including «command», «set», and «ulimit».
-+#         * expansions Â«$varÂ», Â«${var}Â», Â«${var:-default}Â», Â«${var+SET}Â»,
-+#           Â«${var#prefix}Â», Â«${var%suffix}Â», and Â«$( cmd )Â»;
-+#         * compound commands having a testable exit status, especially Â«caseÂ»;
-+#         * various built-in commands including Â«commandÂ», Â«setÂ», and Â«ulimitÂ».
- #
- #   Important for patching:
- #
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 939863351be0544adc7c4079dc2dbb18be877fb9..2eb1df3201e0dbada705f8a888b01c859dcab2ee 100644
+index 939863351be0544adc7c4079dc2dbb18be877fb9..f7addc6af8928ee2b2d1b9a09d13750413d4721f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -40,11 +40,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -40,11 +40,12 @@ public class ExprProcessor implements CodeConstants {
    public static final String UNKNOWN_TYPE_STRING = "<unknown>";
    public static final String NULL_TYPE_STRING = "<null>";
  
@@ -724,44 +695,34 @@ index 939863351be0544adc7c4079dc2dbb18be877fb9..2eb1df3201e0dbada705f8a888b01c85
 -    opc_instanceof, FunctionExprent.FUNCTION_INSTANCEOF
 -  );
 +  private static final Map<Integer, Integer> functionMap = new HashMap<>();
- 
-   private static final VarType[] constants = {
-     VarType.VARTYPE_INT, VarType.VARTYPE_FLOAT, VarType.VARTYPE_LONG, VarType.VARTYPE_DOUBLE, VarType.VARTYPE_CLASS, VarType.VARTYPE_STRING
-@@ -266,7 +262,10 @@ public class ExprProcessor implements CodeConstants {
-     for (int i = 0; i < seq.length(); i++) {
-       Instruction instr = seq.getInstr(i);
-       Integer offset = block.getOriginalOffset(i);
--      Set<Integer> offsets = offset >= 0 ? Set.of(offset) : null;
-+      Set<Integer> offsets = offset >= 0 ? new HashSet<>() : null;
-+      if (offsets != null) {
-+        offsets.add(offset);
-+      }
- 
-       switch (instr.opcode) {
-         case opc_aconst_null:
-@@ -764,7 +763,8 @@ public class ExprProcessor implements CodeConstants {
-     ClassesProcessor.ClassNode enclosingClass = (ClassesProcessor.ClassNode) DecompilerContext.getProperty(
-       DecompilerContext.CURRENT_CLASS_NODE
-     );
--    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(List.of(enclosingClass));
-+    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>();
-+    enclosingClassList.add(enclosingClass);
-     while (enclosingClass.parent != null) {
-       enclosingClass = enclosingClass.parent;
-       enclosingClassList.add(0, enclosingClass);
-@@ -1065,4 +1065,10 @@ public class ExprProcessor implements CodeConstants {
-   private static boolean isNarrowedIntType(VarType type) {
-     return VarType.VARTYPE_INT.isStrictSuperset(type) || type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
-   }
-+
 +  static {
 +    functionMap.put(opc_arraylength, FunctionExprent.FUNCTION_ARRAY_LENGTH);
 +    functionMap.put(opc_checkcast, FunctionExprent.FUNCTION_CAST);
 +    functionMap.put(opc_instanceof, FunctionExprent.FUNCTION_INSTANCEOF);
 +  }
- }
+ 
+   private static final VarType[] constants = {
+     VarType.VARTYPE_INT, VarType.VARTYPE_FLOAT, VarType.VARTYPE_LONG, VarType.VARTYPE_DOUBLE, VarType.VARTYPE_CLASS, VarType.VARTYPE_STRING
+@@ -266,7 +267,7 @@ public class ExprProcessor implements CodeConstants {
+     for (int i = 0; i < seq.length(); i++) {
+       Instruction instr = seq.getInstr(i);
+       Integer offset = block.getOriginalOffset(i);
+-      Set<Integer> offsets = offset >= 0 ? Set.of(offset) : null;
++      Set<Integer> offsets = offset >= 0 ? Collections.singleton(offset) : null;
+ 
+       switch (instr.opcode) {
+         case opc_aconst_null:
+@@ -764,7 +765,7 @@ public class ExprProcessor implements CodeConstants {
+     ClassesProcessor.ClassNode enclosingClass = (ClassesProcessor.ClassNode) DecompilerContext.getProperty(
+       DecompilerContext.CURRENT_CLASS_NODE
+     );
+-    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(List.of(enclosingClass));
++    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(Collections.singletonList(enclosingClass));
+     while (enclosingClass.parent != null) {
+       enclosingClass = enclosingClass.parent;
+       enclosingClassList.add(0, enclosingClass);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..1e9e1aa233685efe9bc248eaa07a98101b85bd68 100644
+index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..3aa5956fbb79de630c5e9e600c9fd27ae7da0091 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 @@ -14,6 +14,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -772,7 +733,7 @@ index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..1e9e1aa233685efe9bc248eaa07a9810
  import java.util.List;
  import java.util.Map;
  
-@@ -30,14 +31,7 @@ public final class SecondaryFunctionsHelper {
+@@ -30,14 +31,15 @@ public final class SecondaryFunctionsHelper {
      FunctionExprent.FUNCTION_CADD
    };
  
@@ -785,14 +746,6 @@ index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..1e9e1aa233685efe9bc248eaa07a9810
 -    FunctionExprent.FUNCTION_LE, new Integer[]{FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE, null}
 -  );
 +  private static final Map<Integer, Integer[]> mapNumComparisons = new HashMap<>();
- 
-   public static boolean identifySecondaryFunctions(Statement stat, VarProcessor varProc) {
-     if (stat.getExprents() == null) {
-@@ -428,4 +422,13 @@ public final class SecondaryFunctionsHelper {
- 
-     return null;
-   }
-+  
 +  static {
 +    mapNumComparisons.put(FunctionExprent.FUNCTION_EQ, new Integer[]{FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_EQ, FunctionExprent.FUNCTION_GT});
 +    mapNumComparisons.put(FunctionExprent.FUNCTION_NE, new Integer[]{FunctionExprent.FUNCTION_GE, FunctionExprent.FUNCTION_NE, FunctionExprent.FUNCTION_LE});
@@ -801,9 +754,11 @@ index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..1e9e1aa233685efe9bc248eaa07a9810
 +    mapNumComparisons.put(FunctionExprent.FUNCTION_LT, new Integer[]{null, FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE});
 +    mapNumComparisons.put(FunctionExprent.FUNCTION_LE, new Integer[]{FunctionExprent.FUNCTION_LT, FunctionExprent.FUNCTION_LE, null});
 +  }
- }
+ 
+   public static boolean identifySecondaryFunctions(Statement stat, VarProcessor varProc) {
+     if (stat.getExprents() == null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index de93e4c06e937ca4c5a73e76c68124f12440d63c..bae5d3c022d2c43ba4599f71b89717ed52671b51 100644
+index de93e4c06e937ca4c5a73e76c68124f12440d63c..9f2940aca8f64599ecc72cf824ca2ff56db9ba04 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 @@ -421,7 +421,7 @@ public final class SwitchHelper {
@@ -811,15 +766,15 @@ index de93e4c06e937ca4c5a73e76c68124f12440d63c..bae5d3c022d2c43ba4599f71b89717ed
          List<Exprent> newExprents;
          if (lastExprentIndex > 0) {
 -          newExprents = List.copyOf(firstSwitchExprents.subList(0, lastExprentIndex));
-+          newExprents = new ArrayList<>((firstSwitchExprents.subList(0, lastExprentIndex)));
++          newExprents = new ArrayList<>(firstSwitchExprents.subList(0, lastExprentIndex));
          }
          else {
            newExprents = Collections.emptyList();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index a7033f507fd9667d773977803718c08810f0d750..781a7e3404ba2406818ace41ea2dccfadb4c2df9 100644
+index a7033f507fd9667d773977803718c08810f0d750..3882cfd68af7f55938311363a69a2dded3fffbab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -36,15 +36,7 @@ public class ConstExprent extends Exprent {
+@@ -36,15 +36,16 @@ public class ConstExprent extends Exprent {
    private static final String E = "E";
    private static final String PI = "PI";
  
@@ -833,14 +788,6 @@ index a7033f507fd9667d773977803718c08810f0d750..781a7e3404ba2406818ace41ea2dccfa
 -    0x5C, "\\\\"  /* \u005c: backslash \ */
 -  );
 +  private static final Map<Integer, String> CHAR_ESCAPES = new HashMap<>();
- 
-   private StructMember parent;
-   private VarType constType;
-@@ -469,4 +461,14 @@ public class ConstExprent extends Exprent {
- 
-     return true;
-   }
-+  
 +  static {
 +    CHAR_ESCAPES.put(0x8, "\\b");   /* \u0008: backspace BS */
 +    CHAR_ESCAPES.put(0x9, "\\t");   /* \u0009: horizontal tab HT */
@@ -850,13 +797,14 @@ index a7033f507fd9667d773977803718c08810f0d750..781a7e3404ba2406818ace41ea2dccfa
 +    CHAR_ESCAPES.put(0x27, "\\'");  /* \u0027: single quote ' */
 +    CHAR_ESCAPES.put(0x5C, "\\\\"); /* \u005c: backslash \ */
 +  }
- }
-\ No newline at end of file
+ 
+   private StructMember parent;
+   private VarType constType;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index bae86609737b8fc480d07bb035734f3fa53a4552..daf85b339959cb537b993c5ad55bcadcd3165a1b 100644
+index bae86609737b8fc480d07bb035734f3fa53a4552..e3dbe4f87b0d9dae87863a1a262f9e7eb70d9390 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -451,16 +451,7 @@ public class InvocationExprent extends Exprent {
+@@ -451,16 +451,17 @@ public class InvocationExprent extends Exprent {
      return null;
    }
  
@@ -871,14 +819,6 @@ index bae86609737b8fc480d07bb035734f3fa53a4552..daf85b339959cb537b993c5ad55bcadc
 -    "charValue", "java/lang/Character"
 -  );
 +  private static final Map<String, String> UNBOXING_METHODS = new HashMap<>();
- 
-   private boolean isUnboxingCall() {
-     return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
-@@ -656,4 +647,15 @@ public class InvocationExprent extends Exprent {
- 
-     return true;
-   }
-+
 +  static {
 +    UNBOXING_METHODS.put("booleanValue", "java/lang/Boolean");
 +    UNBOXING_METHODS.put("byteValue", "java/lang/Byte");
@@ -889,8 +829,9 @@ index bae86609737b8fc480d07bb035734f3fa53a4552..daf85b339959cb537b993c5ad55bcadc
 +    UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
 +    UNBOXING_METHODS.put("charValue", "java/lang/Character");
 +  }
- }
-\ No newline at end of file
+ 
+   private boolean isUnboxingCall() {
+     return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 index 8a73c2655aa12ecfd26df4e2f4eae17145f8f3e6..f10f59b946137e13a7f6e12d9b61099ce109768c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
@@ -952,10 +893,10 @@ index 037cb437ee5e93941364d73e3d88c1c9f14ac517..2133783e40306b0c7a78db9f04ff079e
        else {
          buffer.append(newName);
 diff --git a/src/org/jetbrains/java/decompiler/struct/match/MatchEngine.java b/src/org/jetbrains/java/decompiler/struct/match/MatchEngine.java
-index aa04e9f12c2af4332c6e1fe6e50ae18c5f56808f..fb236b3e39f40b6b50471a4e8f1eeb5fad1c83ee 100644
+index aa04e9f12c2af4332c6e1fe6e50ae18c5f56808f..0395a67d814678eb0bcc7edcc4574b0dd64f3a4b 100644
 --- a/src/org/jetbrains/java/decompiler/struct/match/MatchEngine.java
 +++ b/src/org/jetbrains/java/decompiler/struct/match/MatchEngine.java
-@@ -12,72 +12,26 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+@@ -12,72 +12,81 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
  
  import java.util.*;
  
@@ -1019,31 +960,25 @@ index aa04e9f12c2af4332c6e1fe6e50ae18c5f56808f..fb236b3e39f40b6b50471a4e8f1eeb5f
 -    "return", ExitExprent.EXIT_RETURN,
 -    "throw", ExitExprent.EXIT_THROW);
 +  private static final Map<String, StatementType> stat_type = new HashMap<>();
-+
-+  private static final Map<String, Integer> expr_type = new HashMap<>();
-+
-+  private static final Map<String, Integer> expr_func_type = new HashMap<>();
-+
-+  private static final Map<String, Integer> expr_exit_type = new HashMap<>();
  
-   @SuppressWarnings("SpellCheckingInspection")
+-  @SuppressWarnings("SpellCheckingInspection")
 -  private static final Map<String, Integer> stat_if_type = Map.of(
 -    "if", IfStatement.IFTYPE_IF,
 -    "ifelse", IfStatement.IFTYPE_IFELSE);
-+  private static final Map<String, Integer> stat_if_type = new HashMap<>();
++  private static final Map<String, Integer> expr_type = new HashMap<>();
++
++  private static final Map<String, Integer> expr_func_type = new HashMap<>();
  
 -  private static final Map<String, VarType> expr_const_type = Map.of(
 -    "null", VarType.VARTYPE_NULL,
 -    "string", VarType.VARTYPE_STRING);
++  private static final Map<String, Integer> expr_exit_type = new HashMap<>();
++
++  @SuppressWarnings("SpellCheckingInspection")
++  private static final Map<String, Integer> stat_if_type = new HashMap<>();
++
 +  private static final Map<String, VarType> expr_const_type = new HashMap<>();
- 
-   private final MatchNode rootNode;
-   private final Map<String, Object> variables = new HashMap<>();
-@@ -225,4 +179,59 @@ public class MatchEngine {
-   public Object getVariableValue(String name) {
-     return variables.get(name);
-   }
-+  
++
 +  static {
 +    stat_properties.put("type", MatchProperties.STATEMENT_TYPE);
 +    stat_properties.put("ret", MatchProperties.STATEMENT_RET);
@@ -1098,7 +1033,9 @@ index aa04e9f12c2af4332c6e1fe6e50ae18c5f56808f..fb236b3e39f40b6b50471a4e8f1eeb5f
 +    expr_const_type.put("null", VarType.VARTYPE_NULL);
 +    expr_const_type.put("string", VarType.VARTYPE_STRING);
 +  }
- }
+ 
+   private final MatchNode rootNode;
+   private final Map<String, Object> variables = new HashMap<>();
 diff --git a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
 index bb8b4dd9b866ec54491da50310b09b6fcb0bdf3f..7143281598c9273e847cc8aa5d86178c3b2b6bab 100644
 --- a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java

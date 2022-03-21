@@ -125,10 +125,10 @@ index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba956
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 2eb1df3201e0dbada705f8a888b01c859dcab2ee..52d84bdc316ff92518b18a867f99a20a817030ea 100644
+index f7addc6af8928ee2b2d1b9a09d13750413d4721f..79dceb558c4b99591e87d917739bcf4c66bda292 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -932,6 +932,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -933,6 +933,7 @@ public class ExprProcessor implements CodeConstants {
      }
  
      TextBuffer buf = new TextBuffer();
@@ -272,10 +272,10 @@ index 82ae0a25a20d2727f611d359e699d6666d1e0ae4..a86f0d2887c6c19cb1d911ec43830eb6
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 781a7e3404ba2406818ace41ea2dccfadb4c2df9..31b5c2bcf58611e3b3c4449e77fdbdefd00b768e 100644
+index 3882cfd68af7f55938311363a69a2dded3fffbab..48d38ff8657fd6d237fe2d75677d89b8bbd8852d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -211,7 +211,7 @@ public class ConstExprent extends Exprent {
+@@ -220,7 +220,7 @@ public class ConstExprent extends Exprent {
          else if (floatVal == Float.NEGATIVE_INFINITY) {
            return new TextBuffer("-1.0F / 0.0F");
          }
@@ -284,7 +284,7 @@ index 781a7e3404ba2406818ace41ea2dccfadb4c2df9..31b5c2bcf58611e3b3c4449e77fdbdef
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -242,15 +242,15 @@ public class ConstExprent extends Exprent {
+@@ -251,15 +251,15 @@ public class ConstExprent extends Exprent {
            }
          }
          else if (Double.isNaN(doubleVal)) {
@@ -304,7 +304,7 @@ index 781a7e3404ba2406818ace41ea2dccfadb4c2df9..31b5c2bcf58611e3b3c4449e77fdbdef
  
        case CodeConstants.TYPE_NULL:
          return new TextBuffer("null");
-@@ -268,6 +268,18 @@ public class ConstExprent extends Exprent {
+@@ -277,6 +277,18 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }

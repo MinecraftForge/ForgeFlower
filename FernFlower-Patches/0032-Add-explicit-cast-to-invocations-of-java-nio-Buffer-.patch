@@ -10,7 +10,7 @@ release * or below, it will still reference these new methods, causing
 exceptions at runtime on Java 8.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 426963313888b578a1d2d41c0d779b8df00cffaf..b0ddd5c3b7866be8d5c542d52b22cbed0a847157 100644
+index 40c7bccc6c00fe78743411799c2ea70e1630fc3d..0237d2612b0a83cd316dcdf38299285b745be606 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -46,6 +46,8 @@ public class InvocationExprent extends Exprent {

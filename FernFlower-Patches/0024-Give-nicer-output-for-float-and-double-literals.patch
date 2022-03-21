@@ -5,11 +5,11 @@ Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index ada254ad759267db463e271aef366c98e921cc11..85dd7f9f42b7f77ff25f9e1315684911a9e4b99c 100644
+index cbaf9725b714d7fcccb5b1a149b2acc2be76a888..a3434f09438a5b83f0061992b227f9c634c4476f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -39,6 +39,69 @@ public class ConstExprent extends Exprent {
-   private static final Map<Integer, String> CHAR_ESCAPES = new HashMap<>();
+@@ -48,6 +48,69 @@ public class ConstExprent extends Exprent {
+   }
  
    private StructMember parent;
 +
@@ -78,7 +78,7 @@ index ada254ad759267db463e271aef366c98e921cc11..85dd7f9f42b7f77ff25f9e1315684911
    private VarType constType;
    private final Object value;
    private final boolean boolPermitted;
-@@ -181,37 +244,7 @@ public class ConstExprent extends Exprent {
+@@ -190,37 +253,7 @@ public class ConstExprent extends Exprent {
          return new TextBuffer(value.toString()).append('L');
  
        case CodeConstants.TYPE_FLOAT:
@@ -117,7 +117,7 @@ index ada254ad759267db463e271aef366c98e921cc11..85dd7f9f42b7f77ff25f9e1315684911
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -237,8 +270,31 @@ public class ConstExprent extends Exprent {
+@@ -246,8 +279,31 @@ public class ConstExprent extends Exprent {
            else if (doubleVal == Math.E  && !inConstantVariable(MATH_SIG, E)) {
              return new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
            }
@@ -151,7 +151,7 @@ index ada254ad759267db463e271aef366c98e921cc11..85dd7f9f42b7f77ff25f9e1315684911
            }
          }
          else if (Double.isNaN(doubleVal)) {
-@@ -268,7 +324,71 @@ public class ConstExprent extends Exprent {
+@@ -277,7 +333,71 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }

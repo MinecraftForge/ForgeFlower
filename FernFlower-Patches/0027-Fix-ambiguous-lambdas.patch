@@ -5,10 +5,10 @@ Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index c314bff6265a07deabd8d58bc6d02ff4f4c18e39..be9129ff6c050924aa83b9c96b479faa9407bdac 100644
+index cb5d2a86ad56ab82e74843a8f6258c4059a0df52..2c8652d73727c1e3d76be49504c875b93befca11 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -1078,6 +1078,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -1082,6 +1082,9 @@ public class ExprProcessor implements CodeConstants {
        (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
        (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
  
@@ -18,7 +18,7 @@ index c314bff6265a07deabd8d58bc6d02ff4f4c18e39..be9129ff6c050924aa83b9c96b479faa
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
      // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-@@ -1092,6 +1095,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -1096,6 +1099,8 @@ public class ExprProcessor implements CodeConstants {
  
      if (cast) buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
  
@@ -27,9 +27,9 @@ index c314bff6265a07deabd8d58bc6d02ff4f4c18e39..be9129ff6c050924aa83b9c96b479faa
      if (quote) buffer.append('(');
  
      if (exprent.type == Exprent.EXPRENT_CONST) {
-@@ -1129,4 +1134,12 @@ public class ExprProcessor implements CodeConstants {
-     functionMap.put(opc_checkcast, FunctionExprent.FUNCTION_CAST);
-     functionMap.put(opc_instanceof, FunctionExprent.FUNCTION_INSTANCEOF);
+@@ -1127,4 +1132,12 @@ public class ExprProcessor implements CodeConstants {
+   private static boolean isNarrowedIntType(VarType type) {
+     return VarType.VARTYPE_INT.isStrictSuperset(type) || type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
    }
 +
 +  private static boolean lambdaNeedsCast(VarType left, NewExprent exprent) {
@@ -41,10 +41,10 @@ index c314bff6265a07deabd8d58bc6d02ff4f4c18e39..be9129ff6c050924aa83b9c96b479faa
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index d4c0672a5c8d1eb435d41c22d4fe22117ded5385..be4afc17c864d109ae68363c9537b2d14f6dae44 100644
+index 77fa57bfd13729f13feaa17525a9d8588c1e27a9..139932bdee7eefd94f1edb28f3aef898f3c062c3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -801,7 +801,8 @@ public class InvocationExprent extends Exprent {
+@@ -811,7 +811,8 @@ public class InvocationExprent extends Exprent {
        if (md.params.length == parameters.size()) {
          boolean exact = true;
          for (int i = 0; i < md.params.length; i++) {
@@ -54,7 +54,7 @@ index d4c0672a5c8d1eb435d41c22d4fe22117ded5385..be4afc17c864d109ae68363c9537b2d1
              exact = false;
              missed.set(i);
            }
-@@ -815,7 +816,8 @@ public class InvocationExprent extends Exprent {
+@@ -825,7 +826,8 @@ public class InvocationExprent extends Exprent {
        boolean failed = false;
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
        for (int i = 0; i < parameters.size(); i++) {
@@ -64,7 +64,7 @@ index d4c0672a5c8d1eb435d41c22d4fe22117ded5385..be4afc17c864d109ae68363c9537b2d1
          if (!missed.get(i)) {
            if (!md.params[i].equals(ptype)) {
              failed = true;
-@@ -823,6 +825,17 @@ public class InvocationExprent extends Exprent {
+@@ -833,6 +835,17 @@ public class InvocationExprent extends Exprent {
            }
          }
          else {
@@ -82,7 +82,7 @@ index d4c0672a5c8d1eb435d41c22d4fe22117ded5385..be4afc17c864d109ae68363c9537b2d1
            if (md.params[i].getType() == CodeConstants.TYPE_OBJECT) {
              if (ptype.getType() != CodeConstants.TYPE_NULL) {
                if (!DecompilerContext.getStructContext().instanceOf(ptype.getValue(), md.params[i].getValue())) {
-@@ -850,7 +863,10 @@ public class InvocationExprent extends Exprent {
+@@ -860,7 +873,10 @@ public class InvocationExprent extends Exprent {
  
          GenericMethodDescriptor gen = mtt.getSignature(); //TODO: Find synthetic flags for params, as Enum generic signatures do no contain the String,int params
          if (gen != null && gen.parameterTypes.size() > i && gen.parameterTypes.get(i).isGeneric()) {
