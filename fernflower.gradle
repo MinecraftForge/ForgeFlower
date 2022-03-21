@@ -19,10 +19,6 @@ repositories {
     maven { url = "https://libraries.minecraft.net/" }
 }
 
-task wrapper(type: Wrapper){
-  gradleVersion = '7.4'
-}
-
 dependencies {
     // The Java9 code depends on (can see) the "main" source set
     java9Implementation sourceSets.main.output
