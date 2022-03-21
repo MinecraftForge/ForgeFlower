@@ -5,10 +5,10 @@ Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 2d57c02d34e186e440ee0afccac79545b5a190cf..16a7cfebe26dfe0f6244a46f9af271758be274da 100644
+index ce9bd206bfabc4656de1415a0c4cfefcbe56e9c2..f85f2f39d138f6e4dfae16cfca21f0293a7490ff 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -39,6 +39,7 @@ public class ClassWriter {
+@@ -46,6 +46,7 @@ public class ClassWriter {
      StructClass cl = wrapper.getClassStruct();
  
      InitializerProcessor.extractInitializers(wrapper);
@@ -17,10 +17,10 @@ index 2d57c02d34e186e440ee0afccac79545b5a190cf..16a7cfebe26dfe0f6244a46f9af27175
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersion5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 7bb50aaeb939930ea8c9679d88cf9a2cc5f0b4af..e380664d46356ec909049293a89bc4be6823dca8 100644
+index 804443bf66c6cc2a9cadf5ef11c44827257aaf53..a45067feeedaece4546ae2dbc5148fbf9b2c0309 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -87,6 +87,31 @@ public class ClassesProcessor implements CodeConstants {
+@@ -88,6 +88,31 @@ public class ClassesProcessor implements CodeConstants {
                rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
                rec.accessFlags = entry.accessFlags;
  
@@ -53,7 +53,7 @@ index 7bb50aaeb939930ea8c9679d88cf9a2cc5f0b4af..e380664d46356ec909049293a89bc4be
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index d3696ddeda3a7df15242d613d6cde5c936642509..55badb664d4a52620710e97e040929ce5414eb9e 100644
+index bc8992ff40bf8655077d2c01a7038bfbbfe999c0..4930acdf38046e1dfe3f04a7e68b4ff88c4ed594 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -70,10 +70,10 @@ index d3696ddeda3a7df15242d613d6cde5c936642509..55badb664d4a52620710e97e040929ce
          Exprent exprent = firstData.getExprents().get(0);
          if (exprent.type == Exprent.EXPRENT_INVOCATION) {
            InvocationExprent invExpr = (InvocationExprent)exprent;
--          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getLstParameters().isEmpty()) {
+-          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getParameters().isEmpty()) {
 -            firstData.getExprents().remove(0);
 +          if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false)) {
-+            List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(invExpr.getClassname(), invExpr.getStringDescriptor(), invExpr.getLstParameters().size());
++            List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(invExpr.getClassName(), invExpr.getStringDescriptor(), invExpr.getParameters().size());
 +            boolean hideSuper = true;
 +
 +            //searching for non-synthetic params
@@ -82,8 +82,8 @@ index d3696ddeda3a7df15242d613d6cde5c936642509..55badb664d4a52620710e97e040929ce
 +                continue;
 +              }
 +              VarType type = invExpr.getDescriptor().params[i];
-+              if (type.type == CodeConstants.TYPE_OBJECT) {
-+                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
++              if (type.getType() == CodeConstants.TYPE_OBJECT) {
++                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.getValue());
 +                if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS || (node.access & CodeConstants.ACC_SYNTHETIC) != 0)) {
 +                  break; // Should be last
 +                }
@@ -112,8 +112,8 @@ index d3696ddeda3a7df15242d613d6cde5c936642509..55badb664d4a52620710e97e040929ce
 +        MethodDescriptor md = MethodDescriptor.parseDescriptor(desc);
 +        if (md.params.length > 0) {
 +          VarType type = md.params[md.params.length - 1];
-+          if (type.type == CodeConstants.TYPE_OBJECT) {
-+            ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.value);
++          if (type.getType() == CodeConstants.TYPE_OBJECT) {
++            ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(type.getValue());
 +            if (node != null && (node.type == ClassNode.CLASS_ANONYMOUS) || (node.access & CodeConstants.ACC_SYNTHETIC) != 0) {
 +              //TODO: Verify that the body is JUST a this([args]) call?
 +              wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(name, desc));

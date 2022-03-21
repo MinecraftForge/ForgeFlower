@@ -5,10 +5,10 @@ Subject: [PATCH] Fix output discrepancies based on running JVM
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index e380664d46356ec909049293a89bc4be6823dca8..3dc1f5130dcd0889690078da5bb718256e0780d9 100644
+index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c672ca4ea85 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -229,6 +229,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -249,6 +249,7 @@ public class ClassesProcessor implements CodeConstants {
                  stack.add(nestedClass);
                }
              }
@@ -16,7 +16,7 @@ index e380664d46356ec909049293a89bc4be6823dca8..3dc1f5130dcd0889690078da5bb71825
            }
          }
        }
-@@ -434,7 +435,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -454,7 +455,7 @@ public class ClassesProcessor implements CodeConstants {
    }
  
  
@@ -25,8 +25,8 @@ index e380664d46356ec909049293a89bc4be6823dca8..3dc1f5130dcd0889690078da5bb71825
      public static final int CLASS_ROOT = 0;
      public static final int CLASS_MEMBER = 1;
      public static final int CLASS_ANONYMOUS = 2;
-@@ -516,6 +517,12 @@ public class ClassesProcessor implements CodeConstants {
-       return node.wrapper;
+@@ -545,6 +546,12 @@ public class ClassesProcessor implements CodeConstants {
+       isNonSealed = nonSealed;
      }
  
 +    @Override
@@ -39,10 +39,18 @@ index e380664d46356ec909049293a89bc4be6823dca8..3dc1f5130dcd0889690078da5bb71825
        public String method_name;
        public String method_descriptor;
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-index 2ad5b20116396973442a5e956a9c30f0a1bada13..77371c62159055cb97cfdd207ece9d852f38a441 100644
+index 05e6e2d720aa5812ef12c4741eab06b8ea477e0f..f9c8c6a0334512699c545c881207194745427c96 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
-@@ -107,6 +107,8 @@ public class LambdaProcessor {
+@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.io.IOException;
+ import java.util.BitSet;
++import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+@@ -110,6 +111,8 @@ public class LambdaProcessor {
        mt.releaseResources();
      }
  
@@ -51,7 +59,7 @@ index 2ad5b20116396973442a5e956a9c30f0a1bada13..77371c62159055cb97cfdd207ece9d85
      // build class hierarchy on lambda
      for (ClassNode nd : node.nested) {
        if (nd.type == ClassNode.CLASS_LAMBDA) {
-@@ -116,6 +118,7 @@ public class LambdaProcessor {
+@@ -119,6 +122,7 @@ public class LambdaProcessor {
  
            parent_class.nested.add(nd);
            nd.parent = parent_class;
@@ -60,10 +68,10 @@ index 2ad5b20116396973442a5e956a9c30f0a1bada13..77371c62159055cb97cfdd207ece9d85
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index da175324e5b04e7980225f97d1b30d729d5d46a2..3625c482744fe98f41fda3736355c50b7ed514e6 100644
+index 7a8655702381a23063c06594aa07bdd9b5c0a8fe..bc116db0c8ad1b1312f220b9b9e22c5d7cdddad8 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-@@ -217,6 +217,7 @@ public class NestedClassProcessor {
+@@ -218,6 +218,7 @@ public class NestedClassProcessor {
        if (setEnclosing.contains(node.classStruct.qualifiedName)) {
          node.nested.add(child);
          child.parent = node;
@@ -72,10 +80,10 @@ index da175324e5b04e7980225f97d1b30d729d5d46a2..3625c482744fe98f41fda3736355c50b
          return true;
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index 7ef6d2f64c10d9543977690f19ff0f6bea2a3615..8d0100d6e80a3b8dd743a6c21139348217d742b7 100644
+index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba9560279de55 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-@@ -193,7 +193,7 @@ public final class DomHelper {
+@@ -194,7 +194,7 @@ public final class DomHelper {
  
      RootStatement root = graphToStatement(graph);
  
@@ -84,7 +92,7 @@ index 7ef6d2f64c10d9543977690f19ff0f6bea2a3615..8d0100d6e80a3b8dd743a6c211393482
  
        //			try {
        //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
-@@ -203,7 +203,7 @@ public final class DomHelper {
+@@ -204,7 +204,7 @@ public final class DomHelper {
        throw new RuntimeException("parsing failure!");
      }
  
@@ -93,7 +101,7 @@ index 7ef6d2f64c10d9543977690f19ff0f6bea2a3615..8d0100d6e80a3b8dd743a6c211393482
  
      SequenceHelper.condenseSequences(root);
      root.buildMonitorFlags();
-@@ -466,11 +466,11 @@ public final class DomHelper {
+@@ -467,11 +467,11 @@ public final class DomHelper {
  
          boolean same = (post == head);
  
@@ -107,7 +115,7 @@ index 7ef6d2f64c10d9543977690f19ff0f6bea2a3615..8d0100d6e80a3b8dd743a6c211393482
          setHandlers.add(head);
          while (true) {
  
-@@ -615,7 +615,7 @@ public final class DomHelper {
+@@ -616,7 +616,7 @@ public final class DomHelper {
                set.removeAll(setOldNodes);
  
                if (setOldNodes.contains(key)) {
@@ -117,10 +125,10 @@ index 7ef6d2f64c10d9543977690f19ff0f6bea2a3615..8d0100d6e80a3b8dd743a6c211393482
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 966cd442c8b991aeae0055a114f01426debb59da..010566ba18cc005e72ddcbf7eea17f0f533a87d9 100644
+index 2eb1df3201e0dbada705f8a888b01c859dcab2ee..52d84bdc316ff92518b18a867f99a20a817030ea 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -797,6 +797,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -932,6 +932,7 @@ public class ExprProcessor implements CodeConstants {
      }
  
      TextBuffer buf = new TextBuffer();
@@ -129,10 +137,10 @@ index 966cd442c8b991aeae0055a114f01426debb59da..010566ba18cc005e72ddcbf7eea17f0f
      for (Exprent expr : lst) {
        if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 9f5289507e7d8f25b4f2f269ee239643b3cd7698..3682bbb940e6855019cb5b10b7a7de6d703e5b62 100644
+index 13d747a5ec6b961763f70b9174efeaf976336dbc..5428c1d1b10e0fbaa7c3b62725acd34d0632f37c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-@@ -481,10 +481,17 @@ public class FinallyProcessor {
+@@ -480,10 +480,17 @@ public class FinallyProcessor {
      // so remove dummy exit
      startBlocks.remove(graph.getLast());
      startBlocks.removeAll(tryBlocks);
@@ -151,7 +159,7 @@ index 9f5289507e7d8f25b4f2f269ee239643b3cd7698..3682bbb940e6855019cb5b10b7a7de6d
  
        Area arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
        if (arr == null) {
-@@ -507,8 +514,17 @@ public class FinallyProcessor {
+@@ -506,8 +513,17 @@ public class FinallyProcessor {
      //			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
      //		} catch(Exception ex){ex.printStackTrace();}
  
@@ -171,10 +179,10 @@ index 9f5289507e7d8f25b4f2f269ee239643b3cd7698..3682bbb940e6855019cb5b10b7a7de6d
  
        if (entry.getValue()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-index bf4d889cea52307dede26a398ac9a81ec4577934..05e945fa82190610c0147389204d579d3d1d61e4 100644
+index fba6145dd11f851b2487c11ad2b529c94ef72c35..d7397455f8a67bb220e3236da77d0c4b14aeb1e5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-@@ -19,7 +19,7 @@ public final class LabelHelper {
+@@ -23,7 +23,7 @@ public final class LabelHelper {
  
      liftClosures(root);
  
@@ -183,7 +191,7 @@ index bf4d889cea52307dede26a398ac9a81ec4577934..05e945fa82190610c0147389204d579d
  
      lowClosures(root);
    }
-@@ -117,7 +117,7 @@ public final class LabelHelper {
+@@ -120,7 +120,7 @@ public final class LabelHelper {
          lowContinueLabels(st, edges);
        }
        else {
@@ -193,10 +201,10 @@ index bf4d889cea52307dede26a398ac9a81ec4577934..05e945fa82190610c0147389204d579d
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-index d8b587fff8b748fd4187453c31a5b39e43bc8ecb..318d95cd5427cda3ec721797c181fe68cb95b6db 100644
+index 09e36dc4686d5e445a48325295ace392a79182f7..da65e74c53d2dc8f0e5f5ab538fe7b9defc5b135 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
-@@ -13,10 +13,10 @@ public class DominatorTreeExceptionFilter {
+@@ -14,10 +14,10 @@ public class DominatorTreeExceptionFilter {
    private final Statement statement;
  
    // idom, nodes
@@ -209,7 +217,7 @@ index d8b587fff8b748fd4187453c31a5b39e43bc8ecb..318d95cd5427cda3ec721797c181fe68
  
    // handler, head dom
    private Map<Integer, Integer> mapExceptionDoms = new HashMap<>();
-@@ -66,7 +66,7 @@ public class DominatorTreeExceptionFilter {
+@@ -67,7 +67,7 @@ public class DominatorTreeExceptionFilter {
      for (int index = lstKeys.size() - 1; index >= 0; index--) {
        Integer key = lstKeys.get(index);
        Integer idom = orderedIDoms.get(index);
@@ -218,8 +226,8 @@ index d8b587fff8b748fd4187453c31a5b39e43bc8ecb..318d95cd5427cda3ec721797c181fe68
      }
  
      Integer firstid = statement.getFirst().id;
-@@ -78,7 +78,7 @@ public class DominatorTreeExceptionFilter {
-       List<Statement> lstPreds = stat.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_BACKWARD);
+@@ -79,7 +79,7 @@ public class DominatorTreeExceptionFilter {
+       List<Statement> lstPreds = stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
        if (!lstPreds.isEmpty()) {
  
 -        Set<Integer> set = new HashSet<>();
@@ -228,7 +236,7 @@ index d8b587fff8b748fd4187453c31a5b39e43bc8ecb..318d95cd5427cda3ec721797c181fe68
          for (Statement st : lstPreds) {
            set.add(st.id);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
-index 71ef24b4bf403112f7c5438c135ec06c7e452c80..e8568f4a93c65c6ac1f7b102ac800724531d9d05 100644
+index 82ae0a25a20d2727f611d359e699d6666d1e0ae4..a86f0d2887c6c19cb1d911ec43830eb69f8aaada 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
 @@ -14,9 +14,9 @@ public class FastExtendedPostdominanceHelper {
@@ -264,50 +272,39 @@ index 71ef24b4bf403112f7c5438c135ec06c7e452c80..e8568f4a93c65c6ac1f7b102ac800724
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 9fa58125289555ee7a4c565574acf74afcc413d0..691d613050f89cce24136dc957a38b65cc51fc4c 100644
+index 781a7e3404ba2406818ace41ea2dccfadb4c2df9..31b5c2bcf58611e3b3c4449e77fdbdefd00b768e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -177,15 +177,15 @@ public class ConstExprent extends Exprent {
-           }
-         }
-         else if (Float.isNaN(floatVal)) {
--          return new TextBuffer("0.0F / 0.0");
-+          return new TextBuffer("0.0F / 0.0F");
-         }
-         else if (floatVal == Float.POSITIVE_INFINITY) {
--          return new TextBuffer("1.0F / 0.0");
-+          return new TextBuffer("1.0F / 0.0F");
-         }
+@@ -211,7 +211,7 @@ public class ConstExprent extends Exprent {
          else if (floatVal == Float.NEGATIVE_INFINITY) {
--          return new TextBuffer("-1.0F / 0.0");
-+          return new TextBuffer("-1.0F / 0.0F");
+           return new TextBuffer("-1.0F / 0.0F");
          }
 -        return new TextBuffer(value.toString()).append('F');
 +        return new TextBuffer(trimZeros(value.toString())).append('F');
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -207,15 +207,15 @@ public class ConstExprent extends Exprent {
+@@ -242,15 +242,15 @@ public class ConstExprent extends Exprent {
            }
          }
          else if (Double.isNaN(doubleVal)) {
--          return new TextBuffer("0.0D / 0.0");
+-          return new TextBuffer("0.0 / 0.0");
 +          return new TextBuffer("0.0D / 0.0D");
          }
          else if (doubleVal == Double.POSITIVE_INFINITY) {
--          return new TextBuffer("1.0D / 0.0");
+-          return new TextBuffer("1.0 / 0.0");
 +          return new TextBuffer("1.0D / 0.0D");
          }
          else if (doubleVal == Double.NEGATIVE_INFINITY) {
--          return new TextBuffer("-1.0D / 0.0");
+-          return new TextBuffer("-1.0 / 0.0");
 +          return new TextBuffer("-1.0D / 0.0D");
          }
--        return new TextBuffer(value.toString()).append('D');
+-        return new TextBuffer(value.toString());
 +        return new TextBuffer(trimZeros(value.toString())).append('D');
  
        case CodeConstants.TYPE_NULL:
          return new TextBuffer("null");
-@@ -233,6 +233,18 @@ public class ConstExprent extends Exprent {
+@@ -268,6 +268,18 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }
@@ -324,8 +321,8 @@ index 9fa58125289555ee7a4c565574acf74afcc413d0..691d613050f89cce24136dc957a38b65
 +      return value.substring(0, i + 1);
 +  }
  
-   public boolean isNull() {
-     return CodeConstants.TYPE_NULL == constType.type;
+   private boolean inConstantVariable(String classSignature, String variableName) {
+     ClassesProcessor.ClassNode node = (ClassesProcessor.ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9aa0e0899 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
@@ -381,7 +378,7 @@ index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 29e7030a24be3d75161885ae1adf38cf5a94a001..6efce5e4b043b2dcb58b4dc21f85da9ac9081a7a 100644
+index 53afa148cf8ae11ceeacf454673a1963d4892212..a1f931b79adb35660ee0f29b1d522214384a044f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
@@ -390,9 +387,9 @@ index 29e7030a24be3d75161885ae1adf38cf5a94a001..6efce5e4b043b2dcb58b4dc21f85da9a
  import java.util.List;
 +import java.util.ArrayList;
  import java.util.Map.Entry;
+ import java.util.Objects;
  
- public class SSAConstructorSparseEx {
-@@ -56,7 +57,7 @@ public class SSAConstructorSparseEx {
+@@ -57,7 +58,7 @@ public class SSAConstructorSparseEx {
      // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
      // } catch(Exception ex) {ex.printStackTrace();}
  
@@ -402,10 +399,10 @@ index 29e7030a24be3d75161885ae1adf38cf5a94a001..6efce5e4b043b2dcb58b4dc21f85da9a
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index 4edec05872a22da324cb24961825b9d66811a5e2..f5719d1a14fc0fd41393e44fe84e0d3c9370d323 100644
+index c6287d302d83548e19f51260e1e984dc991e7f86..80d6d34d3329f831e8add4a0617b8e8bf8a86006 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-@@ -71,7 +71,7 @@ public class SSAUConstructorSparseEx {
+@@ -68,7 +68,7 @@ public class SSAUConstructorSparseEx {
      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
      DirectGraph dgraph = flatthelper.buildDirectGraph(root);
  
@@ -415,7 +412,7 @@ index 4edec05872a22da324cb24961825b9d66811a5e2..f5719d1a14fc0fd41393e44fe84e0d3c
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
-index 0891a4758e43affe4c8f7df991a79bd9475cafc8..c098f3be7e2b67de21ea499ca5e12f120b47572e 100644
+index 58f94462caa7a8212c3e9e36e343e2f4c55582f5..d355e63f8a3252bf58f0cdf18f42e6732132efef 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
 @@ -5,7 +5,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -438,16 +435,19 @@ index 0891a4758e43affe4c8f7df991a79bd9475cafc8..c098f3be7e2b67de21ea499ca5e12f12
  
      for (Statement st : set) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index a5b9d3aa23c0f50d4504ab67de8ccf01d072ae73..28c2f2c8bf29d0d12f2a63be231399adf9030935 100644
+index 133d87f45ab3b057e78589a53529821e5a6a6dea..36a26dbef3486dea87ec01d3ad9a587357bca09e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-@@ -63,7 +63,15 @@ public final class SwitchStatement extends Statement {
- 
-     default_edge = head.getSuccessorEdges(Statement.STATEDGE_DIRECT_ALL).get(0);
- 
--    for (Statement st : lstNodes) {
+@@ -45,9 +45,17 @@ public final class SwitchStatement extends Statement {
+       post = postStatement;
+       regularSuccessors.remove(post);
+     }
+-    defaultEdge = head.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
+-    for (Statement successor : regularSuccessors) {
+-      stats.addWithKey(successor, successor.id);
++
 +    //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
-+    List<Statement> sorted = new ArrayList<>(lstNodes);
++    List<Statement> sorted = new ArrayList<>(regularSuccessors);
 +    Collections.sort(sorted, new Comparator<Statement>() {
 +      @Override
 +      public int compare(Statement o1, Statement o2) {
@@ -455,14 +455,15 @@ index a5b9d3aa23c0f50d4504ab67de8ccf01d072ae73..28c2f2c8bf29d0d12f2a63be231399ad
 +      }
 +    });
 +    for (Statement st : sorted) {
-       stats.addWithKey(st, st.id);
++      stats.addWithKey(st, st.id);
      }
    }
+ 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index adbb6fd39f8dca8e6ef97916354e3cb4e59340c9..c211d680fe9d488b302c92e0ad1ba37f233675ec 100644
+index 0bdf9048e55b5d8873959ce3146b913805406fab..f9ffa3a3279fd8c3639489260a0dc4a01950c1a2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-@@ -215,7 +215,10 @@ public class VarVersionsProcessor {
+@@ -277,7 +277,10 @@ public class VarVersionsProcessor {
      Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
  
      // map var-version pairs on new var indexes
@@ -475,40 +476,32 @@ index adbb6fd39f8dca8e6ef97916354e3cb4e59340c9..c211d680fe9d488b302c92e0ad1ba37f
        if (pair.version >= 0) {
          int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
 diff --git a/testData/results/MoreAnnotations.dec b/testData/results/MoreAnnotations.dec
-index 37302cc3db53fe0bbcfdab2e7a9653812a320235..069c0334a1df23c17159f8f199045438559b7687 100644
+index 7ea22e010e25dae99314be45985743c85da03b33..8a16a352f46a45a57f5dd2cbb8fbd14161178022 100644
 --- a/testData/results/MoreAnnotations.dec
 +++ b/testData/results/MoreAnnotations.dec
-@@ -34,8 +34,8 @@ public @interface MoreAnnotations {
-    @MoreAnnotations(
+@@ -35,7 +35,7 @@ public @interface MoreAnnotations {
        intArray = {1, 0, 2147483647, -2147483648},
        byteArray = {1, 0, 127, -128, -1},
--      floatArray = {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0, 1.0F / 0.0, -1.0F / 0.0},
--      doubleArray = {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0, 1.0D / 0.0, -1.0D / 0.0},
-+      floatArray = {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F},
+       floatArray = {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F},
+-      doubleArray = {1.0, 0.0, 1.7976931348623157E308, 4.9E-324, 0.0 / 0.0, 1.0 / 0.0, -1.0 / 0.0},
 +      doubleArray = {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0D, 1.0D / 0.0D, -1.0D / 0.0D},
        booleanArray = {true, false},
        shortArray = {1, 0, 32767, -32768, -1},
        longArray = {1L, 0L, 9223372036854775807L, -9223372036854775808L},
-@@ -51,9 +51,9 @@ public @interface MoreAnnotations {
+@@ -53,7 +53,7 @@ public @interface MoreAnnotations {
  
-    byte byteValue() default 1;
+    float floatValue() default 1.0F / 0.0F;
  
--   float floatValue() default 1.0F / 0.0;
-+   float floatValue() default 1.0F / 0.0F;
- 
--   double doubleValue() default 0.0D / 0.0;
+-   double doubleValue() default 0.0 / 0.0;
 +   double doubleValue() default 0.0D / 0.0D;
  
     boolean booleanValue() default true;
  
-@@ -75,9 +75,9 @@ public @interface MoreAnnotations {
+@@ -77,7 +77,7 @@ public @interface MoreAnnotations {
  
-    byte[] byteArray() default {1, 0, 127, -128, -1};
+    float[] floatArray() default {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F};
  
--   float[] floatArray() default {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0, 1.0F / 0.0, -1.0F / 0.0};
-+   float[] floatArray() default {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F};
- 
--   double[] doubleArray() default {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0, 1.0D / 0.0, -1.0D / 0.0};
+-   double[] doubleArray() default {1.0, 0.0, 1.7976931348623157E308, 4.9E-324, 0.0 / 0.0, 1.0 / 0.0, -1.0 / 0.0};
 +   double[] doubleArray() default {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0D, 1.0D / 0.0D, -1.0D / 0.0D};
  
     boolean[] booleanArray() default {true, false};
@@ -532,7 +525,7 @@ index 37302cc3db53fe0bbcfdab2e7a9653812a320235..069c0334a1df23c17159f8f199045438
  }
  
 diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
-index 924b7641e3454daf3ce738de750dfcfa587fa18d..14c92f960012ea63747096f9237fca7ee5e70ced 100644
+index 9cd9f538a6a53faa511ceac028001ccef418c3aa..3ea3c7058eadc696e538c72e018bd4076b07a397 100644
 --- a/testData/results/TestAnonymousClass.dec
 +++ b/testData/results/TestAnonymousClass.dec
 @@ -67,15 +67,8 @@ public abstract class TestAnonymousClass {
@@ -540,9 +533,9 @@ index 924b7641e3454daf3ce738de750dfcfa587fa18d..14c92f960012ea63747096f9237fca7e
     }// 40
  
 -   static class InnerRecursive {
--      TestAnonymousClass.InnerRecursive r;
+-      InnerRecursive r;
 -
--      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
+-      public InnerRecursive(InnerRecursive var1) {
 -         this.r = var1;// 105
 -      }// 106
 -
@@ -636,7 +629,7 @@ index 924b7641e3454daf3ce738de750dfcfa587fa18d..14c92f960012ea63747096f9237fca7e
  18
  104
 diff --git a/testData/results/TestAnonymousClassConstructor.dec b/testData/results/TestAnonymousClassConstructor.dec
-index 66960ce40f72703d3577549847d033f011007834..63abd4acbe8cf73eb9628724b632af1a9ca231a3 100644
+index e4d02ffde3166e0b22f82550fa73bdea4c6d02ac..e48e5bc934ccd1ed1aedd0fcde645026bbb4e3fe 100644
 --- a/testData/results/TestAnonymousClassConstructor.dec
 +++ b/testData/results/TestAnonymousClassConstructor.dec
 @@ -65,16 +65,16 @@ class TestAnonymousClassConstructor {
@@ -780,7 +773,7 @@ index 66960ce40f72703d3577549847d033f011007834..63abd4acbe8cf73eb9628724b632af1a
  57
  63
 diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
-index 8883fab6ffd4b5f8b8b656b96e9a5c45d0e1bfb9..d5f7070f5b6618b11ea075941af29d4278059b59 100644
+index 5b26ef8b403a0cc1c2b9858ed3c9ce84108c7562..7c03120a91f0fc0a5cecbbff4cd7b2c0d0da2c94 100644
 --- a/testData/results/TestClassSimpleBytecodeMapping.dec
 +++ b/testData/results/TestClassSimpleBytecodeMapping.dec
 @@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
@@ -841,33 +834,8 @@ index 8883fab6ffd4b5f8b8b656b96e9a5c45d0e1bfb9..d5f7070f5b6618b11ea075941af29d42
 +55 <-> 45
  Not mapped:
  39
-diff --git a/testData/results/TestConstants.dec b/testData/results/TestConstants.dec
-index 28df2c294ca1c0818ffad43052919c61c262c16a..1170f1a5876121e55bc5c58a2d10afeac8d1527f 100644
---- a/testData/results/TestConstants.dec
-+++ b/testData/results/TestConstants.dec
-@@ -16,14 +16,14 @@ public class TestConstants {
-    static final int IMax = 2147483647;
-    static final long LMin = -9223372036854775808L;
-    static final long LMax = 9223372036854775807L;
--   static final float FNan = 0.0F / 0.0;
--   static final float FNeg = -1.0F / 0.0;
--   static final float FPos = 1.0F / 0.0;
-+   static final float FNan = 0.0F / 0.0F;
-+   static final float FNeg = -1.0F / 0.0F;
-+   static final float FPos = 1.0F / 0.0F;
-    static final float FMin = 1.4E-45F;
-    static final float FMax = 3.4028235E38F;
--   static final double DNan = 0.0D / 0.0;
--   static final double DNeg = -1.0D / 0.0;
--   static final double DPos = 1.0D / 0.0;
-+   static final double DNan = 0.0D / 0.0D;
-+   static final double DNeg = -1.0D / 0.0D;
-+   static final double DPos = 1.0D / 0.0D;
-    static final double DMin = 4.9E-324D;
-    static final double DMax = 1.7976931348623157E308D;
- 
 diff --git a/testData/results/TestExtendingSubclass.dec b/testData/results/TestExtendingSubclass.dec
-index 5e13985808328287c750d776eee29041bec8e3fe..2caf74011a7beee7fd2a9fdebe1873be625a8f1a 100644
+index f7be1b46d3058aba92f7a21ffc9558068dd26226..6bab8435926e1c10171fc97b61075ec58dba2572 100644
 --- a/testData/results/TestExtendingSubclass.dec
 +++ b/testData/results/TestExtendingSubclass.dec
 @@ -1,35 +1,35 @@
@@ -879,7 +847,7 @@ index 5e13985808328287c750d776eee29041bec8e3fe..2caf74011a7beee7fd2a9fdebe1873be
 +      }// 9
 +   }
 +
-    class Subclass2 extends TestExtendingSubclass.Subclass1 {
+    class Subclass2 extends Subclass1 {
        Subclass2(String name) {
           super(name);// 14
        }// 15
@@ -920,11 +888,11 @@ index 5e13985808328287c750d776eee29041bec8e3fe..2caf74011a7beee7fd2a9fdebe1873be
  8
  13
 diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
-index af4fb30496706a46dcc578948b4c66ef90b6d65e..f728ad7e3493b296f88d919a028b646096f733c7 100644
+index b270e4eea9caf36d5c66b64d18e33ca8d8fcae10..9009b85453ba2aae2ac4e32f94fb082dcd6d3c81 100644
 --- a/testData/results/TestInnerLocal.dec
 +++ b/testData/results/TestInnerLocal.dec
 @@ -30,6 +30,14 @@ public class TestInnerLocal {
-       new TestInnerLocal.Inner1Static.Inner2Static("test");// 26
+       new Inner1Static.Inner2Static("test");// 26
     }// 27
  
 +   class Inner1 {
@@ -1225,7 +1193,7 @@ index 21f0f129d1bc260e2dbc7ce77f07ece57711bf75..af7ce865f5d946980010ee02c3e5be38
  37 <-> 19
  39 <-> 22
 diff --git a/testData/results/TestSwitchOnEnum.dec b/testData/results/TestSwitchOnEnum.dec
-index b6984c399ceff5434ddf72837649389341a00ea5..34064819cc6a520a13bc3fd718a046861414ae4c 100644
+index e63cfe50c3d0c9fddd4f3051d7bda5df33523cbb..6e1f77fa247005cb8bb012a91aff96ed78103204 100644
 --- a/testData/results/TestSwitchOnEnum.dec
 +++ b/testData/results/TestSwitchOnEnum.dec
 @@ -36,15 +36,15 @@ public class TestSwitchOnEnum {

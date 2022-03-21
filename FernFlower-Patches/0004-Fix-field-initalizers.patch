@@ -5,7 +5,7 @@ Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 55badb664d4a52620710e97e040929ce5414eb9e..f1e02d4a1232fe1e98d554e034ec49601fa2be70 100644
+index 4930acdf38046e1dfe3f04a7e68b4ff88c4ed594..169a613c8b6e84a80895acdc18dfe0aa576c2af6 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -213,7 +213,7 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..f1e02d4a1232fe1e98d554e034ec4960
 +  private static void makeLaterFieldsInLambdaQualified(NewExprent nexpr, StructClass cl, int fidx) {
 +    boolean isStatic = cl.getFields().get(fidx).hasModifier(CodeConstants.ACC_STATIC);
 +    if (isStatic && nexpr.isLambda() && !nexpr.isMethodReference()) {
-+      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(nexpr.getNewType().value);
++      ClassNode child = DecompilerContext.getClassProcessor().getMapRootClasses().get(nexpr.getNewType().getValue());
 +      MethodWrapper wrapper = child.parent.getWrapper().getMethods().getWithKey(child.lambdaInformation.content_method_key);
 +
 +      Set<Exprent> s = new HashSet<>();
@@ -241,10 +241,10 @@ index 55badb664d4a52620710e97e040929ce5414eb9e..f1e02d4a1232fe1e98d554e034ec4960
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 642a86be9a791759e04cc74ad12ffca4436dfbf6..c79f1a6fc6d13c3e61d877624c18b117a5567ce6 100644
+index ec3a8668a94c7da89091a09a3002fd14346cc684..0f99c8891a4bc70626b2383b22384a1b212fe8da 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-@@ -31,18 +31,24 @@ public class FieldExprent extends Exprent {
+@@ -29,18 +29,24 @@ public class FieldExprent extends Exprent {
    private final boolean isStatic;
    private Exprent instance;
    private final FieldDescriptor descriptor;
@@ -269,16 +269,16 @@ index 642a86be9a791759e04cc74ad12ffca4436dfbf6..c79f1a6fc6d13c3e61d877624c18b117
  
      addBytecodeOffsets(bytecodeOffsets);
    }
-@@ -89,7 +95,7 @@ public class FieldExprent extends Exprent {
+@@ -87,7 +93,7 @@ public class FieldExprent extends Exprent {
  
      if (isStatic) {
        ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
 -      if (node == null || !classname.equals(node.classStruct.qualifiedName) || isAmbiguous()) {
 +      if (node == null || !classname.equals(node.classStruct.qualifiedName) || isAmbiguous() || forceQualified) {
-         buf.append(DecompilerContext.getImportCollector().getShortNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
+         buf.append(DecompilerContext.getImportCollector().getNestedNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
          buf.append(".");
        }
-@@ -185,6 +191,10 @@ public class FieldExprent extends Exprent {
+@@ -183,6 +189,10 @@ public class FieldExprent extends Exprent {
      return name;
    }
  
