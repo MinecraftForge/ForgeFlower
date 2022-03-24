@@ -318,7 +318,7 @@ index d8fd9bdf784704836e69cfdd1596ae29b2732232..139ccdb55347a5d66627c1489ee73910
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index d93e532f606fc934978a5a784f5a1b819686c657..40c7bccc6c00fe78743411799c2ea70e1630fc3d 100644
+index d93e532f606fc934978a5a784f5a1b819686c657..a368a3e979296796f7eb92df71ad2afbb8fbb31d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -168,6 +168,11 @@ public class InvocationExprent extends Exprent {
@@ -326,9 +326,9 @@ index d93e532f606fc934978a5a784f5a1b819686c657..40c7bccc6c00fe78743411799c2ea70e
      bootstrapArguments = expr.getBootstrapArguments();
      isSyntheticNullCheck = expr.isSyntheticNullCheck();
 +
-+    if (invocationType == INVOKE_DYNAMIC && !isStatic && instance != null && !parameters.isEmpty()) {
++    if (invocationType == INVOKE_DYNAMIC && !isStatic && instance != null && !this.parameters.isEmpty()) {
 +      // method reference, instance and first param are expected to be the same var object
-+      instance = parameters.get(0);
++      instance = this.parameters.get(0);
 +    }
    }
  
