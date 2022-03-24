@@ -5,10 +5,10 @@ Subject: [PATCH] Fix compound assignments
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 85d9b2b2752a20b381e0f5e6420e5419ac728f6f..fd6c22a4b18b2875a5f0f1b7d3f18fa2ed0ba305 100644
+index f2964aa1e2759c4828e65d8db3b8421b7072adbf..6cecb6f4fb4d69f4df24bc0c614d9875cd667105 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-@@ -228,6 +228,8 @@ public class MethodProcessorRunnable implements Runnable {
+@@ -224,6 +224,8 @@ public class MethodProcessorRunnable implements Runnable {
  
      varProc.setVarDefinitions(root);
  

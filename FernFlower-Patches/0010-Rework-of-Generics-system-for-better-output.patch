@@ -470,7 +470,7 @@ index 5448e7900953da79b2bc01f99fd7e8f3080148e7..bdd34f0382b06687ef7fb3237bbc96ac
      defaults.put(MAX_PROCESSING_METHOD, "0");
      defaults.put(RENAME_ENTITIES, "0");
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index f82dfeb2851ab7e9ee249427e66776f789b4280b..f7a7f924d66ab3d6d57e74cc5a83fe531d8fadef 100644
+index 33906d3a433e4421bbf41c6aed5ff566a69a904a..e32253528718631cd622d6af4ede4a85ff4af061 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -2,6 +2,7 @@
@@ -481,7 +481,7 @@ index f82dfeb2851ab7e9ee249427e66776f789b4280b..f7a7f924d66ab3d6d57e74cc5a83fe53
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
  import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
-@@ -46,7 +47,7 @@ public class ClassWrapper {
+@@ -47,7 +48,7 @@ public class ClassWrapper {
      for (StructMethod mt : classStruct.getMethods()) {
        DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
  
@@ -490,7 +490,7 @@ index f82dfeb2851ab7e9ee249427e66776f789b4280b..f7a7f924d66ab3d6d57e74cc5a83fe53
        VarProcessor varProc = new VarProcessor(classStruct, mt, md);
        DecompilerContext.startMethod(varProc);
  
-@@ -217,4 +218,4 @@ public class ClassWrapper {
+@@ -218,4 +219,4 @@ public class ClassWrapper {
    public String toString() {
      return classStruct.qualifiedName;
    }

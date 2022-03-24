@@ -1147,7 +1147,7 @@ index 272601270ea32fb5ccc4a822cd9d1b959bae9c35..9d5fcfd4c907e69c52965517dfe69e3a
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
-index 36a26dbef3486dea87ec01d3ad9a587357bca09e..9a3585fad6023265ff143240720ad20d8937c0d0 100644
+index 119949c8bd35082b95cbfde2b185aa2d23034224..49eb3958a08126c49eab41cf108e9b6676a837d0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
 @@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -1158,7 +1158,7 @@ index 36a26dbef3486dea87ec01d3ad9a587357bca09e..9a3585fad6023265ff143240720ad20d
  import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.*;
-@@ -169,6 +170,21 @@ public final class SwitchStatement extends Statement {
+@@ -170,6 +171,21 @@ public final class SwitchStatement extends Statement {
      sortEdgesAndNodes();
    }
  
