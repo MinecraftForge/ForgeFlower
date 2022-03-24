@@ -4,93 +4,6 @@ Date: Fri, 14 Apr 2017 17:09:41 -0700
 Subject: [PATCH] Rework of Generics system for better output
 
 
-diff --git a/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
-new file mode 100644
-index 0000000000000000000000000000000000000000..ad9f8c22d02565f22720a4fa8819511124598dac
---- /dev/null
-+++ b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
-@@ -0,0 +1,81 @@
-+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-+package org.jetbrains.java.decompiler.util;
-+
-+import java.lang.module.*;
-+import java.lang.reflect.InvocationTargetException;
-+import java.lang.reflect.Method;
-+import java.nio.ByteBuffer;
-+import java.io.File;
-+import java.io.IOException;
-+import java.io.InputStream;
-+import java.util.HashSet;
-+import java.util.Optional;
-+import java.util.Set;
-+import java.util.stream.Stream;
-+
-+import org.jetbrains.java.decompiler.main.DecompilerContext;
-+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
-+import org.jetbrains.java.decompiler.struct.StructContext;
-+
-+public class ClasspathScanner {
-+
-+    public static void addAllClasspath(StructContext ctx) {
-+      Set<String> found = new HashSet<String>();
-+      String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
-+      for (String prop : props) {
-+        if (prop == null)
-+          continue;
-+
-+        for (final String path : prop.split(File.pathSeparator)) {
-+          File file = new File(path);
-+          if (found.contains(file.getAbsolutePath()))
-+            continue;
-+
-+          if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
-+            DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
-+            ctx.addSpace(file, false);
-+            found.add(file.getAbsolutePath());
-+          }
-+        }
-+      }
-+
-+      addAllModulePath(ctx);
-+    }
-+
-+    private static void addAllModulePath(StructContext ctx) {
-+      for (ModuleReference module : ModuleFinder.ofSystem().findAll()) {
-+        String name = module.descriptor().name();
-+        try {
-+          ModuleReader reader = module.open();
-+          DecompilerContext.getLogger().writeMessage("Reading Module: " + name, Severity.INFO);
-+          reader.list().forEach(cls -> {
-+            if (!cls.endsWith(".class") || cls.contains("module-info.class"))
-+              return;
-+
-+            DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
-+            try {
-+              Optional<ByteBuffer> bb = reader.read(cls);
-+              if (!bb.isPresent()) {
-+                DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
-+                return;
-+              }
-+
-+              byte[] data;
-+              if (bb.get().hasArray()) {
-+                data = bb.get().array();
-+              } else {
-+                data = new byte[bb.get().remaining()];
-+                bb.get().get(data);
-+              }
-+              ctx.addData(name, cls, data, false);
-+            } catch (IOException e) {
-+              DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, e);
-+            }
-+          });
-+          reader.close();
-+        } catch (IOException e) {
-+          DecompilerContext.getLogger().writeMessage("Error loading module " + name, e);
-+        }
-+      }
-+    }
-+}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java b/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java
 index 4c4916e4cc5ccdd06dd4138dae54c31fb7f3bd34..decfe747ba2ab3643209987294ef7bcbbfa15e1b 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassReference14Processor.java
@@ -507,7 +420,7 @@ index 33906d3a433e4421bbf41c6aed5ff566a69a904a..e32253528718631cd622d6af4ede4a85
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76f2fb97fd 100644
+index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e71c2c502 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -29,6 +29,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
@@ -518,7 +431,7 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76
  import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.*;
-@@ -474,7 +475,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -473,7 +474,7 @@ public class ExprProcessor implements CodeConstants {
            exprList.add(new ExitExprent(instr.opcode == opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
                                         instr.opcode == opc_return ? null : stack.pop(),
                                         instr.opcode == opc_athrow ? null : methodDescriptor.ret,
@@ -527,7 +440,7 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76
            break;
          case opc_monitorenter:
          case opc_monitorexit:
-@@ -690,7 +691,15 @@ public class ExprProcessor implements CodeConstants {
+@@ -689,7 +690,15 @@ public class ExprProcessor implements CodeConstants {
        sb.append("void");
        return sb.toString();
      }
@@ -543,7 +456,7 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76
        String ret;
        if (getShort) {
          ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
-@@ -741,7 +750,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -740,7 +749,9 @@ public class ExprProcessor implements CodeConstants {
        boolean shouldWrite = true;
        if (!enclosingClasses.isEmpty() && i != nestedTypes.size() - 1) {
          String enclosingType = enclosingClasses.remove(0).simpleName;
@@ -554,7 +467,7 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76
        }
        if (i == 0) { // first annotation can be written already
          if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
-@@ -957,6 +968,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -956,6 +967,8 @@ public class ExprProcessor implements CodeConstants {
          tracer.incrementCurrentSourceLine();
        }
  
@@ -563,7 +476,7 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76
        TextBuffer content = expr.toJava(indent, tracer);
  
        if (content.length() > 0) {
-@@ -1029,7 +1042,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -1028,7 +1041,7 @@ public class ExprProcessor implements CodeConstants {
        }
      }
  
@@ -1004,7 +917,7 @@ index f2efd6b594b700b20814c620328753a66aea22a4..c45050559cace73741f7529254e1483c
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index afaf2bf239640309370fd34cf9750f4a9537ba74..54c7d1fb9150754ba9daa09f4f24aa41c86387a8 100644
+index 8356b5b643139d6c8346070d826877c724e4f8a2..a262cb07aef017240480f332563173ed403bc7a0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -19,6 +19,8 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -1155,7 +1068,7 @@ index afaf2bf239640309370fd34cf9750f4a9537ba74..54c7d1fb9150754ba9daa09f4f24aa41
  
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(parameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, tracer);
-@@ -467,12 +570,11 @@ public class InvocationExprent extends Exprent {
+@@ -466,12 +569,11 @@ public class InvocationExprent extends Exprent {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
@@ -1171,7 +1084,7 @@ index afaf2bf239640309370fd34cf9750f4a9537ba74..54c7d1fb9150754ba9daa09f4f24aa41
      nextMethod:
      for (StructMethod mt : cl.getMethods()) {
        if (name.equals(mt.getName())) {
-@@ -483,11 +585,19 @@ public class InvocationExprent extends Exprent {
+@@ -482,11 +584,19 @@ public class InvocationExprent extends Exprent {
                continue nextMethod;
              }
            }
@@ -1193,7 +1106,7 @@ index afaf2bf239640309370fd34cf9750f4a9537ba74..54c7d1fb9150754ba9daa09f4f24aa41
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -509,7 +619,14 @@ public class InvocationExprent extends Exprent {
+@@ -508,7 +618,14 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];
@@ -2616,24 +2529,31 @@ index 8b6105dbbfea358241702acbc691976d51f0d726..4261dce0b37505d22c6e9ee7c3e0bdb7
  }
 diff --git a/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969850b8087
+index 0000000000000000000000000000000000000000..ad9f8c22d02565f22720a4fa8819511124598dac
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
-@@ -0,0 +1,35 @@
+@@ -0,0 +1,81 @@
 +// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 +package org.jetbrains.java.decompiler.util;
 +
++import java.lang.module.*;
++import java.lang.reflect.InvocationTargetException;
++import java.lang.reflect.Method;
++import java.nio.ByteBuffer;
 +import java.io.File;
++import java.io.IOException;
++import java.io.InputStream;
 +import java.util.HashSet;
++import java.util.Optional;
 +import java.util.Set;
++import java.util.stream.Stream;
 +
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
 +import org.jetbrains.java.decompiler.struct.StructContext;
 +
 +public class ClasspathScanner {
-+    //TODO: Look into caching the metadata grabbed from the context info?
-+    //J9 destroies the classpath so we need to scan this differently. We take advantage of MultiRelease jars to do this.
++
 +    public static void addAllClasspath(StructContext ctx) {
 +      Set<String> found = new HashSet<String>();
 +      String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
@@ -2651,6 +2571,45 @@ index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969
 +            ctx.addSpace(file, false);
 +            found.add(file.getAbsolutePath());
 +          }
++        }
++      }
++
++      addAllModulePath(ctx);
++    }
++
++    private static void addAllModulePath(StructContext ctx) {
++      for (ModuleReference module : ModuleFinder.ofSystem().findAll()) {
++        String name = module.descriptor().name();
++        try {
++          ModuleReader reader = module.open();
++          DecompilerContext.getLogger().writeMessage("Reading Module: " + name, Severity.INFO);
++          reader.list().forEach(cls -> {
++            if (!cls.endsWith(".class") || cls.contains("module-info.class"))
++              return;
++
++            DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
++            try {
++              Optional<ByteBuffer> bb = reader.read(cls);
++              if (!bb.isPresent()) {
++                DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
++                return;
++              }
++
++              byte[] data;
++              if (bb.get().hasArray()) {
++                data = bb.get().array();
++              } else {
++                data = new byte[bb.get().remaining()];
++                bb.get().get(data);
++              }
++              ctx.addData(name, cls, data, false);
++            } catch (IOException e) {
++              DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, e);
++            }
++          });
++          reader.close();
++        } catch (IOException e) {
++          DecompilerContext.getLogger().writeMessage("Error loading module " + name, e);
 +        }
 +      }
 +    }

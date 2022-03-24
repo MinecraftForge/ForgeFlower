@@ -59,7 +59,7 @@ index 301737310f3d346cc2229395551d504a34cb6dbc..b039480288011a5b9bdca635f7c66e85
              classes.put(cl.qualifiedName, cl);
              unit.addClass(cl, name);
 diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
-index 2133783e40306b0c7a78db9f04ff079e341ece6a..489a71c0635dcf579bed3e8b4ce56d882b2f0108 100644
+index 037cb437ee5e93941364d73e3d88c1c9f14ac517..d4e98b9aea54e04c038641e472e215fc62e496a2 100644
 --- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 +++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 @@ -113,7 +113,8 @@ public class ConstantPool implements NewClassNameBuilder {

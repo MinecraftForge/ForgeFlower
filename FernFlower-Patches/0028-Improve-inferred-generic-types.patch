@@ -47,7 +47,7 @@ index 47303b872ca4353b1954d8b3c56d99a0693e095a..fd0e1ab199738bc00cd48f522a75b86e
    public int getExprentUse() {
      return array.getExprentUse() & index.getExprentUse() & Exprent.MULTIPLE_USES;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index a3434f09438a5b83f0061992b227f9c634c4476f..4b22805aa16a8a95a4bebf3b371df3f0c8dae03a 100644
+index 912c46cdd5ce58333526786b20ab4bed310e6e76..c1443e44c5ee72ae04faa1aaedc1c7912879cc91 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -58,7 +58,7 @@ index a3434f09438a5b83f0061992b227f9c634c4476f..4b22805aa16a8a95a4bebf3b371df3f0
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-@@ -134,6 +135,12 @@ public class ConstExprent extends Exprent {
+@@ -133,6 +134,12 @@ public class ConstExprent extends Exprent {
      this.value = value;
      this.boolPermitted = boolPermitted;
      addBytecodeOffsets(bytecodeOffsets);
@@ -264,7 +264,7 @@ index a735a13e50d76c15800b14d0dd589d2db6947b6e..45a83c38eabb72eb26a618e7b7f8a528
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..05a2cf408023e24a209a0a5b691b1eeb8302b1c8 100644
+index 010ea231c4feeec738e6422d7cd77a6b9dbabe0c..89f1602effd405a5c16f63dfd6c17ae43a84337f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.util.TextUtil;
@@ -788,7 +788,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..05a2cf408023e24a209a0a5b691b1eeb
      return buf;
    }
  
-@@ -889,6 +1185,162 @@ public class InvocationExprent extends Exprent {
+@@ -888,6 +1184,162 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -951,7 +951,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..05a2cf408023e24a209a0a5b691b1eeb
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -1001,6 +1453,18 @@ public class InvocationExprent extends Exprent {
+@@ -1000,6 +1452,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticNullCheck;
    }
  

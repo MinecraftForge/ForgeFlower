@@ -92,7 +92,7 @@ index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2d
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b5fd9e7e8c6941b69440d9f916cb6bdd6e211195..da71a1497ceb262e80617c525886da7db85e02b3 100644
+index 454da75adaa0c626ad11e8bdf3e5affe321d1b30..2fb587bd921181e9ae2f51461e082adfc47c021c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -408,6 +408,7 @@ public class InvocationExprent extends Exprent {
@@ -144,7 +144,7 @@ index b5fd9e7e8c6941b69440d9f916cb6bdd6e211195..da71a1497ceb262e80617c525886da7d
  
      boolean firstParameter = true;
      for (int i = start; i < this.parameters.size(); i++) {
-@@ -685,27 +702,98 @@ public class InvocationExprent extends Exprent {
+@@ -684,27 +701,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();

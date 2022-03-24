@@ -5,11 +5,11 @@ Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index cbaf9725b714d7fcccb5b1a149b2acc2be76a888..a3434f09438a5b83f0061992b227f9c634c4476f 100644
+index 2b0a80c8e2f1229664e86159f6cefc74955e197e..912c46cdd5ce58333526786b20ab4bed310e6e76 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -48,6 +48,69 @@ public class ConstExprent extends Exprent {
-   }
+@@ -47,6 +47,69 @@ public class ConstExprent extends Exprent {
+   );
  
    private StructMember parent;
 +
@@ -78,7 +78,7 @@ index cbaf9725b714d7fcccb5b1a149b2acc2be76a888..a3434f09438a5b83f0061992b227f9c6
    private VarType constType;
    private final Object value;
    private final boolean boolPermitted;
-@@ -190,37 +253,7 @@ public class ConstExprent extends Exprent {
+@@ -189,37 +252,7 @@ public class ConstExprent extends Exprent {
          return new TextBuffer(value.toString()).append('L');
  
        case CodeConstants.TYPE_FLOAT:
@@ -117,7 +117,7 @@ index cbaf9725b714d7fcccb5b1a149b2acc2be76a888..a3434f09438a5b83f0061992b227f9c6
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -246,8 +279,31 @@ public class ConstExprent extends Exprent {
+@@ -245,8 +278,31 @@ public class ConstExprent extends Exprent {
            else if (doubleVal == Math.E  && !inConstantVariable(MATH_SIG, E)) {
              return new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
            }
@@ -151,7 +151,7 @@ index cbaf9725b714d7fcccb5b1a149b2acc2be76a888..a3434f09438a5b83f0061992b227f9c6
            }
          }
          else if (Double.isNaN(doubleVal)) {
-@@ -277,7 +333,71 @@ public class ConstExprent extends Exprent {
+@@ -276,7 +332,71 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }

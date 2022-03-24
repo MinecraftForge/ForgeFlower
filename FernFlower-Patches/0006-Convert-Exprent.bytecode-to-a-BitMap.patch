@@ -189,14 +189,14 @@ index 228a7b835307d950e030fe16bcb2e8a41c0fafb3..f1f3e7c7e903dd0571c2a18f1ed97699
      Exprent func = lstOperands.get(0);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 79dceb558c4b99591e87d917739bcf4c66bda292..80d5dab3d3f0101ba5907e6a8e31d275834a73b2 100644
+index 6216a80e20d1a1bbb80c5b343b743832e0421dbc..0a437f1a324bcae5d86e60e990f35bc84ed277ce 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -267,7 +267,15 @@ public class ExprProcessor implements CodeConstants {
+@@ -266,7 +266,15 @@ public class ExprProcessor implements CodeConstants {
      for (int i = 0; i < seq.length(); i++) {
        Instruction instr = seq.getInstr(i);
        Integer offset = block.getOriginalOffset(i);
--      Set<Integer> offsets = offset >= 0 ? Collections.singleton(offset) : null;
+-      Set<Integer> offsets = offset >= 0 ? Set.of(offset) : null;
 +      BitSet offsets = null;
 +      if (offset >= 0) {
 +        offsets = new BitSet();
@@ -209,7 +209,7 @@ index 79dceb558c4b99591e87d917739bcf4c66bda292..80d5dab3d3f0101ba5907e6a8e31d275
  
        switch (instr.opcode) {
          case opc_aconst_null:
-@@ -308,7 +316,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -307,7 +315,7 @@ public class ExprProcessor implements CodeConstants {
          case opc_fload:
          case opc_dload:
          case opc_aload:
@@ -218,7 +218,7 @@ index 79dceb558c4b99591e87d917739bcf4c66bda292..80d5dab3d3f0101ba5907e6a8e31d275
            break;
          case opc_iaload:
          case opc_laload:
-@@ -331,7 +339,10 @@ public class ExprProcessor implements CodeConstants {
+@@ -330,7 +338,10 @@ public class ExprProcessor implements CodeConstants {
          case opc_astore: {
            Exprent value = stack.pop();
            int varIndex = instr.operand(0);
@@ -230,7 +230,7 @@ index 79dceb558c4b99591e87d917739bcf4c66bda292..80d5dab3d3f0101ba5907e6a8e31d275
            exprList.add(new AssignmentExprent(left, value, offsets));
            break;
          }
-@@ -393,7 +404,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -392,7 +403,7 @@ public class ExprProcessor implements CodeConstants {
            pushEx(stack, exprList, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, offsets));
            break;
          case opc_iinc: {
@@ -485,10 +485,10 @@ index 13faa7fd16307e584d00bdf9f990e7cc7245babd..6cc60fd5314369cef21bd56c12e2af8e
    // getter and setter methods
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 48d38ff8657fd6d237fe2d75677d89b8bbd8852d..6542c5adf793250866d9b1d46403084c8db8bc97 100644
+index 3edae784f56848a5697879cfef9e05130ee38d34..08903784da127ef326d115d8af8287cc8f65c2ca 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -52,20 +52,20 @@ public class ConstExprent extends Exprent {
+@@ -51,20 +51,20 @@ public class ConstExprent extends Exprent {
    private final Object value;
    private final boolean boolPermitted;
  
@@ -513,7 +513,7 @@ index 48d38ff8657fd6d237fe2d75677d89b8bbd8852d..6542c5adf793250866d9b1d46403084c
      super(EXPRENT_CONST);
      this.constType = constType;
      this.value = value;
-@@ -454,6 +454,11 @@ public class ConstExprent extends Exprent {
+@@ -453,6 +453,11 @@ public class ConstExprent extends Exprent {
      return boolPermitted;
    }
  
@@ -767,7 +767,7 @@ index d5a743fd1a4e068616a82e8f23d119a8ba2b1d59..36e528ae73df7a893d4f50dd2bc8660b
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 5489465076ce772ad91d6c05ce6bb8b150f1747b..bfae94c3dd24e9fbf624310591ae33ccb454ecff 100644
+index 4e6eb0cb06362df98589932c67a22c3b6741fc27..0c55cfba952a92ffcefe28f12109bd40f56eaf42 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -65,7 +65,7 @@ public class InvocationExprent extends Exprent {
@@ -779,7 +779,7 @@ index 5489465076ce772ad91d6c05ce6bb8b150f1747b..bfae94c3dd24e9fbf624310591ae33cc
      this();
  
      name = cn.elementname;
-@@ -623,6 +623,13 @@ public class InvocationExprent extends Exprent {
+@@ -622,6 +622,13 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  

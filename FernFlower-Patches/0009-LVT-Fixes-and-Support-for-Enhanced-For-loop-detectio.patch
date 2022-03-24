@@ -670,10 +670,10 @@ index c5ccfd1a659461646494c3796528767d0ba089c8..ef96a3f610c7fe1af746aa1d8663ba7a
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..3148af901dbdf25946b67b1da9b0fba8f697a49e 100644
+index 0a437f1a324bcae5d86e60e990f35bc84ed277ce..e160dc7f1bb3c8d1bdec0a1720035803f077e1e7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -316,7 +316,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -315,7 +315,9 @@ public class ExprProcessor implements CodeConstants {
          case opc_fload:
          case opc_dload:
          case opc_aload:
@@ -684,7 +684,7 @@ index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..3148af901dbdf25946b67b1da9b0fba8
            break;
          case opc_iaload:
          case opc_laload:
-@@ -343,6 +345,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -342,6 +344,7 @@ public class ExprProcessor implements CodeConstants {
              offsets.set(offset, offset + instr.length);
            }
            VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - opc_istore], varProcessor, offsets);
@@ -692,7 +692,7 @@ index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..3148af901dbdf25946b67b1da9b0fba8
            exprList.add(new AssignmentExprent(left, value, offsets));
            break;
          }
-@@ -405,6 +408,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -404,6 +407,7 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_iinc: {
            VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, offsets);
@@ -1755,19 +1755,19 @@ index 0000000000000000000000000000000000000000..9123d92be14259e0117a0bb7b06a3d09
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index bfae94c3dd24e9fbf624310591ae33ccb454ecff..afaf2bf239640309370fd34cf9750f4a9537ba74 100644
+index 0c55cfba952a92ffcefe28f12109bd40f56eaf42..8356b5b643139d6c8346070d826877c724e4f8a2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -463,7 +463,7 @@ public class InvocationExprent extends Exprent {
-     UNBOXING_METHODS.put("charValue", "java/lang/Character");
-   }
+@@ -462,7 +462,7 @@ public class InvocationExprent extends Exprent {
+     "charValue", "java/lang/Character"
+   );
  
 -  private boolean isUnboxingCall() {
 +  public boolean isUnboxingCall() {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
-@@ -664,4 +664,4 @@ public class InvocationExprent extends Exprent {
+@@ -663,4 +663,4 @@ public class InvocationExprent extends Exprent {
  
      return true;
    }
@@ -3156,7 +3156,7 @@ index 33c4c3efcf7d9b26737717a2445bffad0db5c4c0..559c96b54667b5b9a051039fdbb3643f
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
-index f10f59b946137e13a7f6e12d9b61099ce109768c..0e4a1c936a139ef915bddf0410fd7dec07bdaa6a 100644
+index 8a73c2655aa12ecfd26df4e2f4eae17145f8f3e6..f57626ccb91231c5a79ed6f955bb0b4dd650776b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 @@ -193,7 +193,12 @@ public class VarTypeProcessor {
@@ -3280,7 +3280,7 @@ index 80f1e91d6227fc4363b0039e13439d5838d790eb..94cedbee257faebd95ea933ab80a7d24
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMember.java b/src/org/jetbrains/java/decompiler/struct/StructMember.java
-index f03613981dd7c48929db77e550c194e072c0e76b..dae54e30376ff57c1549783d4b999fa3ded0d56f 100644
+index 2802eeb66f3144e8b552bd0f14674f768de51219..fb981815b90be8e4ac95bca68d3a8faebdf96b7d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMember.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMember.java
 @@ -18,9 +18,11 @@ import java.util.*;

@@ -318,7 +318,7 @@ index d8fd9bdf784704836e69cfdd1596ae29b2732232..139ccdb55347a5d66627c1489ee73910
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 05a2cf408023e24a209a0a5b691b1eeb8302b1c8..5a9f38b6363480f0b9c10747e65d911bacda6a59 100644
+index 89f1602effd405a5c16f63dfd6c17ae43a84337f..d8e923ec3cee6f41dadb86f3c5237f3ef7d6fdee 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -169,6 +169,11 @@ public class InvocationExprent extends Exprent {
@@ -721,7 +721,7 @@ index 572dde919042921ffebc5f83e0d9f5ebe7276788..51a88dc3d8ecaefd6aff46cbc24eecbe
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
-index 7143281598c9273e847cc8aa5d86178c3b2b6bab..e1acf800d950da2e22a6713360e708482f0ae287 100644
+index bb8b4dd9b866ec54491da50310b09b6fcb0bdf3f..3ea10bf76c3d2faf0e3e5683411597dbea5bfa7b 100644
 --- a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
 +++ b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
 @@ -32,25 +32,6 @@ public class SFormsFastMapDirect {

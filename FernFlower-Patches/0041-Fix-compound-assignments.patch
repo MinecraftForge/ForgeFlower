@@ -18,10 +18,10 @@ index 6e642b683d504ade9edef4ea32c154fbd4a219c9..417f21f05257086df8f9f5974216d0e4
      // FIXME: new edge type needed
      LabelHelper.replaceContinueWithBreak(root);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index 3aa5956fbb79de630c5e9e600c9fd27ae7da0091..bd09bfc980b57c840c8b48ef2723a4ccc62910f7 100644
+index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..26adff36fff4172f2a195ded8246effacd04de4e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-@@ -430,4 +430,46 @@ public final class SecondaryFunctionsHelper {
+@@ -428,4 +428,46 @@ public final class SecondaryFunctionsHelper {
  
      return null;
    }
