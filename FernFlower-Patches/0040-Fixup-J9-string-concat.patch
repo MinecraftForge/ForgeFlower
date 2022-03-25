@@ -5,7 +5,7 @@ Subject: [PATCH] Fixup J9 string concat
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..85643f7f9cfa38c0e40fa62987453eda7ea48f69 100644
+index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..01521c75ba6ea6a17e63ca006a8c2f6c2c6d5eb5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 @@ -150,6 +150,7 @@ public final class ConcatenationHelper {
@@ -16,19 +16,22 @@ index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..85643f7f9cfa38c0e40fa62987453eda
          for (int i = 0; i < recipe.length(); i++) {
            char c = recipe.charAt(i);
  
-@@ -176,9 +177,12 @@ public final class ConcatenationHelper {
-                 VarExprent varExprent = (VarExprent) exprent;
+@@ -172,13 +173,12 @@ public final class ConcatenationHelper {
+             if (c == TAG_ARG) {
+               Exprent exprent = parameters.get(parameterId++);
  
-                 if (!VarType.VARTYPE_STRING.equals(varExprent.getVarType())) {
+-              if ((exprent instanceof VarExprent) && res.isEmpty()) {
+-                VarExprent varExprent = (VarExprent) exprent;
+-
+-                if (!VarType.VARTYPE_STRING.equals(varExprent.getVarType())) {
 -                  // First item of concatenation is a variable and variable's type is not a String.
--                  // Prepend it with empty string literal to force resulting expression type to be String.
++              if (!VarType.VARTYPE_STRING.equals(exprent.getExprType())) {
++                nonString++;
++                if (nonString == 2 && i == 1) {
++                  // First two items of concatenation are a variable and variable's type is not a String.
+                   // Prepend it with empty string literal to force resulting expression type to be String.
 -                  res.add(new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
-+                  nonString++;
-+                  if (nonString == 2 && i == 1) {
-+                    // First two items of concatenation are a variable and variable's type is not a String.
-+                    // Prepend it with empty string literal to force resulting expression type to be String.
-+                    res.add(new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
-+                  }
++                  res.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
                  }
                }
  
