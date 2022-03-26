@@ -5,10 +5,10 @@ Subject: [PATCH] Fix primitive un/boxing issues.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 0259483a968b5d474934879b3241a0d984b74c3b..2fa0e3df27128b779814356f1202003a0efb0b47 100644
+index ba9ee209270893e2faee9019434a7a0a452c4c43..cfbce3057d7f97842f4b001afdd0434da347eb26 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -1045,12 +1045,14 @@ public class ExprProcessor implements CodeConstants {
+@@ -1028,12 +1028,14 @@ public class ExprProcessor implements CodeConstants {
  
      if (unbox) {
        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'

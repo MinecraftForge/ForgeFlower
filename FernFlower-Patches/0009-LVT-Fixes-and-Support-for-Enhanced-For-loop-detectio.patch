@@ -670,7 +670,7 @@ index c5ccfd1a659461646494c3796528767d0ba089c8..ef96a3f610c7fe1af746aa1d8663ba7a
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..ed376e7258ffe5701ab7f9d43e1c3756ce70569f 100644
+index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..3148af901dbdf25946b67b1da9b0fba8f697a49e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -316,7 +316,9 @@ public class ExprProcessor implements CodeConstants {
@@ -684,20 +684,15 @@ index 80d5dab3d3f0101ba5907e6a8e31d275834a73b2..ed376e7258ffe5701ab7f9d43e1c3756
            break;
          case opc_iaload:
          case opc_laload:
-@@ -342,8 +344,10 @@ public class ExprProcessor implements CodeConstants {
-           if (offsets != null) { //TODO: Figure out why this nulls in some cases
+@@ -343,6 +345,7 @@ public class ExprProcessor implements CodeConstants {
              offsets.set(offset, offset + instr.length);
            }
--          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - opc_istore], varProcessor, offsets);
--          exprList.add(new AssignmentExprent(left, value, offsets));
-+          varExprent = new VarExprent(varIndex, varTypes[instr.opcode - opc_istore], varProcessor, offsets);
-+          varProcessor.findLVT(varExprent, offset + instr.length);
-+          AssignmentExprent assign = new AssignmentExprent(varExprent, value, offsets);
-+          exprList.add(assign);
+           VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - opc_istore], varProcessor, offsets);
++          varProcessor.findLVT(left, offset + instr.length);
+           exprList.add(new AssignmentExprent(left, value, offsets));
            break;
          }
-         case opc_iastore:
-@@ -405,6 +409,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -405,6 +408,7 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_iinc: {
            VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, offsets);
@@ -1636,7 +1631,7 @@ index 85d0610b3f756616fb276bcdec9a5ff3d4679943..d54328690977dccf72dbdfb5ae114fa9
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c8de7599c 100644
+index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e3f483dd5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -9,11 +9,14 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1654,21 +1649,20 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
-@@ -24,11 +27,8 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
- import org.jetbrains.java.decompiler.util.TextBuffer;
+@@ -25,10 +28,11 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
  import org.jetbrains.java.decompiler.util.TextUtil;
  
--import java.util.ArrayList;
+ import java.util.ArrayList;
 -import java.util.Collections;
--import java.util.BitSet;
--import java.util.List;
--import java.util.Objects;
-+import java.util.*;
+ import java.util.BitSet;
++import java.util.Collections;
+ import java.util.List;
+ import java.util.Objects;
 +import java.util.stream.Collectors;
  
  public class VarExprent extends Exprent {
    public static final int STACK_BASE = 10000;
-@@ -41,6 +41,7 @@ public class VarExprent extends Exprent {
+@@ -41,6 +45,7 @@ public class VarExprent extends Exprent {
    private int version = 0;
    private boolean classDef = false;
    private boolean stack = false;
@@ -1676,7 +1670,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
  
    public VarExprent(int index, VarType varType, VarProcessor processor) {
      this(index, varType, processor, null);
-@@ -76,6 +77,7 @@ public class VarExprent extends Exprent {
+@@ -76,6 +81,7 @@ public class VarExprent extends Exprent {
      var.setVersion(version);
      var.setClassDef(classDef);
      var.setStack(stack);
@@ -1684,7 +1678,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
      return var;
    }
  
-@@ -92,10 +94,6 @@ public class VarExprent extends Exprent {
+@@ -92,10 +98,6 @@ public class VarExprent extends Exprent {
      }
      else {
        VarVersionPair varVersion = getVarVersionPair();
@@ -1695,7 +1689,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
  
        if (definition) {
          if (processor != null && processor.getVarFinal(varVersion) == VarProcessor.VAR_EXPLICIT_FINAL) {
-@@ -105,7 +103,7 @@ public class VarExprent extends Exprent {
+@@ -105,7 +107,7 @@ public class VarExprent extends Exprent {
          buffer.append(" ");
        }
  
@@ -1704,7 +1698,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
      }
  
      return buffer;
-@@ -115,6 +113,7 @@ public class VarExprent extends Exprent {
+@@ -115,6 +117,7 @@ public class VarExprent extends Exprent {
      return new VarVersionPair(index, version);
    }
  
@@ -1712,7 +1706,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
    public String getDebugName(StructMethod method) {
      StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
      if (attr != null && processor != null) {
-@@ -128,9 +127,25 @@ public class VarExprent extends Exprent {
+@@ -128,9 +131,25 @@ public class VarExprent extends Exprent {
      }
      return null;
    }
@@ -1738,7 +1732,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
        if (method != null) {
          Integer originalIndex = null;
-@@ -196,6 +211,10 @@ public class VarExprent extends Exprent {
+@@ -196,6 +215,10 @@ public class VarExprent extends Exprent {
    }
  
    public VarType getVarType() {
@@ -1749,7 +1743,7 @@ index 4c40e5152ffca092883170401453525093da011a..ebc972f79cdf064ac422d0d7458fd27c
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -248,6 +267,93 @@ public class VarExprent extends Exprent {
+@@ -248,6 +271,93 @@ public class VarExprent extends Exprent {
      this.stack = stack;
    }
  
@@ -2852,7 +2846,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
-index 33c4c3efcf7d9b26737717a2445bffad0db5c4c0..65001f1df0ba1f8a974105998aadeec13dfc8eaa 100644
+index 33c4c3efcf7d9b26737717a2445bffad0db5c4c0..559c96b54667b5b9a051039fdbb3643f8c8601b5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarProcessor.java
 @@ -5,16 +5,20 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -2952,7 +2946,7 @@ index 33c4c3efcf7d9b26737717a2445bffad0db5c4c0..65001f1df0ba1f8a974105998aadeec1
    public int getFirstParameterPosition() {
      return firstParameterPosition;
    }
-+  
++
 +  public List<LocalVariable> getCandidates(int origindex) {
 +    if (!hasLVT())
 +        return null;

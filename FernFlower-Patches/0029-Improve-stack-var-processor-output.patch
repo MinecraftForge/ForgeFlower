@@ -334,10 +334,10 @@ index d93e532f606fc934978a5a784f5a1b819686c657..a368a3e979296796f7eb92df71ad2afb
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 7e32e2fefba3d1e38820d9f4f3a701e116ecad35..239cd8e9687411088ca5718453025986ba2645c7 100644
+index eea545270ec8d5bff3e4f0eae01520f8756022d3..209fb0603e4e283ebd64cb4c993dc245291d952c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -44,6 +44,7 @@ public class VarExprent extends Exprent {
+@@ -48,6 +48,7 @@ public class VarExprent extends Exprent {
    private boolean classDef = false;
    private boolean stack = false;
    private LocalVariable lvt = null;
@@ -345,7 +345,7 @@ index 7e32e2fefba3d1e38820d9f4f3a701e116ecad35..239cd8e9687411088ca5718453025986
  
    public VarExprent(int index, VarType varType, VarProcessor processor) {
      this(index, varType, processor, null);
-@@ -96,6 +97,7 @@ public class VarExprent extends Exprent {
+@@ -100,6 +101,7 @@ public class VarExprent extends Exprent {
      var.setClassDef(classDef);
      var.setStack(stack);
      var.setLVT(lvt);
@@ -353,7 +353,7 @@ index 7e32e2fefba3d1e38820d9f4f3a701e116ecad35..239cd8e9687411088ca5718453025986
      return var;
    }
  
-@@ -310,6 +312,14 @@ public class VarExprent extends Exprent {
+@@ -314,6 +316,14 @@ public class VarExprent extends Exprent {
      return lvt;
    }
  

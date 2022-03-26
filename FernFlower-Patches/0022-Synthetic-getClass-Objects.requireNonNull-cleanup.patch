@@ -5,10 +5,10 @@ Subject: [PATCH] Synthetic getClass/Objects.requireNonNull cleanup
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 2fa0e3df27128b779814356f1202003a0efb0b47..cb5d2a86ad56ab82e74843a8f6258c4059a0df52 100644
+index cfbce3057d7f97842f4b001afdd0434da347eb26..d1898562aa375361e2558bdd0403501199c6826d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -609,6 +609,23 @@ public class ExprProcessor implements CodeConstants {
+@@ -592,6 +592,23 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_pop:
            stack.pop();

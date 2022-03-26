@@ -1372,7 +1372,7 @@ index 74b5b1ead7cef7c63596155e817d854995c0ea3f..96deb9a875cad21e030e97213fc275df
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 4480603ac2a809c505e254b668dfa3583d9d4fd4..7e32e2fefba3d1e38820d9f4f3a701e116ecad35 100644
+index c571b8463712cff5eeeab9d28df9d23feee42bc6..eea545270ec8d5bff3e4f0eae01520f8756022d3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -13,6 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -1383,7 +1383,7 @@ index 4480603ac2a809c505e254b668dfa3583d9d4fd4..7e32e2fefba3d1e38820d9f4f3a701e1
  import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
-@@ -234,7 +235,21 @@ public class VarExprent extends Exprent {
+@@ -238,7 +239,21 @@ public class VarExprent extends Exprent {
  
      VarType vt = null;
      if (processor != null) {

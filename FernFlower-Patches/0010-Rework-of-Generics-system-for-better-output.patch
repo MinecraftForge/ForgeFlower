@@ -498,41 +498,10 @@ index 33906d3a433e4421bbf41c6aed5ff566a69a904a..e32253528718631cd622d6af4ede4a85
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index ed376e7258ffe5701ab7f9d43e1c3756ce70569f..0259483a968b5d474934879b3241a0d984b74c3b 100644
+index 3148af901dbdf25946b67b1da9b0fba8f697a49e..ba9ee209270893e2faee9019434a7a0a452c4c43 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -9,12 +9,28 @@ import org.jetbrains.java.decompiler.main.ClassesProcessor;
- import org.jetbrains.java.decompiler.main.DecompilerContext;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
- import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
--import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.ArrayExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.IfExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.MonitorExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
- import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
- import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
- import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
- import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
--import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
- import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
- import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
- import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-@@ -29,6 +45,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+@@ -29,6 +29,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.Type;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -540,7 +509,7 @@ index ed376e7258ffe5701ab7f9d43e1c3756ce70569f..0259483a968b5d474934879b3241a0d9
  import org.jetbrains.java.decompiler.util.TextBuffer;
  
  import java.util.*;
-@@ -475,7 +492,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -474,7 +475,7 @@ public class ExprProcessor implements CodeConstants {
            exprList.add(new ExitExprent(instr.opcode == opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
                                         instr.opcode == opc_return ? null : stack.pop(),
                                         instr.opcode == opc_athrow ? null : methodDescriptor.ret,
@@ -549,7 +518,7 @@ index ed376e7258ffe5701ab7f9d43e1c3756ce70569f..0259483a968b5d474934879b3241a0d9
            break;
          case opc_monitorenter:
          case opc_monitorexit:
-@@ -691,7 +708,13 @@ public class ExprProcessor implements CodeConstants {
+@@ -690,7 +691,13 @@ public class ExprProcessor implements CodeConstants {
        sb.append("void");
        return sb.toString();
      }
@@ -563,7 +532,7 @@ index ed376e7258ffe5701ab7f9d43e1c3756ce70569f..0259483a968b5d474934879b3241a0d9
        String ret;
        if (getShort) {
          ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
-@@ -958,6 +981,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -957,6 +964,8 @@ public class ExprProcessor implements CodeConstants {
          tracer.incrementCurrentSourceLine();
        }
  
@@ -572,7 +541,7 @@ index ed376e7258ffe5701ab7f9d43e1c3756ce70569f..0259483a968b5d474934879b3241a0d9
        TextBuffer content = expr.toJava(indent, tracer);
  
        if (content.length() > 0) {
-@@ -1030,7 +1055,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -1029,7 +1038,7 @@ public class ExprProcessor implements CodeConstants {
        }
      }
  
@@ -1301,7 +1270,7 @@ index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312
  
            boolean firstParam = true;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index ebc972f79cdf064ac422d0d7458fd27c8de7599c..4480603ac2a809c505e254b668dfa3583d9d4fd4 100644
+index 1765af58c1f7db03da58747e06c19d7e3f483dd5..c571b8463712cff5eeeab9d28df9d23feee42bc6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAtt
@@ -1312,7 +1281,7 @@ index ebc972f79cdf064ac422d0d7458fd27c8de7599c..4480603ac2a809c505e254b668dfa358
  import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-@@ -60,6 +61,22 @@ public class VarExprent extends Exprent {
+@@ -64,6 +65,22 @@ public class VarExprent extends Exprent {
      return getVarType();
    }
  
@@ -1335,7 +1304,7 @@ index ebc972f79cdf064ac422d0d7458fd27c8de7599c..4480603ac2a809c505e254b668dfa358
    @Override
    public int getExprentUse() {
      return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
-@@ -137,7 +154,7 @@ public class VarExprent extends Exprent {
+@@ -141,7 +158,7 @@ public class VarExprent extends Exprent {
            if (lvt.getSignature() != null) {
              GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
              if (descriptor != null) {
@@ -1344,7 +1313,7 @@ index ebc972f79cdf064ac422d0d7458fd27c8de7599c..4480603ac2a809c505e254b668dfa358
                return;
              }
            }
-@@ -163,7 +180,7 @@ public class VarExprent extends Exprent {
+@@ -167,7 +184,7 @@ public class VarExprent extends Exprent {
                if (signature != null) {
                  GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                  if (descriptor != null) {

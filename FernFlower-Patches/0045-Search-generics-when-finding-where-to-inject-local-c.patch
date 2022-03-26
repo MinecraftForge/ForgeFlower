@@ -45,7 +45,7 @@ index 3530d2f46c4ad90974796e41f664613420e2689a..d83ecd553177e5b1ed50776bc5e48d44
            }
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 239cd8e9687411088ca5718453025986ba2645c7..f670f30e2f5c8e2f619d22efc4b61842692b3f11 100644
+index 209fb0603e4e283ebd64cb4c993dc245291d952c..f670f30e2f5c8e2f619d22efc4b61842692b3f11 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -14,7 +14,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
@@ -56,22 +56,15 @@ index 239cd8e9687411088ca5718453025986ba2645c7..f670f30e2f5c8e2f619d22efc4b61842
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
-@@ -27,9 +26,12 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+@@ -27,7 +26,6 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
  import org.jetbrains.java.decompiler.struct.match.MatchNode;
  import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
  import org.jetbrains.java.decompiler.util.TextBuffer;
 -import org.jetbrains.java.decompiler.util.TextUtil;
  
--import java.util.*;
-+import java.util.ArrayList;
-+import java.util.BitSet;
-+import java.util.Collections;
-+import java.util.List;
-+import java.util.Objects;
- import java.util.stream.Collectors;
- 
- public class VarExprent extends Exprent {
-@@ -149,7 +151,8 @@ public class VarExprent extends Exprent {
+ import java.util.ArrayList;
+ import java.util.BitSet;
+@@ -153,7 +151,8 @@ public class VarExprent extends Exprent {
    }
    */
  
@@ -81,7 +74,7 @@ index 239cd8e9687411088ca5718453025986ba2645c7..f670f30e2f5c8e2f619d22efc4b61842
      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
  
        if (lvt != null) {
-@@ -157,13 +160,11 @@ public class VarExprent extends Exprent {
+@@ -161,13 +160,11 @@ public class VarExprent extends Exprent {
            if (lvt.getSignature() != null) {
              GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
              if (descriptor != null) {
@@ -97,7 +90,7 @@ index 239cd8e9687411088ca5718453025986ba2645c7..f670f30e2f5c8e2f619d22efc4b61842
        }
  
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-@@ -183,8 +184,7 @@ public class VarExprent extends Exprent {
+@@ -187,8 +184,7 @@ public class VarExprent extends Exprent {
                if (signature != null) {
                  GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                  if (descriptor != null) {
@@ -107,7 +100,7 @@ index 239cd8e9687411088ca5718453025986ba2645c7..f670f30e2f5c8e2f619d22efc4b61842
                  }
                }
              }
-@@ -195,15 +195,17 @@ public class VarExprent extends Exprent {
+@@ -199,15 +195,17 @@ public class VarExprent extends Exprent {
            if (attr != null) {
              String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
              if (descriptor != null) {
