@@ -264,7 +264,7 @@ index 0fd26ff74d6d18b4ef0a61c1bb0a340aa8c86a25..9cccd33b2d18d9a3b6ac6a829e11691d
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 139932bdee7eefd94f1edb28f3aef898f3c062c3..d93e532f606fc934978a5a784f5a1b819686c657 100644
+index 139932bdee7eefd94f1edb28f3aef898f3c062c3..e993f4c83e7e13f8b45e2f9c38d62b43d14ddfe1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -710,7 +710,7 @@ index 139932bdee7eefd94f1edb28f3aef898f3c062c3..d93e532f606fc934978a5a784f5a1b81
          }
          */
  
-+        if (i == parameters.size() - 1 && parameters.get(i).getExprType() == VarType.VARTYPE_NULL && NewExprent.probablySyntheticParameter(descriptor.params[i].getValue())) {
++        if (i == parameters.size() - 1 && this.parameters.get(i).getExprType() == VarType.VARTYPE_NULL && NewExprent.probablySyntheticParameter(descriptor.params[i].getValue())) {
 +          break;  // skip last parameter of synthetic constructor call
 +        }
 +

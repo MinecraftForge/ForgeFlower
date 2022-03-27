@@ -4,13 +4,10 @@ Date: Tue, 14 Apr 2020 19:25:41 -0700
 Subject: [PATCH] Add explicit cast to invocations of java/nio/Buffer
  functions.
 
-Java 9+ added overrides to these functions to return the specific
-subclass, however, when there is a compiler "bug" that when targeting
-release * or below, it will still reference these new methods, causing
-exceptions at runtime on Java 8.
+Java 9+ added overrides to these functions to return the specific subclass, however, when there is a compiler "bug" that when targeting release * or below, it will still reference these new methods, causing exceptions at runtime on Java 8.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a368a3e979296796f7eb92df71ad2afbb8fbb31d..48d4f5764d0761bc9ad8983ede4d2e42052ada09 100644
+index 614dc11225b07e4122a56763a36d680f49ca997e..91c636417ed3575eda54c92fdd7e20a3ae6b2b0b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -46,6 +46,8 @@ public class InvocationExprent extends Exprent {

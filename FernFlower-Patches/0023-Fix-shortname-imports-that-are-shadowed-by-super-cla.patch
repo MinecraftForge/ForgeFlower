@@ -6,25 +6,9 @@ Subject: [PATCH] Fix shortname imports that are shadowed by super class inner
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-index 6b7d72b6f599aaf04f122ff38ca872f469c9727e..fa48d4659f497d94539c878c8718a5cd47573d9a 100644
+index 6b7d72b6f599aaf04f122ff38ca872f469c9727e..cdd93212560a15372002c4d927a9debc325edbc3 100644
 --- a/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
 +++ b/src/org/jetbrains/java/decompiler/main/collectors/ImportCollector.java
-@@ -3,12 +3,12 @@ package org.jetbrains.java.decompiler.main.collectors;
- 
- import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
- import org.jetbrains.java.decompiler.main.DecompilerContext;
--import org.jetbrains.java.decompiler.struct.StructClass;
--import org.jetbrains.java.decompiler.struct.StructContext;
--import org.jetbrains.java.decompiler.struct.StructField;
- import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
- import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
- import org.jetbrains.java.decompiler.util.TextBuffer;
-+import org.jetbrains.java.decompiler.struct.StructClass;
-+import org.jetbrains.java.decompiler.struct.StructContext;
-+import org.jetbrains.java.decompiler.struct.StructField;
- 
- import java.util.*;
- import java.util.stream.Collectors;
 @@ -20,7 +20,7 @@ public class ImportCollector {
    private final Set<String> setNotImportedNames = new HashSet<>();
    // set of field names in this class and all its predecessors.

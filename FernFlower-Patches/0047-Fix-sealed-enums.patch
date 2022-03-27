@@ -5,7 +5,7 @@ Subject: [PATCH] Fix sealed enums
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index a33744bb55dc0fa01514b4866ccef14ecdc3e5d5..acfa1ad5ffc129d478423ed567efb9dc3c046931 100644
+index 9721ed56abf5d26aead5603ee144523d27466d85..551c7de2d4ab785bbdafea06605a19af740ea20f 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -415,7 +415,7 @@ public class ClassWriter {

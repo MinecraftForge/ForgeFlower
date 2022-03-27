@@ -196,7 +196,7 @@ index 36e528ae73df7a893d4f50dd2bc8660b803953d8..ca13e1610450ff0228de2e5d3c5ac70d
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 48d4f5764d0761bc9ad8983ede4d2e42052ada09..c6fdc7d1152afe6e74a4b4bdbe632a76e60c0579 100644
+index 91c636417ed3575eda54c92fdd7e20a3ae6b2b0b..2a9cee5262053fc00358d30636bae3b307601e46 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -475,8 +475,7 @@ public class InvocationExprent extends Exprent {
@@ -253,10 +253,10 @@ index 105c4d951f806fffb8d42386933a7629fa61d76c..7699ea8d3139df210e69208c04eb604c
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index f670f30e2f5c8e2f619d22efc4b61842692b3f11..a704337c81cd7f9c33b1990e9297512c22c03aeb 100644
+index 0fb1e4749f39a0122735c1d54ea42f94e34d38d2..3a87696731f1f247c48aa24ffb923032e6a6abe2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -87,8 +87,8 @@ public class VarExprent extends Exprent {
+@@ -89,8 +89,8 @@ public class VarExprent extends Exprent {
    }
  
    @Override

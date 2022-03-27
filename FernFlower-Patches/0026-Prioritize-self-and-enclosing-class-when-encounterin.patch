@@ -8,20 +8,20 @@ The compiler encodes all REFERENCED inner classes into the class. The first foun
 Fixes AccessTransformers.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 107fd9d4a124964dc3daf6e34c272b2d64f1dd6e..5a63a0a9a09adf4655a76911c16a6076b147e2e1 100644
+index 107fd9d4a124964dc3daf6e34c272b2d64f1dd6e..1e7db1761de7035c9d1c513d87d153508f4143bb 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -1192,6 +1192,10 @@ public class ClassWriter {
-       }
+@@ -1193,6 +1193,10 @@ public class ClassWriter {
      }
    }
-+  
+ 
 +  public static String getModifiers(int flags) {
 +    return MODIFIERS.entrySet().stream().filter(e -> (e.getKey() & flags) != 0).map(Map.Entry::getValue).collect(Collectors.joining(" "));
 +  }
- 
++
    public static void appendTypeParameters(
        TextBuffer buffer,
+       List<String> parameters,
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 index 66414bc3eac6e187e5f45f70bc67b783ad4f1a4a..8aefba318b0f09b559d41d945a3d8099a861ac55 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
