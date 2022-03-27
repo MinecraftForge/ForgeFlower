@@ -4,11 +4,73 @@ Date: Mon, 31 May 2021 21:28:33 -0600
 Subject: [PATCH] Fixup J9 string concat
 
 
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index f2964aa1e2759c4828e65d8db3b8421b7072adbf..85d9b2b2752a20b381e0f5e6420e5419ac728f6f 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -161,6 +161,10 @@ public class MethodProcessorRunnable implements Runnable {
+     }
+     while (new PPandMMHelper(varProc).findPPandMM(root));
+ 
++    if (cl.isVersion(CodeConstants.BYTECODE_JAVA_9)) {
++      ConcatenationHelper.simplifyStringConcat(root);
++    }
++
+     while (true) {
+       LabelHelper.cleanUpEdges(root);
+ 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..01521c75ba6ea6a17e63ca006a8c2f6c2c6d5eb5 100644
+index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..e44fa1ffd3929428524c31fdac14f1df2e6a6431 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-@@ -150,6 +150,7 @@ public final class ConcatenationHelper {
+@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+ import org.jetbrains.java.decompiler.ClassNameConstants;
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
+ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+@@ -22,6 +23,38 @@ public final class ConcatenationHelper {
+   private static final VarType builderType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuilder");
+   private static final VarType bufferType = new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/StringBuffer");
+ 
++  public static void simplifyStringConcat(Statement stat) {
++    for (Statement s : stat.getStats()) {
++      simplifyStringConcat(s);
++    }
++
++    if (stat.getExprents() != null) {
++      for (int i = 0; i < stat.getExprents().size(); ++i) {
++        Exprent ret = simplifyStringConcat(stat.getExprents().get(i));
++        if (ret != null) {
++          stat.getExprents().set(i, ret);
++        }
++      }
++    }
++  }
++
++  private static Exprent simplifyStringConcat(Exprent exprent) {
++    for (Exprent cexp : exprent.getAllExprents()) {
++      Exprent ret = simplifyStringConcat(cexp);
++      if (ret != null) {
++        exprent.replaceExprent(cexp, ret);
++      }
++    }
++
++    if (exprent.type == Exprent.EXPRENT_INVOCATION) {
++      Exprent ret = ConcatenationHelper.contractStringConcat(exprent);
++      if (!exprent.equals(ret)) {
++        return ret;
++      }
++    }
++
++    return null;
++  }
+ 
+   public static Exprent contractStringConcat(Exprent expr) {
+ 
+@@ -150,6 +183,7 @@ public final class ConcatenationHelper {
          StringBuilder acc = new StringBuilder();
          int parameterId = 0;
          int bootstrapArgumentId = 1;
@@ -16,7 +78,7 @@ index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..01521c75ba6ea6a17e63ca006a8c2f6c
          for (int i = 0; i < recipe.length(); i++) {
            char c = recipe.charAt(i);
  
-@@ -172,13 +173,12 @@ public final class ConcatenationHelper {
+@@ -172,13 +206,12 @@ public final class ConcatenationHelper {
              if (c == TAG_ARG) {
                Exprent exprent = parameters.get(parameterId++);
  
@@ -35,6 +97,21 @@ index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..01521c75ba6ea6a17e63ca006a8c2f6c
                  }
                }
  
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
+index 3e0cbd0fbcbc29ff619d4b2441b13047bb803d11..f174c06886eb5b928abcaf3cedd3b459df9d463b 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
+@@ -286,6 +286,10 @@ public class StructClass extends StructMember {
+     return isVersion16() || (isVersion14() && isPreviewVersion());
+   }
+ 
++  public boolean isVersion(int minVersion) {
++    return majorVersion >= minVersion;
++  }
++
+   @Override
+   public String toString() {
+     return qualifiedName;
 diff --git a/testData/classes/java11/TestJava11StringConcatEmptyAffix.class b/testData/classes/java11/TestJava11StringConcatEmptyAffix.class
 index 2b481af59af9a1e2faa68fef62e1f8cf79533791..2f75b2305743bf363663d8b29ff7f7aacc54a929 100644
 GIT binary patch
