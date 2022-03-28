@@ -6,7 +6,7 @@ Subject: [PATCH] Filter out generated Record getters and constructor. Make
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 565d41306755ce030c9ebfad6844993ec1d09163..9721ed56abf5d26aead5603ee144523d27466d85 100644
+index 507d0d89949ca203a0b33b42150ef35765bbb487..551c7de2d4ab785bbdafea06605a19af740ea20f 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -350,6 +350,18 @@ public class ClassWriter {

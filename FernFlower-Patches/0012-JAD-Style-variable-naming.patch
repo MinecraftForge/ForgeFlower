@@ -5,7 +5,7 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 0ed53cb1612e5ec8ac29bab9156224006ec0ac2d..b5366a6d8a62685594f7c3dcaccce2b5a4cfc470 100644
+index ef6625454fef3f8c9d489692649e81024359975e..7b2b2f465a6261ec603b45516a355a698dad016b 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -742,6 +742,11 @@ public class ClassWriter {

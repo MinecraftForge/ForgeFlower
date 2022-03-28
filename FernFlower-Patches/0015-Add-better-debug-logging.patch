@@ -5,7 +5,7 @@ Subject: [PATCH] Add better debug logging
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index b5366a6d8a62685594f7c3dcaccce2b5a4cfc470..0646aa9c126ff7e010d13d18121524407415712b 100644
+index 7b2b2f465a6261ec603b45516a355a698dad016b..05f91891dd409a4719c00c00418b143ea3091d2a 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -815,7 +815,7 @@ public class ClassWriter {

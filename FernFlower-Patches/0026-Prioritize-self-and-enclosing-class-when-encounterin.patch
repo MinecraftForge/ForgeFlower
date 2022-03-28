@@ -8,7 +8,7 @@ The compiler encodes all REFERENCED inner classes into the class. The first foun
 Fixes AccessTransformers.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 107fd9d4a124964dc3daf6e34c272b2d64f1dd6e..1e7db1761de7035c9d1c513d87d153508f4143bb 100644
+index 1e02167d8f3e17f8f7ac5e734d0fa2eaa1f908f0..deb7d6062d87d1aaeb07bce99c09d7a2454fcd92 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -1193,6 +1193,10 @@ public class ClassWriter {

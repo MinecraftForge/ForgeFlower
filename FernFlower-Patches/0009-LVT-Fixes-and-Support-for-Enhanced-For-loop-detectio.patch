@@ -3505,7 +3505,7 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2975e5084bae04c644436278b93f3680ef473b2c..93db5586ac3a179654a5a7c1f4b9abd417a7cd32 100644
+index becca6fd82503cc3a3aa6a0bb6aef7295d20f19f..1b4c8c3cd4cee7b99482a06e8364e5b105cef276 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -28,6 +28,7 @@ public class SingleClassesTest extends SingleClassesTestBase {

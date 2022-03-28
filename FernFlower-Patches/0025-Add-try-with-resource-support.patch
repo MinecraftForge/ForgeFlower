@@ -443,7 +443,7 @@ index f79794242f3eb9b5000af5fa6b41994ee1b25cd9..472af3df55a4accb2ae3b249289ee69a
  
        if (lstVars != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 0dbfd41972eba692ed65695aa35f4e082d65b54e..a407c631366b659934e21f600a13831967c40eab 100644
+index a7f8e9340a89ec36b8226b920fb24f5be2bbefd1..c95049449d94151fb9192d96717c2b7e7922b182 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -143,6 +143,7 @@ public class SingleClassesTest extends SingleClassesTestBase {

@@ -121,7 +121,7 @@ index 4c4916e4cc5ccdd06dd4138dae54c31fb7f3bd34..decfe747ba2ab3643209987294ef7bcb
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index f85f2f39d138f6e4dfae16cfca21f0293a7490ff..0ed53cb1612e5ec8ac29bab9156224006ec0ac2d 100644
+index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e81024359975e 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -371,7 +371,7 @@ public class ClassWriter {
@@ -2642,7 +2642,7 @@ index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969
 +    }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 93db5586ac3a179654a5a7c1f4b9abd417a7cd32..0dbfd41972eba692ed65695aa35f4e082d65b54e 100644
+index 1b4c8c3cd4cee7b99482a06e8364e5b105cef276..a7f8e9340a89ec36b8226b920fb24f5be2bbefd1 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -25,9 +25,11 @@ public class SingleClassesTest extends SingleClassesTestBase {
