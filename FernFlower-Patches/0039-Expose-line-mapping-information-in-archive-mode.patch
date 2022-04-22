@@ -136,7 +136,7 @@ index f76d2c1611ec48375c25d489d9713bd876ffcb83..81cd12ba302af00d66c3f699804651d9
      } catch (IOException e) {
        DecompilerContext.getLogger().writeMessage("Cannot write entry " + entryName + " to " + file, e);
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 7bcb5652188642db925a5915f8b743fd14b0e328..698020bbb42ba78718b5a332ca4e9a3f3660e9e9 100644
+index 7bcb5652188642db925a5915f8b743fd14b0e328..cc0b70e555ce969185c150e39a551fe2f45a0288 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -59,6 +59,8 @@ public interface IFernflowerPreferences {
@@ -152,12 +152,12 @@ index 7bcb5652188642db925a5915f8b743fd14b0e328..698020bbb42ba78718b5a332ca4e9a3f
      defaults.put(DUMP_ORIGINAL_LINES, "0");
      defaults.put(USE_JAD_VARNAMING, "0");
      defaults.put(SKIP_EXTRA_FILES, "0");
-+    defaults.put(DUMP_CODE_LINES, "0");
++    defaults.put(DUMP_CODE_LINES, "1");
  
      return Collections.unmodifiableMap(defaults);
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..23d9500ce885a6ba36c25be48400df6e4e380a90 100644
+index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..e12e99313c5d67b74acc3bd4c3b13d76ba9be3fc 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 @@ -1,6 +1,8 @@
@@ -193,7 +193,7 @@ index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..23d9500ce885a6ba36c25be48400df6e
    void closeArchive(String path, String archiveName);
 +
 +  default byte[] getCodeLineData(int[] mappings) {
-+    if (mappings == null || mappings.length == 0) {
++    if (mappings == null || mappings.length == 0 || !DecompilerContext.getOption(IFernflowerPreferences.DUMP_CODE_LINES)) {
 +      return null;
 +    }
 +    ByteBuffer buf = ByteBuffer.allocate(5 + (mappings.length * 2));

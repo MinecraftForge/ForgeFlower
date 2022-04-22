@@ -183,7 +183,7 @@ index 81cd12ba302af00d66c3f699804651d940f06a5a..3c0db2d989160f1d05fbb21a2e34ca88
      return new File(target, path).getAbsolutePath();
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-index 23d9500ce885a6ba36c25be48400df6e4e380a90..1b25473dd69252186118cadc4d45f366ddb36dbd 100644
+index e12e99313c5d67b74acc3bd4c3b13d76ba9be3fc..5f90928795ad715b5ef043f22964a81df6d86ff3 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 @@ -1,11 +1,12 @@
@@ -208,7 +208,7 @@ index 23d9500ce885a6ba36c25be48400df6e4e380a90..1b25473dd69252186118cadc4d45f366
 +  default void close() throws IOException {}
 +
    default byte[] getCodeLineData(int[] mappings) {
-     if (mappings == null || mappings.length == 0) {
+     if (mappings == null || mappings.length == 0 || !DecompilerContext.getOption(IFernflowerPreferences.DUMP_CODE_LINES)) {
        return null;
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 index 0f3dc610ec134a438e81561ee2b15bb97edc3fb3..c3cdea305c71f1add8da3e7aed5bbfd0f54a78d9 100644
