@@ -71,7 +71,7 @@ index 4c5641fec76837a51094d4a54800d5b7475446ca..7d29c198014cbfee8092fd31461208ce
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 6fe8f83ebbac94015d2363e8d2a079b07e20e0f0..becca6fd82503cc3a3aa6a0bb6aef7295d20f19f 100644
+index e64cf91c0674163f5c81b874e21e84da83fd264e..721a3606e209f4f803dcb6b513a5768c9c437c48 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -2,26 +2,14 @@
@@ -131,7 +131,7 @@ index 6fe8f83ebbac94015d2363e8d2a079b07e20e0f0..becca6fd82503cc3a3aa6a0bb6aef729
    }
  
    @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
-@@ -227,45 +210,4 @@ public class SingleClassesTest {
+@@ -226,45 +209,4 @@ public class SingleClassesTest {
  
    @Test(expected = ClassFormatException.class)
    public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }

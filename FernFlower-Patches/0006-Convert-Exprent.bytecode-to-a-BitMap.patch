@@ -377,20 +377,20 @@ index ae166cc9ea414d5a0b698d8d06c7a24836c21316..478a3aef4cbc9d555abd82e38200a62b
          BasicBlock dummyBlock = new BasicBlock(++graph.last_id, seq);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-index b616734fe678db9769fc418cba2a2415e294d74e..0211dab428fdeb48a9805cdc5f42d296263ebcc2 100644
+index 84de9258ddf94a35d4b1b1854e6a9bb4755214c5..982b660190ba9488c3ff62022aca0dfecbefab48 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-@@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.util.TextBuffer;
  
 +import java.util.BitSet;
  import java.util.List;
+ import java.util.Objects;
  
- public class AnnotationExprent extends Exprent {
-@@ -93,4 +94,10 @@ public class AnnotationExprent extends Exprent {
-            InterpreterUtil.equalLists(parNames, ann.parNames) &&
-            InterpreterUtil.equalLists(parValues, ann.parValues);
+@@ -98,4 +99,10 @@ public class AnnotationExprent extends Exprent {
+            parNames.equals(ann.parNames) &&
+            parValues.equals(ann.parValues);
    }
 +  
 +  @Override
@@ -680,10 +680,10 @@ index 0f99c8891a4bc70626b2383b22384a1b212fe8da..3c1c333b45528adaaf63d149436a4cef
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 4e7fb98963ca2257f887a8341bd9332a7cf9b1f0..ff43667869005931c1b1aca8f2ef1b556aeba705 100644
+index 8bdade633e911e8cabe2ef7deacc56da3508fc78..f2efd6b594b700b20814c620328753a66aea22a4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -184,7 +184,7 @@ public class FunctionExprent extends Exprent {
+@@ -183,7 +183,7 @@ public class FunctionExprent extends Exprent {
    private VarType implicitType;
    private final List<Exprent> lstOperands;
  
@@ -692,7 +692,7 @@ index 4e7fb98963ca2257f887a8341bd9332a7cf9b1f0..ff43667869005931c1b1aca8f2ef1b55
      this(funcType, new ArrayList<>(), bytecodeOffsets);
  
      if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
-@@ -200,7 +200,7 @@ public class FunctionExprent extends Exprent {
+@@ -199,7 +199,7 @@ public class FunctionExprent extends Exprent {
      }
    }
  
@@ -701,7 +701,7 @@ index 4e7fb98963ca2257f887a8341bd9332a7cf9b1f0..ff43667869005931c1b1aca8f2ef1b55
      super(EXPRENT_FUNCTION);
      this.funcType = funcType;
      this.lstOperands = operands;
-@@ -208,7 +208,7 @@ public class FunctionExprent extends Exprent {
+@@ -207,7 +207,7 @@ public class FunctionExprent extends Exprent {
      addBytecodeOffsets(bytecodeOffsets);
    }
  
@@ -710,7 +710,7 @@ index 4e7fb98963ca2257f887a8341bd9332a7cf9b1f0..ff43667869005931c1b1aca8f2ef1b55
      this(funcType, new ArrayList<>(1), bytecodeOffsets);
      lstOperands.add(operand);
    }
-@@ -599,6 +599,12 @@ public class FunctionExprent extends Exprent {
+@@ -598,6 +598,12 @@ public class FunctionExprent extends Exprent {
      this.implicitType = implicitType;
    }
  
@@ -767,7 +767,7 @@ index d5a743fd1a4e068616a82e8f23d119a8ba2b1d59..36e528ae73df7a893d4f50dd2bc8660b
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index e3dbe4f87b0d9dae87863a1a262f9e7eb70d9390..85d0610b3f756616fb276bcdec9a5ff3d4679943 100644
+index 5489465076ce772ad91d6c05ce6bb8b150f1747b..bfae94c3dd24e9fbf624310591ae33ccb454ecff 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -65,7 +65,7 @@ public class InvocationExprent extends Exprent {
@@ -829,10 +829,10 @@ index 5c4b2f37b57ec1f084e4147f2d9605e89d895b91..3ad223c61453159d096405bb73184644
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 431e5571fde1a5e8deebb840e927c68b83fceed6..32fa14cb76076e868136029b9bd92dbfdfd9cca2 100644
+index 6257de67e8acd4b4882c758befa3c1e5223ddc0c..6df45768b067fd2e01ffd61bb157158cb369ad7e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -32,11 +32,11 @@ public class NewExprent extends Exprent {
+@@ -31,11 +31,11 @@ public class NewExprent extends Exprent {
    private boolean lambda;
    private boolean enumConst;
  
@@ -846,8 +846,8 @@ index 431e5571fde1a5e8deebb840e927c68b83fceed6..32fa14cb76076e868136029b9bd92dbf
      super(EXPRENT_NEW);
      this.newType = newType;
      this.lstDims = lstDims;
-@@ -437,6 +437,14 @@ public class NewExprent extends Exprent {
-            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+@@ -436,6 +436,14 @@ public class NewExprent extends Exprent {
+            Objects.equals(lstArrayElements, ne.lstArrayElements);
    }
  
 +  @Override

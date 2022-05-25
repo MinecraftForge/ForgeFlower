@@ -105,7 +105,7 @@ index 305b06903b36bc4cdb740a8f050543403e6406fe..e734afaf2fb87c2e9d6ede6925f4ca6b
          int offsetLines = buffer.countLines();
  
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b69a2ad93 100644
+index bb7b5b4e4a590219939a8f7e883b9c259c1adf73..458d119056f3fa7eceec7215fa577018d7f8cb8c 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
@@ -116,7 +116,7 @@ index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b
  import java.util.Map;
  import java.util.Objects;
  
-@@ -28,12 +29,14 @@ public class DecompilerContext {
+@@ -29,12 +30,14 @@ public class DecompilerContext {
    private final ClassesProcessor classProcessor;
    private final PoolInterceptor poolInterceptor;
    private final IVariableNamingFactory renamerFactory;
@@ -131,7 +131,7 @@ index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b
                             IFernflowerLogger logger,
                             StructContext structContext,
                             ClassesProcessor classProcessor,
-@@ -45,6 +48,7 @@ public class DecompilerContext {
+@@ -46,6 +49,7 @@ public class DecompilerContext {
      Objects.requireNonNull(classProcessor);
  
      this.properties = properties;
@@ -139,7 +139,7 @@ index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b
      this.logger = logger;
      this.structContext = structContext;
      this.classProcessor = classProcessor;
-@@ -53,6 +57,18 @@ public class DecompilerContext {
+@@ -54,6 +58,18 @@ public class DecompilerContext {
      this.counterContainer = new CounterContainer();
    }
  
@@ -158,7 +158,7 @@ index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b
    // *****************************************************************************
    // context setup and update
    // *****************************************************************************
-@@ -67,6 +83,14 @@ public class DecompilerContext {
+@@ -68,6 +84,14 @@ public class DecompilerContext {
      currentContext.set(context);
    }
  
@@ -173,7 +173,7 @@ index 95baa7dfec5a9c8dcde30a288499aa127aeffa4b..8bbe04c2f404b6c43a6a216bf2a99d3b
    public static void setProperty(String key, Object value) {
      getCurrentContext().properties.put(key, value);
    }
-@@ -101,6 +125,10 @@ public class DecompilerContext {
+@@ -102,6 +126,10 @@ public class DecompilerContext {
             IFernflowerPreferences.LINE_SEPARATOR_UNX : IFernflowerPreferences.LINE_SEPARATOR_WIN;
    }
  

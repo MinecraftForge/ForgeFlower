@@ -24,7 +24,7 @@ index afc26187d4b7916f5c8fa284a940f19a8c996702..d87e027fe9f3a7310d024b3ecda066d5
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340aa8c86a25 100644
+index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2db6947b6e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -5,6 +5,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -36,7 +36,7 @@ index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340a
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
-@@ -300,11 +302,11 @@ public class FunctionExprent extends Exprent {
+@@ -299,11 +301,11 @@ public class FunctionExprent extends Exprent {
        VarType right = lstOperands.get(0).getInferredExprType(upperBound);
        VarType cast = lstOperands.get(1).getExprType();
  
@@ -50,7 +50,7 @@ index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340a
            arrayDim = upperBound.getArrayDim();
            upperBound = upperBound.resizeArrayDim(0);
            right = right.resizeArrayDim(0);
-@@ -324,6 +326,15 @@ public class FunctionExprent extends Exprent {
+@@ -323,6 +325,15 @@ public class FunctionExprent extends Exprent {
              this.needsCast = false;
            }
          }
@@ -66,7 +66,7 @@ index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340a
        }
        else { //TODO: Capture generics to make cast better?
          this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue());
-@@ -582,7 +593,7 @@ public class FunctionExprent extends Exprent {
+@@ -581,7 +592,7 @@ public class FunctionExprent extends Exprent {
          TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
      }
  
@@ -75,7 +75,7 @@ index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340a
      throw new RuntimeException("invalid function");
    }
  
-@@ -663,7 +674,7 @@ public class FunctionExprent extends Exprent {
+@@ -662,7 +673,7 @@ public class FunctionExprent extends Exprent {
      measureBytecode(values, lstOperands);
      measureBytecode(values);
    }
@@ -84,7 +84,7 @@ index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340a
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************
-@@ -677,4 +688,4 @@ public class FunctionExprent extends Exprent {
+@@ -676,4 +687,4 @@ public class FunctionExprent extends Exprent {
      Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
      return type == null || this.funcType == type;
    }
@@ -92,7 +92,7 @@ index 23a08ace27bb5d2eca1018c192cf817d5fa8830e..0fd26ff74d6d18b4ef0a61c1bb0a340a
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index ba4bcdc0710ca68a0485748c55a8b071e7ed9538..1648712fd698d433bec273ffeb21add76a3065b3 100644
+index b5fd9e7e8c6941b69440d9f916cb6bdd6e211195..da71a1497ceb262e80617c525886da7db85e02b3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -408,6 +408,7 @@ public class InvocationExprent extends Exprent {

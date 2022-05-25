@@ -5,10 +5,10 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index ef6625454fef3f8c9d489692649e81024359975e..7b2b2f465a6261ec603b45516a355a698dad016b 100644
+index b7467530cba1d8e317500a5c213dd6013d00a369..eac80ace801517faca82a3a35ac31b58fdd667ab 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -742,6 +742,11 @@ public class ClassWriter {
+@@ -747,6 +747,11 @@ public class ClassWriter {
              buffer.append(' ');
  
              String parameterName = methodWrapper.varproc.getVarName(pair);
@@ -99,7 +99,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..66414bc3eac6e187e5f45f70bc67b783
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index bf0fe47e7d48b21acd758449b67612e250f19554..95baa7dfec5a9c8dcde30a288499aa127aeffa4b 100644
+index 654d0ddf34821ce4ea800cd5421f6268e2ca3236..bb7b5b4e4a590219939a8f7e883b9c259c1adf73 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 @@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
@@ -110,10 +110,10 @@ index bf0fe47e7d48b21acd758449b67612e250f19554..95baa7dfec5a9c8dcde30a288499aa12
  import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
  import org.jetbrains.java.decompiler.struct.StructContext;
  
-@@ -19,12 +20,14 @@ public class DecompilerContext {
-   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
+@@ -20,12 +21,14 @@ public class DecompilerContext {
    public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
    public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
+   public static final String IN_CLASS_TYPE_PARAMS = "IN_CLASS_TYPE_PARAMS";
 +  public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
  
    private final Map<String, Object> properties;
@@ -125,7 +125,7 @@ index bf0fe47e7d48b21acd758449b67612e250f19554..95baa7dfec5a9c8dcde30a288499aa12
    private ImportCollector importCollector;
    private VarProcessor varProcessor;
    private CounterContainer counterContainer;
-@@ -34,7 +37,8 @@ public class DecompilerContext {
+@@ -35,7 +38,8 @@ public class DecompilerContext {
                             IFernflowerLogger logger,
                             StructContext structContext,
                             ClassesProcessor classProcessor,
@@ -135,7 +135,7 @@ index bf0fe47e7d48b21acd758449b67612e250f19554..95baa7dfec5a9c8dcde30a288499aa12
      Objects.requireNonNull(properties);
      Objects.requireNonNull(logger);
      Objects.requireNonNull(structContext);
-@@ -45,6 +49,7 @@ public class DecompilerContext {
+@@ -46,6 +50,7 @@ public class DecompilerContext {
      this.structContext = structContext;
      this.classProcessor = classProcessor;
      this.poolInterceptor = interceptor;
@@ -143,7 +143,7 @@ index bf0fe47e7d48b21acd758449b67612e250f19554..95baa7dfec5a9c8dcde30a288499aa12
      this.counterContainer = new CounterContainer();
    }
  
-@@ -112,6 +117,10 @@ public class DecompilerContext {
+@@ -113,6 +118,10 @@ public class DecompilerContext {
      return getCurrentContext().poolInterceptor;
    }
  

@@ -443,10 +443,10 @@ index f79794242f3eb9b5000af5fa6b41994ee1b25cd9..472af3df55a4accb2ae3b249289ee69a
  
        if (lstVars != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index a7f8e9340a89ec36b8226b920fb24f5be2bbefd1..c95049449d94151fb9192d96717c2b7e7922b182 100644
+index 2c7cdac55a8ba8a9bcc8b4da84e4ed5469e98d6e..c88d5f8ea5ffb16de0d9e8dd8f8e2fd9a726d489 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -143,6 +143,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -144,6 +144,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
    @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
    @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
    @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }

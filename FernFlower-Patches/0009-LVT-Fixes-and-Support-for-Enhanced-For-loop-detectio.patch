@@ -1611,7 +1611,7 @@ index c3263800aba7cb93e7b879d0bd46888fb696e861..d7c81a5f8538cdb6c99c752a9dd0fba5
    public StatEdge(@NotNull EdgeType type, Statement source, Statement destination, Statement closure) {
      this(type, source, destination);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 85d0610b3f756616fb276bcdec9a5ff3d4679943..d54328690977dccf72dbdfb5ae114fa9d91bde12 100644
+index bfae94c3dd24e9fbf624310591ae33ccb454ecff..afaf2bf239640309370fd34cf9750f4a9537ba74 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -463,7 +463,7 @@ public class InvocationExprent extends Exprent {
@@ -3505,7 +3505,7 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index becca6fd82503cc3a3aa6a0bb6aef7295d20f19f..1b4c8c3cd4cee7b99482a06e8364e5b105cef276 100644
+index 721a3606e209f4f803dcb6b513a5768c9c437c48..67c41a7676a7d78c5d4bfa2174608cebd575acaa 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -28,6 +28,7 @@ public class SingleClassesTest extends SingleClassesTestBase {

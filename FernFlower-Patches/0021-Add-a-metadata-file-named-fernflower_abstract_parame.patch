@@ -7,10 +7,10 @@ Subject: [PATCH] Add a metadata file named
 Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 05f91891dd409a4719c00c00418b143ea3091d2a..1e02167d8f3e17f8f7ac5e734d0fa2eaa1f908f0 100644
+index 17dc8a4a5d4e3164337f6d05ab1e00576191a0ca..564236822dab0c638f9a48cb86a6eecc7892080c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -744,7 +744,9 @@ public class ClassWriter {
+@@ -749,7 +749,9 @@ public class ClassWriter {
              String parameterName = methodWrapper.varproc.getVarName(pair);
  
              if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {

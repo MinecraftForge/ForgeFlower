@@ -758,10 +758,10 @@ index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..3aa5956fbb79de630c5e9e600c9fd27a
    public static boolean identifySecondaryFunctions(Statement stat, VarProcessor varProc) {
      if (stat.getExprents() == null) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-index de93e4c06e937ca4c5a73e76c68124f12440d63c..9f2940aca8f64599ecc72cf824ca2ff56db9ba04 100644
+index 49a305a923ba34513b719efc45e15943f84bfba7..19d80e848b2f679926885439536c53f28429545c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SwitchHelper.java
-@@ -421,7 +421,7 @@ public final class SwitchHelper {
+@@ -447,7 +447,7 @@ public final class SwitchHelper {
          }
          List<Exprent> newExprents;
          if (lastExprentIndex > 0) {
@@ -801,7 +801,7 @@ index a7033f507fd9667d773977803718c08810f0d750..3882cfd68af7f55938311363a69a2dde
    private StructMember parent;
    private VarType constType;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index bae86609737b8fc480d07bb035734f3fa53a4552..e3dbe4f87b0d9dae87863a1a262f9e7eb70d9390 100644
+index 4e6eb0cb06362df98589932c67a22c3b6741fc27..5489465076ce772ad91d6c05ce6bb8b150f1747b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -451,16 +451,17 @@ public class InvocationExprent extends Exprent {

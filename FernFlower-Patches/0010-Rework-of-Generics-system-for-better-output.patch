@@ -121,19 +121,27 @@ index 4c4916e4cc5ccdd06dd4138dae54c31fb7f3bd34..decfe747ba2ab3643209987294ef7bcb
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e81024359975e 100644
+index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd6013d00a369 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -371,7 +371,7 @@ public class ClassWriter {
+@@ -371,9 +371,14 @@ public class ClassWriter {
  
      List<TypeAnnotation> typeAnnotations = TypeAnnotation.listFrom(cl);
  
 -    GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
 +    GenericClassDescriptor descriptor = cl.getSignature();
      if (descriptor != null && !descriptor.fparameters.isEmpty()) {
-       appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds, typeAnnotations);
+-      appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds, typeAnnotations);
++      DecompilerContext.setProperty(DecompilerContext.IN_CLASS_TYPE_PARAMS, "1");
++      try {
++        appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds, typeAnnotations);
++      } finally {
++        DecompilerContext.setProperty(DecompilerContext.IN_CLASS_TYPE_PARAMS, "0");
++      }
      }
-@@ -396,15 +396,7 @@ public class ClassWriter {
+ 
+     if (components != null) {
+@@ -396,15 +401,7 @@ public class ClassWriter {
        List<TypeAnnotation> extendsTypeAnnotations = TargetInfo.SupertypeTarget.extractExtends(typeAnnotations);
        if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
          buffer.append("extends ");
@@ -150,7 +158,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
          buffer.append(' ');
        }
      }
-@@ -418,18 +410,7 @@ public class ClassWriter {
+@@ -418,18 +415,7 @@ public class ClassWriter {
              buffer.append(", ");
            }
            List<TypeAnnotation> superTypeAnnotations = TargetInfo.SupertypeTarget.extract(typeAnnotations, i);
@@ -170,7 +178,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
          }
          buffer.append(' ');
        }
-@@ -491,12 +472,7 @@ public class ClassWriter {
+@@ -491,12 +477,7 @@ public class ClassWriter {
      final List<TypeAnnotation> typeAnnotations = TypeAnnotation.listFrom(fd);
  
      if (!isEnum) {
@@ -184,7 +192,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
        buffer.append(' ');
      }
  
-@@ -524,8 +500,8 @@ public class ClassWriter {
+@@ -524,8 +505,8 @@ public class ClassWriter {
            ((ConstExprent) initializer).adjustConstType(fieldType);
          }
  
@@ -195,7 +203,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
        }
      }
      else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
-@@ -639,7 +615,7 @@ public class ClassWriter {
+@@ -639,7 +620,7 @@ public class ClassWriter {
        boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
        boolean clInit = false, init = false, dInit = false;
  
@@ -204,7 +212,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
  
        int flags = mt.getAccessFlags();
        if ((flags & CodeConstants.ACC_NATIVE) != 0) {
-@@ -667,28 +643,7 @@ public class ClassWriter {
+@@ -667,28 +648,7 @@ public class ClassWriter {
          appendComment(buffer, "bridge method", indent);
        }
  
@@ -234,7 +242,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
        appendAnnotations(buffer, indent, mt);
  
        buffer.appendIndent(indent);
-@@ -729,12 +684,7 @@ public class ClassWriter {
+@@ -729,12 +689,7 @@ public class ClassWriter {
          if (init) {
            emptyTypeAnnotations.forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
          } else {
@@ -248,7 +256,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
            buffer.append(' ');
          }
  
-@@ -751,7 +701,12 @@ public class ClassWriter {
+@@ -751,7 +706,12 @@ public class ClassWriter {
          }
  
          int index = methodWrapper.varproc.getFirstParameterVarIndex();
@@ -261,7 +269,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
            if (mask == null || mask.get(i) == null) {
              if (paramCount > 0) {
                buffer.append(", ");
-@@ -768,24 +723,12 @@ public class ClassWriter {
+@@ -768,24 +728,12 @@ public class ClassWriter {
              }
  
              String typeName;
@@ -290,7 +298,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
  
              if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
                  DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-@@ -804,7 +747,7 @@ public class ClassWriter {
+@@ -804,7 +752,7 @@ public class ClassWriter {
              paramCount++;
            }
  
@@ -299,7 +307,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
          }
  
          buffer.append(')');
-@@ -814,19 +757,14 @@ public class ClassWriter {
+@@ -814,19 +762,14 @@ public class ClassWriter {
            throwsExceptions = true;
            buffer.append(" throws ");
  
@@ -322,7 +330,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
            }
          }
        }
-@@ -1054,7 +992,7 @@ public class ClassWriter {
+@@ -1054,7 +997,7 @@ public class ClassWriter {
  
      final List<TypeAnnotation> typeAnnotations = TypeAnnotation.listFrom(cd);
      if (descriptor != null) {
@@ -331,7 +339,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
          varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type,
          TypeAnnotationWriteHelper.create(typeAnnotations)
        ));
-@@ -1108,14 +1046,7 @@ public class ClassWriter {
+@@ -1108,14 +1051,7 @@ public class ClassWriter {
    private static Map.Entry<VarType, GenericFieldDescriptor> getFieldTypeData(StructField fd) {
      VarType fieldType = new VarType(fd.getDescriptor(), false);
  
@@ -347,7 +355,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
      return new AbstractMap.SimpleImmutableEntry<>(fieldType, descriptor);
    }
  
-@@ -1255,22 +1186,11 @@ public class ClassWriter {
+@@ -1255,22 +1191,11 @@ public class ClassWriter {
      }
    }
  
@@ -374,7 +382,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
      buffer.append('<');
      for (int i = 0; i < parameters.size(); i++) {
        if (i > 0) {
-@@ -1278,15 +1198,15 @@ public class ClassWriter {
+@@ -1278,15 +1203,15 @@ public class ClassWriter {
        }
        TargetInfo.TypeParameterTarget.extract(typeAnnotations, i).forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
        buffer.append(parameters.get(i));
@@ -393,7 +401,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
          }
        }
      }
-@@ -1303,4 +1223,4 @@ public class ClassWriter {
+@@ -1303,4 +1228,4 @@ public class ClassWriter {
        }
      }
    }
@@ -401,18 +409,19 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..ef6625454fef3f8c9d489692649e8102
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-index e2936358fa03746e00e23d30f47351c28124e09f..bf0fe47e7d48b21acd758449b67612e250f19554 100644
+index e2936358fa03746e00e23d30f47351c28124e09f..654d0ddf34821ce4ea800cd5421f6268e2ca3236 100644
 --- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
 +++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
-@@ -18,6 +18,7 @@ public class DecompilerContext {
+@@ -18,6 +18,8 @@ public class DecompilerContext {
    public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
    public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
    public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
 +  public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
++  public static final String IN_CLASS_TYPE_PARAMS = "IN_CLASS_TYPE_PARAMS";
  
    private final Map<String, Object> properties;
    private final IFernflowerLogger logger;
-@@ -126,4 +127,4 @@ public class DecompilerContext {
+@@ -126,4 +128,4 @@ public class DecompilerContext {
    public static BytecodeSourceMapper getBytecodeSourceMapper() {
      return getCurrentContext().bytecodeSourceMapper;
    }
@@ -498,7 +507,7 @@ index 33906d3a433e4421bbf41c6aed5ff566a69a904a..e32253528718631cd622d6af4ede4a85
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 3148af901dbdf25946b67b1da9b0fba8f697a49e..ba9ee209270893e2faee9019434a7a0a452c4c43 100644
+index 3148af901dbdf25946b67b1da9b0fba8f697a49e..c592f0d58d1048de416eb2cefd6fcf76f2fb97fd 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -29,6 +29,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
@@ -518,21 +527,34 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..ba9ee209270893e2faee9019434a7a0a
            break;
          case opc_monitorenter:
          case opc_monitorexit:
-@@ -690,7 +691,13 @@ public class ExprProcessor implements CodeConstants {
+@@ -690,7 +691,15 @@ public class ExprProcessor implements CodeConstants {
        sb.append("void");
        return sb.toString();
      }
 +    else if (tp == CodeConstants.TYPE_GENVAR && type.isGeneric()) {
-+      return type.getValue();
++      sb.append(type.getValue());
++      return sb.toString();
 +    }
      else if (tp == CodeConstants.TYPE_OBJECT) {
 +      if (type.isGeneric()) {
-+        return ((GenericType)type).getCastName();
++        ((GenericType)type).appendCastName(sb, typeAnnWriteHelpers);
++        return sb.toString();
 +      }
        String ret;
        if (getShort) {
          ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
-@@ -957,6 +964,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -741,7 +750,9 @@ public class ExprProcessor implements CodeConstants {
+       boolean shouldWrite = true;
+       if (!enclosingClasses.isEmpty() && i != nestedTypes.size() - 1) {
+         String enclosingType = enclosingClasses.remove(0).simpleName;
+-        shouldWrite = !nestedType.equals(enclosingType);
++        shouldWrite = !nestedType.equals(enclosingType)
++          // Also write out the enclosing class if we are the outermost, and we're in the type params
++          || enclosingClasses.isEmpty() && DecompilerContext.getOption(DecompilerContext.IN_CLASS_TYPE_PARAMS);
+       }
+       if (i == 0) { // first annotation can be written already
+         if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
+@@ -957,6 +968,8 @@ public class ExprProcessor implements CodeConstants {
          tracer.incrementCurrentSourceLine();
        }
  
@@ -541,7 +563,7 @@ index 3148af901dbdf25946b67b1da9b0fba8f697a49e..ba9ee209270893e2faee9019434a7a0a
        TextBuffer content = expr.toJava(indent, tracer);
  
        if (content.length() > 0) {
-@@ -1029,7 +1038,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -1029,7 +1042,7 @@ public class ExprProcessor implements CodeConstants {
        }
      }
  
@@ -904,7 +926,7 @@ index 3c1c333b45528adaaf63d149436a4cefa30ad905..be789c6f999339fc4d755850dfd888f6
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index ff43667869005931c1b1aca8f2ef1b556aeba705..2849e5044d991e3ecbcc71e9d1080e11de094f98 100644
+index f2efd6b594b700b20814c620328753a66aea22a4..c45050559cace73741f7529254e1483c81b747c7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -2,6 +2,8 @@
@@ -916,7 +938,7 @@ index ff43667869005931c1b1aca8f2ef1b556aeba705..2849e5044d991e3ecbcc71e9d1080e11
  import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
-@@ -183,6 +185,7 @@ public class FunctionExprent extends Exprent {
+@@ -182,6 +184,7 @@ public class FunctionExprent extends Exprent {
    private int funcType;
    private VarType implicitType;
    private final List<Exprent> lstOperands;
@@ -924,7 +946,7 @@ index ff43667869005931c1b1aca8f2ef1b556aeba705..2849e5044d991e3ecbcc71e9d1080e11
  
    public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
      this(funcType, new ArrayList<>(), bytecodeOffsets);
-@@ -290,6 +293,46 @@ public class FunctionExprent extends Exprent {
+@@ -289,6 +292,46 @@ public class FunctionExprent extends Exprent {
      return exprType;
    }
  
@@ -971,7 +993,7 @@ index ff43667869005931c1b1aca8f2ef1b556aeba705..2849e5044d991e3ecbcc71e9d1080e11
    @Override
    public int getExprentUse() {
      if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
-@@ -464,6 +507,9 @@ public class FunctionExprent extends Exprent {
+@@ -463,6 +506,9 @@ public class FunctionExprent extends Exprent {
        case FUNCTION_NEG:
          return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
        case FUNCTION_CAST:
@@ -982,7 +1004,7 @@ index ff43667869005931c1b1aca8f2ef1b556aeba705..2849e5044d991e3ecbcc71e9d1080e11
        case FUNCTION_ARRAY_LENGTH:
          Exprent arr = lstOperands.get(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index d54328690977dccf72dbdfb5ae114fa9d91bde12..242d6e600e30fa43c9011ba52d34b5aaca116a5e 100644
+index afaf2bf239640309370fd34cf9750f4a9537ba74..54c7d1fb9150754ba9daa09f4f24aa41c86387a8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -19,6 +19,8 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -1188,7 +1210,7 @@ index d54328690977dccf72dbdfb5ae114fa9d91bde12..242d6e600e30fa43c9011ba52d34b5aa
            ambiguous.set(i);
            break;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312ffa09bd5 100644
+index 6df45768b067fd2e01ffd61bb157158cb369ad7e..2501863f7396c721a42eaab481b2c89d88209d23 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -14,7 +14,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -1196,10 +1218,10 @@ index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericClassDescriptor;
 -import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
  import org.jetbrains.java.decompiler.util.ListStack;
  import org.jetbrains.java.decompiler.util.TextBuffer;
-@@ -31,6 +30,7 @@ public class NewExprent extends Exprent {
+ 
+@@ -30,6 +29,7 @@ public class NewExprent extends Exprent {
    private boolean anonymous;
    private boolean lambda;
    private boolean enumConst;
@@ -1207,7 +1229,7 @@ index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312
  
    public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
      this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
-@@ -69,6 +69,24 @@ public class NewExprent extends Exprent {
+@@ -68,6 +68,24 @@ public class NewExprent extends Exprent {
      return anonymous ? DecompilerContext.getClassProcessor().getMapRootClasses().get(newType.getValue()).anonymousClassType : newType;
    }
  
@@ -1225,14 +1247,14 @@ index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312
 +        }
 +      }
 +    }
-+    
++
 +    return getExprType();
 +  }
 +
    @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
-@@ -170,17 +188,17 @@ public class NewExprent extends Exprent {
+@@ -169,17 +187,17 @@ public class NewExprent extends Exprent {
              }
            }
  
@@ -1253,7 +1275,7 @@ index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312
              }
            }
            else {
-@@ -189,6 +207,7 @@ public class NewExprent extends Exprent {
+@@ -188,6 +206,7 @@ public class NewExprent extends Exprent {
          }
        }
  
@@ -1261,7 +1283,7 @@ index 32fa14cb76076e868136029b9bd92dbfdfd9cca2..8df7f76e7690bdd13463e94cca28a312
        buf.append('(');
  
        if (!lambda && constructor != null) {
-@@ -280,6 +299,7 @@ public class NewExprent extends Exprent {
+@@ -279,6 +298,7 @@ public class NewExprent extends Exprent {
  
          int start = enumConst ? 2 : 0;
          if (!enumConst || start < parameters.size()) {
@@ -1931,19 +1953,21 @@ index a65181762765bfdc9d2ee5695f3ffa68b7768b74..2b0fdf1dad01ec62f3e21f372297c124
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
-index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafcaa9e695a 100644
+index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453ee88fb66 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
-@@ -7,6 +7,8 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+@@ -7,9 +7,9 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
  import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
-+import org.jetbrains.java.decompiler.util.TextUtil;
 +import org.jetbrains.java.decompiler.struct.gen.VarType;
  
  import java.util.ArrayList;
- import java.util.Arrays;
-@@ -26,7 +28,7 @@ public final class GenericMain {
+-import java.util.Arrays;
+ import java.util.List;
+ import java.util.stream.Collectors;
+ 
+@@ -26,7 +26,7 @@ public final class GenericMain {
      "boolean",
    };
  
@@ -1952,7 +1976,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
      String original = signature;
      try {
        GenericClassDescriptor descriptor = new GenericClassDescriptor();
-@@ -34,15 +36,23 @@ public final class GenericMain {
+@@ -34,15 +34,23 @@ public final class GenericMain {
        signature = parseFormalParameters(signature, descriptor.fparameters, descriptor.fbounds);
  
        String superCl = GenericType.getNextType(signature);
@@ -1978,7 +2002,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
        return descriptor;
      }
      catch (RuntimeException e) {
-@@ -53,7 +63,7 @@ public final class GenericMain {
+@@ -53,7 +61,7 @@ public final class GenericMain {
  
    public static GenericFieldDescriptor parseFieldSignature(String signature) {
      try {
@@ -1987,7 +2011,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
      }
      catch (RuntimeException e) {
        DecompilerContext.getLogger().writeMessage("Invalid signature: " + signature, IFernflowerLogger.Severity.WARN);
-@@ -65,29 +75,29 @@ public final class GenericMain {
+@@ -65,29 +73,29 @@ public final class GenericMain {
      String original = signature;
      try {
        List<String> typeParameters = new ArrayList<>();
@@ -2023,7 +2047,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
          }
        }
  
-@@ -99,7 +109,7 @@ public final class GenericMain {
+@@ -99,7 +107,7 @@ public final class GenericMain {
      }
    }
  
@@ -2032,7 +2056,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
      if (signature.charAt(0) != '<') {
        return signature;
      }
-@@ -132,7 +142,7 @@ public final class GenericMain {
+@@ -132,7 +140,7 @@ public final class GenericMain {
        String param = value.substring(0, to);
        value = value.substring(to + 1);
  
@@ -2041,7 +2065,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
  
        while (true) {
          if (value.charAt(0) == ':') {
-@@ -141,7 +151,7 @@ public final class GenericMain {
+@@ -141,7 +149,7 @@ public final class GenericMain {
          }
  
          String bound = GenericType.getNextType(value);
@@ -2050,19 +2074,18 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
          value = value.substring(bound.length());
  
  
-@@ -183,137 +193,9 @@ public final class GenericMain {
-       return sb.toString();
+@@ -184,83 +192,14 @@ public final class GenericMain {
      }
      else if (tp == CodeConstants.TYPE_OBJECT) {
--      StringBuilder sb = new StringBuilder();
+       StringBuilder sb = new StringBuilder();
 -      appendClassName(type, sb, typeAnnWriteHelpers);
--      return sb.toString();
-+      return type.getCastName();
++      type.appendCastName(sb, typeAnnWriteHelpers);
+       return sb.toString();
      }
  
      throw new RuntimeException("Invalid type: " + type);
    }
--
+ 
 -  private static void appendClassName(GenericType type, StringBuilder sb, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
 -    List<GenericType> enclosingTypes = type.getEnclosingClasses();
 -    typeAnnWriteHelpers = ExprProcessor.writeTypeAnnotationBeforeType(type, sb, typeAnnWriteHelpers);
@@ -2133,62 +2156,43 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4a857bf3f97a77e41a4eb67897dffafc
 -  }
 -
 -  private static List<TypeAnnotationWriteHelper> getGenericTypeAnnotations(
--    int argIndex,
--    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
--  ) {
--    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
--      StructTypePathEntry entry = typeAnnWriteHelper.getPaths().peek();
--      boolean inGeneric = entry != null && entry.getTypeArgumentIndex() == argIndex
--                          && entry.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE.getId();
--      if (inGeneric) typeAnnWriteHelper.getPaths().pop();
--      return inGeneric;
--    }).collect(Collectors.toList());
--  }
--
++  public static List<TypeAnnotationWriteHelper> getGenericTypeAnnotations(
+     int argIndex,
+     List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+   ) {
+@@ -273,9 +212,9 @@ public final class GenericMain {
+     }).collect(Collectors.toList());
+   }
+ 
 -  private static List<TypeAnnotationWriteHelper> writeTypeAnnotationBeforeWildCard(
--    StringBuilder sb,
++  public static List<TypeAnnotationWriteHelper> writeTypeAnnotationBeforeWildCard(
+     StringBuilder sb,
 -    GenericType type,
--    int wildcard,
--    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
--  ) {
--    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
--      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
--      if (wildcard != GenericType.WILDCARD_NO && path == null) {
--        typeAnnWriteHelper.writeTo(sb);
--        return false;
--      }
++    VarType type,
+     int wildcard,
+     List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+   ) {
+@@ -285,7 +224,7 @@ public final class GenericMain {
+         typeAnnWriteHelper.writeTo(sb);
+         return false;
+       }
 -      if (type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
--        typeAnnWriteHelper.writeTo(sb);
--        return false;
--      }
--      return true;
--    }).collect(Collectors.toList());
--  }
--
++      if (type != null && type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
+         typeAnnWriteHelper.writeTo(sb);
+         return false;
+       }
+@@ -293,9 +232,9 @@ public final class GenericMain {
+     }).collect(Collectors.toList());
+   }
+ 
 -  private static List<TypeAnnotationWriteHelper> writeTypeAnnotationAfterWildCard(
--    StringBuilder sb,
++  public static List<TypeAnnotationWriteHelper> writeTypeAnnotationAfterWildCard(
+     StringBuilder sb,
 -    GenericType type,
--    List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
--  ) {
--    typeAnnWriteHelpers.forEach(typeAnnWriteHelper -> { // remove all wild card path entries
--      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
--      boolean isWildCard = path != null && path.getTypePathEntryKind() == StructTypePathEntry.Kind.TYPE_WILDCARD.getId();
--      if (isWildCard) typeAnnWriteHelper.getPaths().pop();
--    });
--    return typeAnnWriteHelpers.stream().filter(typeAnnWriteHelper -> {
--      StructTypePathEntry path = typeAnnWriteHelper.getPaths().peek();
--      if (type.getArrayDim() == 0 && path == null) {
--        typeAnnWriteHelper.writeTo(sb);
--        return false;
--      }
--      if (type.getArrayDim() == typeAnnWriteHelper.getPaths().size() && type.getArrayDim() == typeAnnWriteHelper.arrayPathCount()) {
--        typeAnnWriteHelper.writeTo(sb);
--        return false;
--      }
--      return true;
--    }).collect(Collectors.toList());
--  }
- }
++    VarType type,
+     List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
+   ) {
+     typeAnnWriteHelpers.forEach(typeAnnWriteHelper -> { // remove all wild card path entries
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java
 index eb8049193e952f7476a99188838b6c8907f49f8d..a93d250e2400a9680d7561d73cc1a69f7c0f8d79 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMethodDescriptor.java
@@ -2223,22 +2227,25 @@ index eb8049193e952f7476a99188838b6c8907f49f8d..a93d250e2400a9680d7561d73cc1a69f
      this.typeParameterBounds = substitute(typeParameterBounds);
      this.parameterTypes = substitute(parameterTypes);
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebdae2fe1bb4 100644
+index ff1fe46b43531409fdce2151485cfc48366d3b62..919ab71b12bc6b45e3b07fc2a2294ceca0af2146 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-@@ -2,44 +2,44 @@
+@@ -2,44 +2,49 @@
  package org.jetbrains.java.decompiler.struct.gen.generics;
  
  import org.jetbrains.java.decompiler.code.CodeConstants;
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
++import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
  import org.jetbrains.java.decompiler.struct.gen.Type;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  
  import java.util.ArrayList;
++import java.util.Arrays;
 +import java.util.Collections;
  import java.util.List;
 +import java.util.Map;
++import java.util.regex.Pattern;
  
 -public class GenericType implements Type {
 +public class GenericType extends VarType implements Type {
@@ -2251,14 +2258,15 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
 -  private final int type;
 -  private final int arrayDim;
 -  private final String value;
-+  private final VarType parent;
-+  private final List<VarType> arguments;
-+  private final int wildcard;
++  private static final Pattern DOT_SPLIT = Pattern.compile("\\.");
  
 -  private final List<GenericType> enclosingClasses = new ArrayList<>();
 -  private final List<GenericType> arguments = new ArrayList<>();
 -  private final List<Integer> wildcards = new ArrayList<>();
--
++  private final VarType parent;
++  private final List<VarType> arguments;
++  private final int wildcard;
+ 
 -  public GenericType(int type, int arrayDim, String value) {
 -    this.type = type;
 -    this.arrayDim = arrayDim;
@@ -2289,7 +2297,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
  
      int index = 0;
      loop:
-@@ -57,32 +57,54 @@ public class GenericType implements Type {
+@@ -57,32 +62,54 @@ public class GenericType implements Type {
          case 'L':
            type = CodeConstants.TYPE_OBJECT;
            signature = signature.substring(index + 1, signature.length() - 1);
@@ -2364,7 +2372,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
            break loop;
  
          default:
-@@ -93,24 +115,20 @@ public class GenericType implements Type {
+@@ -93,24 +120,20 @@ public class GenericType implements Type {
        index++;
      }
  
@@ -2403,7 +2411,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
    }
  
    private static String getNextClassSignature(String value) {
-@@ -138,11 +156,13 @@ public class GenericType implements Type {
+@@ -138,11 +161,13 @@ public class GenericType implements Type {
      return value.substring(0, index);
    }
  
@@ -2419,7 +2427,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
      while (value.length() > 0) {
        String typeStr = getNextType(value);
        int len = typeStr.length();
-@@ -160,16 +180,16 @@ public class GenericType implements Type {
+@@ -160,16 +185,16 @@ public class GenericType implements Type {
            break;
        }
  
@@ -2439,7 +2447,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
    }
  
    public static String getNextType(String value) {
-@@ -220,18 +240,124 @@ public class GenericType implements Type {
+@@ -220,18 +245,129 @@ public class GenericType implements Type {
  
    public GenericType decreaseArrayDim() {
      assert getArrayDim() > 0 : this;
@@ -2463,27 +2471,31 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
 +  public boolean isGeneric() {
 +    return true;
 +  }
-+
+ 
+-  public List<GenericType> getEnclosingClasses() {
+-    return enclosingClasses;
 +  public int getWildcard() {
 +    return wildcard;
 +  }
 +
-+  public String getCastName() {
-+    String clsName = null;
-+    if (parent == null) {
-+      clsName = DecompilerContext.getImportCollector().getNestedName(getValue().replace('/', '.'));
-+    }
-+    else if (parent.isGeneric()) {
-+      clsName = ((GenericType)parent).getCastName() + "." + getValue().substring(parent.getValue().length() + 1);
++  public List<TypeAnnotationWriteHelper> appendCastName(final StringBuilder clsName, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
++    if (parent != null && parent.isGeneric()) {
++      typeAnnWriteHelpers = ((GenericType) parent).appendCastName(clsName, typeAnnWriteHelpers);
++      typeAnnWriteHelpers = ExprProcessor.writeNestedTypeAnnotations(clsName, typeAnnWriteHelpers);
++      clsName.append(".").append(getValue().substring(parent.getValue().length() + 1));
 +    }
 +    else {
-+      clsName = DecompilerContext.getImportCollector().getNestedName(parent.getValue().replace('/', '.')) + "." + getValue().substring(getValue().lastIndexOf('.') + 1);
++      List<String> nestedTypes = Arrays.asList(DOT_SPLIT.split(DecompilerContext.getImportCollector().getNestedName(getValue().replace('/', '.'))));
++      ExprProcessor.writeNestedClass(clsName, this, nestedTypes, typeAnnWriteHelpers);
++      ExprProcessor.popNestedTypeAnnotation(typeAnnWriteHelpers);
 +    }
-+    return clsName + getTypeArguments();
-+  }
-+
-+  private String getTypeArguments() {
-+    StringBuilder buffer = new StringBuilder();
++    typeAnnWriteHelpers = appendTypeArguments(clsName, typeAnnWriteHelpers);
++    return typeAnnWriteHelpers;
+   }
+ 
+-  public List<Integer> getWildcards() {
+-    return wildcards;
++  private List<TypeAnnotationWriteHelper> appendTypeArguments(final StringBuilder buffer, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
 +    if (!arguments.isEmpty()) {
 +      buffer.append('<');
 +
@@ -2493,6 +2505,10 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
 +        }
 +
 +        VarType par = arguments.get(i);
++        // only take type paths that are in the generic
++        List<TypeAnnotationWriteHelper> locTypeAnnWriteHelpers = GenericMain.getGenericTypeAnnotations(i, typeAnnWriteHelpers);
++        typeAnnWriteHelpers.removeAll(locTypeAnnWriteHelpers);
++        locTypeAnnWriteHelpers = GenericMain.writeTypeAnnotationBeforeWildCard(buffer, par, wildcard, locTypeAnnWriteHelpers);
 +        if (par == null) { // Wildcard unbound
 +          buffer.append('?');
 +        }
@@ -2506,20 +2522,19 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
 +              buffer.append("? super ");
 +              break;
 +          }
-+          buffer.append(GenericMain.getGenericCastTypeName(gen, Collections.emptyList()));
++          locTypeAnnWriteHelpers = GenericMain.writeTypeAnnotationAfterWildCard(buffer, par, locTypeAnnWriteHelpers);
++          buffer.append(GenericMain.getGenericCastTypeName(gen, locTypeAnnWriteHelpers));
 +        }
 +        else {
-+          buffer.append(ExprProcessor.getCastTypeName(par, Collections.emptyList()));
++          buffer.append(ExprProcessor.getCastTypeName(par, locTypeAnnWriteHelpers));
 +        }
 +      }
 +
 +      buffer.append(">");
 +    }
-+    return buffer.toString();
++    return typeAnnWriteHelpers;
 +  }
- 
--  public List<GenericType> getEnclosingClasses() {
--    return enclosingClasses;
++
 +  @Override
 +  public String toString() {
 +    StringBuilder buf = new StringBuilder();
@@ -2532,12 +2547,10 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..e0e2ff3166f3d7a80cf1b1ccb04cebda
 +      break;
 +    }
 +    buf.append(super.toString());
-+    buf.append(getTypeArguments());
++    appendTypeArguments(buf, Collections.emptyList());
 +    return buf.toString();
-   }
- 
--  public List<Integer> getWildcards() {
--    return wildcards;
++  }
++
 +
 +  @Override
 +  public VarType remap(Map<VarType, VarType> map) {
@@ -2642,7 +2655,7 @@ index 0000000000000000000000000000000000000000..a76571c1359c904bdb1e374bbc1e4969
 +    }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 1b4c8c3cd4cee7b99482a06e8364e5b105cef276..a7f8e9340a89ec36b8226b920fb24f5be2bbefd1 100644
+index 67c41a7676a7d78c5d4bfa2174608cebd575acaa..2c7cdac55a8ba8a9bcc8b4da84e4ed5469e98d6e 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -25,9 +25,11 @@ public class SingleClassesTest extends SingleClassesTestBase {

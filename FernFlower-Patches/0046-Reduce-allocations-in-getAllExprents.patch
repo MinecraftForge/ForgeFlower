@@ -5,7 +5,7 @@ Subject: [PATCH] Reduce allocations in getAllExprents
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-index 0211dab428fdeb48a9805cdc5f42d296263ebcc2..51dc74f2e73a4c596257223352815d43a48145bb 100644
+index 982b660190ba9488c3ff62022aca0dfecbefab48..8dcde8a4d88fa068b6c2b25e00c4de1eae7253a3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 @@ -26,6 +26,13 @@ public class AnnotationExprent extends Exprent {
@@ -166,10 +166,10 @@ index e6e3e9d6f50239c716d285d64f37679bbf0ff553..c20697620a61837d787aa637a8722e3a
        lst.add(instance);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 9cccd33b2d18d9a3b6ac6a829e11691de0020973..e55acf488e6503e92f664400cb2753380472c968 100644
+index 45a83c38eabb72eb26a618e7b7f8a5288825c6c8..e17051eda8fb757a8def9042ee69fbe27942b18a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -451,8 +451,9 @@ public class FunctionExprent extends Exprent {
+@@ -450,8 +450,9 @@ public class FunctionExprent extends Exprent {
    }
  
    @Override
@@ -196,7 +196,7 @@ index 36e528ae73df7a893d4f50dd2bc8660b803953d8..ca13e1610450ff0228de2e5d3c5ac70d
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 91c636417ed3575eda54c92fdd7e20a3ae6b2b0b..2a9cee5262053fc00358d30636bae3b307601e46 100644
+index 122e7ad0ebcaa9fe20263b674887b51bd6044fd0..6a90becad21cbc1994f39b14211fbc493b27064b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -475,8 +475,7 @@ public class InvocationExprent extends Exprent {
@@ -224,10 +224,10 @@ index 3ad223c61453159d096405bb73184644595b75a9..9102f8bf3d8409a8273072106fede15f
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 96deb9a875cad21e030e97213fc275df310e6c9a..ac4b0f760919c8e5c56debd7a4f57c5a20d4999f 100644
+index 8dfeba4a200154d32b89c6980022792c0fae1f23..72006db699168dfdd44c355cb934f3e72fd5afb5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-@@ -271,9 +271,8 @@ public class NewExprent extends Exprent {
+@@ -270,9 +270,8 @@ public class NewExprent extends Exprent {
    }
  
    @Override

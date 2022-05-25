@@ -5,7 +5,7 @@ Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index deb7d6062d87d1aaeb07bce99c09d7a2454fcd92..507d0d89949ca203a0b33b42150ef35765bbb487 100644
+index ac0d6feaa643477aa465cd8bb8ebd4503faf522a..bae5fd174027bc9f8c7c3d2eb53c2ef7ccab6ffe 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -10,14 +10,19 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
@@ -140,7 +140,7 @@ index 01b9cef3bb535025f816f18acab5951083e4ec55..41f7389f3931a6a3c87647f7fde98f04
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index c95049449d94151fb9192d96717c2b7e7922b182..38860a65555752387c664fc91dc47a293a88c9d6 100644
+index c88d5f8ea5ffb16de0d9e8dd8f8e2fd9a726d489..f9dd18ce93da5481aa016ea665898e3b690db6ec 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -25,7 +25,8 @@ public class SingleClassesTest extends SingleClassesTestBase {

@@ -5,10 +5,10 @@ Subject: [PATCH] Fix primitive un/boxing issues.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index ba9ee209270893e2faee9019434a7a0a452c4c43..cfbce3057d7f97842f4b001afdd0434da347eb26 100644
+index c592f0d58d1048de416eb2cefd6fcf76f2fb97fd..b7d58645dd21d12c16d4efba9604c46614683c35 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -1028,12 +1028,14 @@ public class ExprProcessor implements CodeConstants {
+@@ -1032,12 +1032,14 @@ public class ExprProcessor implements CodeConstants {
  
      if (unbox) {
        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
@@ -30,10 +30,10 @@ index ba9ee209270893e2faee9019434a7a0a452c4c43..cfbce3057d7f97842f4b001afdd0434d
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 2849e5044d991e3ecbcc71e9d1080e11de094f98..23a08ace27bb5d2eca1018c192cf817d5fa8830e 100644
+index c45050559cace73741f7529254e1483c81b747c7..a44200c04618f80d9d845cd15087678635913a3a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -565,6 +565,19 @@ public class FunctionExprent extends Exprent {
+@@ -564,6 +564,19 @@ public class FunctionExprent extends Exprent {
      }
  
      if (funcType <= FUNCTION_I2S) {
@@ -54,7 +54,7 @@ index 2849e5044d991e3ecbcc71e9d1080e11de094f98..23a08ace27bb5d2eca1018c192cf817d
          TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 242d6e600e30fa43c9011ba52d34b5aaca116a5e..ba4bcdc0710ca68a0485748c55a8b071e7ed9538 100644
+index 54c7d1fb9150754ba9daa09f4f24aa41c86387a8..b5fd9e7e8c6941b69440d9f916cb6bdd6e211195 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -59,6 +59,8 @@ public class InvocationExprent extends Exprent {
