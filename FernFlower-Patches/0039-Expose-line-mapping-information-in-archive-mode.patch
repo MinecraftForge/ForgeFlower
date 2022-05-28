@@ -140,10 +140,10 @@ index f434fc92661e1337acfd2ebc7576fbd43f15622f..585494c81bda9c2bde5ea284fb8851df
        } catch (IOException e) {
          DecompilerContext.getLogger().writeMessage("Cannot write entry " + entryName + " to " + file, e);
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index a2be81c2a329812c30ffe2606cae2b5f7ab43c3c..23ed017fc66747daf2f7b603df7d123835145570 100644
+index 7bcb5652188642db925a5915f8b743fd14b0e328..698020bbb42ba78718b5a332ca4e9a3f3660e9e9 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -58,6 +58,8 @@ public interface IFernflowerPreferences {
+@@ -59,6 +59,8 @@ public interface IFernflowerPreferences {
  
    String SKIP_EXTRA_FILES = "sef";
  
@@ -152,7 +152,7 @@ index a2be81c2a329812c30ffe2606cae2b5f7ab43c3c..23ed017fc66747daf2f7b603df7d1238
    Map<String, Object> DEFAULTS = getDefaults();
  
    static Map<String, Object> getDefaults() {
-@@ -105,6 +107,7 @@ public interface IFernflowerPreferences {
+@@ -107,6 +109,7 @@ public interface IFernflowerPreferences {
      defaults.put(DUMP_ORIGINAL_LINES, "0");
      defaults.put(USE_JAD_VARNAMING, "0");
      defaults.put(SKIP_EXTRA_FILES, "0");

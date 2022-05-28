@@ -5,10 +5,10 @@ Subject: [PATCH] Fix ambiguous lambdas
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index e28a44d07de0d1455fdffb5d383e09afe337675e..4b73dc25c67c78ad6ffcf0ac99248e634abef91d 100644
+index 27e7432b4c6774a377c9e5f570e04248bb4d2d0c..ba88826f42a6769428d70668664131736ed42c00 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -1069,6 +1069,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -1072,6 +1072,9 @@ public class ExprProcessor implements CodeConstants {
        (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
        (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
  
@@ -18,7 +18,7 @@ index e28a44d07de0d1455fdffb5d383e09afe337675e..4b73dc25c67c78ad6ffcf0ac99248e63
      boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
  
      // cast instead to 'byte' / 'short' when int constant is used as a value for 'Byte' / 'Short'
-@@ -1083,6 +1086,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -1086,6 +1089,8 @@ public class ExprProcessor implements CodeConstants {
  
      if (cast) buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
  
@@ -27,7 +27,7 @@ index e28a44d07de0d1455fdffb5d383e09afe337675e..4b73dc25c67c78ad6ffcf0ac99248e63
      if (quote) buffer.append('(');
  
      if (exprent.type == Exprent.EXPRENT_CONST) {
-@@ -1114,4 +1119,12 @@ public class ExprProcessor implements CodeConstants {
+@@ -1117,4 +1122,12 @@ public class ExprProcessor implements CodeConstants {
    private static boolean isNarrowedIntType(VarType type) {
      return VarType.VARTYPE_INT.isStrictSuperset(type) || type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
    }

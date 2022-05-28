@@ -5,21 +5,21 @@ Subject: [PATCH] Improve inferred generic types
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index d91d9faebf718192a679c436792a54c24bed8c63..01b9cef3bb535025f816f18acab5951083e4ec55 100644
+index 2493bfcc2eed3e105f819ccc6925ea7a10bfac8c..0c1e9296f40007557be90d12daf39cb9a78df448 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
-   String VERIFY_ANONYMOUS_CLASSES = "vac";
+@@ -37,6 +37,7 @@ public interface IFernflowerPreferences {
  
    String INCLUDE_ENTIRE_CLASSPATH = "iec";
+   String QUALIFY_INNER_CLASSES = "qin";
 +  String EXPLICIT_GENERIC_ARGUMENTS = "ega";
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -88,6 +89,7 @@ public interface IFernflowerPreferences {
-     defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
+@@ -90,6 +91,7 @@ public interface IFernflowerPreferences {
  
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
+     defaults.put(QUALIFY_INNER_CLASSES, "1");
 +    defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
  
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
@@ -1489,7 +1489,7 @@ index d8388e50f6c88e91a0007854400e756153cdb4a6..ab44a6ab25070cb0069c2f55584a9927
      return this;
    }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index 919ab71b12bc6b45e3b07fc2a2294ceca0af2146..a7f1a688cb69e22fe485ab14a54bf359570a26a7 100644
+index 9e9e64933f89c72460c12dea174429c80cbbfcbb..497caabc5178d8c56ffe185302f9c3fe16758ab5 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -5,15 +5,19 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -1536,8 +1536,8 @@ index 919ab71b12bc6b45e3b07fc2a2294ceca0af2146..a7f1a688cb69e22fe485ab14a54bf359
    public GenericType decreaseArrayDim() {
      assert getArrayDim() > 0 : this;
      return new GenericType(getType(), getArrayDim() - 1, getValue(), parent, arguments, wildcard);
-@@ -261,7 +275,7 @@ public class GenericType extends VarType implements Type {
-   }
+@@ -262,7 +276,7 @@ public class GenericType extends VarType implements Type {
+ 
    @Override
    public boolean isGeneric() {
 -    return true;
@@ -1545,7 +1545,7 @@ index 919ab71b12bc6b45e3b07fc2a2294ceca0af2146..a7f1a688cb69e22fe485ab14a54bf359
    }
  
    public int getWildcard() {
-@@ -344,6 +358,10 @@ public class GenericType extends VarType implements Type {
+@@ -345,6 +359,10 @@ public class GenericType extends VarType implements Type {
    public VarType remap(Map<VarType, VarType> map) {
      VarType main = super.remap(map);
      if (main != this) {
@@ -1556,7 +1556,7 @@ index 919ab71b12bc6b45e3b07fc2a2294ceca0af2146..a7f1a688cb69e22fe485ab14a54bf359
        return main;
      }
      boolean changed = false;
-@@ -370,4 +388,267 @@ public class GenericType extends VarType implements Type {
+@@ -371,4 +389,267 @@ public class GenericType extends VarType implements Type {
      }
      return this;
    }

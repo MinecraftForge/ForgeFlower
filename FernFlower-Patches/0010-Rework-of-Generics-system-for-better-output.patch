@@ -2227,7 +2227,7 @@ index eb8049193e952f7476a99188838b6c8907f49f8d..a93d250e2400a9680d7561d73cc1a69f
      this.typeParameterBounds = substitute(typeParameterBounds);
      this.parameterTypes = substitute(parameterTypes);
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index ff1fe46b43531409fdce2151485cfc48366d3b62..919ab71b12bc6b45e3b07fc2a2294ceca0af2146 100644
+index ff1fe46b43531409fdce2151485cfc48366d3b62..9e9e64933f89c72460c12dea174429c80cbbfcbb 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -2,44 +2,49 @@
@@ -2447,33 +2447,34 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..919ab71b12bc6b45e3b07fc2a2294cec
    }
  
    public static String getNextType(String value) {
-@@ -220,18 +245,129 @@ public class GenericType implements Type {
+@@ -220,18 +245,130 @@ public class GenericType implements Type {
  
    public GenericType decreaseArrayDim() {
      assert getArrayDim() > 0 : this;
 -    return new GenericType(this, getArrayDim() - 1);
 +    return new GenericType(getType(), getArrayDim() - 1, getValue(), parent, arguments, wildcard);
-   }
- 
--  public List<GenericType> getArguments() {
++  }
++
 +  public VarType resizeArrayDim(int newArrayDim) {
 +    return new GenericType(getType(), newArrayDim, getValue(), parent, arguments, wildcard);
 +  }
 +
 +  public VarType getParent() {
 +    return parent;
-+  }
-+
+   }
+ 
+-  public List<GenericType> getArguments() {
 +  public List<VarType> getArguments() {
      return arguments;
    }
+ 
+-  public List<GenericType> getEnclosingClasses() {
+-    return enclosingClasses;
 +  @Override
 +  public boolean isGeneric() {
 +    return true;
 +  }
- 
--  public List<GenericType> getEnclosingClasses() {
--    return enclosingClasses;
++
 +  public int getWildcard() {
 +    return wildcard;
 +  }
@@ -2491,10 +2492,8 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..919ab71b12bc6b45e3b07fc2a2294cec
 +    }
 +    typeAnnWriteHelpers = appendTypeArguments(clsName, typeAnnWriteHelpers);
 +    return typeAnnWriteHelpers;
-   }
- 
--  public List<Integer> getWildcards() {
--    return wildcards;
++  }
++
 +  private List<TypeAnnotationWriteHelper> appendTypeArguments(final StringBuilder buffer, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
 +    if (!arguments.isEmpty()) {
 +      buffer.append('<');
@@ -2549,8 +2548,10 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..919ab71b12bc6b45e3b07fc2a2294cec
 +    buf.append(super.toString());
 +    appendTypeArguments(buf, Collections.emptyList());
 +    return buf.toString();
-+  }
-+
+   }
+ 
+-  public List<Integer> getWildcards() {
+-    return wildcards;
 +
 +  @Override
 +  public VarType remap(Map<VarType, VarType> map) {

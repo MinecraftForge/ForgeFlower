@@ -670,19 +670,19 @@ index c9ece039b0d986c1d84b62426a65e6780ddc80e1..3ca43800b47e1d26a1dc036f21cb6e6e
  
    public void endReadingClass() { }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 41f7389f3931a6a3c87647f7fde98f04c37af5c0..a2be81c2a329812c30ffe2606cae2b5f7ab43c3c 100644
+index 86fd580e52b9534c2750139512ba84739308eead..7bcb5652188642db925a5915f8b743fd14b0e328 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -38,6 +38,7 @@ public interface IFernflowerPreferences {
-   String INCLUDE_ENTIRE_CLASSPATH = "iec";
+@@ -39,6 +39,7 @@ public interface IFernflowerPreferences {
+   String QUALIFY_INNER_CLASSES = "qin";
    String EXPLICIT_GENERIC_ARGUMENTS = "ega";
    String INLINE_SIMPLE_LAMBDAS = "isl";
 +  String THREADS = "thr";
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -92,6 +93,7 @@ public interface IFernflowerPreferences {
-     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
+@@ -94,6 +95,7 @@ public interface IFernflowerPreferences {
+     defaults.put(QUALIFY_INNER_CLASSES, "1");
      defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
      defaults.put(INLINE_SIMPLE_LAMBDAS, "1");
 +    defaults.put(THREADS, "AUTO");
