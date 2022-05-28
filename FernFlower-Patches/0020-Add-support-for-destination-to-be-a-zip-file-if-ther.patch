@@ -6,7 +6,7 @@ Subject: [PATCH] Add support for destination to be a zip file if there is only
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 06e362987a3917976627fc1f0b6aad302c4ea650..5393ddec202efa7e1f6bb3f7740fa83a70ea48fd 100644
+index aefae5f232c84700c16721643eab4499e319f61a..e8f65944e62c64cc5b2168c363d4c03d9d0a2fb3 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -100,7 +100,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
@@ -29,10 +29,10 @@ index 06e362987a3917976627fc1f0b6aad302c4ea650..5393ddec202efa7e1f6bb3f7740fa83a
    public void addSource(File source) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..8775e47858f45abaac925543be718bf3cc97a1bf
+index 0000000000000000000000000000000000000000..9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,129 @@
 +package org.jetbrains.java.decompiler.main.decompiler;
 +
 +import java.io.File;
@@ -41,7 +41,7 @@ index 0000000000000000000000000000000000000000..8775e47858f45abaac925543be718bf3
 +import java.io.InputStream;
 +import java.util.HashSet;
 +import java.util.Set;
-+import java.util.jar.JarOutputStream;
++import java.util.jar.JarFile;
 +import java.util.jar.Manifest;
 +import java.util.zip.ZipEntry;
 +import java.util.zip.ZipFile;
@@ -83,7 +83,14 @@ index 0000000000000000000000000000000000000000..8775e47858f45abaac925543be718bf3
 +      throw new UnsupportedOperationException("Attempted to write multiple archives at the same time");
 +    try {
 +      FileOutputStream stream = new FileOutputStream(target);
-+      output = manifest != null ? new JarOutputStream(stream, manifest) : new ZipOutputStream(stream);
++      output = new ZipOutputStream(stream);
++      if (manifest != null) {
++        final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
++        manifestEntry.setTime(STABLE_ZIP_TIMESTAMP);
++        output.putNextEntry(manifestEntry);
++        manifest.write(output);
++        output.closeEntry();
++      }
 +    } catch (IOException e) {
 +      DecompilerContext.getLogger().writeMessage("Cannot create archive " + target, e);
 +    }
@@ -103,7 +110,9 @@ index 0000000000000000000000000000000000000000..8775e47858f45abaac925543be718bf3
 +      ZipEntry entry = srcArchive.getEntry(entryName);
 +      if (entry != null) {
 +        try (InputStream in = srcArchive.getInputStream(entry)) {
-+          output.putNextEntry(new ZipEntry(entryName));
++          final ZipEntry newEntry = new ZipEntry(entryName);
++          newEntry.setTime(entry.getTime());
++          output.putNextEntry(newEntry);
 +          InterpreterUtil.copyStream(in, output);
 +        }
 +      }
@@ -120,7 +129,9 @@ index 0000000000000000000000000000000000000000..8775e47858f45abaac925543be718bf3
 +        return;
 +
 +    try {
-+      output.putNextEntry(new ZipEntry(entryName));
++      ZipEntry entry = new ZipEntry(entryName);
++      entry.setTime(STABLE_ZIP_TIMESTAMP);
++      output.putNextEntry(entry);
 +      if (content != null)
 +          output.write(content.getBytes("UTF-8"));
 +    }
