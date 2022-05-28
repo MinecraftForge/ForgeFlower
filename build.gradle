@@ -5,7 +5,7 @@ buildscript {
         maven { url = 'https://files.minecraftforge.net/maven/'}
     }
     dependencies {
-        classpath 'net.minecraftforge:gitpatcher:0.10.+'
+        classpath 'net.minecraftforge:gitpatcher:0.10.0.9'
     }
 }
 
@@ -21,9 +21,12 @@ patches {
     patches = file('FernFlower-Patches')
 }
 
-allprojects {
-    group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
-    version = gradleutils.getTagOffsetVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
+group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
+version = gradleutils.getTagOffsetVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
+
+subprojects {
+    group = rootProject.group
+    version = rootProject.version
 
     tasks.withType(JavaCompile) {
         options.encoding = 'utf-8'

@@ -38,7 +38,8 @@ project {
         text("env.PUBLISHED_JAVA_GROUP", "net.minecraftforge", label = "Published group", description = "The maven coordinate group that has been published by this build. Can not be empty.", allowEmpty = false)
         text("docker_jdk_version", "8", label = "JDK version", description = "The version of the JDK to use during execution of tasks in a JDK.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
         text("docker_gradle_version", "7.4", label = "Gradle version", description = "The version of Gradle to use during execution of Gradle tasks.", display = ParameterDisplay.HIDDEN, allowEmpty = false)
-        text("env.EMAIL", "ForgeTC@MinecraftForge.net", label = "Git Email", description = "Git email for use in the fake repo", display = ParameterDisplay.HIDDEN, allowEmpty = false) 
+        text("env.EMAIL", "ForgeTC@MinecraftForge.net", label = "Git Email", description = "Git email for use in the fake repo", display = ParameterDisplay.HIDDEN, allowEmpty = false)
+        checkbox("env.GITPATCHER_ADD_GIT_SAFEDIR", "true", label = "Add submodules as safedirs (Gitpatcher)", description = "Whether to add the submodule and patched repository as safe directories for git", checked = "true", unchecked = "false")
         checkbox(
             "should_execute_tests",
             "false",
