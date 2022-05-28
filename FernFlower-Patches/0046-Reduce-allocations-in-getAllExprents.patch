@@ -1,0 +1,269 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SuperCoder79 <25208576+SuperCoder7979@users.noreply.github.com>
+Date: Sun, 21 Nov 2021 17:33:09 -0500
+Subject: [PATCH] Reduce allocations in getAllExprents
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
+index 982b660190ba9488c3ff62022aca0dfecbefab48..8dcde8a4d88fa068b6c2b25e00c4de1eae7253a3 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
+@@ -26,6 +26,13 @@ public class AnnotationExprent extends Exprent {
+     this.parValues = parValues;
+   }
+ 
++  @Override
++  protected List<Exprent> getAllExprents(List<Exprent> list) {
++    list.addAll(this.parValues);
++
++    return list;
++  }
++
+   @Override
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+     TextBuffer buffer = new TextBuffer();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
+index fd0e1ab199738bc00cd48f522a75b86e3c29b9bf..7cfac1bea71a366e2ef6004d0c2c78c094b6721c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
+@@ -65,8 +65,7 @@ public class ArrayExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     lst.add(array);
+     lst.add(index);
+     return lst;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
+index 097c10a32ed819368c48efa51866420c01584395..34d99a13692ca6a7cedc59b7d4d9de4ede6a0358 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
+@@ -18,6 +18,12 @@ public class AssertExprent extends Exprent {
+     this.parameters = parameters;
+   }
+ 
++  @Override
++  protected List<Exprent> getAllExprents(List<Exprent> list) {
++    list.addAll(this.parameters);
++    return list;
++  }
++
+   @Override
+   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+     TextBuffer buffer = new TextBuffer();
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+index 546ee9178d4469e49485c643d31d01f3d1cb4209..922994232e50057249552fcd6d5e5240933aadb0 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+@@ -75,8 +75,7 @@ public class AssignmentExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     lst.add(left);
+     lst.add(right);
+     return lst;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index 4b22805aa16a8a95a4bebf3b371df3f0c8dae03a..0087bbfa80332d79401703c784dd4c9cf40d390c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -187,8 +187,8 @@ public class ConstExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    return new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> list) {
++    return list;
+   }
+ 
+   @Override
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+index db2a53744ffeb8b0bdc7b045a822be2df1695b4e..55d7420c771b6abf6d32056d9b82ec95384bf581 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+@@ -59,8 +59,7 @@ public class ExitExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     if (value != null) {
+       lst.add(value);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index b5f3eff75b43be0fffc71bb10839a5ed578beafe..26f988a9b34ab29690a1d9da505dbc7ed1d59c0a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -99,14 +99,25 @@ public abstract class Exprent implements IMatchable {
+     return false;
+   }
+ 
+-  public List<Exprent> getAllExprents(boolean recursive) {
+-    List<Exprent> lst = getAllExprents();
++  public final List<Exprent> getAllExprents(boolean recursive) {
++    List<Exprent> lst = new ArrayList<>();
++    getAllExprents(recursive, lst);
++
++    return lst;
++  }
++
++  private List<Exprent> getAllExprents(boolean recursive, List<Exprent> list) {
++    int start = list.size();
++    getAllExprents(list);
++    int end = list.size();
++
+     if (recursive) {
+-      for (int i = lst.size() - 1; i >= 0; i--) {
+-        lst.addAll(lst.get(i).getAllExprents(true));
++      for (int i = end - 1; i >= start; i--) {
++        list.get(i).getAllExprents(true, list);
+       }
+     }
+-    return lst;
++
++    return list;
+   }
+ 
+   public Set<VarVersionPair> getAllVariables() {
+@@ -122,10 +133,17 @@ public abstract class Exprent implements IMatchable {
+     return set;
+   }
+ 
+-  public List<Exprent> getAllExprents() {
+-    throw new RuntimeException("not implemented");
++  public final List<Exprent> getAllExprents() {
++    List<Exprent> list = new ArrayList<>();
++    getAllExprents(list);
++
++    return list;
+   }
+ 
++  // Get all the exprents contained within the current one
++  // Preconditions: this list must never be removed from! Only added to!
++  protected abstract List<Exprent> getAllExprents(List<Exprent> list);
++
+   public Exprent copy() {
+     throw new RuntimeException("not implemented");
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+index e6e3e9d6f50239c716d285d64f37679bbf0ff553..c20697620a61837d787aa637a8722e3a2dd736b8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+@@ -115,8 +115,7 @@ public class FieldExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     if (instance != null) {
+       lst.add(instance);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index 45a83c38eabb72eb26a618e7b7f8a5288825c6c8..e17051eda8fb757a8def9042ee69fbe27942b18a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -450,8 +450,9 @@ public class FunctionExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    return new ArrayList<>(lstOperands);
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
++    lst.addAll(this.lstOperands);
++    return lst;
+   }
+ 
+   @Override
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
+index 36e528ae73df7a893d4f50dd2bc8660b803953d8..ca13e1610450ff0228de2e5d3c5ac70df7976b52 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
+@@ -96,8 +96,7 @@ public class IfExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     lst.add(condition);
+     return lst;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 122e7ad0ebcaa9fe20263b674887b51bd6044fd0..6a90becad21cbc1994f39b14211fbc493b27064b 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -475,8 +475,7 @@ public class InvocationExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     if (instance != null) {
+       lst.add(instance);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
+index 3ad223c61453159d096405bb73184644595b75a9..9102f8bf3d8409a8273072106fede15f3d0a7e4a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
+@@ -33,8 +33,7 @@ public class MonitorExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     lst.add(value);
+     return lst;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index 8dfeba4a200154d32b89c6980022792c0fae1f23..72006db699168dfdd44c355cb934f3e72fd5afb5 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -270,9 +270,8 @@ public class NewExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
+ 
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     if (newType.getArrayDim() != 0) {
+       lst.addAll(lstDims);
+       lst.addAll(lstArrayElements);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
+index 105c4d951f806fffb8d42386933a7629fa61d76c..7699ea8d3139df210e69208c04eb604c26c8db22 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
+@@ -67,8 +67,7 @@ public class SwitchExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    List<Exprent> lst = new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
+     lst.add(value);
+     return lst;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 0fb1e4749f39a0122735c1d54ea42f94e34d38d2..3a87696731f1f247c48aa24ffb923032e6a6abe2 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -89,8 +89,8 @@ public class VarExprent extends Exprent {
+   }
+ 
+   @Override
+-  public List<Exprent> getAllExprents() {
+-    return new ArrayList<>();
++  public List<Exprent> getAllExprents(List<Exprent> lst) {
++    return lst;
+   }
+ 
+   @Override

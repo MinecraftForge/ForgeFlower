@@ -1,0 +1,155 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Justin <jrd2558@gmail.com>
+Date: Fri, 20 Dec 2019 08:35:30 -0700
+Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index ac0d6feaa643477aa465cd8bb8ebd4503faf522a..bae5fd174027bc9f8c7c3d2eb53c2ef7ccab6ffe 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -10,14 +10,19 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
+ import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
+ import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
+ import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
+ import org.jetbrains.java.decompiler.struct.*;
+@@ -84,7 +89,15 @@ public class ClassWriter {
+       if (node.lambdaInformation.is_method_reference) {
+         if (!node.lambdaInformation.is_content_method_static && method_object != null) {
+           // reference to a virtual method
+-          buffer.append(method_object.toJava(indent, tracer));
++          method_object.getInferredExprType(new VarType(CodeConstants.TYPE_OBJECT, 0, node.lambdaInformation.content_class_name));
++          String instance = method_object.toJava(indent, tracer).toString();
++          // If the instance is casted, then we need to wrap it
++          if (method_object.type == Exprent.EXPRENT_FUNCTION && ((FunctionExprent)method_object).getFuncType() == FunctionExprent.FUNCTION_CAST && ((FunctionExprent)method_object).doesCast()) {
++            buffer.append('(').append(instance).append(')');
++          }
++          else {
++            buffer.append(instance);
++          }
+         }
+         else {
+           // reference to a static method
+@@ -103,6 +116,7 @@ public class ClassWriter {
+ 
+         List<TypeAnnotation> parameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(TypeAnnotation.listFrom(mt));
+         boolean explicitlyTyped = !parameterTypeAnnotations.isEmpty();
++        boolean simpleLambda = false;
+ 
+         if (!lambdaToAnonymous) {
+           buffer.append('(');
+@@ -134,16 +148,60 @@ public class ClassWriter {
+           }
+ 
+           buffer.append(") ->");
++
++          RootStatement root = wrapper.getMethodWrapper(mt.getName(), mt.getDescriptor()).root;
++          if (DecompilerContext.getOption(IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS) && !methodWrapper.decompiledWithErrors && root != null) {
++            Statement firstStat = root.getFirst();
++            if (firstStat.type == Statement.StatementType.BASIC_BLOCK && firstStat.getExprents() != null && firstStat.getExprents().size() == 1) {
++              Exprent firstExpr = firstStat.getExprents().get(0);
++              boolean isVarDefinition = firstExpr.type == Exprent.EXPRENT_ASSIGNMENT &&
++                ((AssignmentExprent)firstExpr).getLeft().type == Exprent.EXPRENT_VAR &&
++                ((VarExprent)((AssignmentExprent)firstExpr).getLeft()).isDefinition();
++
++              boolean isThrow = firstExpr.type == Exprent.EXPRENT_EXIT &&
++                ((ExitExprent)firstExpr).getExitType() == ExitExprent.EXIT_THROW;
++
++              if (!isVarDefinition && !isThrow) {
++                simpleLambda = true;
++                MethodWrapper outerWrapper = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
++                DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, methodWrapper);
++                try {
++                  TextBuffer codeBuffer = firstExpr.toJava(indent + 1, tracer);
++
++                  if (firstExpr.type == Exprent.EXPRENT_EXIT)
++                    codeBuffer.setStart(6); // skip return
++                  else
++                    codeBuffer.prepend(" ");
++
++                  buffer.append(codeBuffer);
++                }
++                catch (Throwable ex) {
++                  DecompilerContext.getLogger().writeMessage("Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.",
++                    IFernflowerLogger.Severity.WARN,
++                    ex);
++                  methodWrapper.decompiledWithErrors = true;
++                  buffer.append(" // $FF: Couldn't be decompiled");
++                }
++                finally {
++                  tracer.addMapping(root.getDummyExit().bytecode);
++                  addTracer(cl, mt, tracer);
++                  DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD_WRAPPER, outerWrapper);
++                }
++              }
++            }
++          }
+         }
+ 
+-        buffer.append(" {").appendLineSeparator();
+-        tracer.incrementCurrentSourceLine();
++        if (!simpleLambda) {
++          buffer.append(" {").appendLineSeparator();
++          tracer.incrementCurrentSourceLine();
+ 
+-        methodLambdaToJava(node, wrapper, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
++          methodLambdaToJava(node, wrapper, mt, buffer, indent + 1, !lambdaToAnonymous, tracer);
+ 
+-        buffer.appendIndent(indent).append("}");
++          buffer.appendIndent(indent).append("}");
+ 
+-        addTracer(cl, mt, tracer);
++          addTracer(cl, mt, tracer);
++        }
+       }
+     }
+     finally {
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 0c1e9296f40007557be90d12daf39cb9a78df448..86fd580e52b9534c2750139512ba84739308eead 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -38,6 +38,7 @@ public interface IFernflowerPreferences {
+   String INCLUDE_ENTIRE_CLASSPATH = "iec";
+   String QUALIFY_INNER_CLASSES = "qin";
+   String EXPLICIT_GENERIC_ARGUMENTS = "ega";
++  String INLINE_SIMPLE_LAMBDAS = "isl";
+ 
+   String LOG_LEVEL = "log";
+   String MAX_PROCESSING_METHOD = "mpm";
+@@ -92,6 +93,7 @@ public interface IFernflowerPreferences {
+     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
+     defaults.put(QUALIFY_INNER_CLASSES, "1");
+     defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
++    defaults.put(INLINE_SIMPLE_LAMBDAS, "1");
+ 
+     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
+     defaults.put(MAX_PROCESSING_METHOD, "0");
+diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+index c88d5f8ea5ffb16de0d9e8dd8f8e2fd9a726d489..f9dd18ce93da5481aa016ea665898e3b690db6ec 100644
+--- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
++++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
+@@ -25,7 +25,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
+       IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+       IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+       IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
+-      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
++      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1",
++      IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "0"
+     };
+   }
+ 

@@ -20,10 +20,10 @@ index bb303e84f33161a4b4fd40a73aa48d29981d9ef2..cc1f537e71af0748b7b97d7d8489198e
      throw new RuntimeException("not implemented");
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index b5e82131dd20ea45a02ff62e085695417111adfe..b905da55c9b3bd7dc48123559809a1d7ed9eaf9c 100644
+index c870c683cad7935d7aba141c0310ec0f0a2fdeda..272601270ea32fb5ccc4a822cd9d1b959bae9c35 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-@@ -469,6 +469,10 @@ public class Statement implements IMatchable {
+@@ -430,6 +430,10 @@ public abstract class Statement implements IMatchable {
      return false;
    }
  
@@ -71,18 +71,21 @@ index 4c5641fec76837a51094d4a54800d5b7475446ca..7d29c198014cbfee8092fd31461208ce
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index feea5aad81ebdff6221e13cfc8472b4b5c2d78c0..1e8014083efc7c0fdfad40747cccbcd0bf33c608 100644
+index e64cf91c0674163f5c81b874e21e84da83fd264e..721a3606e209f4f803dcb6b513a5768c9c437c48 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -1,37 +1,20 @@
- // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@@ -2,26 +2,14 @@
  package org.jetbrains.java.decompiler;
  
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
 -import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+ import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 -import org.junit.After;
 -import org.junit.Before;
+ import org.junit.Rule;
  import org.junit.Test;
+ import org.junit.rules.Timeout;
  
 -import java.io.File;
 -import java.io.IOException;
@@ -95,7 +98,15 @@ index feea5aad81ebdff6221e13cfc8472b4b5c2d78c0..1e8014083efc7c0fdfad40747cccbcd0
 -
 -public class SingleClassesTest {
 -  private DecompilerTestFixture fixture;
--
++public class SingleClassesTest extends SingleClassesTestBase {
++  protected DecompilerTestFixture fixture;
+ 
+   /*
+    * Set individual test duration time limit to 60 seconds.
+@@ -30,19 +18,14 @@ public class SingleClassesTest {
+   @Rule
+   public Timeout globalTimeout = Timeout.seconds(60);
+ 
 -  @Before
 -  public void setUp() throws IOException {
 -    fixture = new DecompilerTestFixture();
@@ -109,9 +120,6 @@ index feea5aad81ebdff6221e13cfc8472b4b5c2d78c0..1e8014083efc7c0fdfad40747cccbcd0
 -  public void tearDown() {
 -    fixture.tearDown();
 -    fixture = null;
-+public class SingleClassesTest extends SingleClassesTestBase {
-+  protected DecompilerTestFixture fixture;
-+  
 +  @Override
 +  protected String[] getDecompilerOptions() {
 +    return new String[] {
@@ -123,10 +131,10 @@ index feea5aad81ebdff6221e13cfc8472b4b5c2d78c0..1e8014083efc7c0fdfad40747cccbcd0
    }
  
    @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
-@@ -134,45 +117,4 @@ public class SingleClassesTest {
-   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
-   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
-   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
+@@ -226,45 +209,4 @@ public class SingleClassesTest {
+ 
+   @Test(expected = ClassFormatException.class)
+   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
 -
 -  private void doTest(String testFile, String... companionFiles) {
 -    ConsoleDecompiler decompiler = fixture.getDecompiler();

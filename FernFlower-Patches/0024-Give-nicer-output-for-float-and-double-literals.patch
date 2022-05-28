@@ -1,0 +1,226 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Pokechu22 <Pokechu022@gmail.com>
+Date: Fri, 3 Aug 2018 14:15:46 -0700
+Subject: [PATCH] Give nicer output for float and double literals
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index cbaf9725b714d7fcccb5b1a149b2acc2be76a888..a3434f09438a5b83f0061992b227f9c634c4476f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -48,6 +48,69 @@ public class ConstExprent extends Exprent {
+   }
+ 
+   private StructMember parent;
++
++  private static final Map<Double, String[]> PI_DOUBLES = new HashMap<>();
++  private static final Map<Float, String[]> PI_FLOATS = new HashMap<>();
++  static {
++    final double PI_D = Math.PI;
++    final float PI_F = (float)Math.PI;
++    PI_DOUBLES.put(PI_D, new String[] { "", "" });
++    PI_DOUBLES.put(-PI_D, new String[] { "-", "" });
++    PI_FLOATS.put(PI_F, new String[] { "", "" });
++    PI_FLOATS.put(-PI_F, new String[] { "-", "" });
++
++    PI_DOUBLES.put(PI_D * 2D, new String[] { "(", " * 2D)" });
++    PI_DOUBLES.put(-PI_D * 2D, new String[] { "(-", " * 2D)" });
++    PI_FLOATS.put(PI_F * 2F, new String[] { "(", " * 2F)" });
++    PI_FLOATS.put(-PI_F * 2F, new String[] { "(-", " * 2F)" });
++
++    PI_DOUBLES.put(PI_D / 2D, new String[] { "(", " / 2D)" });
++    PI_DOUBLES.put(-PI_D / 2D, new String[] { "(-", " / 2D)" });
++    PI_FLOATS.put(PI_F / 2F, new String[] { "(", " / 2F)" });
++    PI_FLOATS.put(-PI_F / 2F, new String[] { "(-", " / 2F)" });
++
++    PI_DOUBLES.put(PI_D * 1.5D, new String[] { "(", " * 1.5D)" });
++    PI_DOUBLES.put(-PI_D * 1.5D, new String[] { "(-", " * 1.5D)" });
++    PI_FLOATS.put(PI_F * 1.5F, new String[] { "(", " * 1.5F)" });
++    PI_FLOATS.put(-PI_F * 1.5F, new String[] { "(-", " * 1.5F)" });
++
++    PI_DOUBLES.put(PI_D / 3D, new String[] { "(", " / 3D)" });
++    PI_DOUBLES.put(-PI_D / 3D, new String[] { "(-", " / 3D)" });
++    PI_FLOATS.put(PI_F / 3F, new String[] { "(", " / 3F)" });
++    PI_FLOATS.put(-PI_F / 3F, new String[] { "(-", " / 3F)" });
++
++    PI_DOUBLES.put(PI_D / 4D, new String[] { "(", " / 4D)" });
++    PI_DOUBLES.put(-PI_D / 4D, new String[] { "(-", " / 4D)" });
++    PI_FLOATS.put(PI_F / 4F, new String[] { "(", " / 4F)" });
++    PI_FLOATS.put(-PI_F / 4F, new String[] { "(-", " / 4F)" });
++
++    PI_DOUBLES.put(PI_D / 5D, new String[] { "(", " / 5D)" });
++    PI_DOUBLES.put(-PI_D / 5D, new String[] { "(-", " / 5D)" });
++    PI_FLOATS.put(PI_F / 5F, new String[] { "(", " / 5F)" });
++    PI_FLOATS.put(-PI_F / 5F, new String[] { "(-", " / 5F)" });
++
++    PI_DOUBLES.put(PI_D / 6D, new String[] { "(", " / 6D)" });
++    PI_DOUBLES.put(-PI_D / 6D, new String[] { "(-", " / 6D)" });
++    PI_FLOATS.put(PI_F / 6F, new String[] { "(", " / 6F)" });
++    PI_FLOATS.put(-PI_F / 6F, new String[] { "(-", " / 6F)" });
++
++    PI_DOUBLES.put(PI_D / 8D, new String[] { "(", " / 8D)" });
++    PI_DOUBLES.put(-PI_D / 8D, new String[] { "(-", " / 8D)" });
++    PI_FLOATS.put(PI_F / 8F, new String[] { "(", " / 8F)" });
++    PI_FLOATS.put(-PI_F / 8F, new String[] { "(-", " / 8F)" });
++
++    PI_DOUBLES.put(PI_D / 10D, new String[] { "(", " / 10D)" });
++    PI_DOUBLES.put(-PI_D / 10D, new String[] { "(-", " / 10D)" });
++    PI_FLOATS.put(PI_F / 10F, new String[] { "(", " / 10F)" });
++    PI_FLOATS.put(-PI_F / 10F, new String[] { "(-", " / 10F)" });
++
++    // Radian/degree conversions
++    PI_DOUBLES.put(PI_D / 180D, new String[] { "(", " / 180D)" });
++    PI_DOUBLES.put(180D / PI_D, new String[] { "(180D / ", ")" });
++    PI_FLOATS.put(PI_F / 180F, new String[] { "(", " / 180F)" });
++    PI_FLOATS.put(180F / PI_F, new String[] { "(180F / ", ")" });
++  }
++
+   private VarType constType;
+   private final Object value;
+   private final boolean boolPermitted;
+@@ -190,37 +253,7 @@ public class ConstExprent extends Exprent {
+         return new TextBuffer(value.toString()).append('L');
+ 
+       case CodeConstants.TYPE_FLOAT:
+-        float floatVal = (Float)value;
+-        if (!literal) {
+-          if (Float.isNaN(floatVal) && !inConstantVariable(FLOAT_SIG, NAN)) {
+-            return new FieldExprent(NAN, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+-          }
+-          else if (floatVal == Float.POSITIVE_INFINITY && !inConstantVariable(FLOAT_SIG, POS_INF)) {
+-            return new FieldExprent(POS_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+-          }
+-          else if (floatVal == Float.NEGATIVE_INFINITY && !inConstantVariable(FLOAT_SIG, NEG_INF)) {
+-            return new FieldExprent(NEG_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+-          }
+-          else if (floatVal == Float.MAX_VALUE && !inConstantVariable(FLOAT_SIG, MAX_VAL)) {
+-            return new FieldExprent(MAX_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+-          }
+-          else if (floatVal == Float.MIN_VALUE && !inConstantVariable(FLOAT_SIG, MIN_VAL)) {
+-            return new FieldExprent(MIN_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+-          }
+-          else if (floatVal == Float.MIN_NORMAL && !inConstantVariable(FLOAT_SIG, MIN_NORM)) {
+-            return new FieldExprent(MIN_NORM, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+-          }
+-        }
+-        else if (Float.isNaN(floatVal)) {
+-          return new TextBuffer("0.0F / 0.0F");
+-        }
+-        else if (floatVal == Float.POSITIVE_INFINITY) {
+-          return new TextBuffer("1.0F / 0.0F");
+-        }
+-        else if (floatVal == Float.NEGATIVE_INFINITY) {
+-          return new TextBuffer("-1.0F / 0.0F");
+-        }
+-        return new TextBuffer(trimZeros(value.toString())).append('F');
++        return createFloat(literal, (Float)value, tracer);
+ 
+       case CodeConstants.TYPE_DOUBLE:
+         double doubleVal = (Double)value;
+@@ -246,8 +279,31 @@ public class ConstExprent extends Exprent {
+           else if (doubleVal == Math.E  && !inConstantVariable(MATH_SIG, E)) {
+             return new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+           }
+-          else if (doubleVal == Math.PI && !inConstantVariable(MATH_SIG, PI)) {
+-            return new FieldExprent(PI, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
++          else if (doubleVal == -Double.MAX_VALUE && !inConstantVariable(DOUBLE_SIG, MAX_VAL)) {
++            return new FieldExprent(MAX_VAL, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++          }
++          else if (doubleVal == -Double.MIN_NORMAL) {
++            return new FieldExprent(MIN_NORM, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++          }
++          else if (doubleVal == -Double.MIN_VALUE) {
++            return new FieldExprent(MIN_VAL, DOUBLE_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++          }
++          else if (PI_DOUBLES.containsKey(doubleVal)) {
++            String[] parts = PI_DOUBLES.get(doubleVal);
++            return getPiDouble(tracer).enclose(parts[0], parts[1]);
++          }
++
++          // Check for cases where a float literal has been upcasted to a double.
++          // (for instance, double d = .01F results in 0.009999999776482582D without this)
++          float nearestFloatVal = (float)doubleVal;
++          if (doubleVal == (double)nearestFloatVal) {
++            // Value can be represented precisely as both a float and a double.
++            // Now check if the string representation as a float is nicer/shorter.
++            // If they're the same, there's no point in the cast and such (e.g. don't decompile 1.0D as (double)1.0F).
++            if (Float.toString(nearestFloatVal).length() < Double.toString(doubleVal).length()) {
++              // Include a cast to prevent using the wrong method call in ambiguous cases.
++              return createFloat(literal, nearestFloatVal, tracer).prepend("(double)");
++            }
+           }
+         }
+         else if (Double.isNaN(doubleVal)) {
+@@ -277,7 +333,71 @@ public class ConstExprent extends Exprent {
+ 
+     throw new RuntimeException("invalid constant type: " + constType);
+   }
+-  
++
++  private TextBuffer createFloat(boolean literal, float floatVal, BytecodeMappingTracer tracer) {
++    if (!literal) {
++      // Float constants, some of which can't be represented directly
++      if (Float.isNaN(floatVal) && !inConstantVariable(FLOAT_SIG, NAN)) {
++        return new FieldExprent(NAN, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == Float.POSITIVE_INFINITY && !inConstantVariable(FLOAT_SIG, POS_INF)) {
++        return new FieldExprent(POS_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == Float.NEGATIVE_INFINITY && !inConstantVariable(FLOAT_SIG, NEG_INF)) {
++        return new FieldExprent(NEG_INF, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == Float.MAX_VALUE && !inConstantVariable(FLOAT_SIG, MAX_VAL)) {
++        return new FieldExprent(MAX_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == Float.MIN_NORMAL && !inConstantVariable(FLOAT_SIG, MIN_NORM)) {
++        return new FieldExprent(MIN_NORM, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == Float.MIN_VALUE && !inConstantVariable(FLOAT_SIG, MIN_VAL)) {
++        return new FieldExprent(MIN_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
++      }
++      else if (floatVal == -Float.MAX_VALUE && !inConstantVariable(FLOAT_SIG, MAX_VAL)) {
++        return new FieldExprent(MAX_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++      }
++      else if (floatVal == -Float.MIN_NORMAL && !inConstantVariable(FLOAT_SIG, MIN_NORM)) {
++        return new FieldExprent(MIN_NORM, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++      }
++      else if (floatVal == -Float.MIN_VALUE && !inConstantVariable(FLOAT_SIG, MIN_VAL)) {
++        return new FieldExprent(MIN_VAL, FLOAT_SIG, true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("-");
++      }
++      // Math constants
++      else if (floatVal == (float)Math.E && !inConstantVariable(MATH_SIG, E)) {
++        return new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer).prepend("(float)");
++      }
++      else if (PI_FLOATS.containsKey(floatVal) && !inConstantVariable(MATH_SIG, PI)) {
++        String[] parts = PI_FLOATS.get(floatVal);
++        return getPiFloat(tracer).enclose(parts[0], parts[1]);
++      }
++    }
++    else {
++      // Check for special values that can't be used directly in code
++      // (and we can't replace with the constant due to the user requesting not to)
++      if (Float.isNaN(floatVal)) {
++        return new TextBuffer("0.0F / 0.0F");
++      }
++      else if (floatVal == Float.POSITIVE_INFINITY) {
++        return new TextBuffer("1.0F / 0.0F");
++      }
++      else if (floatVal == Float.NEGATIVE_INFINITY) {
++        return new TextBuffer("-1.0F / 0.0F");
++      }
++    }
++    return new TextBuffer(trimZeros(Float.toString(floatVal))).append('F');
++  }
++
++  private TextBuffer getPiDouble(BytecodeMappingTracer tracer) {
++    return new FieldExprent(PI, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
++  }
++
++  private TextBuffer getPiFloat(BytecodeMappingTracer tracer) {
++    // java.lang.Math doesn't have a float version of pi, unfortunately
++    return getPiDouble(tracer).prepend("(float)");
++  }
++
+   // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
+   // This trims them all down to only the necessary amount.
+   private static String trimZeros(String value) {

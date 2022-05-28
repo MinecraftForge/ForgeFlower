@@ -23,6 +23,8 @@ dependencies {
     // The Java9 code depends on (can see) the "main" source set
     java9Implementation sourceSets.main.output
 
+    implementation 'org.jetbrains:annotations:20.1.+'
+
     testImplementation 'junit:junit:4.+'
     testImplementation 'org.hamcrest:hamcrest-core:1.3'
     testImplementation 'org.assertj:assertj-core:3.+'

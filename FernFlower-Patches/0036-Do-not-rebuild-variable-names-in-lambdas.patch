@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Wed, 17 Jun 2020 11:07:09 -0700
+Subject: [PATCH] Do not rebuild variable names in lambdas.
+
+Breaks outer this references. Code existed before my time, no idea what it's intention is.
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 2d00c7f88b838eaec5582b108701581b60d387ae..3530d2f46c4ad90974796e41f664613420e2689a 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -163,7 +163,7 @@ public class NestedClassProcessor {
+     Set<String> setNewOuterNames = new HashSet<>(mapNewNames.values());
+     setNewOuterNames.removeAll(method.setOuterVarNames);
+ 
+-    method.varproc.refreshVarNames(new VarNamesCollector(setNewOuterNames));
++    //method.varproc.refreshVarNames(new VarNamesCollector(setNewOuterNames));
+     method.setOuterVarNames.addAll(setNewOuterNames);
+ 
+     for (Entry<VarVersionPair, String> entry : mapNewNames.entrySet()) {
