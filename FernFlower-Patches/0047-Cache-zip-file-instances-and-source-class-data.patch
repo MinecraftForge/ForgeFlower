@@ -183,12 +183,12 @@ index 81cd12ba302af00d66c3f699804651d940f06a5a..3c0db2d989160f1d05fbb21a2e34ca88
      return new File(target, path).getAbsolutePath();
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-index e12e99313c5d67b74acc3bd4c3b13d76ba9be3fc..5f90928795ad715b5ef043f22964a81df6d86ff3 100644
+index 017d3975a3cbe06e485b65ca1b75d6c64d62c249..e4583691c76eee3a12c27f9e4d7538cd37d8279f 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-@@ -1,11 +1,12 @@
- // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- package org.jetbrains.java.decompiler.main.extern;
+@@ -3,11 +3,12 @@ package org.jetbrains.java.decompiler.main.extern;
+ 
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
  
 +import java.io.IOException;
  import java.nio.ByteBuffer;
@@ -200,7 +200,7 @@ index e12e99313c5d67b74acc3bd4c3b13d76ba9be3fc..5f90928795ad715b5ef043f22964a81d
    long STABLE_ZIP_TIMESTAMP = 0x386D4380; // 01/01/2000 00:00:00 java 8 breaks when using 0.
  
    void saveFolder(String path);
-@@ -31,6 +32,9 @@ public interface IResultSaver {
+@@ -33,6 +34,9 @@ public interface IResultSaver {
  
    void closeArchive(String path, String archiveName);
  

@@ -157,19 +157,21 @@ index 7bcb5652188642db925a5915f8b743fd14b0e328..cc0b70e555ce969185c150e39a551fe2
      return Collections.unmodifiableMap(defaults);
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..e12e99313c5d67b74acc3bd4c3b13d76ba9be3fc 100644
+index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..017d3975a3cbe06e485b65ca1b75d6c64d62c249 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-@@ -1,6 +1,8 @@
+@@ -1,6 +1,10 @@
  // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  package org.jetbrains.java.decompiler.main.extern;
  
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++
 +import java.nio.ByteBuffer;
 +import java.nio.ByteOrder;
  import java.util.jar.Manifest;
  
  public interface IResultSaver {
-@@ -10,6 +12,7 @@ public interface IResultSaver {
+@@ -10,6 +14,7 @@ public interface IResultSaver {
  
    void copyFile(String source, String path, String entryName);
  
@@ -177,7 +179,7 @@ index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..e12e99313c5d67b74acc3bd4c3b13d76
    void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping);
  
    void createArchive(String path, String archiveName, Manifest manifest);
-@@ -18,7 +21,29 @@ public interface IResultSaver {
+@@ -18,7 +23,29 @@ public interface IResultSaver {
  
    void copyEntry(String source, String path, String archiveName, String entry);
  
