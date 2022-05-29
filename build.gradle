@@ -5,7 +5,7 @@ buildscript {
         maven { url = 'https://files.minecraftforge.net/maven/'}
     }
     dependencies {
-        classpath 'net.minecraftforge:gitpatcher:0.10.0.9'
+        classpath 'net.minecraftforge:gitpatcher:0.10.0.10'
     }
 }
 
