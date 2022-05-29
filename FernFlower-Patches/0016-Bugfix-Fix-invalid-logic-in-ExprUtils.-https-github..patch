@@ -16,7 +16,7 @@ public interface Test {
 }
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
-index 58a653a79f3dd3215b65b75ccdee314e7e71f3ad..7db79c9324a3cbe50878f18a4e398731d6047edb 100644
+index 58a653a79f3dd3215b65b75ccdee314e7e71f3ad..ed7182b90388ba221ca97b6ddd5c640dbc062746 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExprUtil.java
 @@ -8,6 +8,9 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -49,7 +49,7 @@ index 58a653a79f3dd3215b65b75ccdee314e7e71f3ad..7db79c9324a3cbe50878f18a4e398731
 +    if (struct.hasModifier(CodeConstants.ACC_STATIC))
 +      return true;
 +    if (struct.hasAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES)) {
-+      StructInnerClassesAttribute attr = (StructInnerClassesAttribute)struct.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
++      StructInnerClassesAttribute attr = struct.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
 +      for (StructInnerClassesAttribute.Entry entry : attr.getEntries()) {
 +        if (entry.innerName != null && entry.innerName.equals(struct.qualifiedName)) {
 +          return (entry.accessFlags & CodeConstants.ACC_STATIC) == CodeConstants.ACC_STATIC;

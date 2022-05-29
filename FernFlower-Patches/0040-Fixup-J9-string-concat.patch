@@ -98,7 +98,7 @@ index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..e44fa1ffd3929428524c31fdac14f1df
                }
  
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index 3e0cbd0fbcbc29ff619d4b2441b13047bb803d11..f174c06886eb5b928abcaf3cedd3b459df9d463b 100644
+index 969d6feb0133be481210b4e24a3db72637d0ccdd..17a1f62355d26d2142fa9957064ecf5a92774a3f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -286,6 +286,10 @@ public class StructClass extends StructMember {

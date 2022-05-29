@@ -7,10 +7,10 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 305b06903b36bc4cdb740a8f050543403e6406fe..fc2ed5383e6e7ce5b4121c5bd5e77a6cfe0059ff 100644
+index 28bc5654aa5167f0e1e99a599d73cb6017cd7f2b..9776ab40a5d1a4df0fc84ace958815cbfac00dff 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -32,12 +32,13 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
+@@ -30,12 +30,13 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
  import java.io.IOException;
  import java.util.*;
  import java.util.Map.Entry;
@@ -25,7 +25,7 @@ index 305b06903b36bc4cdb740a8f050543403e6406fe..fc2ed5383e6e7ce5b4121c5bd5e77a6c
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
-@@ -401,7 +402,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -399,7 +400,7 @@ public class ClassesProcessor implements CodeConstants {
      return true;
    }
  
@@ -34,7 +34,7 @@ index 305b06903b36bc4cdb740a8f050543403e6406fe..fc2ed5383e6e7ce5b4121c5bd5e77a6c
      ClassNode root = mapRootClasses.get(cl.qualifiedName);
      if (root.type != ClassNode.CLASS_ROOT) {
        return;
-@@ -410,25 +411,12 @@ public class ClassesProcessor implements CodeConstants {
+@@ -408,25 +409,12 @@ public class ClassesProcessor implements CodeConstants {
      boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
      boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
  
@@ -63,7 +63,7 @@ index 305b06903b36bc4cdb740a8f050543403e6406fe..fc2ed5383e6e7ce5b4121c5bd5e77a6c
          new LambdaProcessor().processClass(root);
  
          // add simple class names to implicit import
-@@ -440,7 +428,36 @@ public class ClassesProcessor implements CodeConstants {
+@@ -438,7 +426,36 @@ public class ClassesProcessor implements CodeConstants {
          new NestedClassProcessor().processClass(root, root);
  
          new NestedMemberAccess().propagateMemberAccess(root);
@@ -100,7 +100,7 @@ index 305b06903b36bc4cdb740a8f050543403e6406fe..fc2ed5383e6e7ce5b4121c5bd5e77a6c
          TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
          new ClassWriter().classToJava(root, classBuffer, 0, null);
  
-@@ -450,7 +467,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -448,7 +465,7 @@ public class ClassesProcessor implements CodeConstants {
            buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
          }
  
@@ -246,7 +246,7 @@ index 469b313a958cf8aca35fe98fc809880d12db671e..eefcf79cedb6148f5c02b8077914a467
    public String getClassContent(StructClass cl) {
      try {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 92e27999009de17e1ba1e6475b1fac1b13ecc337..0b607e86f96bef987c949612fa9410d0dfc3aa02 100644
+index e77afd845015501a743b091d3a3cc716497ffc75..7af078ed357349951585906564c1bf8239c0c810 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -109,7 +109,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
@@ -298,7 +298,7 @@ index ff3b9b3dd27f5f07ebc80f6ca4ac3c632c93c83d..4398128ff456563af17a51479e563bb9
      if (accepts(Severity.INFO)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..f76d2c1611ec48375c25d489d9713bd876ffcb83
+index 0000000000000000000000000000000000000000..98fe00844f7b4d5bbdcef09e379bb8e634a96dff
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 @@ -0,0 +1,213 @@
@@ -401,7 +401,7 @@ index 0000000000000000000000000000000000000000..f76d2c1611ec48375c25d489d9713bd8
 +          final ZipEntry newEntry = new ZipEntry(entryName);
 +          newEntry.setTime(entry.getTime());
 +          ctx.stream.putNextEntry(newEntry);
-+          InterpreterUtil.copyStream(in, ctx.stream);
++          in.transferTo(ctx.stream);
 +        }
 +      }
 +    } catch (IOException e) {

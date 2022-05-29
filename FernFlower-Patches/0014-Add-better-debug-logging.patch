@@ -18,10 +18,10 @@ index eac80ace801517faca82a3a35ac31b58fdd667ab..17dc8a4a5d4e3164337f6d05ab1e0057
              methodWrapper.decompiledWithErrors = true;
            }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index e32253528718631cd622d6af4ede4a85ff4af061..1910404be55e21448b74caf4d7682ade09a2a1b1 100644
+index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..9152bdbdb93f50fdd45c2ea3c353188d82efb77d 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-@@ -111,7 +111,7 @@ public class ClassWrapper {
+@@ -110,7 +110,7 @@ public class ClassWrapper {
          }
        }
        catch (Throwable t) {

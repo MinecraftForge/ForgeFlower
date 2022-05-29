@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Tue, 11 Apr 2017 20:44:39 -0700
-Subject: [PATCH] Git filter and setup, backport to Java 8
+Subject: [PATCH] Git filter and setup, cleanup for java 17
 
 
 diff --git a/.gitattributes b/.gitattributes
@@ -293,6 +293,19 @@ index 2b5420b0d76d97d25c4de444bc669891fd9ea4f3..c52eb2e815432be8d1f1e6b61cffdcce
 +.idea/
 +repo
 +!testData/classes/**
+diff --git a/README.md b/README.md
+index 3f5a417a01d918a21b7dcb057b2eb259ec2df475..9b15cd643468b3852b0092f7bffd399518fc03b3 100644
+--- a/README.md
++++ b/README.md
+@@ -11,6 +11,8 @@ Fernflower is licenced under the [Apache Licence Version 2.0](http://www.apache.
+ 
+ ### Running from command line
+ 
++ForgeFlower requires Java 17 to run.
++
+ `java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>`
+ 
+ \* means 0 or more times\
 diff --git a/build.gradle b/build.gradle
 deleted file mode 100644
 index efa9dfcfa2204db2314dc867ba995a6cfca37581..0000000000000000000000000000000000000000

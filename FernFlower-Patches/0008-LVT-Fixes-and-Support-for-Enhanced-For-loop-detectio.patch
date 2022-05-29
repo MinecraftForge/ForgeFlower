@@ -158,7 +158,7 @@ index c122a3f7f937d01dbd99aefb674ad9f1d6f95d10..81fed9eaea4d73a99e87545d15171033
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 575759dabaea87058a5a615c05cb91932cb5873b..79e55ad572826f33aa4022b1f60c37917d78a67b 100644
+index 575759dabaea87058a5a615c05cb91932cb5873b..09a5887befc045f8faef7a1c53a71387ea8ff890 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -388,10 +388,10 @@ index 575759dabaea87058a5a615c05cb91932cb5873b..79e55ad572826f33aa4022b1f60c3791
 +  }
 +
 +  private static void iterateExprents(DirectGraph graph, ExprentIteratorWithReplace iter) {
-+    LinkedList<DirectNode> stack = new LinkedList<DirectNode>();
++    LinkedList<DirectNode> stack = new LinkedList<>();
 +    stack.add(graph.first);
 +
-+    HashSet<DirectNode> setVisited = new HashSet<DirectNode>();
++    HashSet<DirectNode> setVisited = new HashSet<>();
 +
 +    while (!stack.isEmpty()) {
 +
@@ -1016,10 +1016,10 @@ index 0000000000000000000000000000000000000000..04f0a2768d2a943475df28a17389407b
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d1988a7bb40c 100644
+index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041e3243269 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-@@ -5,13 +5,19 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
+@@ -5,8 +5,13 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
  import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
@@ -1033,13 +1033,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
  import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
- 
- import java.util.ArrayList;
-+import java.util.BitSet;
- import java.util.List;
- import java.util.Set;
- 
-@@ -47,17 +53,20 @@ public final class MergeHelper {
+@@ -47,17 +52,20 @@ public final class MergeHelper {
  
          // identify a while loop
          if (matchWhile(stat)) {
@@ -1064,7 +1058,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
      }
  
      return (stat.getLoopType() != oldLoop);
-@@ -147,13 +156,14 @@ public final class MergeHelper {
+@@ -147,13 +155,14 @@ public final class MergeHelper {
          if (firstif.iftype == IfStatement.IFTYPE_IF) {
            if (firstif.getIfstat() == null) {
              StatEdge ifedge = firstif.getIfEdge();
@@ -1081,7 +1075,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
  
                if (stat.getConditionExprent() != null) {
                  ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-@@ -191,7 +201,7 @@ public final class MergeHelper {
+@@ -191,7 +200,7 @@ public final class MergeHelper {
                return true;
              }
            }
@@ -1090,7 +1084,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
              StatEdge elseedge = firstif.getAllSuccessorEdges().get(0);
              if (isDirectPath(stat, elseedge.getDestination())) {
                // exit condition identified
-@@ -245,7 +255,7 @@ public final class MergeHelper {
+@@ -245,7 +254,7 @@ public final class MergeHelper {
  
                return true;
              }
@@ -1099,7 +1093,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
          }
        }
      }
-@@ -330,6 +340,8 @@ public final class MergeHelper {
+@@ -330,6 +339,8 @@ public final class MergeHelper {
          }
          else {
            preData = current.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).get(0);
@@ -1108,7 +1102,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
            preData = getLastDirectData(preData);
            if (preData != null && !preData.getExprents().isEmpty()) {
              initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
-@@ -368,12 +380,16 @@ public final class MergeHelper {
+@@ -368,12 +379,16 @@ public final class MergeHelper {
        stat.setIncExprent(exp);
      }
  
@@ -1129,7 +1123,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
      }
    }
  
-@@ -406,14 +422,346 @@ public final class MergeHelper {
+@@ -406,14 +421,346 @@ public final class MergeHelper {
        return stat;
      }
  
@@ -1484,10 +1478,10 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..bbd92a8d84b43d1ead8d83cc02d2d198
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index 9d0ec7c864030386838efd4952da1e999ccd967e..b085a40522e69c4bb6e69e8abf946ad61e2a2a24 100644
+index 9d0ec7c864030386838efd4952da1e999ccd967e..81b4c480810a2f74388a4626a4dc0c2bfc523365 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-@@ -5,19 +5,32 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+@@ -5,19 +5,31 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
@@ -1499,7 +1493,6 @@ index 9d0ec7c864030386838efd4952da1e999ccd967e..b085a40522e69c4bb6e69e8abf946ad6
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
-+import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
 +import java.util.HashMap;
  import java.util.HashSet;
@@ -1520,7 +1513,7 @@ index 9d0ec7c864030386838efd4952da1e999ccd967e..b085a40522e69c4bb6e69e8abf946ad6
  
    public boolean findPPandMM(RootStatement root) {
  
-@@ -45,6 +58,8 @@ public class PPandMMHelper {
+@@ -45,6 +57,8 @@ public class PPandMMHelper {
        stack.addAll(node.successors);
      }
  
@@ -1529,7 +1522,7 @@ index 9d0ec7c864030386838efd4952da1e999ccd967e..b085a40522e69c4bb6e69e8abf946ad6
      return res;
    }
  
-@@ -120,13 +135,18 @@ public class PPandMMHelper {
+@@ -120,13 +134,18 @@ public class PPandMMHelper {
              Exprent left = as.getLeft();
  
              VarType condtype = econd.getExprType();
@@ -1549,7 +1542,7 @@ index 9d0ec7c864030386838efd4952da1e999ccd967e..b085a40522e69c4bb6e69e8abf946ad6
                return ret;
              }
            }
-@@ -136,4 +156,48 @@ public class PPandMMHelper {
+@@ -136,4 +155,48 @@ public class PPandMMHelper {
  
      return null;
    }
@@ -1557,7 +1550,7 @@ index 9d0ec7c864030386838efd4952da1e999ccd967e..b085a40522e69c4bb6e69e8abf946ad6
 +  private boolean exprsEqual(Exprent e1, Exprent e2) {
 +    if (e1 == e2) return true;
 +    if (e1 == null || e2 == null) return false;
-+    if (e1.type == VarExprent.EXPRENT_VAR) {
++    if (e1.type == Exprent.EXPRENT_VAR) {
 +      return varsEqual(e1, e2);
 +    }
 +    return e1.equals(e2);
@@ -1775,10 +1768,10 @@ index 0c55cfba952a92ffcefe28f12109bd40f56eaf42..8356b5b643139d6c8346070d826877c7
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e3f483dd5 100644
+index 4c40e5152ffca092883170401453525093da011a..2fda2ba5fc05992faf891d2af14910023228c6b6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -9,11 +9,14 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -9,11 +9,13 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
  import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -1786,15 +1779,18 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
- import org.jetbrains.java.decompiler.struct.StructMethod;
+-import org.jetbrains.java.decompiler.struct.StructMethod;
  import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 +import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
  import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAttribute;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericFieldDescriptor;
-@@ -25,10 +28,11 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
- import org.jetbrains.java.decompiler.util.TextUtil;
+@@ -22,13 +24,13 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
+-import org.jetbrains.java.decompiler.util.TextUtil;
  
  import java.util.ArrayList;
 -import java.util.Collections;
@@ -1806,7 +1802,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
  
  public class VarExprent extends Exprent {
    public static final int STACK_BASE = 10000;
-@@ -41,6 +45,7 @@ public class VarExprent extends Exprent {
+@@ -41,6 +43,7 @@ public class VarExprent extends Exprent {
    private int version = 0;
    private boolean classDef = false;
    private boolean stack = false;
@@ -1814,7 +1810,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
  
    public VarExprent(int index, VarType varType, VarProcessor processor) {
      this(index, varType, processor, null);
-@@ -76,6 +81,7 @@ public class VarExprent extends Exprent {
+@@ -76,6 +79,7 @@ public class VarExprent extends Exprent {
      var.setVersion(version);
      var.setClassDef(classDef);
      var.setStack(stack);
@@ -1822,7 +1818,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
      return var;
    }
  
-@@ -92,10 +98,6 @@ public class VarExprent extends Exprent {
+@@ -92,10 +96,6 @@ public class VarExprent extends Exprent {
      }
      else {
        VarVersionPair varVersion = getVarVersionPair();
@@ -1833,7 +1829,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
  
        if (definition) {
          if (processor != null && processor.getVarFinal(varVersion) == VarProcessor.VAR_EXPLICIT_FINAL) {
-@@ -105,7 +107,7 @@ public class VarExprent extends Exprent {
+@@ -105,7 +105,7 @@ public class VarExprent extends Exprent {
          buffer.append(" ");
        }
  
@@ -1842,7 +1838,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
      }
  
      return buffer;
-@@ -115,6 +117,7 @@ public class VarExprent extends Exprent {
+@@ -115,6 +115,7 @@ public class VarExprent extends Exprent {
      return new VarVersionPair(index, version);
    }
  
@@ -1850,7 +1846,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
    public String getDebugName(StructMethod method) {
      StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
      if (attr != null && processor != null) {
-@@ -128,9 +131,25 @@ public class VarExprent extends Exprent {
+@@ -128,9 +129,25 @@ public class VarExprent extends Exprent {
      }
      return null;
    }
@@ -1876,7 +1872,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
        if (method != null) {
          Integer originalIndex = null;
-@@ -196,6 +215,10 @@ public class VarExprent extends Exprent {
+@@ -196,6 +213,10 @@ public class VarExprent extends Exprent {
    }
  
    public VarType getVarType() {
@@ -1887,7 +1883,7 @@ index 4c40e5152ffca092883170401453525093da011a..1765af58c1f7db03da58747e06c19d7e
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -248,6 +271,93 @@ public class VarExprent extends Exprent {
+@@ -248,6 +269,93 @@ public class VarExprent extends Exprent {
      this.stack = stack;
    }
  
@@ -2030,40 +2026,6 @@ index c05f6eb84fb8d09d8842851c0c2725dff527449b..a3ef4b8b5fdb820c520a21fcd727e08e
                  graph.nodes.putWithKey(nodecond, nodecond.id);
  
                  DirectNode nodeinc = new DirectNode(DirectNodeType.INCREMENT, stat, stat.id + "_inc");
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index 499968a156b91709d769ac5867e9fa9ce6f23232..ef2fb6128921b74b815b39d6be6e9c7290a2be70 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-@@ -2,6 +2,7 @@
- package org.jetbrains.java.decompiler.modules.decompiler.stats;
- 
- import org.jetbrains.java.decompiler.code.CodeConstants;
-+import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
- import org.jetbrains.java.decompiler.main.DecompilerContext;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
- import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-@@ -53,7 +54,7 @@ public final class CatchAllStatement extends Statement {
-         post = edge.getDestination();
-       }
-     }
--
-+    
-     vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
-                             new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
-                             DecompilerContext.getVarProcessor()));
-diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 7c83c48777e2dc683d1321fb297f89466f62e8ce..c3536d73475e1037a82e5f76a328c859f5507077 100644
---- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-+++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-@@ -43,7 +43,7 @@ public final class CatchStatement extends Statement {
-       if (setHandlers.contains(stat)) {
-         stats.addWithKey(stat, stat.id);
-         exctstrings.add(new ArrayList<>(edge.getExceptions()));
--
-+        
-         vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
-                                 new VarType(CodeConstants.TYPE_OBJECT, 0, edge.getExceptions().get(0)),
-                                 // FIXME: for now simply the first type. Should get the first common superclass when possible.
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 index 2dc447272c2786a80f9638a91c95716484911fe2..0c64170a05d6675803b69284d8ee532e44212ee2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
@@ -2132,7 +2094,7 @@ index 9d5fcfd4c907e69c52965517dfe69e3a2f82c5df..57475f98e56d87c8dbd7edc3cda7cf24
  
    //TODO: Cleanup/cache?
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0656846f1 100644
+index 46e405dcb94da78180efa7a8e2374392590027db..b65a7ceb11c31ab892d8bd1f6e1a30fc78aa11ab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -4,18 +4,28 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -2410,7 +2372,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0
 +  }
 +
 +  private VPPEntry mergeVars(Statement stat) {
-+    Map<Integer, VarVersionPair> parent = new HashMap<Integer, VarVersionPair>(); // Always empty dua!
++    Map<Integer, VarVersionPair> parent = new HashMap<>(); // Always empty dua!
 +    MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 +
 +    int index = 0;
@@ -2425,7 +2387,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0
 +
 +    populateTypeBounds(varproc, stat);
 +
-+    Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<VarVersionPair, VarVersionPair>();
++    Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<>();
 +    VPPEntry remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
 +    while (remap != null) {
 +      //System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
@@ -2439,7 +2401,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0
 +
 +
 +  private VPPEntry mergeVars(Statement stat, Map<Integer, VarVersionPair> parent, Map<Integer, VarVersionPair> leaked, Map<VarVersionPair, VarVersionPair> blacklist) {
-+    Map<Integer, VarVersionPair> this_vars = new HashMap<Integer, VarVersionPair>();
++    Map<Integer, VarVersionPair> this_vars = new HashMap<>();
 +    if (parent.size() > 0)
 +      this_vars.putAll(parent);
 +
@@ -2476,7 +2438,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0
 +          Statement st = (Statement)obj;
 +
 +          //Map<VarVersionPair, VarVersionPair> blacklist_n = new HashMap<VarVersionPair, VarVersionPair>();
-+          Map<Integer, VarVersionPair> leaked_n = new HashMap<Integer, VarVersionPair>();
++          Map<Integer, VarVersionPair> leaked_n = new HashMap<>();
 +          VPPEntry remap = mergeVars(st, this_vars, leaked_n, blacklist);
 +
 +          if (remap != null) {
@@ -2763,7 +2725,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..344772dc14f336d6ffe235c5159225d0
 +
 +    findTypes(stat, types);
 +
-+    Map<VarVersionPair,String> typeNames = new LinkedHashMap<VarVersionPair,String>();
++    Map<VarVersionPair,String> typeNames = new LinkedHashMap<>();
 +    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
 +      typeNames.put(e.getKey(), e.getValue().getCast());
 +    }
@@ -3496,21 +3458,19 @@ index 829c78e8a1361bb88cb700696c22af4f7d36349d..cfdda0f2830307d34dfcc3c0a0714f6e
    public void initContent(DataInputFullStream data, ConstantPool pool) throws IOException {
 diff --git a/src/org/jetbrains/java/decompiler/util/DebugPrinter.java b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..15cf67e559a23c86615e477d45db1d3f8edaeaf0
+index 0000000000000000000000000000000000000000..311db9ff7f0c543b3d131f588baed0d92394d93c
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DebugPrinter.java
-@@ -0,0 +1,94 @@
+@@ -0,0 +1,92 @@
 +package org.jetbrains.java.decompiler.util;
 +
 +import java.util.BitSet;
-+import java.util.List;
 +
 +import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 +import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 +import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 +import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 +import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
 +
 +//Debug printer useful for visualizing objects, no real functional value
 +public class DebugPrinter {
@@ -3649,10 +3609,10 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 721a3606e209f4f803dcb6b513a5768c9c437c48..67c41a7676a7d78c5d4bfa2174608cebd575acaa 100644
+index 8c4811fe2e4c46bf87bc0b4ac7752bae5243faf1..2018e2e548a35e13f925bf42858064e24f3f8696 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -28,6 +28,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -26,6 +26,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
      };
    }
  

@@ -53,7 +53,7 @@ index 804443bf66c6cc2a9cadf5ef11c44827257aaf53..a45067feeedaece4546ae2dbc5148fbf
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index bc8992ff40bf8655077d2c01a7038bfbbfe999c0..4930acdf38046e1dfe3f04a7e68b4ff88c4ed594 100644
+index bc8992ff40bf8655077d2c01a7038bfbbfe999c0..34be3854cad1675d54a32929d5e1fe1641f1a929 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
@@ -121,10 +121,3 @@ index bc8992ff40bf8655077d2c01a7038bfbbfe999c0..4930acdf38046e1dfe3f04a7e68b4ff8
            }
          }
        }
-@@ -248,4 +295,4 @@ public final class InitializerProcessor {
- 
-     return true;
-   }
--}
-\ No newline at end of file
-+}

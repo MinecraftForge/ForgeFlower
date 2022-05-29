@@ -6,10 +6,10 @@ Subject: [PATCH] Add Minecraft test framework
 
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..8ec8c36234a30e76b7f75d54220f771afe58e264
+index 0000000000000000000000000000000000000000..c00385f0f59014289ddb152e4dc4e908a8427fb6
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,139 @@
 +package org.jetbrains.java.decompiler;
 +
 +import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -22,7 +22,6 @@ index 0000000000000000000000000000000000000000..8ec8c36234a30e76b7f75d54220f771a
 +import java.util.Map;
 +import java.util.Map.Entry;
 +
-+import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 +import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;

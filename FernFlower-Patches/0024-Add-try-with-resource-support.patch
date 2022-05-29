@@ -639,7 +639,7 @@ index a3ef4b8b5fdb820c520a21fcd727e08e9dfe2510..f4f8b55a68c10671beef7859540398ca
              graph.nodes.putWithKey(firstnd, firstnd.id);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index c3536d73475e1037a82e5f76a328c859f5507077..9db86209721e133416de8379accb6ee5a1235d01 100644
+index 7c83c48777e2dc683d1321fb297f89466f62e8ce..97c1d3f816dcfc21811da2097744bfe9e5747813 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -10,18 +10,26 @@ import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
@@ -705,10 +705,11 @@ index c3536d73475e1037a82e5f76a328c859f5507077..9db86209721e133416de8379accb6ee5
  
      buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
      buf.appendIndent(indent).append("}");
-@@ -181,6 +207,15 @@ public final class CatchStatement extends Statement {
+@@ -181,6 +207,16 @@ public final class CatchStatement extends Statement {
      return buf;
    }
  
++  @Override
 +  public List<Object> getSequentialObjects() {
 +
 +    List<Object> lst = new ArrayList<>(resources);
@@ -721,10 +722,11 @@ index c3536d73475e1037a82e5f76a328c859f5507077..9db86209721e133416de8379accb6ee5
    @Override
    public Statement getSimpleCopy() {
      CatchStatement cs = new CatchStatement();
-@@ -195,11 +230,35 @@ public final class CatchStatement extends Statement {
+@@ -195,11 +231,36 @@ public final class CatchStatement extends Statement {
      return cs;
    }
  
++  @Override
 +  public void getOffset(BitSet values) {
 +    super.getOffset(values);
 +
@@ -758,10 +760,10 @@ index c3536d73475e1037a82e5f76a328c859f5507077..9db86209721e133416de8379accb6ee5
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index f79794242f3eb9b5000af5fa6b41994ee1b25cd9..472af3df55a4accb2ae3b249289ee69a47ecf2c0 100644
+index 8340673d27079b96d7aee5d32d7f61af7ed80b67..b62210af04100c66a17e17e5d5447af59a69f1bf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-@@ -115,7 +115,11 @@ public class VarDefinitionHelper {
+@@ -110,7 +110,11 @@ public class VarDefinitionHelper {
          lstVars = ((CatchAllStatement)st).getVars();
        }
        else if (st.type == StatementType.TRY_CATCH) {
@@ -775,10 +777,10 @@ index f79794242f3eb9b5000af5fa6b41994ee1b25cd9..472af3df55a4accb2ae3b249289ee69a
  
        if (lstVars != null) {
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2c7cdac55a8ba8a9bcc8b4da84e4ed5469e98d6e..c88d5f8ea5ffb16de0d9e8dd8f8e2fd9a726d489 100644
+index 256f412db7806d11c41d9f48d8e3d28361e50c39..9ee13f077fb092089bc874cee4dc53f918009d91 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -144,6 +144,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -142,6 +142,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
    @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
    @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
    @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }

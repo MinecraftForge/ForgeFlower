@@ -30,10 +30,10 @@ index 3534ca10c55713f5856163b7325e0c6e71c2c502..6ddd7caf2f8deeb0ebbe89d17ad96bf0
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index c45050559cace73741f7529254e1483c81b747c7..a44200c04618f80d9d845cd15087678635913a3a 100644
+index f227df9c03dd6ae3972b80ce11dc36d468addea3..f2dda05e818d680f72d73b22b56a76dd18656ece 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -564,6 +564,19 @@ public class FunctionExprent extends Exprent {
+@@ -563,6 +563,19 @@ public class FunctionExprent extends Exprent {
      }
  
      if (funcType <= FUNCTION_I2S) {
@@ -54,7 +54,7 @@ index c45050559cace73741f7529254e1483c81b747c7..a44200c04618f80d9d845cd150876786
          TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index a262cb07aef017240480f332563173ed403bc7a0..454da75adaa0c626ad11e8bdf3e5affe321d1b30 100644
+index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec994e3a000 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -59,6 +59,8 @@ public class InvocationExprent extends Exprent {

@@ -8,10 +8,10 @@ Adds an option (on by default) to force inner class references to be
 qualified to their outer class, -qin
 
 diff --git a/README.md b/README.md
-index 3f5a417a01d918a21b7dcb057b2eb259ec2df475..d553a0f3b5a12d8563c7b5a3ecd4ad280aadc5f0 100644
+index 9b15cd643468b3852b0092f7bffd399518fc03b3..4621cadc55b0814bf7f20fc5fff482b7756b5c6c 100644
 --- a/README.md
 +++ b/README.md
-@@ -65,6 +65,7 @@ The rest of options can be left as they are: they are aimed at professional reve
+@@ -67,6 +67,7 @@ The rest of options can be left as they are: they are aimed at professional reve
  - inn (1): check for IntelliJ IDEA-specific @NotNull annotation and remove inserted code if found
  - lac (0): decompile lambda expressions to anonymous classes
  - nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Unix), default is OS-dependent

@@ -69,10 +69,10 @@ index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..26adff36fff4172f2a195ded8246effa
 +  }
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index f9dd18ce93da5481aa016ea665898e3b690db6ec..3760b901af42d9321df36c7bcf5f1a8827ba8923 100644
+index 0313a69f077750a99fde54677176ba2eba0ca24f..7a8bb7a852b3bf074a4df3c9539bed289434d25b 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -214,4 +214,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -212,4 +212,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
  
    @Test(expected = ClassFormatException.class)
    public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }

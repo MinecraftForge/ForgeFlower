@@ -140,10 +140,10 @@ index 0c1e9296f40007557be90d12daf39cb9a78df448..86fd580e52b9534c2750139512ba8473
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index c88d5f8ea5ffb16de0d9e8dd8f8e2fd9a726d489..f9dd18ce93da5481aa016ea665898e3b690db6ec 100644
+index 9ee13f077fb092089bc874cee4dc53f918009d91..0313a69f077750a99fde54677176ba2eba0ca24f 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -25,7 +25,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -23,7 +23,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
        IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
        IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
        IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",

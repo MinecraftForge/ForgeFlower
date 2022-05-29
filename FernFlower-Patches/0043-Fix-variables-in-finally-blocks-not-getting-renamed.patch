@@ -5,7 +5,7 @@ Subject: [PATCH] Fix variables in finally blocks not getting renamed
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 30cdd284745688c1d2b0e10b5e884991173a1527..d60e7cc9b67c1e850d4d998f96ea3fdd2c8eb31a 100644
+index 8ba1c6311feb0993a5603be756dd273cb7b35185..4032029f16cede8b2fe6ccbd17c9abda458e0e2d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 @@ -762,23 +762,29 @@ public class FinallyProcessor {

@@ -5,19 +5,10 @@ Subject: [PATCH] Improve output of loops inside trycatch
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java
-index b95ef0727bc66c3401161abbbcc935c88f9abd42..690b54e282bff7edbd3bca9e3d79b918fb61ac58 100644
+index b95ef0727bc66c3401161abbbcc935c88f9abd42..0286e728d8cce195ff6be89f7c8af8190713591e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java
-@@ -1,6 +1,8 @@
- // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- package org.jetbrains.java.decompiler.modules.decompiler;
- 
-+import org.jetbrains.java.decompiler.main.DecompilerContext;
-+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
- import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
- import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-@@ -192,6 +194,26 @@ public final class DecHelper {
+@@ -192,6 +192,26 @@ public final class DecHelper {
      return setHandlers;
    }
  
@@ -44,11 +35,18 @@ index b95ef0727bc66c3401161abbbcc935c88f9abd42..690b54e282bff7edbd3bca9e3d79b918
    public static List<Exprent> copyExprentList(List<? extends Exprent> lst) {
      List<Exprent> ret = new ArrayList<>();
      for (Exprent expr : lst) {
+@@ -199,4 +219,4 @@ public final class DecHelper {
+     }
+     return ret;
+   }
+-}
+\ No newline at end of file
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-index ef2fb6128921b74b815b39d6be6e9c7290a2be70..788f116a39c069d5d9c0bd8e2c44bd2b37e0a4f8 100644
+index 499968a156b91709d769ac5867e9fa9ce6f23232..89664837c365d106d53c89fb94da9bed6b9cfc72 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
-@@ -86,6 +86,10 @@ public final class CatchAllStatement extends Statement {
+@@ -85,6 +85,10 @@ public final class CatchAllStatement extends Statement {
              return null;
            }
  
@@ -60,7 +58,7 @@ index ef2fb6128921b74b815b39d6be6e9c7290a2be70..788f116a39c069d5d9c0bd8e2c44bd2b
              return new CatchAllStatement(head, exc);
            }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
-index 9db86209721e133416de8379accb6ee5a1235d01..a1d700f0129bd04957067c5bc00f90e6961b1879 100644
+index 97c1d3f816dcfc21811da2097744bfe9e5747813..5444b3ce893eafbc1fac90313a1a20debcc89d0f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
 @@ -133,6 +133,10 @@ public final class CatchStatement extends Statement {
