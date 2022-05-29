@@ -185,21 +185,35 @@ index bb7b5b4e4a590219939a8f7e883b9c259c1adf73..458d119056f3fa7eceec7215fa577018
      return getCurrentContext().logger;
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index 469b313a958cf8aca35fe98fc809880d12db671e..22cb517d3ab2901bb7d88e38802eb2825584b78d 100644
+index 469b313a958cf8aca35fe98fc809880d12db671e..eefcf79cedb6148f5c02b8077914a467f3d58b64 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-@@ -26,6 +26,10 @@ public class Fernflower implements IDecompiledData {
+@@ -25,7 +25,24 @@ public class Fernflower implements IDecompiledData {
+   private final IIdentifierRenamer helper;
    private final IdentifierConverter converter;
  
++  private static int getThreads(Map<String, Object> options, final String def) {
++    String thr = options != null ? (String) options.getOrDefault(IFernflowerPreferences.THREADS, def) : def;
++    if ("AUTO".equals(thr)) {
++      return Runtime.getRuntime().availableProcessors();
++    } else {
++      try {
++        return Integer.parseInt(thr);
++      } catch (NumberFormatException e) {
++        throw new RuntimeException("Malformed threads option: " + thr);
++      }
++    }
++  }
++
    public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger) {
-+    this(provider, saver, customProperties, logger, 0);
++    this(provider, saver, customProperties, logger, getThreads(customProperties, "AUTO"));
 +  }
 +
 +  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> customProperties, IFernflowerLogger logger, int threads) {
      Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
      if (customProperties != null) {
        properties.putAll(customProperties);
-@@ -70,7 +74,7 @@ public class Fernflower implements IDecompiledData {
+@@ -70,7 +87,7 @@ public class Fernflower implements IDecompiledData {
        }
      }
  
@@ -208,7 +222,7 @@ index 469b313a958cf8aca35fe98fc809880d12db671e..22cb517d3ab2901bb7d88e38802eb282
      DecompilerContext.setCurrentContext(context);
  
      String vendor = System.getProperty("java.vendor", "missing vendor");
-@@ -138,6 +142,17 @@ public class Fernflower implements IDecompiledData {
+@@ -138,6 +155,17 @@ public class Fernflower implements IDecompiledData {
      }
    }
  
@@ -227,18 +241,10 @@ index 469b313a958cf8aca35fe98fc809880d12db671e..22cb517d3ab2901bb7d88e38802eb282
    public String getClassContent(StructClass cl) {
      try {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 2b6e9ed5d2cf8e3781c9b33b1489fee9447d8181..ac1fc2f7588fb23b9d0232e675492f3d7c5c10fc 100644
+index 92e27999009de17e1ba1e6475b1fac1b13ecc337..0b607e86f96bef987c949612fa9410d0dfc3aa02 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
- import org.jetbrains.java.decompiler.main.Fernflower;
- import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
- import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
- import org.jetbrains.java.decompiler.main.extern.IResultSaver;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
- 
-@@ -109,7 +110,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -109,7 +109,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
        return;
      }
  
@@ -247,30 +253,14 @@ index 2b6e9ed5d2cf8e3781c9b33b1489fee9447d8181..ac1fc2f7588fb23b9d0232e675492f3d
      ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
  
      for (File library : libraries) {
-@@ -147,7 +148,25 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -147,7 +147,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
  
    protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
      root = destination;
 -    engine = new Fernflower(this, root.isDirectory() ? this : new SingleFileSaver(destination), options, logger);
 +
-+    String thr = options != null ? (String) options.getOrDefault(IFernflowerPreferences.THREADS, "AUTO") : "AUTO";
-+    int threads;
-+    if ("AUTO".equals(thr)) {
-+      threads = Runtime.getRuntime().availableProcessors();
-+    } else {
-+      try {
-+        threads = Integer.parseInt(thr);
-+      } catch (NumberFormatException e) {
-+        throw new RuntimeException("Malformed threads option: " + thr);
-+      }
-+    }
-+
 +    IResultSaver saver = root.isDirectory() ? this : new SingleFileSaver(destination);
-+    if (threads > 1) {
-+      saver = new ThreadSafeResultSaver(root);
-+    }
-+
-+    engine = new Fernflower(this, saver, options, logger, threads);
++    engine = new Fernflower(this, saver, options, logger);
    }
  
    public void addSource(File source) {
@@ -303,10 +293,10 @@ index ff3b9b3dd27f5f07ebc80f6ca4ac3c632c93c83d..4398128ff456563af17a51479e563bb9
      if (accepts(Severity.INFO)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd43f15622f
+index 0000000000000000000000000000000000000000..f76d2c1611ec48375c25d489d9713bd876ffcb83
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
-@@ -0,0 +1,227 @@
+@@ -0,0 +1,213 @@
 +// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 +package org.jetbrains.java.decompiler.main.decompiler;
 +
@@ -321,11 +311,7 @@ index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd4
 +import java.util.HashSet;
 +import java.util.Map;
 +import java.util.Set;
-+import java.util.concurrent.ExecutionException;
-+import java.util.concurrent.ExecutorService;
-+import java.util.concurrent.Executors;
-+import java.util.concurrent.Future;
-+import java.util.jar.JarOutputStream;
++import java.util.jar.JarFile;
 +import java.util.jar.Manifest;
 +import java.util.zip.ZipEntry;
 +import java.util.zip.ZipFile;
@@ -369,7 +355,14 @@ index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd4
 +        throw new IOException("Cannot create file " + file);
 +      }
 +      FileOutputStream fos = new FileOutputStream(file);
-+      ZipOutputStream zos = manifest != null ? new JarOutputStream(fos, manifest) : new ZipOutputStream(fos);
++      ZipOutputStream zos = new ZipOutputStream(fos);
++      if (manifest != null) {
++        final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
++        manifestEntry.setTime(STABLE_ZIP_TIMESTAMP);
++        zos.putNextEntry(manifestEntry);
++        manifest.write(zos);
++        zos.closeEntry();
++      }
 +      ctx = new ArchiveContext(file, zos);
 +      if (archiveMode) {
 +        singeArchiveCtx = ctx;
@@ -393,22 +386,22 @@ index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd4
 +    if (ctx == null) {
 +      throw new RuntimeException("Archive closed and tried to copy entry '" + entryName + "' from '" + source + "' to '" + file + "'.");
 +    }
-+    ctx.submit(() -> {
-+      if (!ctx.addEntry(entryName)) {
-+        return;
-+      }
-+      try (ZipFile srcArchive = new ZipFile(new File(source))) {
-+        ZipEntry entry = srcArchive.getEntry(entryName);
-+        if (entry != null) {
-+          try (InputStream in = srcArchive.getInputStream(entry)) {
-+            ctx.stream.putNextEntry(new ZipEntry(entryName));
-+            InterpreterUtil.copyStream(in, ctx.stream);
-+          }
++    if (!ctx.addEntry(entryName)) {
++      return;
++    }
++    try (ZipFile srcArchive = new ZipFile(new File(source))) {
++      ZipEntry entry = srcArchive.getEntry(entryName);
++      if (entry != null) {
++        try (InputStream in = srcArchive.getInputStream(entry)) {
++          final ZipEntry newEntry = new ZipEntry(entryName);
++          newEntry.setTime(entry.getTime());
++          ctx.stream.putNextEntry(newEntry);
++          InterpreterUtil.copyStream(in, ctx.stream);
 +        }
-+      } catch (IOException e) {
-+        DecompilerContext.getLogger().writeMessage("Cannot copy entry " + entryName + " from " + source + " to " + file, e);
 +      }
-+    });
++    } catch (IOException e) {
++      DecompilerContext.getLogger().writeMessage("Cannot copy entry " + entryName + " from " + source + " to " + file, e);
++    }
 +  }
 +
 +  @Override
@@ -418,19 +411,19 @@ index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd4
 +    if (ctx == null) {
 +      throw new RuntimeException("Archive closed and tried to write entry '" + entryName + "' to '" + file + "'.");
 +    }
-+    ctx.submit(() -> {
-+      if (!ctx.addEntry(entryName)) {
-+        return;
++    if (!ctx.addEntry(entryName)) {
++      return;
++    }
++    try {
++      ZipEntry entry = new ZipEntry(entryName);
++      entry.setTime(STABLE_ZIP_TIMESTAMP);
++      ctx.stream.putNextEntry(entry);
++      if (content != null) {
++        ctx.stream.write(content.getBytes(StandardCharsets.UTF_8));
 +      }
-+      try {
-+        ctx.stream.putNextEntry(new ZipEntry(entryName));
-+        if (content != null) {
-+          ctx.stream.write(content.getBytes(StandardCharsets.UTF_8));
-+        }
-+      } catch (IOException e) {
-+        DecompilerContext.getLogger().writeMessage("Cannot write entry " + entryName + " to " + file, e);
-+      }
-+    });
++    } catch (IOException e) {
++      DecompilerContext.getLogger().writeMessage("Cannot write entry " + entryName + " to " + file, e);
++    }
 +  }
 +
 +  @Override
@@ -440,24 +433,12 @@ index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd4
 +    if (ctx == null) {
 +      throw new RuntimeException("Tried to close closed archive '" + file + "'.");
 +    }
-+    //Submit a job at the end of the executor.
-+    Future<?> closeFuture = ctx.submit(() -> {
-+      try {
-+        ctx.stream.close();
-+      } catch (IOException e) {
-+        DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN, e);
-+      }
-+    });
-+
-+    //Ask the executor to shutdown gracefully.
-+    ctx.executor.shutdown();
-+
 +    try {
-+      //Wait for our future to execute.
-+      closeFuture.get();
-+    } catch (InterruptedException | ExecutionException e) {
-+      throw new RuntimeException(e);
++      ctx.stream.close();
++    } catch (IOException e) {
++      DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN, e);
 +    }
++
 +    if (archiveMode) {
 +      singeArchiveCtx = null;
 +    } else {
@@ -513,16 +494,11 @@ index 0000000000000000000000000000000000000000..f434fc92661e1337acfd2ebc7576fbd4
 +
 +    public final File file;
 +    public final ZipOutputStream stream;
-+    public final ExecutorService executor = Executors.newSingleThreadExecutor();
 +    public final Set<String> savedEntries = new HashSet<>();
 +
 +    private ArchiveContext(File file, ZipOutputStream stream) {
 +      this.file = file;
 +      this.stream = stream;
-+    }
-+
-+    public Future<?> submit(Runnable runnable) {
-+      return executor.submit(runnable);
 +    }
 +
 +    public boolean addEntry(String entryName) {
@@ -690,7 +666,7 @@ index 86fd580e52b9534c2750139512ba84739308eead..7bcb5652188642db925a5915f8b743fd
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..9eb1e3b71ee54001c902f11f6fa6c132c5a670fc 100644
+index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..4e64b70da8fe886801e027a7ae6c0e59f94cf62a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -14,8 +14,14 @@ import java.io.IOException;
@@ -720,79 +696,65 @@ index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..9eb1e3b71ee54001c902f11f6fa6c132
              if (content != null) {
                int[] mapping = null;
                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
-@@ -152,13 +161,64 @@ public class ContextUnit {
+@@ -152,13 +161,51 @@ public class ContextUnit {
            }
          }
  
--        // classes
++        //Whooo threads!
++        int threads = DecompilerContext.getThreads();
++        DecompilerContext rootContext = DecompilerContext.getCurrentContext();
++        ExecutorService executor = threads > 0 ? Executors.newFixedThreadPool(threads) : Executors.newSingleThreadExecutor();
++
++        //Compute the classes we need to decomp.
++        List<ClassContext> toProcess = IntStream.range(0, classes.size()).parallel()
++          .mapToObj(i -> {
++            StructClass cl = classes.get(i);
++            return new ClassContext(cl, decompiledData.getClassEntryName(cl, classEntries.get(i)));
++          })
++          .filter(e -> e.entryName != null)
++          .collect(Collectors.toList());
++        List<Future<?>> futures = new ArrayList<>(toProcess.size());
++
++        //Submit preprocessor jobs.
++        for (ClassContext clCtx : toProcess) {
++          futures.add(executor.submit(() -> {
++            DecompilerContext.cloneContext(rootContext);
++            clCtx.ctx = DecompilerContext.getCurrentContext();
++            clCtx.shouldContinue = decompiledData.processClass(clCtx.cl);
++            DecompilerContext.setCurrentContext(null);
++          }));
++        }
++
++        //Ask the executor to shutdown
++        waitForAll(futures);
++        futures.clear();
++
+         // classes
 -        for (int i = 0; i < classes.size(); i++) {
 -          StructClass cl = classes.get(i);
 -          String entryName = decompiledData.getClassEntryName(cl, classEntries.get(i));
 -          if (entryName != null) {
 -            String content = decompiledData.getClassContent(cl);
 -            resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content);
-+        //Whooo threads!
-+        int threads = DecompilerContext.getThreads();
-+        if (threads > 1) {
-+
-+          DecompilerContext rootContext = DecompilerContext.getCurrentContext();
-+          ExecutorService executor = Executors.newFixedThreadPool(threads);
-+
-+          //Compute the classes we need to decomp.
-+          List<ClassContext> toProcess = IntStream.range(0, classes.size()).parallel()
-+            .mapToObj(i -> {
-+              StructClass cl = classes.get(i);
-+              return new ClassContext(cl, decompiledData.getClassEntryName(cl, classEntries.get(i)));
-+            })
-+            .filter(e -> e.entryName != null)
-+            .collect(Collectors.toList());
-+          List<Future<?>> futures = new ArrayList<>(toProcess.size());
-+
-+          //Submit preprocessor jobs.
-+          for (ClassContext clCtx : toProcess) {
++        for (ClassContext clCtx : toProcess) {
++          if (clCtx.shouldContinue) {
 +            futures.add(executor.submit(() -> {
-+              DecompilerContext.cloneContext(rootContext);
-+              clCtx.ctx = DecompilerContext.getCurrentContext();
-+              clCtx.shouldContinue = decompiledData.processClass(clCtx.cl);
++              DecompilerContext.setCurrentContext(clCtx.ctx);
++              clCtx.classContent = decompiledData.getClassContent(clCtx.cl);
 +              DecompilerContext.setCurrentContext(null);
 +            }));
 +          }
++        }
++        executor.shutdown();
++        waitForAll(futures);
 +
-+          //Ask the executor to shutdown
-+          executor.shutdown();
-+          waitForAll(futures);
-+          futures.clear();
-+
-+          executor = Executors.newFixedThreadPool(threads);
-+
-+          // classes
-+          for (ClassContext clCtx : toProcess) {
-+            if (clCtx.shouldContinue) {
-+              futures.add(executor.submit(() -> {
-+                DecompilerContext.setCurrentContext(clCtx.ctx);
-+                String content = decompiledData.getClassContent(clCtx.cl);
-+                resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, content);
-+                DecompilerContext.setCurrentContext(null);
-+              }));
-+            }
-+          }
-+          executor.shutdown();
-+          waitForAll(futures);
-+        } else {
-+          // classes
-+          for (int i = 0; i < classes.size(); i++) {
-+            StructClass cl = classes.get(i);
-+            String entryName = decompiledData.getClassEntryName(cl, classEntries.get(i));
-+            if (entryName != null) {
-+              if (decompiledData.processClass(cl)) {
-+                String content = decompiledData.getClassContent(cl);
-+                resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content);
-+              }
-+            }
++        for (final ClassContext clCtx : toProcess) {
++          if (clCtx.shouldContinue) {
++            resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, clCtx.classContent);
            }
          }
  
-@@ -166,6 +226,16 @@ public class ContextUnit {
+@@ -166,6 +213,16 @@ public class ContextUnit {
      }
    }
  
@@ -809,7 +771,7 @@ index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..9eb1e3b71ee54001c902f11f6fa6c132
    public void setManifest(Manifest manifest) {
      this.manifest = manifest;
    }
-@@ -177,4 +247,17 @@ public class ContextUnit {
+@@ -177,4 +234,18 @@ public class ContextUnit {
    public List<StructClass> getClasses() {
      return classes;
    }
@@ -819,6 +781,7 @@ index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..9eb1e3b71ee54001c902f11f6fa6c132
 +    public final String entryName;
 +    public boolean shouldContinue;
 +    public DecompilerContext ctx;
++    String classContent;
 +
 +    private ClassContext(StructClass cl, String entryName) {
 +      this.cl = cl;

@@ -7,7 +7,7 @@ Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
 Our use case is specifying a ton of external libraries. It will read a text file and replace the -cfg entry with those lines.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..06e362987a3917976627fc1f0b6aad302c4ea650 100644
+index d0ae9a7c3b20de44cb202390cc0dfd4d690fee64..aefae5f232c84700c16721643eab4499e319f61a 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -10,9 +10,13 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -18,7 +18,7 @@ index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..06e362987a3917976627fc1f0b6aad30
 +import java.nio.file.Path;
 +import java.nio.file.Paths;
  import java.util.*;
- import java.util.jar.JarOutputStream;
+ import java.util.jar.JarFile;
  import java.util.jar.Manifest;
 +import java.util.stream.Stream;
  import java.util.zip.ZipEntry;
@@ -63,7 +63,7 @@ index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..06e362987a3917976627fc1f0b6aad30
      if (args.length < 2) {
        System.out.println(
          "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
-@@ -269,4 +305,4 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -280,4 +316,4 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
        DecompilerContext.getLogger().writeMessage("Cannot close " + file, IFernflowerLogger.Severity.WARN);
      }
    }

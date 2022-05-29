@@ -10,10 +10,10 @@ Add -dcl {dump code lines} to dump this line data to a file in the output archiv
 This will allow external projects to do this remapping as well.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index ac1fc2f7588fb23b9d0232e675492f3d7c5c10fc..bd3535557b78014919d34c3ee5d17c34ea523e2d 100644
+index 0b607e86f96bef987c949612fa9410d0dfc3aa02..cab48267cfe9a4b6c1f7f63449340cf6d446bd92 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-@@ -265,7 +265,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -255,7 +255,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
  
    @Override
    public void saveDirEntry(String path, String archiveName, String entryName) {
@@ -22,7 +22,7 @@ index ac1fc2f7588fb23b9d0232e675492f3d7c5c10fc..bd3535557b78014919d34c3ee5d17c34
    }
  
    @Override
-@@ -293,7 +293,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+@@ -285,7 +285,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
    }
  
    @Override
@@ -35,16 +35,14 @@ index ac1fc2f7588fb23b9d0232e675492f3d7c5c10fc..bd3535557b78014919d34c3ee5d17c34
      String file = new File(getAbsolutePath(path), archiveName).getPath();
  
      if (!checkEntry(entryName, file)) {
-@@ -302,9 +306,13 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
- 
-     try {
+@@ -296,9 +300,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
        ZipOutputStream out = mapArchiveStreams.get(file);
--      out.putNextEntry(new ZipEntry(entryName));
-+      ZipEntry entry = new ZipEntry(entryName);
+       ZipEntry entry = new ZipEntry(entryName);
+       entry.setTime(STABLE_ZIP_TIMESTAMP);
 +      if (extra != null) {
 +        entry.setExtra(extra);
 +      }
-+      out.putNextEntry(entry);
+       out.putNextEntry(entry);
        if (content != null) {
 -        out.write(content.getBytes(StandardCharsets.UTF_8));
 +        out.write(content);
@@ -52,7 +50,7 @@ index ac1fc2f7588fb23b9d0232e675492f3d7c5c10fc..bd3535557b78014919d34c3ee5d17c34
      }
      catch (IOException ex) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
-index 8775e47858f45abaac925543be718bf3cc97a1bf..8e37643c54c6e961c317d9bc2c1ed5556e0b4179 100644
+index 9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1..164cd142118f37d33375c19b8903d61658d3a07a 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 @@ -4,6 +4,7 @@ import java.io.File;
@@ -62,8 +60,8 @@ index 8775e47858f45abaac925543be718bf3cc97a1bf..8e37643c54c6e961c317d9bc2c1ed555
 +import java.nio.charset.StandardCharsets;
  import java.util.HashSet;
  import java.util.Set;
- import java.util.jar.JarOutputStream;
-@@ -56,7 +57,7 @@ public class SingleFileSaver implements IResultSaver {
+ import java.util.jar.JarFile;
+@@ -63,7 +64,7 @@ public class SingleFileSaver implements IResultSaver {
  
    @Override
    public void saveDirEntry(String path, String archiveName, String entryName) {
@@ -72,7 +70,7 @@ index 8775e47858f45abaac925543be718bf3cc97a1bf..8e37643c54c6e961c317d9bc2c1ed555
    }
  
    @Override
-@@ -80,14 +81,21 @@ public class SingleFileSaver implements IResultSaver {
+@@ -89,16 +90,22 @@ public class SingleFileSaver implements IResultSaver {
    }
  
    @Override
@@ -86,11 +84,11 @@ index 8775e47858f45abaac925543be718bf3cc97a1bf..8e37643c54c6e961c317d9bc2c1ed555
          return;
  
      try {
--      output.putNextEntry(new ZipEntry(entryName));
-+      ZipEntry entry = new ZipEntry(entryName);
+       ZipEntry entry = new ZipEntry(entryName);
+       entry.setTime(STABLE_ZIP_TIMESTAMP);
 +      if (extra != null)
 +        entry.setExtra(extra);
-+      output.putNextEntry(entry);
+       output.putNextEntry(entry);
        if (content != null)
 -          output.write(content.getBytes("UTF-8"));
 +        output.write(content);
@@ -98,10 +96,10 @@ index 8775e47858f45abaac925543be718bf3cc97a1bf..8e37643c54c6e961c317d9bc2c1ed555
      catch (IOException ex) {
        String message = "Cannot write entry " + entryName + " to " + target;
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
-index f434fc92661e1337acfd2ebc7576fbd43f15622f..585494c81bda9c2bde5ea284fb8851df3c1b072b 100644
+index f76d2c1611ec48375c25d489d9713bd876ffcb83..81cd12ba302af00d66c3f699804651d940f06a5a 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
-@@ -74,7 +74,7 @@ public class ThreadSafeResultSaver implements IResultSaver {
+@@ -77,7 +77,7 @@ public class ThreadSafeResultSaver implements IResultSaver {
  
    @Override
    public void saveDirEntry(String path, String archiveName, String entryName) {
@@ -110,7 +108,7 @@ index f434fc92661e1337acfd2ebc7576fbd43f15622f..585494c81bda9c2bde5ea284fb8851df
    }
  
    @Override
-@@ -103,7 +103,11 @@ public class ThreadSafeResultSaver implements IResultSaver {
+@@ -106,7 +106,11 @@ public class ThreadSafeResultSaver implements IResultSaver {
    }
  
    @Override
@@ -123,22 +121,20 @@ index f434fc92661e1337acfd2ebc7576fbd43f15622f..585494c81bda9c2bde5ea284fb8851df
      String file = new File(getAbsolutePath(path), archiveName).getPath();
      ArchiveContext ctx = getCtx(file);
      if (ctx == null) {
-@@ -114,9 +118,13 @@ public class ThreadSafeResultSaver implements IResultSaver {
-         return;
+@@ -118,9 +122,12 @@ public class ThreadSafeResultSaver implements IResultSaver {
+     try {
+       ZipEntry entry = new ZipEntry(entryName);
+       entry.setTime(STABLE_ZIP_TIMESTAMP);
++      if (extra != null) {
++        entry.setExtra(extra);
++      }
+       ctx.stream.putNextEntry(entry);
+       if (content != null) {
+-        ctx.stream.write(content.getBytes(StandardCharsets.UTF_8));
++        ctx.stream.write(content);
        }
-       try {
--        ctx.stream.putNextEntry(new ZipEntry(entryName));
-+        ZipEntry entry = new ZipEntry(entryName);
-+        if (extra != null) {
-+          entry.setExtra(extra);
-+        }
-+        ctx.stream.putNextEntry(entry);
-         if (content != null) {
--          ctx.stream.write(content.getBytes(StandardCharsets.UTF_8));
-+          ctx.stream.write(content);
-         }
-       } catch (IOException e) {
-         DecompilerContext.getLogger().writeMessage("Cannot write entry " + entryName + " to " + file, e);
+     } catch (IOException e) {
+       DecompilerContext.getLogger().writeMessage("Cannot write entry " + entryName + " to " + file, e);
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 index 7bcb5652188642db925a5915f8b743fd14b0e328..698020bbb42ba78718b5a332ca4e9a3f3660e9e9 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
@@ -161,7 +157,7 @@ index 7bcb5652188642db925a5915f8b743fd14b0e328..698020bbb42ba78718b5a332ca4e9a3f
      return Collections.unmodifiableMap(defaults);
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
-index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..e16c60301264feaeaabfaf281495807d888456db 100644
+index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..23d9500ce885a6ba36c25be48400df6e4e380a90 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
 @@ -1,6 +1,8 @@
@@ -173,7 +169,7 @@ index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..e16c60301264feaeaabfaf281495807d
  import java.util.jar.Manifest;
  
  public interface IResultSaver {
-@@ -8,6 +10,7 @@ public interface IResultSaver {
+@@ -10,6 +12,7 @@ public interface IResultSaver {
  
    void copyFile(String source, String path, String entryName);
  
@@ -181,7 +177,7 @@ index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..e16c60301264feaeaabfaf281495807d
    void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping);
  
    void createArchive(String path, String archiveName, Manifest manifest);
-@@ -16,7 +19,29 @@ public interface IResultSaver {
+@@ -18,7 +21,29 @@ public interface IResultSaver {
  
    void copyEntry(String source, String path, String archiveName, String entry);
  
@@ -213,35 +209,36 @@ index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..e16c60301264feaeaabfaf281495807d
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index 9eb1e3b71ee54001c902f11f6fa6c132c5a670fc..5e119e5030efab2bccc1bd96601075c081056339 100644
+index 4e64b70da8fe886801e027a7ae6c0e59f94cf62a..5b669d8b71d9601769988c41f64650926cadfc5f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-@@ -201,7 +201,11 @@ public class ContextUnit {
-               futures.add(executor.submit(() -> {
-                 DecompilerContext.setCurrentContext(clCtx.ctx);
-                 String content = decompiledData.getClassContent(clCtx.cl);
--                resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, content);
-+                int[] mapping = null;
-+                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
-+                  mapping = DecompilerContext.getBytecodeSourceMapper().getOriginalLinesMapping();
-+                }
-+                resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, content, mapping);
-                 DecompilerContext.setCurrentContext(null);
-               }));
-             }
-@@ -216,7 +220,11 @@ public class ContextUnit {
-             if (entryName != null) {
-               if (decompiledData.processClass(cl)) {
-                 String content = decompiledData.getClassContent(cl);
--                resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content);
-+                int[] mapping = null;
-+                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
-+                  mapping = DecompilerContext.getBytecodeSourceMapper().getOriginalLinesMapping();
-+                }
-+                resultSaver.saveClassEntry(archivePath, filename, cl.qualifiedName, entryName, content, mapping);
-               }
-             }
+@@ -196,6 +196,9 @@ public class ContextUnit {
+             futures.add(executor.submit(() -> {
+               DecompilerContext.setCurrentContext(clCtx.ctx);
+               clCtx.classContent = decompiledData.getClassContent(clCtx.cl);
++              if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
++                clCtx.mapping = DecompilerContext.getBytecodeSourceMapper().getOriginalLinesMapping();
++              }
+               DecompilerContext.setCurrentContext(null);
+             }));
            }
+@@ -205,7 +208,7 @@ public class ContextUnit {
+ 
+         for (final ClassContext clCtx : toProcess) {
+           if (clCtx.shouldContinue) {
+-            resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, clCtx.classContent);
++            resultSaver.saveClassEntry(archivePath, filename, clCtx.cl.qualifiedName, clCtx.entryName, clCtx.classContent, clCtx.mapping);
+           }
+         }
+ 
+@@ -241,6 +244,7 @@ public class ContextUnit {
+     public boolean shouldContinue;
+     public DecompilerContext ctx;
+     String classContent;
++    int[] mapping;
+ 
+     private ClassContext(StructClass cl, String entryName) {
+       this.cl = cl;
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
 index 8ec8c36234a30e76b7f75d54220f771afe58e264..b5f5d82ee5a62234932d8527cdc1a9ae0ec38e8a 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftTest.java

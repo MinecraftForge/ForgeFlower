@@ -1,8 +1,10 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: LexManos <LexManos@gmail.com>
 Date: Wed, 12 Apr 2017 10:08:10 -0700
-Subject: [PATCH] Fix output discrepancies based on running JVM
+Subject: [PATCH] Fix output discrepancies to produce stable output
 
+Running JVM and timestamp result in output varying between
+environments and runs.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c672ca4ea85 100644
@@ -38,6 +40,70 @@ index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c67
      public static class LambdaInformation {
        public String method_name;
        public String method_descriptor;
+diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..d0ae9a7c3b20de44cb202390cc0dfd4d690fee64 100644
+--- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
++++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+@@ -11,7 +11,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import java.io.*;
+ import java.nio.charset.StandardCharsets;
+ import java.util.*;
+-import java.util.jar.JarOutputStream;
++import java.util.jar.JarFile;
+ import java.util.jar.Manifest;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipFile;
+@@ -189,7 +189,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+       }
+ 
+       FileOutputStream fileStream = new FileOutputStream(file);
+-      ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
++      ZipOutputStream zipStream = new ZipOutputStream(fileStream);
++      if (manifest != null) {
++        final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
++        manifestEntry.setTime(STABLE_ZIP_TIMESTAMP);
++        zipStream.putNextEntry(manifestEntry);
++        manifest.write(zipStream);
++        zipStream.closeEntry();
++      }
+       mapArchiveStreams.put(file.getPath(), zipStream);
+     }
+     catch (IOException ex) {
+@@ -215,7 +222,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+       if (entry != null) {
+         try (InputStream in = srcArchive.getInputStream(entry)) {
+           ZipOutputStream out = mapArchiveStreams.get(file);
+-          out.putNextEntry(new ZipEntry(entryName));
++          final ZipEntry newEntry = new ZipEntry(entryName);
++          newEntry.setTime(entry.getTime());
++          out.putNextEntry(newEntry);
+           InterpreterUtil.copyStream(in, out);
+         }
+       }
+@@ -236,7 +245,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+ 
+     try {
+       ZipOutputStream out = mapArchiveStreams.get(file);
+-      out.putNextEntry(new ZipEntry(entryName));
++      ZipEntry entry = new ZipEntry(entryName);
++      entry.setTime(STABLE_ZIP_TIMESTAMP);
++      out.putNextEntry(entry);
+       if (content != null) {
+         out.write(content.getBytes(StandardCharsets.UTF_8));
+       }
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
+index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..cf03900654e427bd435ba6dc2d5a0cec8c8708e4 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
+@@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.main.extern;
+ import java.util.jar.Manifest;
+ 
+ public interface IResultSaver {
++  long STABLE_ZIP_TIMESTAMP = 0x386D4380; // 01/01/2000 00:00:00 java 8 breaks when using 0.
++
+   void saveFolder(String path);
+ 
+   void copyFile(String source, String path, String entryName);
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
 index 05e6e2d720aa5812ef12c4741eab06b8ea477e0f..f9c8c6a0334512699c545c881207194745427c96 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
