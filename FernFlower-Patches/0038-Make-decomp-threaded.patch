@@ -7,16 +7,21 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 305b06903b36bc4cdb740a8f050543403e6406fe..e734afaf2fb87c2e9d6ede6925f4ca6b3d560773 100644
+index 305b06903b36bc4cdb740a8f050543403e6406fe..fc2ed5383e6e7ce5b4121c5bd5e77a6cfe0059ff 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -37,7 +37,8 @@ public class ClassesProcessor implements CodeConstants {
+@@ -32,12 +32,13 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
+ import java.io.IOException;
+ import java.util.*;
+ import java.util.Map.Entry;
++import java.util.concurrent.ConcurrentHashMap;
+ 
+ public class ClassesProcessor implements CodeConstants {
    public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
  
    private final StructContext context;
 -  private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
-+  //TODO, This is synchronized because LambdaProcessor adds classes to this. Figure out a way to not sync this map.
-+  private final Map<String, ClassNode> mapRootClasses = Collections.synchronizedMap(new HashMap<>());
++  private final Map<String, ClassNode> mapRootClasses = new ConcurrentHashMap<>();
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
