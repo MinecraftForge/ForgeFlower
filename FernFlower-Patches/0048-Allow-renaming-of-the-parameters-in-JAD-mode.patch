@@ -1,0 +1,86 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Marc Hermans <marc.hermans@ldtteam.com>
+Date: Fri, 28 Oct 2022 11:52:10 +0200
+Subject: [PATCH] Allow renaming of the parameters in JAD mode.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index 025a8ac22323407bf6b2a4f3e70a0409abadc7d9..d422baf689ed4db7cf6ca8e00cdcd3741fb64de3 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -81,7 +81,7 @@ public class Fernflower implements IDecompiledData {
+     }
+     if (renamerFactory == null) {
+       if("1".equals(properties.get(IFernflowerPreferences.USE_JAD_VARNAMING))) {
+-        renamerFactory = new JADNameProvider.JADNameProviderFactory();
++        renamerFactory = new JADNameProvider.JADNameProviderFactory("1".equals(properties.get(IFernflowerPreferences.USE_JAD_PARAMETER_RENAMING)));
+       } else {
+         renamerFactory = new IdentityRenamerFactory();
+       }
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index cc0b70e555ce969185c150e39a551fe2f45a0288..8ab625f76062156959aa0424ea7af911d6be11a4 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -56,6 +56,7 @@ public interface IFernflowerPreferences {
+   String LINE_SEPARATOR_UNX = "\n";
+ 
+   String USE_JAD_VARNAMING = "jvn";
++  String USE_JAD_PARAMETER_RENAMING = "jpr";
+ 
+   String SKIP_EXTRA_FILES = "sef";
+ 
+@@ -108,6 +109,7 @@ public interface IFernflowerPreferences {
+     defaults.put(UNIT_TEST_MODE, "0");
+     defaults.put(DUMP_ORIGINAL_LINES, "0");
+     defaults.put(USE_JAD_VARNAMING, "0");
++    defaults.put(USE_JAD_PARAMETER_RENAMING, "1");
+     defaults.put(SKIP_EXTRA_FILES, "0");
+     defaults.put(DUMP_CODE_LINES, "1");
+ 
+diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
+index e7073956c555e710b18f0495a4166e911cb50de7..9df8b36d2f80096ab406813777c907186614b88e 100644
+--- a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
++++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
+@@ -17,7 +17,6 @@ package org.jetbrains.java.decompiler.util;
+ 
+ import java.util.ArrayList;
+ import java.util.Collections;
+-import java.util.Comparator;
+ import java.util.HashMap;
+ import java.util.LinkedHashMap;
+ import java.util.List;
+@@ -43,7 +42,7 @@ public class JADNameProvider implements IVariableNameProvider {
+   private static final Pattern CAPS_START = Pattern.compile("^[A-Z]");
+   private static final Pattern ARRAY = Pattern.compile("(\\[|\\.\\.\\.)");
+ 
+-  public JADNameProvider(StructMethod wrapper) {
++  public JADNameProvider(StructMethod wrapper, boolean renameParameters) {
+     last = new HashMap<String, Holder>();
+     last.put("int",     new Holder(0, true,  "i", "j", "k", "l"));
+     last.put("byte",    new Holder(0, false, "b"       ));
+@@ -66,6 +65,7 @@ public class JADNameProvider implements IVariableNameProvider {
+     remap.put("long", "int");
+ 
+     this.method = wrapper;
++    this.renameParameters = renameParameters;
+   }
+ 
+   @Override
+@@ -207,9 +207,16 @@ public class JADNameProvider implements IVariableNameProvider {
+   }
+ 
+   public static class JADNameProviderFactory implements IVariableNamingFactory {
++
++    private final boolean renameParameters;
++
++    public JADNameProviderFactory(boolean renameParameters) {
++      this.renameParameters = renameParameters;
++    }
++
+     @Override
+     public IVariableNameProvider createFactory(StructMethod method) {
+-      return new JADNameProvider(method);
++      return new JADNameProvider(method, renameParameters);
+     }
+   }
+ }
