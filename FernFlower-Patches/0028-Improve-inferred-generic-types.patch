@@ -264,7 +264,7 @@ index a735a13e50d76c15800b14d0dd589d2db6947b6e..45a83c38eabb72eb26a618e7b7f8a528
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..0533ef866afdfd90e5bec78866cbd47d8a799ec2 100644
+index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..ae78c8ccbdb5240c2e72a2700f63e3734d8650cb 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -52,6 +52,7 @@ public class InvocationExprent extends Exprent {
@@ -457,7 +457,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..0533ef866afdfd90e5bec78866cbd47d
 +              mask = ExprUtil.getSyntheticParametersMask(newNode, stringDescriptor, parameters.size());
 +              start = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) ? 2 : 0;
 +            } else if (!newNode.enclosingClasses.isEmpty()) {
-+              start = !newNode.classStruct.hasModifier(CodeConstants.ACC_STATIC) ? 1 : 0;
++              start = (newNode.access & CodeConstants.ACC_STATIC) == 0 ? 1 : 0;
 +            }
 +          }
 +
