@@ -264,7 +264,7 @@ index a735a13e50d76c15800b14d0dd589d2db6947b6e..45a83c38eabb72eb26a618e7b7f8a528
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f58170076616 100644
+index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..055e2fcaf6bc9d211f5b4745bf40dc605983e3f7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.util.TextUtil;
@@ -292,7 +292,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
    private boolean forceBoxing = false;
    private boolean forceUnboxing = false;
    private boolean isSyntheticNullCheck = false;
-@@ -175,45 +179,309 @@ public class InvocationExprent extends Exprent {
+@@ -175,45 +179,324 @@ public class InvocationExprent extends Exprent {
  
    @Override
    public VarType getInferredExprType(VarType upperBound) {
@@ -486,7 +486,11 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
 +                    if (node.lambdaInformation.is_method_reference) {
 +                      StructClass content = (StructClass) DecompilerContext.getStructContext().getClass(node.lambdaInformation.content_class_name);
 +                      StructClass currentCls = (StructClass) DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
-+                      potentialMethodCount = (int) content.getMethods().stream().filter((method) -> canAccess(currentCls, method)).map(StructMethod::getName).filter(node.lambdaInformation.content_method_name::equals).count();
++                      potentialMethodCount = (int) content.getMethods().stream()
++                          .filter((method) -> canAccess(currentCls, method))
++                          .map(StructMethod::getName)
++                          .filter(node.lambdaInformation.content_method_name::equals)
++                          .count();
 +                    }
 +                    if (potentialMethodCount > 1) {
 +                      StructClass base = DecompilerContext.getStructContext().getClass(newExprent.getExprType().getValue());
@@ -502,7 +506,18 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
 +                          Map<VarType, VarType> genvars = new HashMap<>();
 +                          if (base.getSignature() != null) {
 +                            base.getSignature().genericType.mapGenVarsTo((GenericType) paramType, genvars);
-+                            excluded.addAll(found.getSignature().parameterTypes.stream().filter(VarType::isGeneric).map(GenericType.class::cast).map(GenericType::getAllGenericVars).flatMap(List::stream).map(genvars::get).filter(Objects::nonNull).filter(VarType::isGeneric).map(GenericType.class::cast).map(GenericType::getAllGenericVars).flatMap(List::stream).collect(Collectors.toList()));
++                            excluded.addAll(found.getSignature().parameterTypes.stream()
++                                .filter(VarType::isGeneric)
++                                .map(GenericType.class::cast)
++                                .map(GenericType::getAllGenericVars)
++                                .flatMap(List::stream)
++                                .map(genvars::get)
++                                .filter(Objects::nonNull)
++                                .filter(VarType::isGeneric)
++                                .map(GenericType.class::cast)
++                                .map(GenericType::getAllGenericVars)
++                                .flatMap(List::stream)
++                                .collect(Collectors.toList()));
 +                          }
 +                        }
 +                      }
@@ -624,7 +639,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
        }
      }
  
-@@ -316,7 +584,19 @@ public class InvocationExprent extends Exprent {
+@@ -316,7 +599,19 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
@@ -644,7 +659,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
            if (isUnboxingCall() && !forceUnboxing) {
              // we don't print the unboxing call - no need to bother with the instance wrapping / casting
              if (instance.type == Exprent.EXPRENT_FUNCTION) {
-@@ -345,7 +625,8 @@ public class InvocationExprent extends Exprent {
+@@ -345,7 +640,8 @@ public class InvocationExprent extends Exprent {
  
            TextBuffer res = instance.toJava(indent, tracer);
  
@@ -654,7 +669,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
  
            if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
              buf.append("((").append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(")");
-@@ -355,7 +636,7 @@ public class InvocationExprent extends Exprent {
+@@ -355,7 +651,7 @@ public class InvocationExprent extends Exprent {
              }
              buf.append(res).append(")");
            }
@@ -663,7 +678,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
              buf.append("(").append(res).append(")");
            }
            else {
-@@ -401,6 +682,12 @@ public class InvocationExprent extends Exprent {
+@@ -401,6 +697,12 @@ public class InvocationExprent extends Exprent {
          }
      }
  
@@ -676,7 +691,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
      List<VarVersionPair> mask = null;
      boolean isEnum = false;
      if (funcType == TYPE_INIT) {
-@@ -413,28 +700,6 @@ public class InvocationExprent extends Exprent {
+@@ -413,28 +715,6 @@ public class InvocationExprent extends Exprent {
      ClassNode currCls = ((ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE));
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
@@ -705,7 +720,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (parameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -523,20 +788,32 @@ public class InvocationExprent extends Exprent {
+@@ -523,20 +803,32 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -751,7 +766,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
      }
  
  
-@@ -574,6 +851,10 @@ public class InvocationExprent extends Exprent {
+@@ -574,6 +866,10 @@ public class InvocationExprent extends Exprent {
          }
          */
  
@@ -762,7 +777,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(this.parameters.get(i), types[i], buff, indent, true, ambiguous, true, true, tracer);
  
-@@ -589,8 +870,6 @@ public class InvocationExprent extends Exprent {
+@@ -589,8 +885,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -771,7 +786,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
      return buf;
    }
  
-@@ -889,6 +1168,162 @@ public class InvocationExprent extends Exprent {
+@@ -889,6 +1183,162 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -934,7 +949,7 @@ index dd3cde1a35d189ad7ea847c9f5de2531e4177a1b..2a86f18822debf16915c08bad0e2f581
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -1001,6 +1436,18 @@ public class InvocationExprent extends Exprent {
+@@ -1001,6 +1451,18 @@ public class InvocationExprent extends Exprent {
      return isSyntheticNullCheck;
    }
  
