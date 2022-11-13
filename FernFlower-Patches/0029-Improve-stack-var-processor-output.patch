@@ -318,10 +318,10 @@ index d8fd9bdf784704836e69cfdd1596ae29b2732232..139ccdb55347a5d66627c1489ee73910
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index ae78c8ccbdb5240c2e72a2700f63e3734d8650cb..5890904d54f0049853e1b2fb47cdd399c24c4ddd 100644
+index 055e2fcaf6bc9d211f5b4745bf40dc605983e3f7..31b8d0684dc3bd870caa8001d3b9da28a97c5d7f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -168,6 +168,11 @@ public class InvocationExprent extends Exprent {
+@@ -169,6 +169,11 @@ public class InvocationExprent extends Exprent {
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
      isSyntheticNullCheck = expr.isSyntheticNullCheck();
