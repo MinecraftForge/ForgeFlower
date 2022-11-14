@@ -1,0 +1,108 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: coehlrich <coehlrich@users.noreply.github.com>
+Date: Mon, 14 Nov 2022 23:46:16 +1300
+Subject: [PATCH] Fix signature polymorphic methods
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index fd6c22a4b18b2875a5f0f1b7d3f18fa2ed0ba305..7078bd10c2bccd11c1aad74dfe05802eab460281 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -193,6 +193,8 @@ public class MethodProcessorRunnable implements Runnable {
+       stackProc.simplifyStackVars(root, mt, cl);
+       varProc.setVarVersions(root);
+ 
++      MethodHandleDescriptorHelper.changeMethodHandleDescriptorsStats(root);
++
+       LabelHelper.identifyLabels(root);
+ 
+       if (TryHelper.enhanceTryStats(root)) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..99d632904eb139a1e21f7aa30098a05ddf9a4a88
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
+@@ -0,0 +1,83 @@
++package org.jetbrains.java.decompiler.modules.decompiler;
++
++import java.util.ArrayList;
++import java.util.Collections;
++import java.util.List;
++
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.AnnotationExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.struct.StructClass;
++import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.attr.StructAnnotationAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
++import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
++
++public class MethodHandleDescriptorHelper
++{
++    public static void changeMethodHandleDescriptorsStats(Statement stat) {
++        for (Statement inner : stat.getStats()) {
++            changeMethodHandleDescriptorsStats(inner);
++        }
++
++        if (stat.getExprents() != null) {
++            for (int i = 0; i < stat.getExprents().size(); i++) {
++                Exprent exprent = stat.getExprents().get(i);
++                Exprent updated = updateExprent(exprent);
++                if (updated != null) {
++                    stat.getExprents().set(i, updated);
++                }
++            }
++        }
++    }
++
++    private static Exprent updateExprent(Exprent exprent) {
++        for (Exprent inner : exprent.getAllExprents()) {
++            Exprent updated = updateExprent(inner);
++            if (updated != null) {
++                exprent.replaceExprent(inner, updated);
++            }
++        }
++
++        if (exprent.type == Exprent.EXPRENT_INVOCATION) {
++            InvocationExprent invocation = (InvocationExprent) exprent;
++            StructClass cl = DecompilerContext.getStructContext().getClass(invocation.getClassName());
++            if (cl != null) {
++                StructMethod mtd = cl.getMethod(invocation.getName(), "([Ljava/lang/Object;)Ljava/lang/Object;");
++                if (mtd != null) {
++                    StructAnnotationAttribute annotations = mtd.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS);
++                    if (annotations != null) {
++                        for (AnnotationExprent annotation : annotations.getAnnotations()) {
++                            if (annotation.getClassName().equals("java/lang/invoke/MethodHandle$PolymorphicSignature")) {
++                                MethodDescriptor oldDesc = invocation.getDescriptor();
++                                invocation.setStringDescriptor(mtd.getDescriptor());
++                                invocation.setDescriptor(MethodDescriptor.parseDescriptor(mtd.getDescriptor()));
++
++                                List<Exprent> params = invocation.getParameters();
++                                NewExprent newParam = new NewExprent(VarType.VARTYPE_OBJECT.resizeArrayDim(1), Collections.emptyList(), null);
++                                newParam.setLstArrayElements(params);
++                                List<Exprent> newParams = new ArrayList<>();
++                                newParams.add(newParam);
++                                invocation.setParameters(newParams);
++
++                                List<Exprent> castExprents = new ArrayList<>();
++                                castExprents.add(invocation);
++                                castExprents.add(new ConstExprent(oldDesc.ret, null, null));
++                                FunctionExprent cast = new FunctionExprent(FunctionExprent.FUNCTION_CAST, castExprents, null);
++                                return cast;
++                            }
++                        }
++                    }
++                }
++            }
++        }
++        return null;
++    }
++
++}
