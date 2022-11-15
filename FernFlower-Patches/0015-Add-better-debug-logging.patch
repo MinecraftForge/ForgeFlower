@@ -1,0 +1,92 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Mon, 25 Sep 2017 13:46:14 -0700
+Subject: [PATCH] Add better debug logging
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+index eac80ace801517faca82a3a35ac31b58fdd667ab..17dc8a4a5d4e3164337f6d05ab1e00576191a0ca 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
+@@ -820,7 +820,7 @@ public class ClassWriter {
+             tracer.addTracer(codeTracer);
+           }
+           catch (Throwable t) {
+-            String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be written.";
++            String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + node.classStruct.qualifiedName + " couldn't be written.";
+             DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
+             methodWrapper.decompiledWithErrors = true;
+           }
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+index e32253528718631cd622d6af4ede4a85ff4af061..1910404be55e21448b74caf4d7682ade09a2a1b1 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+@@ -111,7 +111,7 @@ public class ClassWrapper {
+         }
+       }
+       catch (Throwable t) {
+-        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
++        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
+         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
+         isError = true;
+       }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index 301737310f3d346cc2229395551d504a34cb6dbc..b039480288011a5b9bdca635f7c66e85c92eb311 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
+ 
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+@@ -122,6 +123,7 @@ public class StructContext {
+   }
+ 
+   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
++    DecompilerContext.getLogger().writeMessage("Adding Archive: " + file.getAbsolutePath(), Severity.INFO);
+     try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
+       Enumeration<? extends ZipEntry> entries = archive.entries();
+       while (entries.hasMoreElements()) {
+@@ -140,6 +142,7 @@ public class StructContext {
+         if (!entry.isDirectory()) {
+           if (name.endsWith(".class")) {
+             byte[] bytes = InterpreterUtil.getBytes(archive, entry);
++            DecompilerContext.getLogger().writeMessage("  Loading Class: " + name, Severity.INFO);
+             StructClass cl = StructClass.create(new DataInputFullStream(bytes), isOwn, loader);
+             classes.put(cl.qualifiedName, cl);
+             unit.addClass(cl, name);
+diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
+index 2133783e40306b0c7a78db9f04ff079e341ece6a..489a71c0635dcf579bed3e8b4ce56d882b2f0108 100644
+--- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
++++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
+@@ -113,7 +113,8 @@ public class ConstantPool implements NewClassNameBuilder {
+     int size = in.readUnsignedShort();
+ 
+     for (int i = 1; i < size; i++) {
+-      switch (in.readUnsignedByte()) {
++      byte tag = (byte)in.readUnsignedByte();
++      switch (tag) {
+         case CodeConstants.CONSTANT_Utf8:
+           in.readUTF();
+           break;
+@@ -138,11 +139,17 @@ public class ConstantPool implements NewClassNameBuilder {
+         case CodeConstants.CONSTANT_Class:
+         case CodeConstants.CONSTANT_String:
+         case CodeConstants.CONSTANT_MethodType:
++        case CodeConstants.CONSTANT_Module:
++        case CodeConstants.CONSTANT_Package:
+           in.discard(2);
+           break;
+ 
+         case CodeConstants.CONSTANT_MethodHandle:
+           in.discard(3);
++          break;
++
++        default:
++            throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
+       }
+     }
+   }

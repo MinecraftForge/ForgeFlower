@@ -1,0 +1,1282 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Wed, 12 Apr 2017 10:08:10 -0700
+Subject: [PATCH] Fix output discrepancies to produce stable output
+
+Running JVM and timestamp result in output varying between
+environments and runs.
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c672ca4ea85 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -249,6 +249,7 @@ public class ClassesProcessor implements CodeConstants {
+                 stack.add(nestedClass);
+               }
+             }
++            Collections.sort(superNode.nested);
+           }
+         }
+       }
+@@ -454,7 +455,7 @@ public class ClassesProcessor implements CodeConstants {
+   }
+ 
+ 
+-  public static class ClassNode {
++  public static class ClassNode implements Comparable<ClassNode> {
+     public static final int CLASS_ROOT = 0;
+     public static final int CLASS_MEMBER = 1;
+     public static final int CLASS_ANONYMOUS = 2;
+@@ -545,6 +546,12 @@ public class ClassesProcessor implements CodeConstants {
+       isNonSealed = nonSealed;
+     }
+ 
++    @Override
++    public int compareTo(ClassNode o) {
++      //TODO: Take line numbers into account?
++      return this.classStruct.qualifiedName.compareTo(o.classStruct.qualifiedName);
++    }
++
+     public static class LambdaInformation {
+       public String method_name;
+       public String method_descriptor;
+diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+index 75d4d0937f1e39fe630b1318a4ad531de7fbd644..d0ae9a7c3b20de44cb202390cc0dfd4d690fee64 100644
+--- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
++++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+@@ -11,7 +11,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import java.io.*;
+ import java.nio.charset.StandardCharsets;
+ import java.util.*;
+-import java.util.jar.JarOutputStream;
++import java.util.jar.JarFile;
+ import java.util.jar.Manifest;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipFile;
+@@ -189,7 +189,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+       }
+ 
+       FileOutputStream fileStream = new FileOutputStream(file);
+-      ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
++      ZipOutputStream zipStream = new ZipOutputStream(fileStream);
++      if (manifest != null) {
++        final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
++        manifestEntry.setTime(STABLE_ZIP_TIMESTAMP);
++        zipStream.putNextEntry(manifestEntry);
++        manifest.write(zipStream);
++        zipStream.closeEntry();
++      }
+       mapArchiveStreams.put(file.getPath(), zipStream);
+     }
+     catch (IOException ex) {
+@@ -215,7 +222,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+       if (entry != null) {
+         try (InputStream in = srcArchive.getInputStream(entry)) {
+           ZipOutputStream out = mapArchiveStreams.get(file);
+-          out.putNextEntry(new ZipEntry(entryName));
++          final ZipEntry newEntry = new ZipEntry(entryName);
++          newEntry.setTime(entry.getTime());
++          out.putNextEntry(newEntry);
+           InterpreterUtil.copyStream(in, out);
+         }
+       }
+@@ -236,7 +245,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+ 
+     try {
+       ZipOutputStream out = mapArchiveStreams.get(file);
+-      out.putNextEntry(new ZipEntry(entryName));
++      ZipEntry entry = new ZipEntry(entryName);
++      entry.setTime(STABLE_ZIP_TIMESTAMP);
++      out.putNextEntry(entry);
+       if (content != null) {
+         out.write(content.getBytes(StandardCharsets.UTF_8));
+       }
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
+index fad1ddcfb9d2e43720b4cd3acaa165ba86e94892..cf03900654e427bd435ba6dc2d5a0cec8c8708e4 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IResultSaver.java
+@@ -4,6 +4,8 @@ package org.jetbrains.java.decompiler.main.extern;
+ import java.util.jar.Manifest;
+ 
+ public interface IResultSaver {
++  long STABLE_ZIP_TIMESTAMP = 0x386D4380; // 01/01/2000 00:00:00 java 8 breaks when using 0.
++
+   void saveFolder(String path);
+ 
+   void copyFile(String source, String path, String entryName);
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
+index 05e6e2d720aa5812ef12c4741eab06b8ea477e0f..f9c8c6a0334512699c545c881207194745427c96 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/LambdaProcessor.java
+@@ -19,6 +19,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.io.IOException;
+ import java.util.BitSet;
++import java.util.Collections;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
+@@ -110,6 +111,8 @@ public class LambdaProcessor {
+       mt.releaseResources();
+     }
+ 
++    Collections.sort(node.nested);
++
+     // build class hierarchy on lambda
+     for (ClassNode nd : node.nested) {
+       if (nd.type == ClassNode.CLASS_LAMBDA) {
+@@ -119,6 +122,7 @@ public class LambdaProcessor {
+ 
+           parent_class.nested.add(nd);
+           nd.parent = parent_class;
++          Collections.sort(parent_class.nested);
+         }
+       }
+     }
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 7a8655702381a23063c06594aa07bdd9b5c0a8fe..bc116db0c8ad1b1312f220b9b9e22c5d7cdddad8 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -218,6 +218,7 @@ public class NestedClassProcessor {
+       if (setEnclosing.contains(node.classStruct.qualifiedName)) {
+         node.nested.add(child);
+         child.parent = node;
++        Collections.sort(node.nested);
+ 
+         return true;
+       }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba9560279de55 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+@@ -194,7 +194,7 @@ public final class DomHelper {
+ 
+     RootStatement root = graphToStatement(graph);
+ 
+-    if (!processStatement(root, new HashMap<>())) {
++    if (!processStatement(root, new LinkedHashMap<>())) {
+ 
+       //			try {
+       //				DotExporter.toDotFile(root.getFirst().getStats().get(13), new File("c:\\Temp\\stat1.dot"));
+@@ -204,7 +204,7 @@ public final class DomHelper {
+       throw new RuntimeException("parsing failure!");
+     }
+ 
+-    LabelHelper.lowContinueLabels(root, new HashSet<>());
++    LabelHelper.lowContinueLabels(root, new LinkedHashSet<>());
+ 
+     SequenceHelper.condenseSequences(root);
+     root.buildMonitorFlags();
+@@ -467,11 +467,11 @@ public final class DomHelper {
+ 
+         boolean same = (post == head);
+ 
+-        HashSet<Statement> setNodes = new HashSet<>();
++        HashSet<Statement> setNodes = new LinkedHashSet<>();
+         HashSet<Statement> setPreds = new HashSet<>();
+ 
+         // collect statement nodes
+-        HashSet<Statement> setHandlers = new HashSet<>();
++        HashSet<Statement> setHandlers = new LinkedHashSet<>();
+         setHandlers.add(head);
+         while (true) {
+ 
+@@ -616,7 +616,7 @@ public final class DomHelper {
+               set.removeAll(setOldNodes);
+ 
+               if (setOldNodes.contains(key)) {
+-                mapExtPost.computeIfAbsent(newid, k -> new HashSet<>()).addAll(set);
++                mapExtPost.computeIfAbsent(newid, k -> new LinkedHashSet<>()).addAll(set);
+                 mapExtPost.remove(key);
+               }
+               else {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index f7addc6af8928ee2b2d1b9a09d13750413d4721f..79dceb558c4b99591e87d917739bcf4c66bda292 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -933,6 +933,7 @@ public class ExprProcessor implements CodeConstants {
+     }
+ 
+     TextBuffer buf = new TextBuffer();
++    lst = Exprent.sortIndexed(lst);
+ 
+     for (Exprent expr : lst) {
+       if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
+index 13d747a5ec6b961763f70b9174efeaf976336dbc..5428c1d1b10e0fbaa7c3b62725acd34d0632f37c 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
+@@ -480,10 +480,17 @@ public class FinallyProcessor {
+     // so remove dummy exit
+     startBlocks.remove(graph.getLast());
+     startBlocks.removeAll(tryBlocks);
++    List<BasicBlock> starts = new ArrayList<BasicBlock>(startBlocks);
++    Collections.sort(starts, new Comparator<BasicBlock>() {
++      @Override
++      public int compare(BasicBlock o1, BasicBlock o2) {
++        return o2.id - o1.id;
++      }
++    });
+ 
+     List<Area> lstAreas = new ArrayList<>();
+ 
+-    for (BasicBlock start : startBlocks) {
++    for (BasicBlock start : starts) {
+ 
+       Area arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
+       if (arr == null) {
+@@ -506,8 +513,17 @@ public class FinallyProcessor {
+     //			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
+     //		} catch(Exception ex){ex.printStackTrace();}
+ 
++    List<Entry<BasicBlock, Boolean>> lasts = new ArrayList<Entry<BasicBlock, Boolean>>(mapLast.entrySet());
++    // We must sort here to prevent decompile differences deriving from hash maps.
++    Collections.sort(lasts, new Comparator<Entry<BasicBlock, Boolean>>() {
++      @Override
++      public int compare(Entry<BasicBlock, Boolean> o1, Entry<BasicBlock, Boolean> o2) {
++        return o1.getKey().id - o2.getKey().id;
++      }
++    });
++
+     // INFO: empty basic blocks may remain in the graph!
+-    for (Entry<BasicBlock, Boolean> entry : mapLast.entrySet()) {
++    for (Entry<BasicBlock, Boolean> entry : lasts) {
+       BasicBlock last = entry.getKey();
+ 
+       if (entry.getValue()) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
+index fba6145dd11f851b2487c11ad2b529c94ef72c35..d7397455f8a67bb220e3236da77d0c4b14aeb1e5 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
+@@ -23,7 +23,7 @@ public final class LabelHelper {
+ 
+     liftClosures(root);
+ 
+-    lowContinueLabels(root, new HashSet<>());
++    lowContinueLabels(root, new LinkedHashSet<>());
+ 
+     lowClosures(root);
+   }
+@@ -120,7 +120,7 @@ public final class LabelHelper {
+         lowContinueLabels(st, edges);
+       }
+       else {
+-        lowContinueLabels(st, new HashSet<>());
++        lowContinueLabels(st, new LinkedHashSet<>());
+       }
+     }
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
+index 09e36dc4686d5e445a48325295ace392a79182f7..da65e74c53d2dc8f0e5f5ab538fe7b9defc5b135 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/DominatorTreeExceptionFilter.java
+@@ -14,10 +14,10 @@ public class DominatorTreeExceptionFilter {
+   private final Statement statement;
+ 
+   // idom, nodes
+-  private final Map<Integer, Set<Integer>> mapTreeBranches = new HashMap<>();
++  private final Map<Integer, Set<Integer>> mapTreeBranches = new LinkedHashMap<>();
+ 
+   // handler, range nodes
+-  private final Map<Integer, Set<Integer>> mapExceptionRanges = new HashMap<>();
++  private final Map<Integer, Set<Integer>> mapExceptionRanges = new LinkedHashMap<>();
+ 
+   // handler, head dom
+   private Map<Integer, Integer> mapExceptionDoms = new HashMap<>();
+@@ -67,7 +67,7 @@ public class DominatorTreeExceptionFilter {
+     for (int index = lstKeys.size() - 1; index >= 0; index--) {
+       Integer key = lstKeys.get(index);
+       Integer idom = orderedIDoms.get(index);
+-      mapTreeBranches.computeIfAbsent(idom, k -> new HashSet<>()).add(key);
++      mapTreeBranches.computeIfAbsent(idom, k -> new LinkedHashSet<>()).add(key);
+     }
+ 
+     Integer firstid = statement.getFirst().id;
+@@ -79,7 +79,7 @@ public class DominatorTreeExceptionFilter {
+       List<Statement> lstPreds = stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.BACKWARD);
+       if (!lstPreds.isEmpty()) {
+ 
+-        Set<Integer> set = new HashSet<>();
++        Set<Integer> set = new LinkedHashSet<>();
+ 
+         for (Statement st : lstPreds) {
+           set.add(st.id);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
+index 82ae0a25a20d2727f611d359e699d6666d1e0ae4..a86f0d2887c6c19cb1d911ec43830eb69f8aaada 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/decompose/FastExtendedPostdominanceHelper.java
+@@ -14,9 +14,9 @@ public class FastExtendedPostdominanceHelper {
+ 
+   private List<Statement> lstReversePostOrderList;
+ 
+-  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<>();
++  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new LinkedHashMap<>();
+ 
+-  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<>();
++  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new LinkedHashMap<>();
+ 
+   private Statement statement;
+ 
+@@ -26,7 +26,7 @@ public class FastExtendedPostdominanceHelper {
+ 
+     this.statement = statement;
+ 
+-    HashSet<Integer> set = new HashSet<>();
++    HashSet<Integer> set = new LinkedHashSet<>();
+     for (Statement st : statement.getStats()) {
+       set.add(st.id);
+     }
+@@ -54,7 +54,9 @@ public class FastExtendedPostdominanceHelper {
+     Set<Entry<Integer, FastFixedSet<Integer>>> entries = mapExtPostdominators.entrySet();
+     HashMap<Integer, Set<Integer>> res = new HashMap<>(entries.size());
+     for (Entry<Integer, FastFixedSet<Integer>> entry : entries) {
+-      res.put(entry.getKey(), entry.getValue().toPlainSet());
++      List<Integer> lst = new ArrayList<>(entry.getValue().toPlainSet());
++      Collections.sort(lst); // Order Matters!
++      res.put(entry.getKey(), new LinkedHashSet<>(lst));
+     }
+ 
+     return res;
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index 3882cfd68af7f55938311363a69a2dded3fffbab..48d38ff8657fd6d237fe2d75677d89b8bbd8852d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -220,7 +220,7 @@ public class ConstExprent extends Exprent {
+         else if (floatVal == Float.NEGATIVE_INFINITY) {
+           return new TextBuffer("-1.0F / 0.0F");
+         }
+-        return new TextBuffer(value.toString()).append('F');
++        return new TextBuffer(trimZeros(value.toString())).append('F');
+ 
+       case CodeConstants.TYPE_DOUBLE:
+         double doubleVal = (Double)value;
+@@ -251,15 +251,15 @@ public class ConstExprent extends Exprent {
+           }
+         }
+         else if (Double.isNaN(doubleVal)) {
+-          return new TextBuffer("0.0 / 0.0");
++          return new TextBuffer("0.0D / 0.0D");
+         }
+         else if (doubleVal == Double.POSITIVE_INFINITY) {
+-          return new TextBuffer("1.0 / 0.0");
++          return new TextBuffer("1.0D / 0.0D");
+         }
+         else if (doubleVal == Double.NEGATIVE_INFINITY) {
+-          return new TextBuffer("-1.0 / 0.0");
++          return new TextBuffer("-1.0D / 0.0D");
+         }
+-        return new TextBuffer(value.toString());
++        return new TextBuffer(trimZeros(value.toString())).append('D');
+ 
+       case CodeConstants.TYPE_NULL:
+         return new TextBuffer("null");
+@@ -277,6 +277,18 @@ public class ConstExprent extends Exprent {
+ 
+     throw new RuntimeException("invalid constant type: " + constType);
+   }
++  
++  // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
++  // This trims them all down to only the necessary amount.
++  private static String trimZeros(String value) {
++      int i = value.length() - 1;
++      while (i >= 0 && value.charAt(i) == '0') {
++          i--;
++      }
++      if (value.charAt(i) == '.')
++        i++;
++      return value.substring(0, i + 1);
++  }
+ 
+   private boolean inConstantVariable(String classSignature, String variableName) {
+     ClassesProcessor.ClassNode node = (ClassesProcessor.ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9aa0e0899 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -15,7 +15,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+ 
++import java.util.ArrayList;
+ import java.util.Collection;
++import java.util.Collections;
++import java.util.Comparator;
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map.Entry;
+@@ -131,6 +134,38 @@ public class Exprent implements IMatchable {
+     }
+   }
+ 
++  public static List<? extends Exprent> sortIndexed(List<? extends Exprent> lst) {
++      List<Exprent> ret = new ArrayList<Exprent>();
++      List<VarExprent> defs = new ArrayList<VarExprent>();
++
++      Comparator<VarExprent> comp = new Comparator<VarExprent>() {
++        public int compare(VarExprent o1, VarExprent o2) {
++          return o1.getIndex() - o2.getIndex();
++        }
++      };
++
++      for (Exprent exp : lst) {
++        boolean isDef = exp instanceof VarExprent && ((VarExprent)exp).isDefinition();
++        if (!isDef) {
++          if (defs.size() > 0) {
++            Collections.sort(defs, comp);
++            ret.addAll(defs);
++            defs.clear();
++          }
++          ret.add(exp);
++        }
++        else {
++          defs.add((VarExprent)exp);
++        }
++      }
++
++      if (defs.size() > 0) {
++        Collections.sort(defs, comp);
++        ret.addAll(defs);
++      }
++      return ret;
++    }
++  
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+index 53afa148cf8ae11ceeacf454673a1963d4892212..a1f931b79adb35660ee0f29b1d522214384a044f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
++import java.util.ArrayList;
+ import java.util.Map.Entry;
+ import java.util.Objects;
+ 
+@@ -57,7 +58,7 @@ public class SSAConstructorSparseEx {
+     // DotExporter.toDotFile(dgraph, new File("c:\\Temp\\gr12_my.dot"));
+     // } catch(Exception ex) {ex.printStackTrace();}
+ 
+-    HashSet<Integer> setInit = new HashSet<>();
++    List<Integer> setInit = new ArrayList<>();
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+index c6287d302d83548e19f51260e1e984dc991e7f86..80d6d34d3329f831e8add4a0617b8e8bf8a86006 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
+@@ -68,7 +68,7 @@ public class SSAUConstructorSparseEx {
+     FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+     DirectGraph dgraph = flatthelper.buildDirectGraph(root);
+ 
+-    HashSet<Integer> setInit = new HashSet<>();
++    List<Integer> setInit = new ArrayList<>();
+     for (int i = 0; i < 64; i++) {
+       setInit.add(i);
+     }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+index 58f94462caa7a8212c3e9e36e343e2f4c55582f5..d355e63f8a3252bf58f0cdf18f42e6732132efef 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+@@ -5,7 +5,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
+ 
+ import java.util.Collection;
+-import java.util.HashSet;
++import java.util.LinkedHashSet;
++import java.util.Set;
+ 
+ 
+ public class GeneralStatement extends Statement {
+@@ -25,7 +26,7 @@ public class GeneralStatement extends Statement {
+     first = head;
+     stats.addWithKey(head, head.id);
+ 
+-    HashSet<Statement> set = new HashSet<>(statements);
++    Set<Statement> set = new LinkedHashSet<>(statements);
+     set.remove(head);
+ 
+     for (Statement st : set) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+index 133d87f45ab3b057e78589a53529821e5a6a6dea..119949c8bd35082b95cbfde2b185aa2d23034224 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/SwitchStatement.java
+@@ -46,7 +46,16 @@ public final class SwitchStatement extends Statement {
+       regularSuccessors.remove(post);
+     }
+     defaultEdge = head.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0);
+-    for (Statement successor : regularSuccessors) {
++
++    //We need to use set above in case we have multiple edges to the same node. But HashSets iterator is not ordered, so sort
++    List<Statement> sorted = new ArrayList<>(regularSuccessors);
++    Collections.sort(sorted, new Comparator<Statement>() {
++      @Override
++      public int compare(Statement o1, Statement o2) {
++        return o1.id - o2.id;
++      }
++    });
++    for (Statement successor : sorted) {
+       stats.addWithKey(successor, successor.id);
+     }
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+index 0bdf9048e55b5d8873959ce3146b913805406fab..f9ffa3a3279fd8c3639489260a0dc4a01950c1a2 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
+@@ -277,7 +277,10 @@ public class VarVersionsProcessor {
+     Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
+ 
+     // map var-version pairs on new var indexes
+-    for (VarVersionPair pair : new ArrayList<>(mapExprentMinTypes.keySet())) {
++    List<VarVersionPair> vvps = new ArrayList<>(mapExprentMinTypes.keySet());
++    Collections.sort(vvps, (o1, o2) -> o1.var != o2.var ?  o1.var - o2.var : o1.version - o2.version);
++
++    for (VarVersionPair pair : vvps) {
+ 
+       if (pair.version >= 0) {
+         int newIndex = pair.version == 1 ? pair.var : counters.getCounterAndIncrement(CounterContainer.VAR_COUNTER);
+diff --git a/testData/results/MoreAnnotations.dec b/testData/results/MoreAnnotations.dec
+index 7ea22e010e25dae99314be45985743c85da03b33..8a16a352f46a45a57f5dd2cbb8fbd14161178022 100644
+--- a/testData/results/MoreAnnotations.dec
++++ b/testData/results/MoreAnnotations.dec
+@@ -35,7 +35,7 @@ public @interface MoreAnnotations {
+       intArray = {1, 0, 2147483647, -2147483648},
+       byteArray = {1, 0, 127, -128, -1},
+       floatArray = {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F},
+-      doubleArray = {1.0, 0.0, 1.7976931348623157E308, 4.9E-324, 0.0 / 0.0, 1.0 / 0.0, -1.0 / 0.0},
++      doubleArray = {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0D, 1.0D / 0.0D, -1.0D / 0.0D},
+       booleanArray = {true, false},
+       shortArray = {1, 0, 32767, -32768, -1},
+       longArray = {1L, 0L, 9223372036854775807L, -9223372036854775808L},
+@@ -53,7 +53,7 @@ public @interface MoreAnnotations {
+ 
+    float floatValue() default 1.0F / 0.0F;
+ 
+-   double doubleValue() default 0.0 / 0.0;
++   double doubleValue() default 0.0D / 0.0D;
+ 
+    boolean booleanValue() default true;
+ 
+@@ -77,7 +77,7 @@ public @interface MoreAnnotations {
+ 
+    float[] floatArray() default {1.0F, 0.0F, 3.4028235E38F, 1.4E-45F, 0.0F / 0.0F, 1.0F / 0.0F, -1.0F / 0.0F};
+ 
+-   double[] doubleArray() default {1.0, 0.0, 1.7976931348623157E308, 4.9E-324, 0.0 / 0.0, 1.0 / 0.0, -1.0 / 0.0};
++   double[] doubleArray() default {1.0D, 0.0D, 1.7976931348623157E308D, 4.9E-324D, 0.0D / 0.0D, 1.0D / 0.0D, -1.0D / 0.0D};
+ 
+    boolean[] booleanArray() default {true, false};
+ 
+@@ -95,13 +95,13 @@ public @interface MoreAnnotations {
+ 
+    Class<? extends CharSequence>[] classArray() default {CharSequence.class, String.class, StringBuilder.class};
+ 
++   public @interface NestedAnnotation {
++      String value() default "MyString";
++   }
++
+    public static enum TestEnum {
+       FirstValue,
+       SecondValue;
+    }
+-
+-   public @interface NestedAnnotation {
+-      String value() default "MyString";
+-   }
+ }
+ 
+diff --git a/testData/results/TestAnonymousClass.dec b/testData/results/TestAnonymousClass.dec
+index 9cd9f538a6a53faa511ceac028001ccef418c3aa..3ea3c7058eadc696e538c72e018bd4076b07a397 100644
+--- a/testData/results/TestAnonymousClass.dec
++++ b/testData/results/TestAnonymousClass.dec
+@@ -67,15 +67,8 @@ public abstract class TestAnonymousClass {
+       boolean var1 = true;// 39
+    }// 40
+ 
+-   static class InnerRecursive {
+-      InnerRecursive r;
+-
+-      public InnerRecursive(InnerRecursive var1) {
+-         this.r = var1;// 105
+-      }// 106
+-
+-      void foo() {
+-      }// 110
++   interface I {
++      void foo() throws Exception;
+    }
+ 
+    private static class Inner {
+@@ -87,8 +80,15 @@ public abstract class TestAnonymousClass {
+       };
+    }
+ 
+-   interface I {
+-      void foo() throws Exception;
++   static class InnerRecursive {
++      TestAnonymousClass.InnerRecursive r;
++
++      public InnerRecursive(TestAnonymousClass.InnerRecursive var1) {
++         this.r = var1;// 105
++      }// 106
++
++      void foo() {
++      }// 110
+    }
+ }
+ 
+@@ -180,24 +180,24 @@ class 'pkg/TestAnonymousClass' {
+    }
+ }
+ 
++class 'pkg/TestAnonymousClass$Inner$1' {
++   method 'run ()V' {
++      0      76
++      1      76
++      2      77
++      3      77
++      4      78
++   }
++}
++
+ class 'pkg/TestAnonymousClass$InnerRecursive' {
+    method '<init> (Lpkg/TestAnonymousClass$InnerRecursive;)V' {
+-      6      73
+-      9      74
++      6      86
++      9      87
+    }
+ 
+    method 'foo ()V' {
+-      0      77
+-   }
+-}
+-
+-class 'pkg/TestAnonymousClass$Inner$1' {
+-   method 'run ()V' {
+-      0      83
+-      1      83
+-      2      84
+-      3      84
+-      4      85
++      0      90
+    }
+ }
+ 
+@@ -223,9 +223,9 @@ Lines mapping:
+ 53 <-> 18
+ 54 <-> 19
+ 55 <-> 20
+-66 <-> 84
+-67 <-> 85
+-68 <-> 86
++66 <-> 77
++67 <-> 78
++68 <-> 79
+ 75 <-> 24
+ 76 <-> 25
+ 77 <-> 26
+@@ -234,9 +234,9 @@ Lines mapping:
+ 91 <-> 37
+ 92 <-> 38
+ 93 <-> 39
+-105 <-> 74
+-106 <-> 75
+-110 <-> 78
++105 <-> 87
++106 <-> 88
++110 <-> 91
+ Not mapped:
+ 18
+ 104
+diff --git a/testData/results/TestAnonymousClassConstructor.dec b/testData/results/TestAnonymousClassConstructor.dec
+index e4d02ffde3166e0b22f82550fa73bdea4c6d02ac..e48e5bc934ccd1ed1aedd0fcde645026bbb4e3fe 100644
+--- a/testData/results/TestAnonymousClassConstructor.dec
++++ b/testData/results/TestAnonymousClassConstructor.dec
+@@ -65,16 +65,16 @@ class TestAnonymousClassConstructor {
+       System.out.println("n(): " + s);// 53
+    }// 54
+ 
+-   static class InnerStaticPublic {
+-      public InnerStaticPublic(long a, int b) {
+-         TestAnonymousClassConstructor.n(a + "+" + b);// 100
+-      }// 101
++   class InnerPrivate {
++      private InnerPrivate(long a, int b) {
++         TestAnonymousClassConstructor.n(a + "+" + b);// 64
++      }// 65
+    }
+ 
+-   static class InnerStaticPublicString {
+-      public InnerStaticPublicString(String s) {
+-         TestAnonymousClassConstructor.n(s);// 94
+-      }// 95
++   class InnerPrivateString {
++      private InnerPrivateString(String s) {
++         TestAnonymousClassConstructor.n(s);// 58
++      }// 59
+    }
+ 
+    class InnerPublic {
+@@ -101,16 +101,16 @@ class TestAnonymousClassConstructor {
+       }// 71
+    }
+ 
+-   class InnerPrivate {
+-      private InnerPrivate(long a, int b) {
+-         TestAnonymousClassConstructor.n(a + "+" + b);// 64
+-      }// 65
++   static class InnerStaticPublic {
++      public InnerStaticPublic(long a, int b) {
++         TestAnonymousClassConstructor.n(a + "+" + b);// 100
++      }// 101
+    }
+ 
+-   class InnerPrivateString {
+-      private InnerPrivateString(String s) {
+-         TestAnonymousClassConstructor.n(s);// 58
+-      }// 59
++   static class InnerStaticPublicString {
++      public InnerStaticPublicString(String s) {
++         TestAnonymousClassConstructor.n(s);// 94
++      }// 95
+    }
+ }
+ 
+@@ -190,19 +190,19 @@ class 'pkg/TestAnonymousClassConstructor' {
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
+-   method '<init> (JI)V' {
+-      f      69
+-      18      69
+-      1b      69
+-      1e      70
++class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
++   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
++      14      69
++      1e      69
++      21      69
++      24      70
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
+-   method '<init> (Ljava/lang/String;)V' {
+-      5      75
+-      8      76
++class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
++   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
++      a      75
++      d      76
+    }
+ }
+ 
+@@ -238,19 +238,19 @@ class 'pkg/TestAnonymousClassConstructor$InnerStaticPrivateString' {
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerPrivate' {
+-   method '<init> (Lpkg/TestAnonymousClassConstructor;JI)V' {
+-      14      105
+-      1e      105
+-      21      105
+-      24      106
++class 'pkg/TestAnonymousClassConstructor$InnerStaticPublic' {
++   method '<init> (JI)V' {
++      f      105
++      18      105
++      1b      105
++      1e      106
+    }
+ }
+ 
+-class 'pkg/TestAnonymousClassConstructor$InnerPrivateString' {
+-   method '<init> (Lpkg/TestAnonymousClassConstructor;Ljava/lang/String;)V' {
+-      a      111
+-      d      112
++class 'pkg/TestAnonymousClassConstructor$InnerStaticPublicString' {
++   method '<init> (Ljava/lang/String;)V' {
++      5      111
++      8      112
+    }
+ }
+ 
+@@ -281,10 +281,10 @@ Lines mapping:
+ 50 <-> 62
+ 53 <-> 65
+ 54 <-> 66
+-58 <-> 112
+-59 <-> 113
+-64 <-> 106
+-65 <-> 107
++58 <-> 76
++59 <-> 77
++64 <-> 70
++65 <-> 71
+ 70 <-> 100
+ 71 <-> 101
+ 76 <-> 94
+@@ -293,10 +293,10 @@ Lines mapping:
+ 83 <-> 89
+ 88 <-> 82
+ 89 <-> 83
+-94 <-> 76
+-95 <-> 77
+-100 <-> 70
+-101 <-> 71
++94 <-> 112
++95 <-> 113
++100 <-> 106
++101 <-> 107
+ Not mapped:
+ 57
+ 63
+diff --git a/testData/results/TestClassSimpleBytecodeMapping.dec b/testData/results/TestClassSimpleBytecodeMapping.dec
+index 5b26ef8b403a0cc1c2b9858ed3c9ce84108c7562..7c03120a91f0fc0a5cecbbff4cd7b2c0d0da2c94 100644
+--- a/testData/results/TestClassSimpleBytecodeMapping.dec
++++ b/testData/results/TestClassSimpleBytecodeMapping.dec
+@@ -33,17 +33,17 @@ public class TestClassSimpleBytecodeMapping {
+       var1.run();// 49
+    }// 50
+ 
+-   public class InnerClass2 {
+-      public void print() {
+-         System.out.println("Inner2");// 54
+-      }// 55
+-   }
+-
+    public class InnerClass {
+       public void print() {
+          System.out.println("Inner");// 44
+       }// 45
+    }
++
++   public class InnerClass2 {
++      public void print() {
++         System.out.println("Inner2");// 54
++      }// 55
++   }
+ }
+ 
+ class 'pkg/TestClassSimpleBytecodeMapping$1' {
+@@ -96,7 +96,7 @@ class 'pkg/TestClassSimpleBytecodeMapping' {
+    }
+ }
+ 
+-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
++class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
+    method 'print ()V' {
+       0      37
+       3      37
+@@ -105,7 +105,7 @@ class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    }
+ }
+ 
+-class 'pkg/TestClassSimpleBytecodeMapping$InnerClass' {
++class 'pkg/TestClassSimpleBytecodeMapping$InnerClass2' {
+    method 'print ()V' {
+       0      43
+       3      43
+@@ -130,11 +130,11 @@ Lines mapping:
+ 36 <-> 25
+ 38 <-> 27
+ 40 <-> 30
+-44 <-> 44
+-45 <-> 45
++44 <-> 38
++45 <-> 39
+ 49 <-> 33
+ 50 <-> 34
+-54 <-> 38
+-55 <-> 39
++54 <-> 44
++55 <-> 45
+ Not mapped:
+ 39
+diff --git a/testData/results/TestExtendingSubclass.dec b/testData/results/TestExtendingSubclass.dec
+index f7be1b46d3058aba92f7a21ffc9558068dd26226..6bab8435926e1c10171fc97b61075ec58dba2572 100644
+--- a/testData/results/TestExtendingSubclass.dec
++++ b/testData/results/TestExtendingSubclass.dec
+@@ -1,35 +1,35 @@
+ package pkg;
+ 
+ public class TestExtendingSubclass {
++   class Subclass1 {
++      Subclass1(String name) {
++      }// 9
++   }
++
+    class Subclass2 extends Subclass1 {
+       Subclass2(String name) {
+          super(name);// 14
+       }// 15
+    }
+-
+-   class Subclass1 {
+-      Subclass1(String name) {
+-      }// 9
+-   }
+ }
+ 
+-class 'pkg/TestExtendingSubclass$Subclass2' {
++class 'pkg/TestExtendingSubclass$Subclass1' {
+    method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+-      8      5
+-      b      6
++      9      5
+    }
+ }
+ 
+-class 'pkg/TestExtendingSubclass$Subclass1' {
++class 'pkg/TestExtendingSubclass$Subclass2' {
+    method '<init> (Lpkg/TestExtendingSubclass;Ljava/lang/String;)V' {
+-      9      11
++      8      10
++      b      11
+    }
+ }
+ 
+ Lines mapping:
+-9 <-> 12
+-14 <-> 6
+-15 <-> 7
++9 <-> 6
++14 <-> 11
++15 <-> 12
+ Not mapped:
+ 8
+ 13
+diff --git a/testData/results/TestInnerLocal.dec b/testData/results/TestInnerLocal.dec
+index b270e4eea9caf36d5c66b64d18e33ca8d8fcae10..9009b85453ba2aae2ac4e32f94fb082dcd6d3c81 100644
+--- a/testData/results/TestInnerLocal.dec
++++ b/testData/results/TestInnerLocal.dec
+@@ -30,6 +30,14 @@ public class TestInnerLocal {
+       new Inner1Static.Inner2Static("test");// 26
+    }// 27
+ 
++   class Inner1 {
++      final String x;
++
++      public Inner1(String var2) {
++         this.x = var2;// 46
++      }// 47
++   }
++
+    static class Inner1Static {
+       final String x;
+ 
+@@ -45,14 +53,6 @@ public class TestInnerLocal {
+          }// 46
+       }
+    }
+-
+-   class Inner1 {
+-      final String x;
+-
+-      public Inner1(@Deprecated String x) {
+-         this.x = x;// 32
+-      }// 33
+-   }
+ }
+ 
+ class 'pkg/TestInnerLocal$1Inner' {
+@@ -86,47 +86,47 @@ class 'pkg/TestInnerLocal$2Inner' {
+    }
+ }
+ 
+-class 'pkg/TestInnerLocal$Inner1Static' {
+-   method '<init> (Ljava/lang/String;)V' {
+-      6      36
+-      9      37
++class 'TestInnerLocal$Inner1' {
++   method '<init> (LTestInnerLocal;Ljava/lang/String;)V' {
++      b      34
++      e      35
+    }
+ }
+ 
+-class 'pkg/TestInnerLocal$Inner1Static$Inner2Static' {
++class 'TestInnerLocal$Inner1Static' {
+    method '<init> (Ljava/lang/String;)V' {
+-      6      43
+-      9      44
++      6      42
++      9      43
+    }
+ }
+ 
+-class 'pkg/TestInnerLocal$Inner1' {
+-   method '<init> (Lpkg/TestInnerLocal;Ljava/lang/String;)V' {
+-      b      52
+-      e      53
++class 'pkg/TestInnerLocal$Inner1Static$Inner2Static' {
++   method '<init> (Ljava/lang/String;)V' {
++      6      49
++      9      50
+    }
+ }
+ 
+ Lines mapping:
+-8 <-> 9
+-9 <-> 10
+-11 <-> 13
+-12 <-> 14
+-13 <-> 15
+-14 <-> 16
+-20 <-> 23
+-21 <-> 24
+-23 <-> 27
+-24 <-> 28
+-25 <-> 29
+-26 <-> 30
+-27 <-> 31
+-32 <-> 53
+-33 <-> 54
+-39 <-> 37
+-40 <-> 38
+-45 <-> 44
+-46 <-> 45
++22 <-> 7
++23 <-> 8
++25 <-> 11
++26 <-> 12
++27 <-> 13
++28 <-> 14
++34 <-> 21
++35 <-> 22
++37 <-> 25
++38 <-> 26
++39 <-> 27
++40 <-> 28
++41 <-> 29
++46 <-> 35
++47 <-> 36
++53 <-> 43
++54 <-> 44
++59 <-> 50
++60 <-> 51
+ Not mapped:
+ 7
+ 19
+diff --git a/testData/results/TestInnerSignature.dec b/testData/results/TestInnerSignature.dec
+index b2e4d0f757e55cd9ab6bd77aa9ed0afb33989e7d..8aab3c2b9f56368f1350f1ac98262c761bf6ed19 100644
+--- a/testData/results/TestInnerSignature.dec
++++ b/testData/results/TestInnerSignature.dec
+@@ -11,18 +11,6 @@ public class TestInnerSignature<A, B, C> {
+       this.c = c;// 11
+    }// 12
+ 
+-   public static class InnerStatic<A, B, C> {
+-      A a;
+-      B b;
+-      C c;
+-
+-      public InnerStatic(A a, @Deprecated B b, C c) {
+-         this.a = a;// 32
+-         this.b = b;// 33
+-         this.c = c;// 34
+-      }// 35
+-   }
+-
+    public class Inner {
+       A a;
+       B b;
+@@ -34,6 +22,18 @@ public class TestInnerSignature<A, B, C> {
+          this.c = c;// 22
+       }// 23
+    }
++
++   public static class InnerStatic<A, B, C> {
++      A a;
++      B b;
++      C c;
++
++      public InnerStatic(A var1, B var2, C var3) {
++         this.a = var1;// 46
++         this.b = var2;// 47
++         this.c = var3;// 48
++      }// 49
++   }
+ }
+ 
+ class 'pkg/TestInnerSignature' {
+@@ -45,37 +45,37 @@ class 'pkg/TestInnerSignature' {
+    }
+ }
+ 
+-class 'pkg/TestInnerSignature$InnerStatic' {
+-   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+-      6      19
+-      b      20
+-      10      21
+-      13      22
++class 'TestInnerSignature$Inner' {
++   method '<init> (LTestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      b      17
++      10      18
++      16      19
++      19      20
+    }
+ }
+ 
+-class 'pkg/TestInnerSignature$Inner' {
+-   method '<init> (Lpkg/TestInnerSignature;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
+-      b      31
+-      10      32
+-      16      33
+-      19      34
++class 'TestInnerSignature$InnerStatic' {
++   method '<init> (Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V' {
++      6      29
++      b      30
++      10      31
++      13      32
+    }
+ }
+ 
+ Lines mapping:
+-9 <-> 9
+-10 <-> 10
+-11 <-> 11
+-12 <-> 12
+-20 <-> 32
+-21 <-> 33
+-22 <-> 34
+-23 <-> 35
+-32 <-> 20
+-33 <-> 21
+-34 <-> 22
+-35 <-> 23
++23 <-> 7
++24 <-> 8
++25 <-> 9
++26 <-> 10
++34 <-> 18
++35 <-> 19
++36 <-> 20
++37 <-> 21
++46 <-> 30
++47 <-> 31
++48 <-> 32
++49 <-> 33
+ Not mapped:
+ 8
+ 19
+diff --git a/testData/results/TestMethodParameters.dec b/testData/results/TestMethodParameters.dec
+index 21f0f129d1bc260e2dbc7ce77f07ece57711bf75..af7ce865f5d946980010ee02c3e5be384a041064 100644
+--- a/testData/results/TestMethodParameters.dec
++++ b/testData/results/TestMethodParameters.dec
+@@ -21,6 +21,14 @@ public class TestMethodParameters {
+ 
+    }// 39
+ 
++   class C1 {
++      C1(@Deprecated int var2) {
++      }// 24
++
++      void m(@Deprecated int var1) {
++      }// 25
++   }
++
+    static class C2 {
+       C2(@Deprecated int var1) {
+       }// 29
+@@ -31,14 +39,6 @@ public class TestMethodParameters {
+       static void m2(@Deprecated int var0) {
+       }// 31
+    }
+-
+-   class C1 {
+-      C1(@Deprecated int var2) {
+-      }// 24
+-
+-      void m(@Deprecated int var1) {
+-      }// 25
+-   }
+ }
+ 
+ class 'pkg/TestMethodParameters' {
+@@ -69,26 +69,26 @@ class 'pkg/TestMethodParameters$1Local' {
+    }
+ }
+ 
+-class 'pkg/TestMethodParameters$C2' {
+-   method '<init> (I)V' {
+-      4      25
++class 'pkg/TestMethodParameters$C1' {
++   method '<init> (Lpkg/TestMethodParameters;I)V' {
++      9      25
+    }
+ 
+-   method 'm1 (I)V' {
++   method 'm (I)V' {
+       0      28
+    }
++}
+ 
+-   method 'm2 (I)V' {
+-      0      31
++class 'pkg/TestMethodParameters$C2' {
++   method '<init> (I)V' {
++      4      33
+    }
+-}
+ 
+-class 'pkg/TestMethodParameters$C1' {
+-   method '<init> (Lpkg/TestMethodParameters;I)V' {
+-      9      36
++   method 'm1 (I)V' {
++      0      36
+    }
+ 
+-   method 'm (I)V' {
++   method 'm2 (I)V' {
+       0      39
+    }
+ }
+@@ -97,11 +97,11 @@ Lines mapping:
+ 19 <-> 5
+ 20 <-> 8
+ 21 <-> 11
+-24 <-> 37
+-25 <-> 40
+-29 <-> 26
+-30 <-> 29
+-31 <-> 32
++24 <-> 26
++25 <-> 29
++29 <-> 34
++30 <-> 37
++31 <-> 40
+ 36 <-> 16
+ 37 <-> 19
+ 39 <-> 22
+diff --git a/testData/results/TestSwitchOnEnum.dec b/testData/results/TestSwitchOnEnum.dec
+index e63cfe50c3d0c9fddd4f3051d7bda5df33523cbb..6e1f77fa247005cb8bb012a91aff96ed78103204 100644
+--- a/testData/results/TestSwitchOnEnum.dec
++++ b/testData/results/TestSwitchOnEnum.dec
+@@ -36,15 +36,15 @@ public class TestSwitchOnEnum {
+ 
+       }// 46
+ 
+-      static enum B {
+-         B1,
+-         B2;
+-      }
+-
+       static enum A {
+          A1,
+          A2;
+       }
++
++      static enum B {
++         B1,
++         B2;
++      }
+    }
+ }
+ 
