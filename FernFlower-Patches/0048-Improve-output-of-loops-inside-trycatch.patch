@@ -1,0 +1,76 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: SuperCoder79 <25208576+SuperCoder7979@users.noreply.github.com>
+Date: Tue, 15 Nov 2022 13:57:49 -0500
+Subject: [PATCH] Improve output of loops inside trycatch
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java
+index b95ef0727bc66c3401161abbbcc935c88f9abd42..690b54e282bff7edbd3bca9e3d79b918fb61ac58 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DecHelper.java
+@@ -1,6 +1,8 @@
+ // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package org.jetbrains.java.decompiler.modules.decompiler;
+ 
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
+ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+@@ -192,6 +194,26 @@ public final class DecHelper {
+     return setHandlers;
+   }
+ 
++  public static boolean invalidHeadMerge(Statement head) {
++    // Don't build a trycatch around a loop-head if statement, as we know that DoStatement should be built first.
++    // Since CatchStatement's isHead is run after DoStatement's, we can assume that a loop was not able to be built.
++    Statement ifhead = findIfHead(head);
++
++    return ifhead != null && head.getContinueSet().contains(ifhead.getFirst());
++  }
++
++  private static Statement findIfHead(Statement head) {
++    while (head != null && head.type != Statement.StatementType.IF) {
++      if (head.type != Statement.StatementType.SEQUENCE) {
++        return null;
++      }
++
++      head = head.getFirst();
++    }
++
++    return head;
++  }
++
+   public static List<Exprent> copyExprentList(List<? extends Exprent> lst) {
+     List<Exprent> ret = new ArrayList<>();
+     for (Exprent expr : lst) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
+index ef2fb6128921b74b815b39d6be6e9c7290a2be70..788f116a39c069d5d9c0bd8e2c44bd2b37e0a4f8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchAllStatement.java
+@@ -86,6 +86,10 @@ public final class CatchAllStatement extends Statement {
+             return null;
+           }
+ 
++          if (DecHelper.invalidHeadMerge(head)) {
++            return null;
++          }
++
+           if (DecHelper.checkStatementExceptions(Arrays.asList(head, exc))) {
+             return new CatchAllStatement(head, exc);
+           }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
+index 9db86209721e133416de8379accb6ee5a1235d01..a1d700f0129bd04957067c5bc00f90e6961b1879 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/CatchStatement.java
+@@ -133,6 +133,10 @@ public final class CatchStatement extends Statement {
+           }
+         }
+ 
++        if (DecHelper.invalidHeadMerge(head)) {
++          return null;
++        }
++
+         if (DecHelper.checkStatementExceptions(lst)) {
+           return new CatchStatement(head, next, setHandlers);
+         }
