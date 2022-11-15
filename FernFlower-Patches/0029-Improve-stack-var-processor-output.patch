@@ -369,9 +369,45 @@ index eea545270ec8d5bff3e4f0eae01520f8756022d3..209fb0603e4e283ebd64cb4c993dc245
      VarVersionPair pair = getVarVersionPair();
      if (lvt != null)
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 3917ae87c6d147e808768ffc717cc24b08b3f433..737c88143708e0b6b19a6b335e1d4353064ecb94 100644
+index 3917ae87c6d147e808768ffc717cc24b08b3f433..425835112eb41eef31457d309e8c66332402e9cc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
+@@ -98,7 +98,7 @@ public class SSAConstructorSparseEx {
+       mergeInVarMaps(node, dgraph);
+ 
+       SFormsFastMapDirect varmap = inVarVersions.get(node.id);
+-      varmap = new SFormsFastMapDirect(varmap);
++      varmap = varmap.getCopy();
+ 
+       SFormsFastMapDirect[] varmaparr = new SFormsFastMapDirect[]{varmap, null};
+ 
+@@ -155,7 +155,7 @@ public class SSAConstructorSparseEx {
+ 
+             SFormsFastMapDirect varmapFalse;
+             if (varmaparr[1] == null) {
+-              varmapFalse = new SFormsFastMapDirect(varmaparr[0]);
++              varmapFalse = varmaparr[0].getCopy();
+             }
+             else {
+               varmapFalse = varmaparr[1];
+@@ -175,7 +175,7 @@ public class SSAConstructorSparseEx {
+           case FunctionExprent.FUNCTION_CADD:
+             processExprent(func.getLstOperands().get(0), varmaparr);
+ 
+-            SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[0]), null};
++            SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{varmaparr[0].getCopy(), null};
+ 
+             processExprent(func.getLstOperands().get(1), varmaparrAnd);
+ 
+@@ -190,7 +190,7 @@ public class SSAConstructorSparseEx {
+             processExprent(func.getLstOperands().get(0), varmaparr);
+ 
+             SFormsFastMapDirect[] varmaparrOr =
+-              new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[varmaparr[1] == null ? 0 : 1]), null};
++              new SFormsFastMapDirect[]{varmaparr[varmaparr[1] == null ? 0 : 1].getCopy(), null};
+ 
+             processExprent(func.getLstOperands().get(1), varmaparrOr);
+ 
 @@ -239,7 +239,7 @@ public class SSAConstructorSparseEx {
        Integer varindex = vardest.getIndex();
        FastSparseSet<Integer> vers = varmap.get(varindex);
@@ -401,7 +437,7 @@ index 3917ae87c6d147e808768ffc717cc24b08b3f433..737c88143708e0b6b19a6b335e1d4353
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index d233d671b4d1bdeb14327bb155310d3b792b932d..2160f80887ab72b9d2cff50e9dcae1724dc839ca 100644
+index d233d671b4d1bdeb14327bb155310d3b792b932d..e6a75ccc4e43e43ae12cd641942d029a338ee485 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -64,6 +64,9 @@ public class SSAUConstructorSparseEx {
@@ -414,6 +450,42 @@ index d233d671b4d1bdeb14327bb155310d3b792b932d..2160f80887ab72b9d2cff50e9dcae172
    public void splitVariables(RootStatement root, StructMethod mt) {
  
      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
+@@ -105,7 +108,7 @@ public class SSAUConstructorSparseEx {
+       updated.remove(node.id);
+       mergeInVarMaps(node, dgraph);
+ 
+-      SFormsFastMapDirect varmap = new SFormsFastMapDirect(inVarVersions.get(node.id));
++      SFormsFastMapDirect varmap = inVarVersions.get(node.id).getCopy();
+ 
+       SFormsFastMapDirect[] varmaparr = new SFormsFastMapDirect[]{varmap, null};
+ 
+@@ -174,7 +177,7 @@ public class SSAUConstructorSparseEx {
+ 
+             SFormsFastMapDirect varmapFalse;
+             if (varmaparr[1] == null) {
+-              varmapFalse = new SFormsFastMapDirect(varmaparr[0]);
++              varmapFalse = varmaparr[0].getCopy();
+             }
+             else {
+               varmapFalse = varmaparr[1];
+@@ -194,7 +197,7 @@ public class SSAUConstructorSparseEx {
+           case FunctionExprent.FUNCTION_CADD:
+             processExprent(func.getLstOperands().get(0), varmaparr, stat, calcLiveVars);
+ 
+-            SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[0]), null};
++            SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{varmaparr[0].getCopy(), null};
+ 
+             processExprent(func.getLstOperands().get(1), varmaparrAnd, stat, calcLiveVars);
+ 
+@@ -209,7 +212,7 @@ public class SSAUConstructorSparseEx {
+             processExprent(func.getLstOperands().get(0), varmaparr, stat, calcLiveVars);
+ 
+             SFormsFastMapDirect[] varmaparrOr =
+-              new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[varmaparr[1] == null ? 0 : 1]), null};
++              new SFormsFastMapDirect[]{varmaparr[varmaparr[1] == null ? 0 : 1].getCopy(), null};
+ 
+             processExprent(func.getLstOperands().get(1), varmaparrOr, stat, calcLiveVars);
+ 
 @@ -288,7 +291,7 @@ public class SSAUConstructorSparseEx {
          varassign.setVersion(nextver);
  
@@ -473,6 +545,15 @@ index d233d671b4d1bdeb14327bb155310d3b792b932d..2160f80887ab72b9d2cff50e9dcae172
      }
    }
  
+@@ -472,7 +500,7 @@ public class SSAUConstructorSparseEx {
+ 
+     VarVersionNode node = nodes.getWithKey(varpaar);
+ 
+-    node.live = new SFormsFastMapDirect(varmap);
++    node.live = varmap.getCopy();
+   }
+ 
+   private Integer getNextFreeVersion(Integer var, Statement stat) {
 @@ -816,4 +844,8 @@ public class SSAUConstructorSparseEx {
    public HashMap<Integer, Integer> getMapFieldVars() {
      return mapFieldVars;
@@ -639,3 +720,33 @@ index 572dde919042921ffebc5f83e0d9f5ebe7276788..51a88dc3d8ecaefd6aff46cbc24eecbe
      return node;
    }
  
+diff --git a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
+index 7143281598c9273e847cc8aa5d86178c3b2b6bab..e1acf800d950da2e22a6713360e708482f0ae287 100644
+--- a/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
++++ b/src/org/jetbrains/java/decompiler/util/SFormsFastMapDirect.java
+@@ -32,25 +32,6 @@ public class SFormsFastMapDirect {
+     }
+   }
+ 
+-  public SFormsFastMapDirect(SFormsFastMapDirect map) {
+-    for (int i = 2; i >= 0; i--) {
+-      FastSparseSet<Integer>[] arr = map.elements[i];
+-      int[] arrnext = map.next[i];
+-
+-      int length = arr.length;
+-      @SuppressWarnings("unchecked") FastSparseSet<Integer>[] arrnew = new FastSparseSet[length];
+-      int[] arrnextnew = new int[length];
+-
+-      System.arraycopy(arr, 0, arrnew, 0, length);
+-      System.arraycopy(arrnext, 0, arrnextnew, 0, length);
+-
+-      elements[i] = arrnew;
+-      next[i] = arrnextnew;
+-
+-      size = map.size;
+-    }
+-  }
+-
+   public SFormsFastMapDirect getCopy() {
+ 
+     SFormsFastMapDirect map = new SFormsFastMapDirect(false);
