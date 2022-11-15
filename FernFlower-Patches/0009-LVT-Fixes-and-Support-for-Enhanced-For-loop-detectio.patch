@@ -453,7 +453,7 @@ index 86cac9e08f0f0d3ebd43353b64eba9560279de55..038dac26540f41092afd009369546705
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..8f7984ec00e84aeca1902484f8f9b43c1fe81cf6
+index 0000000000000000000000000000000000000000..82c960ee29c4babfe77381df3a4a46716c68e401
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/EliminateLoopsHelper.java
 @@ -0,0 +1,199 @@
@@ -636,6 +636,12 @@ index 0000000000000000000000000000000000000000..8f7984ec00e84aeca1902484f8f9b43c
 +
 +  private static void eliminateLoop(Statement loop, Statement parentloop) {
 +
++    // remove the last break edge, if exists
++    Statement loopcontent = loop.getFirst();
++    if (!loopcontent.getSuccessorEdges(StatEdge.EdgeType.BREAK).isEmpty()) {
++      loopcontent.removeSuccessor(loopcontent.getSuccessorEdges(StatEdge.EdgeType.BREAK).get(0));
++    }
++
 +    // move continue edges to the parent loop
 +    List<StatEdge> lst = new ArrayList<>(loop.getLabelEdges());
 +    for (StatEdge edge : lst) {
@@ -645,12 +651,6 @@ index 0000000000000000000000000000000000000000..8f7984ec00e84aeca1902484f8f9b43c
 +
 +      parentloop.addLabeledEdge(edge);
 +    }
-+
-+    // remove the last break edge, if exists
-+    Statement loopcontent = loop.getFirst();
-+//    if (!loopcontent.getAllSuccessorEdges().isEmpty()) {
-+//      loopcontent.removeSuccessor(loopcontent.getAllSuccessorEdges().get(0));
-+//    }
 +
 +    // replace loop with its content
 +    loop.getParent().replaceStatement(loop, loopcontent);
