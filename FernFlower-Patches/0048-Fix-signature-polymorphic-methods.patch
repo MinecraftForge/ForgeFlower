@@ -19,10 +19,10 @@ index fd6c22a4b18b2875a5f0f1b7d3f18fa2ed0ba305..7078bd10c2bccd11c1aad74dfe05802e
        if (TryHelper.enhanceTryStats(root)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..6a641cf966ad040114e5d50fca9382f931d49700
+index 0000000000000000000000000000000000000000..641d616a4a99bb0a779f42737b883076a9e98deb
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
-@@ -0,0 +1,86 @@
+@@ -0,0 +1,92 @@
 +package org.jetbrains.java.decompiler.modules.decompiler;
 +
 +import java.util.ArrayList;
@@ -46,6 +46,9 @@ index 0000000000000000000000000000000000000000..6a641cf966ad040114e5d50fca9382f9
 +
 +public class MethodHandleDescriptorHelper
 +{
++
++    private static final String OBJECT_ARRAY_PARAM = "([Ljava/lang/Object;)";
++
 +    public static void changeMethodHandleDescriptorsStats(Statement stat) {
 +        for (Statement inner : stat.getStats()) {
 +            changeMethodHandleDescriptorsStats(inner);
@@ -74,7 +77,10 @@ index 0000000000000000000000000000000000000000..6a641cf966ad040114e5d50fca9382f9
 +            InvocationExprent invocation = (InvocationExprent) exprent;
 +            StructClass cl = DecompilerContext.getStructContext().getClass(invocation.getClassName());
 +            if (cl != null) {
-+                StructMethod mtd = cl.getMethod(invocation.getName(), "([Ljava/lang/Object;)Ljava/lang/Object;");
++                StructMethod mtd = cl.getMethod(invocation.getName(), OBJECT_ARRAY_PARAM + "Ljava/lang/Object;");
++                if (mtd == null) {
++                    mtd = cl.getMethod(invocation.getName(), OBJECT_ARRAY_PARAM + invocation.getDescriptor().ret);
++                }
 +                if (mtd != null) {
 +                    StructAnnotationAttribute annotations = mtd.getAttribute(StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS);
 +                    if (annotations != null) {
