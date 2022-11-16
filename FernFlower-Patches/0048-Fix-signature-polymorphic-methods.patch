@@ -19,10 +19,10 @@ index fd6c22a4b18b2875a5f0f1b7d3f18fa2ed0ba305..7078bd10c2bccd11c1aad74dfe05802e
        if (TryHelper.enhanceTryStats(root)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..99d632904eb139a1e21f7aa30098a05ddf9a4a88
+index 0000000000000000000000000000000000000000..6a641cf966ad040114e5d50fca9382f931d49700
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,86 @@
 +package org.jetbrains.java.decompiler.modules.decompiler;
 +
 +import java.util.ArrayList;
@@ -91,11 +91,14 @@ index 0000000000000000000000000000000000000000..99d632904eb139a1e21f7aa30098a05d
 +                                newParams.add(newParam);
 +                                invocation.setParameters(newParams);
 +
-+                                List<Exprent> castExprents = new ArrayList<>();
-+                                castExprents.add(invocation);
-+                                castExprents.add(new ConstExprent(oldDesc.ret, null, null));
-+                                FunctionExprent cast = new FunctionExprent(FunctionExprent.FUNCTION_CAST, castExprents, null);
-+                                return cast;
++                                if (!VarType.VARTYPE_VOID.equals(oldDesc.ret)) {
++                                  List<Exprent> castExprents = new ArrayList<>();
++                                  castExprents.add(invocation);
++                                  castExprents.add(new ConstExprent(oldDesc.ret, null, null));
++                                  FunctionExprent cast = new FunctionExprent(FunctionExprent.FUNCTION_CAST, castExprents, null);
++                                  return cast;
++                                }
++                                return null;
 +                            }
 +                        }
 +                    }
