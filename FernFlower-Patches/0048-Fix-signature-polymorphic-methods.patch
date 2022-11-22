@@ -5,7 +5,7 @@ Subject: [PATCH] Fix signature polymorphic methods
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index fd6c22a4b18b2875a5f0f1b7d3f18fa2ed0ba305..7078bd10c2bccd11c1aad74dfe05802eab460281 100644
+index 417f21f05257086df8f9f5974216d0e40e58c960..8f5843341e46cc2117780700bacbd5d72cd8099a 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -193,6 +193,8 @@ public class MethodProcessorRunnable implements Runnable {
@@ -16,7 +16,7 @@ index fd6c22a4b18b2875a5f0f1b7d3f18fa2ed0ba305..7078bd10c2bccd11c1aad74dfe05802e
 +
        LabelHelper.identifyLabels(root);
  
-       if (TryHelper.enhanceTryStats(root)) {
+       if (TryHelper.enhanceTryStats(root, mt)) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MethodHandleDescriptorHelper.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..641d616a4a99bb0a779f42737b883076a9e98deb
