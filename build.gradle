@@ -24,6 +24,8 @@ patches {
 group = 'net.minecraftforge' //put it under us for now, because this is a unofficial mirrior
 version = gradleutils.getTagOffsetVersion() // The tag should be OurVersion.FernFlowerCommitNumber, ex: 1.5.380
 
+logger.lifecycle("${name} version ${version} - JDK ${System.getProperty("java.version")}")
+
 subprojects {
     group = rootProject.group
     version = rootProject.version
