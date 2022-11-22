@@ -5,7 +5,7 @@ Subject: [PATCH] Fixup J9 string concat
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index f2964aa1e2759c4828e65d8db3b8421b7072adbf..85d9b2b2752a20b381e0f5e6420e5419ac728f6f 100644
+index dbee9d14a323279ca226e5e6f32f0f4182d22dc9..6e642b683d504ade9edef4ea32c154fbd4a219c9 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -161,6 +161,10 @@ public class MethodProcessorRunnable implements Runnable {

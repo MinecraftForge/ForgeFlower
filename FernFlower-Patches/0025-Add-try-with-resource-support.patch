@@ -5,14 +5,14 @@ Subject: [PATCH] Add try with resource support
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 81fed9eaea4d73a99e87545d15171033f98db3b1..d2c448319e75f6acfb462e6b2d9505f13407a1de 100644
+index 81fed9eaea4d73a99e87545d15171033f98db3b1..cc6f6ad706aa1fcb0b129ea9da80b47fd77f0a5f 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -190,6 +190,10 @@ public class MethodProcessorRunnable implements Runnable {
  
        LabelHelper.identifyLabels(root);
  
-+      if (TryHelper.enhanceTryStats(root)) {
++      if (TryHelper.enhanceTryStats(root, mt)) {
 +        continue;
 +      }
 +
@@ -21,48 +21,55 @@ index 81fed9eaea4d73a99e87545d15171033f98db3b1..d2c448319e75f6acfb462e6b2d9505f1
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..6e392e9dc5e31e920e526d9d4c61757ff469d9ae
+index 0000000000000000000000000000000000000000..74f8661d10c840fff38ebde68bd284fd9ed16a72
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
-@@ -0,0 +1,263 @@
+@@ -0,0 +1,595 @@
 +package org.jetbrains.java.decompiler.modules.decompiler;
 +
++import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
++import org.jetbrains.java.decompiler.struct.StructMethod;
 +import org.jetbrains.java.decompiler.struct.gen.VarType;
++
++import java.util.ArrayList;
++import java.util.LinkedHashSet;
++import java.util.List;
++import java.util.Set;
++import java.util.stream.Collectors;
 +
 +public class TryHelper
 +{
-+  public static boolean enhanceTryStats(RootStatement root) {
-+    boolean ret = makeTryWithResourceRec(root);
++  public static boolean enhanceTryStats(RootStatement root, StructMethod mt) {
++    boolean ret = makeTryWithResourceRec(root, mt);
 +    if (ret) {
 +      SequenceHelper.condenseSequences(root);
-+      if (collapseTryRec(root)) {
++      if (collapseTryRec(root, mt)) {
 +        SequenceHelper.condenseSequences(root);
 +      }
 +    }
 +    return ret;
 +  }
 +
-+  private static boolean makeTryWithResourceRec(Statement stat) {
++  private static boolean makeTryWithResourceRec(Statement stat, StructMethod mt) {
 +    if (stat.type == Statement.StatementType.CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
 +      if (makeTryWithResource((CatchAllStatement)stat)) {
 +        return true;
 +      }
 +    }
 +
++    if (mt.getBytecodeVersion() >= CodeConstants.BYTECODE_JAVA_11 && stat.type == Statement.StatementType.TRY_CATCH) {
++      if (makeTryWithResourceJ11((CatchStatement) stat)) {
++        return true;
++      }
++    }
++
 +    for (Statement st : stat.getStats()) {
-+      if (makeTryWithResourceRec(st)) {
++      if (makeTryWithResourceRec(st, mt)) {
 +        return true;
 +      }
 +    }
@@ -70,18 +77,39 @@ index 0000000000000000000000000000000000000000..6e392e9dc5e31e920e526d9d4c61757f
 +    return false;
 +  }
 +
-+  private static boolean collapseTryRec(Statement stat) {
-+    if (stat.type == Statement.StatementType.TRY_CATCH && collapseTry((CatchStatement)stat)) {
-+      return true;
-+    }
-+
-+    for (Statement st : stat.getStats()) {
-+      if (collapseTryRec(st)) {
-+        return true;
++  private static boolean collapseTryRec(Statement stat, StructMethod mt) {
++    // This method uses two different algorithms as the J11 code expects to process everything that it can without returning, while the J8 expects to return early.
++    // Future work could be done to improve the flow of things here.
++    if (mt.getBytecodeVersion() >= CodeConstants.BYTECODE_JAVA_11) {
++      boolean ret = false;
++      if (stat.type == Statement.StatementType.TRY_CATCH) {
++        CatchStatement tryStat = (CatchStatement) stat;
++        if (collapseTryJ11(tryStat)) {
++          ret = true;
++        }
 +      }
-+    }
 +
-+    return false;
++      for (Statement st : stat.getStats()) {
++        ret |= collapseTryRec(st, mt);
++      }
++
++      return ret;
++    } else {
++      if (stat.type == Statement.StatementType.TRY_CATCH) {
++        CatchStatement tryStat = (CatchStatement) stat;
++        if (collapseTry(tryStat)) {
++          return true;
++        }
++      }
++
++      for (Statement st : stat.getStats()) {
++        if (collapseTryRec(st, mt)) {
++          return true;
++        }
++      }
++
++      return false;
++    }
 +  }
 +
 +  private static boolean makeTryWithResource(CatchAllStatement finallyStat) {
@@ -163,6 +191,255 @@ index 0000000000000000000000000000000000000000..6e392e9dc5e31e920e526d9d4c61757f
 +    return false;
 +  }
 +
++  // Make try with resources with the new style bytecode (J11+)
++  // It doesn't use finally blocks, and is just a try catch
++  public static boolean makeTryWithResourceJ11(CatchStatement tryStatement) {
++    // Doesn't have a catch block, probably already processed
++    if (tryStatement.getStats().size() < 2) {
++      return false;
++    }
++
++    Statement inner = tryStatement.getStats().get(1); // Get catch block
++
++    VarExprent closeable = null;
++
++    boolean nullable = false;
++
++    if (inner instanceof SequenceStatement) {
++      // Replace dummy inner with real inner
++      inner = inner.getStats().get(0);
++
++      // If the catch statement contains a simple try catch, then it's a nonnull resource
++      if (inner instanceof CatchStatement) {
++        if (inner.getStats().isEmpty()) {
++          return false;
++        }
++
++        Statement inTry = inner.getStats().get(0);
++
++        // Catch block contains a basic block inside which has the closeable invocation
++        if (inTry instanceof BasicBlockStatement && !inTry.getExprents().isEmpty()) {
++          Exprent first = inTry.getExprents().get(0);
++
++          if (isCloseable(first)) {
++            closeable = (VarExprent) ((InvocationExprent)first).getInstance();
++          }
++        }
++      }
++
++      // Nullable resource, contains null checks
++      if (inner instanceof IfStatement) {
++        Exprent ifCase = ((IfStatement)inner).getHeadexprent().getCondition();
++
++        if (ifCase instanceof FunctionExprent) {
++          // Will look like "if (!(!(var != null)))"
++          FunctionExprent func = unwrapNegations((FunctionExprent) ifCase);
++
++          Exprent check = func.getLstOperands().get(0);
++
++          // If it's not a var, end processing early
++          if (!(check instanceof VarExprent)) {
++            return false;
++          }
++
++          // Make sure it's checking against null
++          if (func.getLstOperands().get(1).getExprType().equals(VarType.VARTYPE_NULL)) {
++            // Ensured that the if stat is a null check
++
++            inner = ((IfStatement)inner).getIfstat();
++
++            if (inner == null) {
++              return false;
++            }
++
++            // Process try catch inside of if statement
++            if (inner instanceof CatchStatement && !inner.getStats().isEmpty()) {
++              Statement inTry = inner.getStats().get(0);
++
++              if (inTry instanceof BasicBlockStatement && !inTry.getExprents().isEmpty()) {
++                Exprent first = inTry.getExprents().get(0);
++
++                // Check for closable invocation
++                if (isCloseable(first)) {
++                  closeable = (VarExprent) ((InvocationExprent)first).getInstance();
++                  nullable = true;
++
++                  // Double check that the variables in the null check and the closeable match
++                  if (!closeable.getVarVersionPair().equals(((VarExprent)check).getVarVersionPair())) {
++                    closeable = null;
++                  }
++                }
++              }
++            }
++          }
++        }
++      }
++    }
++
++    // Didn't find an autocloseable, return early
++    if (closeable == null) {
++      return false;
++    }
++
++    Set<Statement> destinations = findExitpoints(tryStatement);
++
++    Statement check = tryStatement;
++    List<StatEdge> preds = new ArrayList<>();
++    while (check != null && preds.isEmpty()) {
++      preds = check.getPredecessorEdges(StatEdge.EdgeType.REGULAR);
++      check = check.getParent();
++    }
++
++    if (preds.isEmpty()) {
++      return false;
++    }
++
++    StatEdge edge = preds.get(0);
++    if (edge.getSource() instanceof BasicBlockStatement) {
++      AssignmentExprent assignment = findResourceDef(closeable, edge.getSource());
++
++      if (assignment == null) {
++        return false;
++      }
++
++      for (Statement destination : destinations) {
++        if (!isValid(destination, closeable, nullable)) {
++          return false;
++        }
++      }
++
++      for (Statement destination : destinations) {
++        removeClose(destination, nullable);
++      }
++
++      edge.getSource().getExprents().remove(assignment);
++
++      // Add resource assignment to try
++      tryStatement.getResources().add(0, assignment);
++
++      // Get catch block
++      Statement remove = tryStatement.getStats().get(1);
++
++      // Flatten references to statement
++      SequenceHelper.destroyAndFlattenStatement(remove);
++
++      // Destroy catch block
++      tryStatement.getStats().remove(1);
++
++      tryStatement.setTryType(CatchStatement.RESORCES);
++
++      return true;
++    }
++
++    return false;
++  }
++
++  private static boolean isValid(Statement stat, VarExprent closeable, boolean nullable) {
++    if (nullable) {
++      // Check for if statement that contains a null check and a close()
++      if (stat instanceof IfStatement) {
++        IfStatement ifStat = (IfStatement) stat;
++        Exprent condition = ifStat.getHeadexprent().getCondition();
++
++        if (condition instanceof FunctionExprent) {
++          // This can sometimes be double inverted negative conditions too, handle that case
++          FunctionExprent func = unwrapNegations((FunctionExprent) condition);
++
++          // Ensure the exprent is the one we want to remove
++          if (func.getFuncType() == FunctionExprent.FUNCTION_NE && func.getLstOperands().get(0) instanceof VarExprent && func.getLstOperands().get(1).getExprType().equals(VarType.VARTYPE_NULL)) {
++            if (func.getLstOperands().get(0) instanceof VarExprent && ((VarExprent) func.getLstOperands().get(0)).getVarVersionPair().equals(closeable.getVarVersionPair())) {
++              return true;
++            }
++          }
++        }
++      }
++    } else {
++      if (stat instanceof BasicBlockStatement) {
++        if (stat.getExprents() != null && !stat.getExprents().isEmpty()) {
++          Exprent exprent = stat.getExprents().get(0);
++
++          if (exprent instanceof InvocationExprent) {
++            Exprent inst = ((InvocationExprent) exprent).getInstance();
++
++            // Ensure the var exprent we want to remove is the right one
++            if (inst instanceof VarExprent && inst.equals(closeable) && isCloseable(exprent)) {
++              return true;
++            }
++          }
++        }
++      }
++    }
++
++    return false;
++  }
++
++  private static void removeClose(Statement statement, boolean nullable) {
++    if (nullable) {
++      // Breaking out of parent, remove label
++      List<StatEdge> edges = statement.getAllSuccessorEdges();
++      if (!edges.isEmpty() && edges.get(0).closure == statement.getParent()) {
++        SequenceHelper.destroyAndFlattenStatement(statement);
++      } else {
++        for (StatEdge edge : statement.getFirst().getAllSuccessorEdges()) {
++          edge.getDestination().removePredecessor(edge);
++        }
++
++        for (StatEdge edge : ((IfStatement)statement).getIfstat().getAllSuccessorEdges()) {
++          edge.getDestination().removePredecessor(edge);
++
++          if (edge.closure != null) {
++            edge.closure.getLabelEdges().remove(edge);
++          }
++        }
++
++        // Keep the label as it's not the parent
++        BasicBlockStatement newStat = new BasicBlockStatement(new BasicBlock(
++          DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
++
++        statement.getParent().replaceStatement(statement, newStat);
++      }
++    } else {
++      statement.getExprents().remove(0);
++    }
++  }
++
++  private static Set<Statement> findExitpoints(Statement stat) {
++    Set<StatEdge> edges = new LinkedHashSet<>();
++    findEdgesLeaving(stat.getFirst(), stat, edges);
++
++    return edges.stream().map(StatEdge::getDestination).collect(Collectors.toSet());
++  }
++
++  private static void findEdgesLeaving(Statement curr, Statement check, Set<StatEdge> edges) {
++    findEdgesLeaving(curr, check, edges, false);
++  }
++
++  public static void findEdgesLeaving(Statement curr, Statement check, Set<StatEdge> edges, boolean allowExit) {
++    for (StatEdge edge : curr.getAllSuccessorEdges()) {
++      if (!check.containsStatement(edge.getDestination()) && (allowExit || !(edge.getDestination() instanceof DummyExitStatement))) {
++        edges.add(edge);
++      }
++    }
++
++    for (Statement stat : curr.getStats()) {
++      findEdgesLeaving(stat, check, edges, allowExit);
++    }
++  }
++
++  private static FunctionExprent unwrapNegations(FunctionExprent func) {
++    while (func.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT) {
++      Exprent expr = func.getLstOperands().get(0);
++
++      if (expr instanceof FunctionExprent) {
++        func = (FunctionExprent) expr;
++      } else {
++        break;
++      }
++    }
++
++    return func;
++  }
++
 +  private static boolean collapseTry(CatchStatement catchStat) {
 +    Statement parent = catchStat;
 +    if (parent.getFirst() != null && parent.getFirst().type == Statement.StatementType.SEQUENCE) {
@@ -189,6 +466,61 @@ index 0000000000000000000000000000000000000000..6e392e9dc5e31e920e526d9d4c61757f
 +        return true;
 +      }
 +    }
++    return false;
++  }
++
++  // J11+
++  // Merges try with resource statements that are nested within each other, as well as try with resources statements nested in a normal try.
++  private static boolean collapseTryJ11(CatchStatement stat) {
++    if (stat.getStats().isEmpty()) {
++      return false;
++    }
++
++    // Get the statement inside of the current try
++    Statement inner = stat.getStats().get(0);
++
++    // Check if the inner statement is a try statement
++    if (inner instanceof CatchStatement) {
++      // Filter on try with resources statements
++      List<Exprent> resources = ((CatchStatement) inner).getResources();
++      if (!resources.isEmpty()) {
++        // One try inside of the catch
++
++        // Only merge trys that have an inner statement size of 1, a single block
++        // TODO: how does this handle nested nullable try stats?
++        if (inner.getStats().size() == 1) {
++          stat.setTryType(CatchStatement.RESORCES);
++          // Set the outer try to be resources, and initialize
++          stat.getResources().addAll(resources);
++          stat.getVarDefinitions().addAll(inner.getVarDefinitions());
++
++          // Get inner block of inner try stat
++          Statement innerBlock = inner.getStats().get(0);
++
++          // Remove successors as the replaceStatement call will add the appropriate successor
++          List<StatEdge> innerEdges = inner.getAllSuccessorEdges();
++          for (StatEdge succ : innerBlock.getAllSuccessorEdges()) {
++            boolean found = false;
++            for (StatEdge innerEdge : innerEdges) {
++              if (succ.getDestination() == innerEdge.getDestination() && succ.getType() == innerEdge.getType()) {
++                found = true;
++                break;
++              }
++            }
++
++            if (found) {
++              innerBlock.removeSuccessor(succ);
++            }
++          }
++
++          // Replace the inner try statement with the block inside
++          stat.replaceStatement(inner, innerBlock);
++
++          return true;
++        }
++      }
++    }
++
 +    return false;
 +  }
 +
