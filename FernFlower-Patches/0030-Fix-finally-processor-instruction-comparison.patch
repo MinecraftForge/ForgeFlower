@@ -5,7 +5,7 @@ Subject: [PATCH] Fix finally processor instruction comparison
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index f0d3f8516357d7bae44b0ad0e5f24903a717268f..30cdd284745688c1d2b0e10b5e884991173a1527 100644
+index 362e11b75c647920c328b16cb9f2778537fca275..8ba1c6311feb0993a5603be756dd273cb7b35185 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 @@ -852,13 +852,17 @@ public class FinallyProcessor {

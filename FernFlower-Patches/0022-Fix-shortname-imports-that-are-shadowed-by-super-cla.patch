@@ -8,10 +8,10 @@ Adds an option (on by default) to force inner class references to be
 qualified to their outer class, -qin
 
 diff --git a/README.md b/README.md
-index 3f5a417a01d918a21b7dcb057b2eb259ec2df475..d553a0f3b5a12d8563c7b5a3ecd4ad280aadc5f0 100644
+index 9b15cd643468b3852b0092f7bffd399518fc03b3..4621cadc55b0814bf7f20fc5fff482b7756b5c6c 100644
 --- a/README.md
 +++ b/README.md
-@@ -65,6 +65,7 @@ The rest of options can be left as they are: they are aimed at professional reve
+@@ -67,6 +67,7 @@ The rest of options can be left as they are: they are aimed at professional reve
  - inn (1): check for IntelliJ IDEA-specific @NotNull annotation and remove inserted code if found
  - lac (0): decompile lambda expressions to anonymous classes
  - nls (0): define new line character to be used for output. 0 - '\r\n' (Windows), 1 - '\n' (Unix), default is OS-dependent
@@ -189,7 +189,7 @@ index d91d9faebf718192a679c436792a54c24bed8c63..2493bfcc2eed3e105f819ccc6925ea7a
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index e28a44d07de0d1455fdffb5d383e09afe337675e..27e7432b4c6774a377c9e5f570e04248bb4d2d0c 100644
+index b744ddbb35bcc08716826324c1895ce8f860d31b..00ed5ce590551dc8cbe80199b4cdd90b6a50494c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -200,7 +200,7 @@ index e28a44d07de0d1455fdffb5d383e09afe337675e..27e7432b4c6774a377c9e5f570e04248
  import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
  import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
-@@ -762,12 +763,14 @@ public class ExprProcessor implements CodeConstants {
+@@ -761,12 +762,14 @@ public class ExprProcessor implements CodeConstants {
    ) {
      List<ClassesProcessor.ClassNode> enclosingClasses = enclosingClassList();
      StringBuilder curPathBldr = new StringBuilder(type.getValue().substring(0, type.getValue().lastIndexOf('/') + 1));

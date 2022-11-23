@@ -11,7 +11,6 @@ ext {
 sourceSets {
     main.java.srcDirs = ['src']
     test.java.srcDirs = ['test']
-    java9.java.srcDirs = ['java9']
 }
 
 repositories {
@@ -20,9 +19,6 @@ repositories {
 }
 
 dependencies {
-    // The Java9 code depends on (can see) the "main" source set
-    java9Implementation sourceSets.main.output
-
     implementation 'org.jetbrains:annotations:20.1.+'
 
     testImplementation 'junit:junit:4.+'
@@ -31,39 +27,25 @@ dependencies {
     testImplementation 'com.google.code.gson:gson:2.8.0'
 }
 
+// Default all standard Java compile tasks to Java 17
 java.toolchain {
-    languageVersion = JavaLanguageVersion.of(8)
+    languageVersion = JavaLanguageVersion.of(17)
 }
 
-// Default all standard Java compile tasks to Java 8
-// We'll specify Java 9 only for the java9 compile task
 tasks.withType(JavaCompile) {
     options.deprecation = true
 }
 
-compileJava9Java {
-    javaCompiler = javaToolchains.compilerFor {
-        languageVersion = JavaLanguageVersion.of(9)
-    }
-}
-
 eclipse {
-    classpath {
-        sourceSets -= [sourceSets.java9]
-    }
     project {
         name 'ForgeFlower'
     }
 }
 
 jar {
-    into('META-INF/versions/9') {
-        from sourceSets.java9.output
-    }
     manifest {
         attributes(
-            'Main-Class' : 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler',
-            'Multi-Release': 'true'
+            'Main-Class' : 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
         )
     }
 }

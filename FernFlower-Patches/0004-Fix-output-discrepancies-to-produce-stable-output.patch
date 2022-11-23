@@ -191,10 +191,10 @@ index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba956
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index f7addc6af8928ee2b2d1b9a09d13750413d4721f..79dceb558c4b99591e87d917739bcf4c66bda292 100644
+index 939863351be0544adc7c4079dc2dbb18be877fb9..6216a80e20d1a1bbb80c5b343b743832e0421dbc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -933,6 +933,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -932,6 +932,7 @@ public class ExprProcessor implements CodeConstants {
      }
  
      TextBuffer buf = new TextBuffer();
@@ -203,14 +203,14 @@ index f7addc6af8928ee2b2d1b9a09d13750413d4721f..79dceb558c4b99591e87d917739bcf4c
      for (Exprent expr : lst) {
        if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 13d747a5ec6b961763f70b9174efeaf976336dbc..5428c1d1b10e0fbaa7c3b62725acd34d0632f37c 100644
+index 13d747a5ec6b961763f70b9174efeaf976336dbc..ad41b185d8c830f26b4f598a6568b3272a11d86f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 @@ -480,10 +480,17 @@ public class FinallyProcessor {
      // so remove dummy exit
      startBlocks.remove(graph.getLast());
      startBlocks.removeAll(tryBlocks);
-+    List<BasicBlock> starts = new ArrayList<BasicBlock>(startBlocks);
++    List<BasicBlock> starts = new ArrayList<>(startBlocks);
 +    Collections.sort(starts, new Comparator<BasicBlock>() {
 +      @Override
 +      public int compare(BasicBlock o1, BasicBlock o2) {
@@ -229,7 +229,7 @@ index 13d747a5ec6b961763f70b9174efeaf976336dbc..5428c1d1b10e0fbaa7c3b62725acd34d
      //			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
      //		} catch(Exception ex){ex.printStackTrace();}
  
-+    List<Entry<BasicBlock, Boolean>> lasts = new ArrayList<Entry<BasicBlock, Boolean>>(mapLast.entrySet());
++    List<Entry<BasicBlock, Boolean>> lasts = new ArrayList<>(mapLast.entrySet());
 +    // We must sort here to prevent decompile differences deriving from hash maps.
 +    Collections.sort(lasts, new Comparator<Entry<BasicBlock, Boolean>>() {
 +      @Override
@@ -338,10 +338,10 @@ index 82ae0a25a20d2727f611d359e699d6666d1e0ae4..a86f0d2887c6c19cb1d911ec43830eb6
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 3882cfd68af7f55938311363a69a2dded3fffbab..48d38ff8657fd6d237fe2d75677d89b8bbd8852d 100644
+index a7033f507fd9667d773977803718c08810f0d750..3edae784f56848a5697879cfef9e05130ee38d34 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -220,7 +220,7 @@ public class ConstExprent extends Exprent {
+@@ -219,7 +219,7 @@ public class ConstExprent extends Exprent {
          else if (floatVal == Float.NEGATIVE_INFINITY) {
            return new TextBuffer("-1.0F / 0.0F");
          }
@@ -350,7 +350,7 @@ index 3882cfd68af7f55938311363a69a2dded3fffbab..48d38ff8657fd6d237fe2d75677d89b8
  
        case CodeConstants.TYPE_DOUBLE:
          double doubleVal = (Double)value;
-@@ -251,15 +251,15 @@ public class ConstExprent extends Exprent {
+@@ -250,15 +250,15 @@ public class ConstExprent extends Exprent {
            }
          }
          else if (Double.isNaN(doubleVal)) {
@@ -370,7 +370,7 @@ index 3882cfd68af7f55938311363a69a2dded3fffbab..48d38ff8657fd6d237fe2d75677d89b8
  
        case CodeConstants.TYPE_NULL:
          return new TextBuffer("null");
-@@ -277,6 +277,18 @@ public class ConstExprent extends Exprent {
+@@ -276,6 +276,18 @@ public class ConstExprent extends Exprent {
  
      throw new RuntimeException("invalid constant type: " + constType);
    }
@@ -390,7 +390,7 @@ index 3882cfd68af7f55938311363a69a2dded3fffbab..48d38ff8657fd6d237fe2d75677d89b8
    private boolean inConstantVariable(String classSignature, String variableName) {
      ClassesProcessor.ClassNode node = (ClassesProcessor.ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9aa0e0899 100644
+index cc1f537e71af0748b7b97d7d8489198e2a677cc9..9b1b3de632a63bbba1f5f7a99d5f75bf537bd171 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -15,7 +15,10 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -404,15 +404,16 @@ index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9
  import java.util.HashSet;
  import java.util.List;
  import java.util.Map.Entry;
-@@ -131,6 +134,38 @@ public class Exprent implements IMatchable {
+@@ -131,6 +134,39 @@ public class Exprent implements IMatchable {
      }
    }
  
 +  public static List<? extends Exprent> sortIndexed(List<? extends Exprent> lst) {
-+      List<Exprent> ret = new ArrayList<Exprent>();
-+      List<VarExprent> defs = new ArrayList<VarExprent>();
++      List<Exprent> ret = new ArrayList<>();
++      List<VarExprent> defs = new ArrayList<>();
 +
-+      Comparator<VarExprent> comp = new Comparator<VarExprent>() {
++      Comparator<VarExprent> comp = new Comparator<>() {
++        @Override
 +        public int compare(VarExprent o1, VarExprent o2) {
 +          return o1.getIndex() - o2.getIndex();
 +        }
@@ -439,7 +440,7 @@ index cc1f537e71af0748b7b97d7d8489198e2a677cc9..0994d9466eda95b46d3f234bf977e8e9
 +      }
 +      return ret;
 +    }
-+  
++
    // *****************************************************************************
    // IMatchable implementation
    // *****************************************************************************

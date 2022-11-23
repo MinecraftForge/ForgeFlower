@@ -5,10 +5,10 @@ Subject: [PATCH] Synthetic getClass/Objects.requireNonNull cleanup
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index b7d58645dd21d12c16d4efba9604c46614683c35..e28a44d07de0d1455fdffb5d383e09afe337675e 100644
+index 6ddd7caf2f8deeb0ebbe89d17ad96bf092e66cba..b744ddbb35bcc08716826324c1895ce8f860d31b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -592,6 +592,23 @@ public class ExprProcessor implements CodeConstants {
+@@ -591,6 +591,23 @@ public class ExprProcessor implements CodeConstants {
            break;
          case opc_pop:
            stack.pop();
@@ -135,7 +135,7 @@ index e1bed2f0f5f501d05f93dfa6bfcd2f2b3e76b822..6d42db459055d505604728dcac4af7bb
    private static boolean isConstructorInvocationRemote(List<Exprent> list, int index) {
      Exprent current = list.get(index);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index da71a1497ceb262e80617c525886da7db85e02b3..d7c1be5364fdb879c94c6fb748b98399c58afae5 100644
+index c1a645bfe508513263618dc04da1d66eb99e7d0e..e6d996ebfcd85fa0def6bc6fd1e10156fce0a44c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
@@ -154,7 +154,7 @@ index da71a1497ceb262e80617c525886da7db85e02b3..d7c1be5364fdb879c94c6fb748b98399
    }
  
    @Override
-@@ -975,6 +977,14 @@ public class InvocationExprent extends Exprent {
+@@ -974,6 +976,14 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  

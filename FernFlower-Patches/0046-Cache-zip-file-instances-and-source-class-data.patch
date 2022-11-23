@@ -17,7 +17,7 @@ index eefcf79cedb6148f5c02b8077914a467f3d58b64..025a8ac22323407bf6b2a4f3e70a0409
    }
  
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index cab48267cfe9a4b6c1f7f63449340cf6d446bd92..5d717145324d1547432ed54d4d6358ba9baf0c1e 100644
+index b4869c2a756adb1c2da8b62fd8d4dc3f3f7cb2ca..1172775610851755373694f48903594af615f816 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -7,6 +7,7 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
@@ -79,13 +79,13 @@ index cab48267cfe9a4b6c1f7f63449340cf6d446bd92..5d717145324d1547432ed54d4d6358ba
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
-index 164cd142118f37d33375c19b8903d61658d3a07a..cfb332145a5ce8f20882732a76c64c4f7a2f3b58 100644
+index 272e4db3578da68aed40eb864f09eb547f85784d..0052821de22c460136632b2e09003427b473c6ad 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
-@@ -17,11 +17,13 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+@@ -16,11 +16,13 @@ import java.util.zip.ZipOutputStream;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
  import org.jetbrains.java.decompiler.main.extern.IResultSaver;
- import org.jetbrains.java.decompiler.util.InterpreterUtil;
 +import org.jetbrains.java.decompiler.util.ZipFileCache;
  
  public class SingleFileSaver implements IResultSaver {
@@ -96,7 +96,7 @@ index 164cd142118f37d33375c19b8903d61658d3a07a..cfb332145a5ce8f20882732a76c64c4f
  
    public SingleFileSaver(File target) {
      this.target = target;
-@@ -72,7 +74,8 @@ public class SingleFileSaver implements IResultSaver {
+@@ -71,7 +73,8 @@ public class SingleFileSaver implements IResultSaver {
      if (!checkEntry(entryName))
        return;
  
@@ -106,7 +106,7 @@ index 164cd142118f37d33375c19b8903d61658d3a07a..cfb332145a5ce8f20882732a76c64c4f
        ZipEntry entry = srcArchive.getEntry(entryName);
        if (entry != null) {
          try (InputStream in = srcArchive.getInputStream(entry)) {
-@@ -125,6 +128,11 @@ public class SingleFileSaver implements IResultSaver {
+@@ -124,6 +127,11 @@ public class SingleFileSaver implements IResultSaver {
      }
    }
  
@@ -119,7 +119,7 @@ index 164cd142118f37d33375c19b8903d61658d3a07a..cfb332145a5ce8f20882732a76c64c4f
      boolean added = entries.add(entryName);
      if (!added) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
-index 81cd12ba302af00d66c3f699804651d940f06a5a..3c0db2d989160f1d05fbb21a2e34ca883f1ea946 100644
+index 114b7ab0681c661c5486e20f42993402f45debc6..376f1501c2933a523714d50ed646a5b0ad801e50 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 @@ -5,13 +5,14 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;

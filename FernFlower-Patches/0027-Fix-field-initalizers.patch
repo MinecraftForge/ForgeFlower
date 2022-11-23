@@ -5,7 +5,7 @@ Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 4930acdf38046e1dfe3f04a7e68b4ff88c4ed594..169a613c8b6e84a80895acdc18dfe0aa576c2af6 100644
+index 34be3854cad1675d54a32929d5e1fe1641f1a929..686298a19d1ea4df848ff1ffd737f0ae70e92722 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -34,7 +34,7 @@ index 4930acdf38046e1dfe3f04a7e68b4ff88c4ed594..169a613c8b6e84a80895acdc18dfe0aa
    private static void extractStaticInitializers(ClassWrapper wrapper, MethodWrapper method) {
      RootStatement root = method.root;
      StructClass cl = wrapper.getClassStruct();
-+    Set<String> whitelist = new HashSet<String>();
++    Set<String> whitelist = new HashSet<>();
 +
      Statement firstData = Statements.findFirstData(root);
      if (firstData != null) {
@@ -137,7 +137,7 @@ index 4930acdf38046e1dfe3f04a7e68b4ff88c4ed594..169a613c8b6e84a80895acdc18dfe0aa
        return;
      }
  
-+    Set<String> whitelist = new HashSet<String>(wrapper.getStaticFieldInitializers().getLstKeys());
++    Set<String> whitelist = new HashSet<>(wrapper.getStaticFieldInitializers().getLstKeys());
 +    int prev_fidx = 0;
 +
      while (true) {
@@ -207,6 +207,8 @@ index 4930acdf38046e1dfe3f04a7e68b4ff88c4ed594..169a613c8b6e84a80895acdc18dfe0aa
  
      return true;
    }
+-}
+\ No newline at end of file
 +
 +  // Makes lambdas that are used to initialize a static field only reference
 +  // static fields defined later in the class by qualified name
@@ -239,26 +241,26 @@ index 4930acdf38046e1dfe3f04a7e68b4ff88c4ed594..169a613c8b6e84a80895acdc18dfe0aa
 +      });
 +    }
 +  }
- }
++}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index ec3a8668a94c7da89091a09a3002fd14346cc684..0f99c8891a4bc70626b2383b22384a1b212fe8da 100644
+index b76d5dd1f39f3ef9a2847414bcf1cc3738b0fdae..be789c6f999339fc4d755850dfd888f600f73a45 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-@@ -29,18 +29,24 @@ public class FieldExprent extends Exprent {
+@@ -33,18 +33,24 @@ public class FieldExprent extends Exprent {
    private final boolean isStatic;
    private Exprent instance;
    private final FieldDescriptor descriptor;
 +  private boolean forceQualified = false;
  
-   public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
+   public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
      this(cn.elementname, cn.classname, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
    }
  
-   public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
+   public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets) {
 +    this(name, classname, isStatic, instance, descriptor, bytecodeOffsets, false);
 +  }
 +
-+  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets, boolean forceQualified) {
++  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets, boolean forceQualified) {
      super(EXPRENT_FIELD);
      this.name = name;
      this.classname = classname;
@@ -269,7 +271,7 @@ index ec3a8668a94c7da89091a09a3002fd14346cc684..0f99c8891a4bc70626b2383b22384a1b
  
      addBytecodeOffsets(bytecodeOffsets);
    }
-@@ -87,7 +93,7 @@ public class FieldExprent extends Exprent {
+@@ -111,7 +117,7 @@ public class FieldExprent extends Exprent {
  
      if (isStatic) {
        ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
@@ -278,7 +280,7 @@ index ec3a8668a94c7da89091a09a3002fd14346cc684..0f99c8891a4bc70626b2383b22384a1b
          buf.append(DecompilerContext.getImportCollector().getNestedNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
          buf.append(".");
        }
-@@ -183,6 +189,10 @@ public class FieldExprent extends Exprent {
+@@ -207,6 +213,10 @@ public class FieldExprent extends Exprent {
      return name;
    }
  
@@ -286,9 +288,9 @@ index ec3a8668a94c7da89091a09a3002fd14346cc684..0f99c8891a4bc70626b2383b22384a1b
 +    this.forceQualified = value;
 +  }
 +
-   // *****************************************************************************
-   // IMatchable implementation
-   // *****************************************************************************
+   @Override
+   public void getBytecodeRange(BitSet values) {
+     measureBytecode(values, instance);
 diff --git a/testData/classes/pkg/TestClassFields$Inner.class b/testData/classes/pkg/TestClassFields$Inner.class
 index 1c16a7e3b3a72a2d00987cd024702775f328a0ae..996ad8e2d4dcbd470e913ca7707356a1f5b0664b 100644
 GIT binary patch
@@ -320,7 +322,7 @@ z<BWBrM`IJ2QGxr6yLz()p0~umT@n;j{=*u$vbHW9HKC}}7M?_C9O+7)J(-o9N<PN2
 GhW!C-@ghk8
 
 diff --git a/testData/results/TestClashName.dec b/testData/results/TestClashName.dec
-index 2a9a731549e4bee8fe6ff812211e5a7930252017..43348ea674adf840021a807e16fd231a51939c1d 100644
+index 9adf65e9646db3f5243ab2ead6806f502cfea1bb..14242655cc785caa4ba0773580f4795b410c2ef9 100644
 --- a/testData/results/TestClashName.dec
 +++ b/testData/results/TestClashName.dec
 @@ -7,25 +7,14 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
@@ -357,7 +359,7 @@ index 2a9a731549e4bee8fe6ff812211e5a7930252017..43348ea674adf840021a807e16fd231a
  
     @SharedName4
     public int m() {
-@@ -42,67 +31,32 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
+@@ -42,26 +31,6 @@ public class TestClashName extends ext.TestClashNameParent implements TestClashN
  }
  
  class 'pkg/TestClashName' {
@@ -382,32 +384,9 @@ index 2a9a731549e4bee8fe6ff812211e5a7930252017..43348ea674adf840021a807e16fd231a
 -   }
 -
     method 'm ()I' {
--      1      31
--      4      31
--      6      32
--      9      32
--      c      33
--      f      33
--      11      34
--      14      34
--      17      35
--      1a      35
--      1d      36
--      1f      36
--      20      36
-+      1      20
-+      4      20
-+      6      21
-+      9      21
-+      c      22
-+      f      22
-+      11      23
-+      14      23
-+      17      24
-+      1a      24
-+      1d      25
-+      1f      25
-+      20      25
+       0      20
+       1      20
+@@ -99,30 +68,15 @@ class 'pkg/TestClashName' {
     }
  
     method 'f ()V' {
@@ -447,7 +426,7 @@ index 2a9a731549e4bee8fe6ff812211e5a7930252017..43348ea674adf840021a807e16fd231a
 +78 <-> 26
 +82 <-> 30
 diff --git a/testData/results/TestClassFields.dec b/testData/results/TestClassFields.dec
-index ea272ead5c52deca629cb12876748960044559e0..852ae473bdfa591e28aa9b132f9f358ee1fc6eeb 100644
+index 4c37124913d759059ccf151547cfd163d6342412..1547551e536084420a529a7cb7c5d621159938b3 100644
 --- a/testData/results/TestClassFields.dec
 +++ b/testData/results/TestClassFields.dec
 @@ -3,16 +3,14 @@ package pkg;
@@ -471,16 +450,7 @@ index ea272ead5c52deca629cb12876748960044559e0..852ae473bdfa591e28aa9b132f9f358e
     }
  }
  
-@@ -21,17 +19,13 @@ class 'pkg/TestClassFields' {
-       11      8
-       14      8
-       17      8
--      1b      9
--      1f      10
--      22      10
--      25      11
-+      20      9
-    }
+@@ -30,9 +28,8 @@ class 'pkg/TestClassFields' {
  }
  
  Lines mapping:

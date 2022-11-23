@@ -10,7 +10,7 @@ Add -dcl {dump code lines} to dump this line data to a file in the output archiv
 This will allow external projects to do this remapping as well.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index 0b607e86f96bef987c949612fa9410d0dfc3aa02..cab48267cfe9a4b6c1f7f63449340cf6d446bd92 100644
+index 7af078ed357349951585906564c1bf8239c0c810..b4869c2a756adb1c2da8b62fd8d4dc3f3f7cb2ca 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -255,7 +255,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
@@ -50,7 +50,7 @@ index 0b607e86f96bef987c949612fa9410d0dfc3aa02..cab48267cfe9a4b6c1f7f63449340cf6
      }
      catch (IOException ex) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
-index 9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1..164cd142118f37d33375c19b8903d61658d3a07a 100644
+index 651584c6758413e31edd5ee6952cb069246c10d4..272e4db3578da68aed40eb864f09eb547f85784d 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 @@ -4,6 +4,7 @@ import java.io.File;
@@ -61,7 +61,7 @@ index 9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1..164cd142118f37d33375c19b8903d616
  import java.util.HashSet;
  import java.util.Set;
  import java.util.jar.JarFile;
-@@ -63,7 +64,7 @@ public class SingleFileSaver implements IResultSaver {
+@@ -62,7 +63,7 @@ public class SingleFileSaver implements IResultSaver {
  
    @Override
    public void saveDirEntry(String path, String archiveName, String entryName) {
@@ -70,7 +70,7 @@ index 9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1..164cd142118f37d33375c19b8903d616
    }
  
    @Override
-@@ -89,16 +90,22 @@ public class SingleFileSaver implements IResultSaver {
+@@ -88,16 +89,22 @@ public class SingleFileSaver implements IResultSaver {
    }
  
    @Override
@@ -96,7 +96,7 @@ index 9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1..164cd142118f37d33375c19b8903d616
      catch (IOException ex) {
        String message = "Cannot write entry " + entryName + " to " + target;
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
-index f76d2c1611ec48375c25d489d9713bd876ffcb83..81cd12ba302af00d66c3f699804651d940f06a5a 100644
+index 98fe00844f7b4d5bbdcef09e379bb8e634a96dff..114b7ab0681c661c5486e20f42993402f45debc6 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ThreadSafeResultSaver.java
 @@ -77,7 +77,7 @@ public class ThreadSafeResultSaver implements IResultSaver {
@@ -242,10 +242,10 @@ index 4e64b70da8fe886801e027a7ae6c0e59f94cf62a..5b669d8b71d9601769988c41f6465092
      private ClassContext(StructClass cl, String entryName) {
        this.cl = cl;
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-index 8ec8c36234a30e76b7f75d54220f771afe58e264..b5f5d82ee5a62234932d8527cdc1a9ae0ec38e8a 100644
+index c00385f0f59014289ddb152e4dc4e908a8427fb6..a4d18cddb429e22c18519e65267366578b73bbf1 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftTest.java
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-@@ -69,7 +69,7 @@ public class MinecraftTest  extends SingleClassesTestBase {
+@@ -68,7 +68,7 @@ public class MinecraftTest  extends SingleClassesTestBase {
            }
  
            @Override

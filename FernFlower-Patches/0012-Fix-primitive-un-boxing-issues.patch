@@ -5,10 +5,10 @@ Subject: [PATCH] Fix primitive un/boxing issues.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index c592f0d58d1048de416eb2cefd6fcf76f2fb97fd..b7d58645dd21d12c16d4efba9604c46614683c35 100644
+index 3534ca10c55713f5856163b7325e0c6e71c2c502..6ddd7caf2f8deeb0ebbe89d17ad96bf092e66cba 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -1032,12 +1032,14 @@ public class ExprProcessor implements CodeConstants {
+@@ -1031,12 +1031,14 @@ public class ExprProcessor implements CodeConstants {
  
      if (unbox) {
        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
@@ -30,10 +30,10 @@ index c592f0d58d1048de416eb2cefd6fcf76f2fb97fd..b7d58645dd21d12c16d4efba9604c466
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index c45050559cace73741f7529254e1483c81b747c7..a44200c04618f80d9d845cd15087678635913a3a 100644
+index f227df9c03dd6ae3972b80ce11dc36d468addea3..f2dda05e818d680f72d73b22b56a76dd18656ece 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -564,6 +564,19 @@ public class FunctionExprent extends Exprent {
+@@ -563,6 +563,19 @@ public class FunctionExprent extends Exprent {
      }
  
      if (funcType <= FUNCTION_I2S) {
@@ -54,7 +54,7 @@ index c45050559cace73741f7529254e1483c81b747c7..a44200c04618f80d9d845cd150876786
          TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 54c7d1fb9150754ba9daa09f4f24aa41c86387a8..b5fd9e7e8c6941b69440d9f916cb6bdd6e211195 100644
+index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec994e3a000 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -59,6 +59,8 @@ public class InvocationExprent extends Exprent {
@@ -229,7 +229,7 @@ index 54c7d1fb9150754ba9daa09f4f24aa41c86387a8..b5fd9e7e8c6941b69440d9f916cb6bdd
              return true;
            }
          }
-@@ -570,6 +671,18 @@ public class InvocationExprent extends Exprent {
+@@ -569,6 +670,18 @@ public class InvocationExprent extends Exprent {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
@@ -248,7 +248,7 @@ index 54c7d1fb9150754ba9daa09f4f24aa41c86387a8..b5fd9e7e8c6941b69440d9f916cb6bdd
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();
      StructClass cl = DecompilerContext.getStructContext().getClass(className);
-@@ -599,6 +712,8 @@ public class InvocationExprent extends Exprent {
+@@ -598,6 +711,8 @@ public class InvocationExprent extends Exprent {
        return EMPTY_BIT_SET;
      }
  
@@ -257,7 +257,7 @@ index 54c7d1fb9150754ba9daa09f4f24aa41c86387a8..b5fd9e7e8c6941b69440d9f916cb6bdd
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
      if (mt != null) {
-@@ -608,18 +723,50 @@ public class InvocationExprent extends Exprent {
+@@ -607,18 +722,50 @@ public class InvocationExprent extends Exprent {
          for (int i = 0; i < md.params.length; i++) {
            if (!md.params[i].equals(parameters.get(i).getExprType())) {
              exact = false;

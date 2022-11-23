@@ -6,7 +6,7 @@ Subject: [PATCH] Add support for destination to be a zip file if there is only
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index aefae5f232c84700c16721643eab4499e319f61a..e8f65944e62c64cc5b2168c363d4c03d9d0a2fb3 100644
+index c5398222893b170023afa13fa5b6c773ab3edc8d..b44bf391a4914dcee3228cfbb3bbdfefec2f3527 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -100,7 +100,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
@@ -29,10 +29,10 @@ index aefae5f232c84700c16721643eab4499e319f61a..e8f65944e62c64cc5b2168c363d4c03d
    public void addSource(File source) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..9b35ab03a71f7dda64589c88dc8dd1480c5d9cf1
+index 0000000000000000000000000000000000000000..651584c6758413e31edd5ee6952cb069246c10d4
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/SingleFileSaver.java
-@@ -0,0 +1,129 @@
+@@ -0,0 +1,128 @@
 +package org.jetbrains.java.decompiler.main.decompiler;
 +
 +import java.io.File;
@@ -50,7 +50,6 @@ index 0000000000000000000000000000000000000000..9b35ab03a71f7dda64589c88dc8dd148
 +import org.jetbrains.java.decompiler.main.DecompilerContext;
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 +import org.jetbrains.java.decompiler.main.extern.IResultSaver;
-+import org.jetbrains.java.decompiler.util.InterpreterUtil;
 +
 +public class SingleFileSaver implements IResultSaver {
 +  private final File target;
@@ -113,7 +112,7 @@ index 0000000000000000000000000000000000000000..9b35ab03a71f7dda64589c88dc8dd148
 +          final ZipEntry newEntry = new ZipEntry(entryName);
 +          newEntry.setTime(entry.getTime());
 +          output.putNextEntry(newEntry);
-+          InterpreterUtil.copyStream(in, output);
++          in.transferTo(output);
 +        }
 +      }
 +    }

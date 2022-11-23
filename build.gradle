@@ -41,32 +41,8 @@ project(':ForgeFlower') {
     sourcesJar.dependsOn rootProject.tasks.applyPatches
 }
 
-project(':ForgeFlower9') {
-    apply plugin: 'java'
-    apply plugin: 'eclipse'
-
-    sourceSets {
-        java9.java.srcDirs = ['../ForgeFlower/java9']
-    }
-
-    eclipse {
-        project {
-            name 'FernFlower9'
-            linkedResource name: 'java9', type: '2', location: project(':ForgeFlower').file('java9').getAbsolutePath()
-        }
-    }
-
-    dependencies {
-        implementation project(':ForgeFlower')
-    }
-
-    java.toolchain {
-        languageVersion = JavaLanguageVersion.of(9)
-    }
-}
-
 if (tasks.findByName('eclipse') == null) tasks.create('eclipse')
-tasks.findByName('eclipse').dependsOn('applyPatches', 'ForgeFlower:eclipse', 'ForgeFlower9:eclipse')
+tasks.findByName('eclipse').dependsOn('applyPatches', 'ForgeFlower:eclipse')
 
 changelog {
     fromMergeBase()

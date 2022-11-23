@@ -5,7 +5,7 @@ Subject: [PATCH] Improvements to var++ and var--
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 79e55ad572826f33aa4022b1f60c37917d78a67b..e4f693aa6f988445693b5f36efb1d9f810bff3ba 100644
+index 09a5887befc045f8faef7a1c53a71387ea8ff890..52575665f1021b39a09412a774587b10dad34812 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -926,7 +926,7 @@ public class NestedClassProcessor {
@@ -18,18 +18,21 @@ index 79e55ad572826f33aa4022b1f60c37917d78a67b..e4f693aa6f988445693b5f36efb1d9f8
            break;
          case Exprent.EXPRENT_VAR:
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8bf6ace6d 100644
+index 81b4c480810a2f74388a4626a4dc0c2bfc523365..f0f66146eb4ecad4ed1bbd41712cace8fe466ed5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PPandMMHelper.java
-@@ -13,7 +13,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
- import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
+@@ -14,18 +14,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
  import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
--import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
- import java.util.HashMap;
+-import java.util.HashMap;
  import java.util.HashSet;
-@@ -26,7 +25,7 @@ public class PPandMMHelper {
+ import java.util.LinkedList;
+ import java.util.List;
+-import java.util.Map;
+-import java.util.Objects;
+ 
+ public class PPandMMHelper {
  
    private boolean exprentReplaced;
    private VarProcessor varProc;
@@ -38,7 +41,7 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
  
    public PPandMMHelper(VarProcessor varProc) {
      this.varProc = varProc;
-@@ -35,10 +34,10 @@ public class PPandMMHelper {
+@@ -34,10 +31,10 @@ public class PPandMMHelper {
    public boolean findPPandMM(RootStatement root) {
  
      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
@@ -51,7 +54,7 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
  
      HashSet<DirectNode> setVisited = new HashSet<>();
  
-@@ -58,8 +57,6 @@ public class PPandMMHelper {
+@@ -57,8 +54,6 @@ public class PPandMMHelper {
        stack.addAll(node.successors);
      }
  
@@ -60,7 +63,7 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
      return res;
    }
  
-@@ -134,7 +131,7 @@ public class PPandMMHelper {
+@@ -133,7 +128,7 @@ public class PPandMMHelper {
            if (econst.type == Exprent.EXPRENT_CONST && ((ConstExprent)econst).hasValueOne()) {
              Exprent left = as.getLeft();
  
@@ -69,7 +72,7 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
              if (exprsEqual(left, econd) && (midlayer == null || midlayer.equals(condtype))) {
                FunctionExprent ret = new FunctionExprent(
                  func.getFuncType() == FunctionExprent.FUNCTION_ADD ? FunctionExprent.FUNCTION_PPI : FunctionExprent.FUNCTION_MMI,
-@@ -144,7 +141,7 @@ public class PPandMMHelper {
+@@ -143,7 +138,7 @@ public class PPandMMHelper {
                exprentReplaced = true;
  
                if (!left.equals(econd)) {
@@ -78,7 +81,7 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
                }
  
                return ret;
-@@ -172,13 +169,13 @@ public class PPandMMHelper {
+@@ -171,13 +166,13 @@ public class PPandMMHelper {
  
      VarExprent v1 = (VarExprent)e1;
      VarExprent v2 = (VarExprent)e2;
@@ -96,7 +99,7 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
      graph.iterateExprents(new DirectGraph.ExprentIterator() {
        @Override
        public int processExprent(Exprent exprent) {
-@@ -188,10 +185,9 @@ public class PPandMMHelper {
+@@ -187,10 +182,9 @@ public class PPandMMHelper {
          for (Exprent expr : lst) {
            if (expr.type == Exprent.EXPRENT_VAR) {
              VarExprent var = (VarExprent)expr;
@@ -111,10 +114,10 @@ index b085a40522e69c4bb6e69e8abf946ad61e2a2a24..6864b5d55d7029299f9de1ade7e28fb8
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 6542c5adf793250866d9b1d46403084c8db8bc97..cbaf9725b714d7fcccb5b1a149b2acc2be76a888 100644
+index 08903784da127ef326d115d8af8287cc8f65c2ca..2b0a80c8e2f1229664e86159f6cefc74955e197e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -458,7 +458,12 @@ public class ConstExprent extends Exprent {
+@@ -457,7 +457,12 @@ public class ConstExprent extends Exprent {
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values);
    }

@@ -71,10 +71,10 @@ index 4c5641fec76837a51094d4a54800d5b7475446ca..7d29c198014cbfee8092fd31461208ce
    private static boolean isTestDataDir(File dir) {
      return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index e64cf91c0674163f5c81b874e21e84da83fd264e..721a3606e209f4f803dcb6b513a5768c9c437c48 100644
+index e64cf91c0674163f5c81b874e21e84da83fd264e..8c4811fe2e4c46bf87bc0b4ac7752bae5243faf1 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -2,26 +2,14 @@
+@@ -2,27 +2,13 @@
  package org.jetbrains.java.decompiler;
  
  import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -98,12 +98,12 @@ index e64cf91c0674163f5c81b874e21e84da83fd264e..721a3606e209f4f803dcb6b513a5768c
 -
 -public class SingleClassesTest {
 -  private DecompilerTestFixture fixture;
+-
 +public class SingleClassesTest extends SingleClassesTestBase {
-+  protected DecompilerTestFixture fixture;
- 
    /*
     * Set individual test duration time limit to 60 seconds.
-@@ -30,19 +18,14 @@ public class SingleClassesTest {
+    * This will help us to test bugs hanging decompiler.
+@@ -30,19 +16,14 @@ public class SingleClassesTest {
    @Rule
    public Timeout globalTimeout = Timeout.seconds(60);
  
@@ -131,7 +131,7 @@ index e64cf91c0674163f5c81b874e21e84da83fd264e..721a3606e209f4f803dcb6b513a5768c
    }
  
    @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
-@@ -226,45 +209,4 @@ public class SingleClassesTest {
+@@ -226,45 +207,4 @@ public class SingleClassesTest {
  
    @Test(expected = ClassFormatException.class)
    public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }

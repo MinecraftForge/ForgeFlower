@@ -21,26 +21,10 @@ index b7467530cba1d8e317500a5c213dd6013d00a369..eac80ace801517faca82a3a35ac31b58
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 7db5b328969a6dac49054e57b5c00c672ca4ea85..66414bc3eac6e187e5f45f70bc67b783ad4f1a4a 100644
+index 7db5b328969a6dac49054e57b5c00c672ca4ea85..f0d59a81d1f40f95d21ff7699fd349e10d39278c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.main;
- import org.jetbrains.java.decompiler.code.CodeConstants;
- import org.jetbrains.java.decompiler.code.Instruction;
- import org.jetbrains.java.decompiler.code.InstructionSequence;
-+import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeSourceMapper;
- import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
- import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-@@ -11,6 +12,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
- import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer;
- import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
- import org.jetbrains.java.decompiler.main.rels.LambdaProcessor;
-+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
- import org.jetbrains.java.decompiler.main.rels.NestedClassProcessor;
- import org.jetbrains.java.decompiler.main.rels.NestedMemberAccess;
- import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
-@@ -146,6 +148,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -146,6 +146,7 @@ public class ClassesProcessor implements CodeConstants {
          node.access = cl.getAccessFlags();
          mapRootClasses.put(cl.qualifiedName, node);
        }
@@ -48,7 +32,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..66414bc3eac6e187e5f45f70bc67b783
      }
  
      // set non-sealed if class extends or implements a sealed class and is not final or sealed itself
-@@ -256,6 +259,25 @@ public class ClassesProcessor implements CodeConstants {
+@@ -256,6 +257,25 @@ public class ClassesProcessor implements CodeConstants {
      }
    }
  
@@ -74,7 +58,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..66414bc3eac6e187e5f45f70bc67b783
    private static boolean isAnonymous(StructClass cl, StructClass enclosingCl) {
      // checking super class and interfaces
      int[] interfaces = cl.getInterfaces();
-@@ -444,6 +466,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -444,6 +464,7 @@ public class ClassesProcessor implements CodeConstants {
    private static void destroyWrappers(ClassNode node) {
      node.wrapper = null;
      node.classStruct.releaseResources();
@@ -82,7 +66,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..66414bc3eac6e187e5f45f70bc67b783
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -503,7 +526,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -503,7 +524,7 @@ public class ClassesProcessor implements CodeConstants {
  
        anonymousClassType = new VarType(lambda_class_name, true);
  
@@ -91,7 +75,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..66414bc3eac6e187e5f45f70bc67b783
        if (!is_method_reference) { // content method in the same class, check synthetic flag
          StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
          is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
-@@ -566,4 +589,4 @@ public class ClassesProcessor implements CodeConstants {
+@@ -566,4 +587,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
    }
@@ -327,7 +311,7 @@ index 0000000000000000000000000000000000000000..fc1d7d67864ab12e894fcdf0ed8e1297
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 721c6a83a921b0f382290f3e17bbea5b214b7881..f79794242f3eb9b5000af5fa6b41994ee1b25cd9 100644
+index 2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3..8340673d27079b96d7aee5d32d7f61af7ed80b67 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,6 +2,7 @@
@@ -338,33 +322,23 @@ index 721c6a83a921b0f382290f3e17bbea5b214b7881..f79794242f3eb9b5000af5fa6b41994e
  import org.jetbrains.java.decompiler.main.DecompilerContext;
  import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
  import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-@@ -11,7 +12,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+@@ -11,6 +12,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.InvocationExprent;
 +import org.jetbrains.java.decompiler.modules.decompiler.exps.NewExprent;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph.ExprentIterator;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
- import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
-@@ -21,11 +24,15 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
- import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
- import org.jetbrains.java.decompiler.struct.StructClass;
- import org.jetbrains.java.decompiler.struct.StructMethod;
-+import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
-+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
- import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute.LocalVariable;
+@@ -25,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribu
  import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
  import org.jetbrains.java.decompiler.struct.gen.VarType;
- import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 +import org.jetbrains.java.decompiler.util.StatementIterator;
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -850,6 +857,53 @@ public class VarDefinitionHelper {
+@@ -849,6 +852,53 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().getCast());
      }
@@ -418,7 +392,7 @@ index 721c6a83a921b0f382290f3e17bbea5b214b7881..f79794242f3eb9b5000af5fa6b41994e
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -859,7 +913,16 @@ public class VarDefinitionHelper {
+@@ -858,7 +908,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().getLVT();
@@ -435,7 +409,7 @@ index 721c6a83a921b0f382290f3e17bbea5b214b7881..f79794242f3eb9b5000af5fa6b41994e
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -993,7 +1056,7 @@ public class VarDefinitionHelper {
+@@ -992,7 +1051,7 @@ public class VarDefinitionHelper {
  
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null)
@@ -493,10 +467,10 @@ index e3d5edf6e78c37206e5a37abaf24efbb6eb6dfa3..7237f2527530d8dea8d82f934c273c98
    }
 diff --git a/src/org/jetbrains/java/decompiler/util/JADNameProvider.java b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e911cb50de7
+index 0000000000000000000000000000000000000000..65024207b453623b9666bc20302246e8f36cde69
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/JADNameProvider.java
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,214 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -516,7 +490,6 @@ index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e91
 +
 +import java.util.ArrayList;
 +import java.util.Collections;
-+import java.util.Comparator;
 +import java.util.HashMap;
 +import java.util.LinkedHashMap;
 +import java.util.List;
@@ -543,7 +516,7 @@ index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e91
 +  private static final Pattern ARRAY = Pattern.compile("(\\[|\\.\\.\\.)");
 +
 +  public JADNameProvider(StructMethod wrapper) {
-+    last = new HashMap<String, Holder>();
++    last = new HashMap<>();
 +    last.put("int",     new Holder(0, true,  "i", "j", "k", "l"));
 +    last.put("byte",    new Holder(0, false, "b"       ));
 +    last.put("char",    new Holder(0, false, "c"       ));
@@ -561,7 +534,7 @@ index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e91
 +    last.put("Package", new Holder(0, true,  "opackage"));
 +    last.put("Enum",    new Holder(0, true,  "oenum"   ));
 +
-+    remap = new HashMap<String, String>();
++    remap = new HashMap<>();
 +    remap.put("long", "int");
 +
 +    this.method = wrapper;
@@ -570,7 +543,7 @@ index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e91
 +  @Override
 +  public synchronized void addParentContext(IVariableNameProvider iparent) {
 +    JADNameProvider parent = (JADNameProvider) iparent;
-+    HashMap<String, Holder> temp = new HashMap<String, Holder>();
++    HashMap<String, Holder> temp = new HashMap<>();
 +    for (Entry<String, Holder> e : parent.last.entrySet()) {
 +      temp.put(e.getKey(), e.getValue().copy());
 +    }
@@ -581,7 +554,7 @@ index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e91
 +  private static class Holder {
 +    public int id;
 +    public boolean skip_zero;
-+    public final List<String> names = new ArrayList<String>();
++    public final List<String> names = new ArrayList<>();
 +
 +    public Holder(int t1, boolean skip_zero, String... names) {
 +      this.id = t1;
@@ -617,10 +590,10 @@ index 0000000000000000000000000000000000000000..e7073956c555e710b18f0495a4166e91
 +      params += param.getStackSize();
 +    }
 +
-+    List<VarVersionPair> keys = new ArrayList<VarVersionPair>(entries.keySet());
++    List<VarVersionPair> keys = new ArrayList<>(entries.keySet());
 +    Collections.sort(keys, (o1, o2) -> (o1.var != o2.var) ? o1.var - o2.var : o1.version - o2.version);
 +
-+    Map<VarVersionPair, String> result = new LinkedHashMap<VarVersionPair, String>();
++    Map<VarVersionPair, String> result = new LinkedHashMap<>();
 +    for (VarVersionPair ver : keys) {
 +      String type = entries.get(ver);
 +      if ("this".equals(type)) {

@@ -148,7 +148,7 @@ index f9ffa3a3279fd8c3639489260a0dc4a01950c1a2..7a88cb7bc4744aac96bdaffc0ab95652
      typeProcessor.calculateVarTypes(root, graph);
 diff --git a/src/org/jetbrains/java/decompiler/util/DotExporter.java b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..c1f55119989bacdc74d279564e78b05833355696
+index 0000000000000000000000000000000000000000..f9ce78507cb70255e090088fbf1e1834dfdf902f
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/util/DotExporter.java
 @@ -0,0 +1,238 @@
@@ -228,30 +228,30 @@ index 0000000000000000000000000000000000000000..c1f55119989bacdc74d279564e78b058
 +
 +    List<BasicBlock> blocks = graph.getBlocks();
 +    for(int i=0;i<blocks.size();i++) {
-+      BasicBlock block = (BasicBlock)blocks.get(i);
++      BasicBlock block = blocks.get(i);
 +
 +      buffer.append(block.id+" [shape=box,label=\""+block.id+"\"];\r\n");
 +
 +
 +      List<BasicBlock> suc = block.getSuccessors();
 +      if(!showMultipleEdges) {
-+        HashSet<BasicBlock> set = new HashSet<BasicBlock>();
++        HashSet<BasicBlock> set = new HashSet<>();
 +        set.addAll(suc);
 +        suc = Collections.list(Collections.enumeration(set));
 +      }
 +      for(int j=0;j<suc.size();j++) {
-+        buffer.append(block.id+"->"+((BasicBlock)suc.get(j)).id+";\r\n");
++        buffer.append(block.id+"->"+suc.get(j).id+";\r\n");
 +      }
 +
 +
 +      suc = block.getSuccessorExceptions();
 +      if(!showMultipleEdges) {
-+        HashSet<BasicBlock> set = new HashSet<BasicBlock>();
++        HashSet<BasicBlock> set = new HashSet<>();
 +        set.addAll(suc);
 +        suc = Collections.list(Collections.enumeration(set));
 +      }
 +      for(int j=0;j<suc.size();j++) {
-+        buffer.append(block.id+" -> "+((BasicBlock)suc.get(j)).id+" [style=dotted];\r\n");
++        buffer.append(block.id+" -> "+suc.get(j).id+" [style=dotted];\r\n");
 +      }
 +    }
 +

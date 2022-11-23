@@ -5,7 +5,7 @@ Subject: [PATCH] Search generics when finding where to inject local classes.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 3530d2f46c4ad90974796e41f664613420e2689a..d83ecd553177e5b1ed50776bc5e48d44eb94ba90 100644
+index b531db78bf55aed572f05215033c290bbb9e05c0..9cdaa21a937fb4ec4b326a00b9be942342fd716c 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -16,15 +16,6 @@ index 3530d2f46c4ad90974796e41f664613420e2689a..d83ecd553177e5b1ed50776bc5e48d44
  import org.jetbrains.java.decompiler.util.DotExporter;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
-@@ -77,7 +78,7 @@ public class NestedClassProcessor {
- 
-         if (child.type == ClassNode.CLASS_LOCAL && child.enclosingMethod != null) {
-           MethodWrapper enclosingMethodWrapper = node.getWrapper().getMethods().getWithKey(child.enclosingMethod);
--          if(enclosingMethodWrapper != null) { // e.g. in case of switch-on-enum. FIXME: some proper handling of multiple enclosing classes 
-+          if(enclosingMethodWrapper != null) { // e.g. in case of switch-on-enum. FIXME: some proper handling of multiple enclosing classes
-             setLocalClassDefinition(enclosingMethodWrapper, child);
-           }
-         }
 @@ -935,9 +936,15 @@ public class NestedClassProcessor {
          case Exprent.EXPRENT_VAR:
            VarExprent varExpr = (VarExprent)expr;
@@ -45,10 +36,10 @@ index 3530d2f46c4ad90974796e41f664613420e2689a..d83ecd553177e5b1ed50776bc5e48d44
            }
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 209fb0603e4e283ebd64cb4c993dc245291d952c..0fb1e4749f39a0122735c1d54ea42f94e34d38d2 100644
+index 135c633ac8ed35d6ccb4d24131395ec6d94ea566..f670f30e2f5c8e2f619d22efc4b61842692b3f11 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-@@ -153,7 +153,8 @@ public class VarExprent extends Exprent {
+@@ -151,7 +151,8 @@ public class VarExprent extends Exprent {
    }
    */
  
@@ -58,7 +49,7 @@ index 209fb0603e4e283ebd64cb4c993dc245291d952c..0fb1e4749f39a0122735c1d54ea42f94
      if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
  
        if (lvt != null) {
-@@ -161,13 +162,11 @@ public class VarExprent extends Exprent {
+@@ -159,13 +160,11 @@ public class VarExprent extends Exprent {
            if (lvt.getSignature() != null) {
              GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(lvt.getSignature());
              if (descriptor != null) {
@@ -74,7 +65,7 @@ index 209fb0603e4e283ebd64cb4c993dc245291d952c..0fb1e4749f39a0122735c1d54ea42f94
        }
  
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
-@@ -187,8 +186,7 @@ public class VarExprent extends Exprent {
+@@ -185,8 +184,7 @@ public class VarExprent extends Exprent {
                if (signature != null) {
                  GenericFieldDescriptor descriptor = GenericMain.parseFieldSignature(signature);
                  if (descriptor != null) {
@@ -84,7 +75,7 @@ index 209fb0603e4e283ebd64cb4c993dc245291d952c..0fb1e4749f39a0122735c1d54ea42f94
                  }
                }
              }
-@@ -199,15 +197,17 @@ public class VarExprent extends Exprent {
+@@ -197,15 +195,17 @@ public class VarExprent extends Exprent {
            if (attr != null) {
              String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
              if (descriptor != null) {

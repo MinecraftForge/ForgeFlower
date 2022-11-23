@@ -6,7 +6,7 @@ Subject: [PATCH] Enhance Generic Invocations Temporarily.
 This is a temp separate patch until I get some time to merge it to patch 10/13.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
-index afc26187d4b7916f5c8fa284a940f19a8c996702..d87e027fe9f3a7310d024b3ecda066d546f0a370 100644
+index 33150f76d649f124bc818036b0f7c6331d5e74be..e2f36231b51e547b4aae610c8450d83bc0952e44 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 @@ -266,11 +266,11 @@ public abstract class Exprent implements IMatchable {
@@ -24,19 +24,10 @@ index afc26187d4b7916f5c8fa284a940f19a8c996702..d87e027fe9f3a7310d024b3ecda066d5
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2db6947b6e 100644
+index f2dda05e818d680f72d73b22b56a76dd18656ece..2ce8932cb33e4881de5ed09b728781804cdced57 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -5,6 +5,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
- import org.jetbrains.java.decompiler.util.TextBuffer;
- import org.jetbrains.java.decompiler.main.DecompilerContext;
- import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
-+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
-+import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
- import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
- import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
- import org.jetbrains.java.decompiler.struct.gen.VarType;
-@@ -299,11 +301,11 @@ public class FunctionExprent extends Exprent {
+@@ -298,11 +298,11 @@ public class FunctionExprent extends Exprent {
        VarType right = lstOperands.get(0).getInferredExprType(upperBound);
        VarType cast = lstOperands.get(1).getExprType();
  
@@ -50,7 +41,7 @@ index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2d
            arrayDim = upperBound.getArrayDim();
            upperBound = upperBound.resizeArrayDim(0);
            right = right.resizeArrayDim(0);
-@@ -323,6 +325,15 @@ public class FunctionExprent extends Exprent {
+@@ -322,6 +322,15 @@ public class FunctionExprent extends Exprent {
              this.needsCast = false;
            }
          }
@@ -66,7 +57,7 @@ index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2d
        }
        else { //TODO: Capture generics to make cast better?
          this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue());
-@@ -581,7 +592,7 @@ public class FunctionExprent extends Exprent {
+@@ -580,7 +589,7 @@ public class FunctionExprent extends Exprent {
          TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
      }
  
@@ -75,16 +66,7 @@ index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2d
      throw new RuntimeException("invalid function");
    }
  
-@@ -662,7 +673,7 @@ public class FunctionExprent extends Exprent {
-     measureBytecode(values, lstOperands);
-     measureBytecode(values);
-   }
--  
-+
-   // *****************************************************************************
-   // IMatchable implementation
-   // *****************************************************************************
-@@ -676,4 +687,4 @@ public class FunctionExprent extends Exprent {
+@@ -675,4 +684,4 @@ public class FunctionExprent extends Exprent {
      Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
      return type == null || this.funcType == type;
    }
@@ -92,7 +74,7 @@ index a44200c04618f80d9d845cd15087678635913a3a..a735a13e50d76c15800b14d0dd589d2d
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index b5fd9e7e8c6941b69440d9f916cb6bdd6e211195..da71a1497ceb262e80617c525886da7db85e02b3 100644
+index cba6b5ab608f96de2ef6781d8c1cfec994e3a000..c1a645bfe508513263618dc04da1d66eb99e7d0e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -408,6 +408,7 @@ public class InvocationExprent extends Exprent {
@@ -144,7 +126,7 @@ index b5fd9e7e8c6941b69440d9f916cb6bdd6e211195..da71a1497ceb262e80617c525886da7d
  
      boolean firstParameter = true;
      for (int i = start; i < this.parameters.size(); i++) {
-@@ -685,27 +702,98 @@ public class InvocationExprent extends Exprent {
+@@ -684,27 +701,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();
@@ -254,7 +236,7 @@ index b5fd9e7e8c6941b69440d9f916cb6bdd6e211195..da71a1497ceb262e80617c525886da7d
      StructClass cl = DecompilerContext.getStructContext().getClass(className);
      if (cl == null || matches.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructClass.java b/src/org/jetbrains/java/decompiler/struct/StructClass.java
-index ce8b12c815fc939406701ad57627a1bd11771722..894c8e5f0c28ef64acfe392f433ea56f37437054 100644
+index bead2d172e27075e63f6977562988041a96a4371..4115efedd42ef96e61425d05dc83153e20ebf9a2 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructClass.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructClass.java
 @@ -159,6 +159,35 @@ public class StructClass extends StructMember {

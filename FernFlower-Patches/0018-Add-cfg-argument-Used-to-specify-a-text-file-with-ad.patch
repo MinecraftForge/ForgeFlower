@@ -7,7 +7,7 @@ Subject: [PATCH] Add -cfg argument Used to specify a text file with additional
 Our use case is specifying a ton of external libraries. It will read a text file and replace the -cfg entry with those lines.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index d0ae9a7c3b20de44cb202390cc0dfd4d690fee64..aefae5f232c84700c16721643eab4499e319f61a 100644
+index d0ae9a7c3b20de44cb202390cc0dfd4d690fee64..c5398222893b170023afa13fa5b6c773ab3edc8d 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -10,9 +10,13 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -28,7 +28,7 @@ index d0ae9a7c3b20de44cb202390cc0dfd4d690fee64..aefae5f232c84700c16721643eab4499
  public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
    @SuppressWarnings("UseOfSystemOutOrSystemErr")
    public static void main(String[] args) {
-+    List<String> params = new ArrayList<String>();
++    List<String> params = new ArrayList<>();
 +    for (int x = 0; x < args.length; x++) {
 +      if (args[x].startsWith("-cfg")) {
 +        String path = null;

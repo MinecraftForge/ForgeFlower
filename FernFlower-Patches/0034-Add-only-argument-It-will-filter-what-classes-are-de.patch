@@ -8,10 +8,10 @@ Uses a prefix system, so -only=net/minecraft/block/ will decompile all classes i
 Useful for debugging to limit scope/runtime.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 8aefba318b0f09b559d41d945a3d8099a861ac55..305b06903b36bc4cdb740a8f050543403e6406fe 100644
+index e0c4593576ed55313de61adde1a5e175b75d0825..28bc5654aa5167f0e1e99a599d73cb6017cd7f2b 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-@@ -38,6 +38,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -36,6 +36,7 @@ public class ClassesProcessor implements CodeConstants {
  
    private final StructContext context;
    private final Map<String, ClassNode> mapRootClasses = new HashMap<>();
@@ -19,7 +19,7 @@ index 8aefba318b0f09b559d41d945a3d8099a861ac55..305b06903b36bc4cdb740a8f05054340
  
    private static class Inner {
      private String simpleName;
-@@ -63,6 +64,22 @@ public class ClassesProcessor implements CodeConstants {
+@@ -61,6 +62,22 @@ public class ClassesProcessor implements CodeConstants {
      this.context = context;
    }
  
@@ -42,7 +42,7 @@ index 8aefba318b0f09b559d41d945a3d8099a861ac55..305b06903b36bc4cdb740a8f05054340
    public void loadClasses(IIdentifierRenamer renamer) {
      Map<String, Inner> mapInnerClasses = new HashMap<>();
      Map<String, Set<String>> mapNestedClassReferences = new HashMap<>();
-@@ -162,9 +179,11 @@ public class ClassesProcessor implements CodeConstants {
+@@ -160,9 +177,11 @@ public class ClassesProcessor implements CodeConstants {
            }
          }
  
@@ -82,7 +82,7 @@ index ab8c1a60acfdef8c6ffb3082efbfbc1315d2c0bc..469b313a958cf8aca35fe98fc809880d
      }
      else if (converter != null) {
 diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
-index e8f65944e62c64cc5b2168c363d4c03d9d0a2fb3..92e27999009de17e1ba1e6475b1fac1b13ecc337 100644
+index b44bf391a4914dcee3228cfbb3bbdfefec2f3527..e77afd845015501a743b091d3a3cc716497ffc75 100644
 --- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 +++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
 @@ -66,6 +66,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
