@@ -21,10 +21,10 @@ index 81fed9eaea4d73a99e87545d15171033f98db3b1..cc6f6ad706aa1fcb0b129ea9da80b47f
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..74f8661d10c840fff38ebde68bd284fd9ed16a72
+index 0000000000000000000000000000000000000000..88b868c9ddbe9f3aec362fe34724c0cc480d2b84
 --- /dev/null
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/TryHelper.java
-@@ -0,0 +1,595 @@
+@@ -0,0 +1,602 @@
 +package org.jetbrains.java.decompiler.modules.decompiler;
 +
 +import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -199,6 +199,10 @@ index 0000000000000000000000000000000000000000..74f8661d10c840fff38ebde68bd284fd
 +      return false;
 +    }
 +
++    if (!tryStatement.getVars().get(0).getVarType().getValue().equals("java/lang/Throwable")) {
++      return false;
++    }
++
 +    Statement inner = tryStatement.getStats().get(1); // Get catch block
 +
 +    VarExprent closeable = null;
@@ -282,6 +286,9 @@ index 0000000000000000000000000000000000000000..74f8661d10c840fff38ebde68bd284fd
 +    }
 +
 +    Set<Statement> destinations = findExitpoints(tryStatement);
++    if (destinations.isEmpty()) {
++      return false;
++    }
 +
 +    Statement check = tryStatement;
 +    List<StatEdge> preds = new ArrayList<>();
