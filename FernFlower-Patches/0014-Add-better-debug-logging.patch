@@ -5,10 +5,10 @@ Subject: [PATCH] Add better debug logging
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index eac80ace801517faca82a3a35ac31b58fdd667ab..17dc8a4a5d4e3164337f6d05ab1e00576191a0ca 100644
+index b10e0887ea88e2bc59c26ff893cb857f44289e02..51ecfceba749e63b8eb0022e4ad47c4c12b15a54 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -820,7 +820,7 @@ public class ClassWriter {
+@@ -817,7 +817,7 @@ public class ClassWriter {
              tracer.addTracer(codeTracer);
            }
            catch (Throwable t) {

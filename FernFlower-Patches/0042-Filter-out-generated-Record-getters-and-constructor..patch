@@ -6,7 +6,7 @@ Subject: [PATCH] Filter out generated Record getters and constructor. Make
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index bae5fd174027bc9f8c7c3d2eb53c2ef7ccab6ffe..15cdda39d2354f1e0eab1e72a7769fb9d2083958 100644
+index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f584ef47261 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -350,6 +350,18 @@ public class ClassWriter {
@@ -87,7 +87,7 @@ index bae5fd174027bc9f8c7c3d2eb53c2ef7ccab6ffe..15cdda39d2354f1e0eab1e72a7769fb9
          buffer.append('(');
  
          List<VarVersionPair> mask = methodWrapper.synthParameters;
-@@ -837,6 +885,7 @@ public class ClassWriter {
+@@ -836,6 +884,7 @@ public class ClassWriter {
              buffer.append(ExprProcessor.getCastTypeName(type, Collections.emptyList()));
            }
          }
@@ -95,7 +95,7 @@ index bae5fd174027bc9f8c7c3d2eb53c2ef7ccab6ffe..15cdda39d2354f1e0eab1e72a7769fb9
        }
  
        tracer.incrementCurrentSourceLine(buffer.countLines(start_index_method));
-@@ -870,7 +919,7 @@ public class ClassWriter {
+@@ -869,7 +918,7 @@ public class ClassWriter {
              BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
              TextBuffer code = root.toJava(indent + 1, codeTracer);
  

@@ -6,22 +6,22 @@ Subject: [PATCH] Add new command line argument -sef SkipExtraFiles: To skip
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 206f62766c52572b6d5583c7822da22a25130adc..d91d9faebf718192a679c436792a54c24bed8c63 100644
+index 9641d4ea515d943009e87fe180a9e8a2569e8b14..8337607e067c1c7cdc803058eab4bfb0ba3c9d3c 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -53,6 +53,8 @@ public interface IFernflowerPreferences {
- 
-   String USE_JAD_VARNAMING = "jvn";
+@@ -54,6 +54,8 @@ public interface IFernflowerPreferences {
+   String USE_JAD_VARNAMING = "jvn"; // Overwrites any Local Variable names with JAD style names
+   String USE_JAD_PARAMETER_RENAMING = "jpr"; // Include parameter names in JAD naming
  
 +  String SKIP_EXTRA_FILES = "sef";
 +
    Map<String, Object> DEFAULTS = getDefaults();
  
    static Map<String, Object> getDefaults() {
-@@ -96,6 +98,7 @@ public interface IFernflowerPreferences {
-     defaults.put(UNIT_TEST_MODE, "0");
+@@ -98,6 +100,7 @@ public interface IFernflowerPreferences {
      defaults.put(DUMP_ORIGINAL_LINES, "0");
      defaults.put(USE_JAD_VARNAMING, "0");
+     defaults.put(USE_JAD_PARAMETER_RENAMING, "0");
 +    defaults.put(SKIP_EXTRA_FILES, "0");
  
      return Collections.unmodifiableMap(defaults);

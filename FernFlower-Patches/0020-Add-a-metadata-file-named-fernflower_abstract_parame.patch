@@ -7,20 +7,22 @@ Subject: [PATCH] Add a metadata file named
 Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 17dc8a4a5d4e3164337f6d05ab1e00576191a0ca..564236822dab0c638f9a48cb86a6eecc7892080c 100644
+index 51ecfceba749e63b8eb0022e4ad47c4c12b15a54..935436becc44c1cc5f9cdad3753d139aa5fa9932 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -749,7 +749,9 @@ public class ClassWriter {
-             String parameterName = methodWrapper.varproc.getVarName(pair);
+@@ -747,7 +747,11 @@ public class ClassWriter {
+             buffer.append(' ');
  
-             if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {
--              parameterName = methodWrapper.methodStruct.getVariableNamer().renameAbstractParameter(parameterName, index);
-+              String newParameterName = methodWrapper.methodStruct.getVariableNamer().renameAbstractParameter(parameterName, index);
-+              parameterName = !newParameterName.equals(parameterName) ? newParameterName : DecompilerContext.getStructContext().renameAbstractParameter(methodWrapper.methodStruct.getClassQualifiedName(), mt.getName(), mt.getDescriptor(), index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0), parameterName);
-+
-             }
+             String parameterName = methodWrapper.varproc.getVarName(pair);
+-            parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(flags, typeName, parameterName, index);
++            String newParameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(flags, typeName, parameterName, index);
++            if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0 && newParameterName.equals(parameterName)) {
++              newParameterName = DecompilerContext.getStructContext().renameAbstractParameter(methodWrapper.methodStruct.getClassQualifiedName(), mt.getName(), mt.getDescriptor(), index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0), parameterName);
++            }
++            parameterName = newParameterName;
  
              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
+ 
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 index 57c74fd4bdd195287f616c9b5138bad87b2a96da..c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java

@@ -190,7 +190,7 @@ index bb7b5b4e4a590219939a8f7e883b9c259c1adf73..458d119056f3fa7eceec7215fa577018
      return getCurrentContext().logger;
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index 469b313a958cf8aca35fe98fc809880d12db671e..eefcf79cedb6148f5c02b8077914a467f3d58b64 100644
+index bc97cdaa10bcc5e99860241f0ee0ef8cfff8434e..8e8abfd701a61accbd67ca4e661d7d329fd48c0b 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
 @@ -25,7 +25,24 @@ public class Fernflower implements IDecompiledData {
@@ -218,7 +218,7 @@ index 469b313a958cf8aca35fe98fc809880d12db671e..eefcf79cedb6148f5c02b8077914a467
      Map<String, Object> properties = new HashMap<>(IFernflowerPreferences.DEFAULTS);
      if (customProperties != null) {
        properties.putAll(customProperties);
-@@ -70,7 +87,7 @@ public class Fernflower implements IDecompiledData {
+@@ -71,7 +88,7 @@ public class Fernflower implements IDecompiledData {
        }
      }
  
@@ -227,7 +227,7 @@ index 469b313a958cf8aca35fe98fc809880d12db671e..eefcf79cedb6148f5c02b8077914a467
      DecompilerContext.setCurrentContext(context);
  
      String vendor = System.getProperty("java.vendor", "missing vendor");
-@@ -138,6 +155,17 @@ public class Fernflower implements IDecompiledData {
+@@ -139,6 +156,17 @@ public class Fernflower implements IDecompiledData {
      }
    }
  
@@ -651,7 +651,7 @@ index c9ece039b0d986c1d84b62426a65e6780ddc80e1..3ca43800b47e1d26a1dc036f21cb6e6e
  
    public void endReadingClass() { }
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 86fd580e52b9534c2750139512ba84739308eead..7bcb5652188642db925a5915f8b743fd14b0e328 100644
+index 1e1d3bd20fe462b6df4dad18a4dea2b611376298..e9aa42e6801916d0acad2541d88b8ad780d60d8e 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -39,6 +39,7 @@ public interface IFernflowerPreferences {
@@ -662,7 +662,7 @@ index 86fd580e52b9534c2750139512ba84739308eead..7bcb5652188642db925a5915f8b743fd
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -94,6 +95,7 @@ public interface IFernflowerPreferences {
+@@ -95,6 +96,7 @@ public interface IFernflowerPreferences {
      defaults.put(QUALIFY_INNER_CLASSES, "1");
      defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
      defaults.put(INLINE_SIMPLE_LAMBDAS, "1");

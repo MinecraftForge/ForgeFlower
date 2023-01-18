@@ -58,10 +58,10 @@ index e0c4593576ed55313de61adde1a5e175b75d0825..28bc5654aa5167f0e1e99a599d73cb60
        linkEnclosingMethods(cl);
      }
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index ab8c1a60acfdef8c6ffb3082efbfbc1315d2c0bc..469b313a958cf8aca35fe98fc809880d12db671e 100644
+index aa8b1132b84fc44bf6decd96ebaf5c021c185ac1..bc97cdaa10bcc5e99860241f0ee0ef8cfff8434e 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-@@ -115,6 +115,10 @@ public class Fernflower implements IDecompiledData {
+@@ -116,6 +116,10 @@ public class Fernflower implements IDecompiledData {
      structContext.saveContext();
    }
  
@@ -72,7 +72,7 @@ index ab8c1a60acfdef8c6ffb3082efbfbc1315d2c0bc..469b313a958cf8aca35fe98fc809880d
    public void clearContext() {
      DecompilerContext.setCurrentContext(null);
    }
-@@ -122,7 +126,7 @@ public class Fernflower implements IDecompiledData {
+@@ -123,7 +127,7 @@ public class Fernflower implements IDecompiledData {
    @Override
    public String getClassEntryName(StructClass cl, String entryName) {
      ClassNode node = classProcessor.getMapRootClasses().get(cl.qualifiedName);

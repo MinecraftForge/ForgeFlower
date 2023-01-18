@@ -5,7 +5,7 @@ Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index ac0d6feaa643477aa465cd8bb8ebd4503faf522a..bae5fd174027bc9f8c7c3d2eb53c2ef7ccab6ffe 100644
+index 593a250927796059e2ade8ba80cfd755f0dc1a6f..6837887133f8a5dd289e65f0b0bc924900be05c6 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -10,14 +10,19 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
@@ -120,7 +120,7 @@ index ac0d6feaa643477aa465cd8bb8ebd4503faf522a..bae5fd174027bc9f8c7c3d2eb53c2ef7
      }
      finally {
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 0c1e9296f40007557be90d12daf39cb9a78df448..86fd580e52b9534c2750139512ba84739308eead 100644
+index 9bad04ab4c0cee5afc2623722674e929058062f0..1e1d3bd20fe462b6df4dad18a4dea2b611376298 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -38,6 +38,7 @@ public interface IFernflowerPreferences {
@@ -131,7 +131,7 @@ index 0c1e9296f40007557be90d12daf39cb9a78df448..86fd580e52b9534c2750139512ba8473
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -92,6 +93,7 @@ public interface IFernflowerPreferences {
+@@ -93,6 +94,7 @@ public interface IFernflowerPreferences {
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
      defaults.put(QUALIFY_INNER_CLASSES, "1");
      defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");

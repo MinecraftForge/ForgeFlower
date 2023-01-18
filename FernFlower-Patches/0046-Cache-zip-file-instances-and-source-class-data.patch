@@ -5,10 +5,10 @@ Subject: [PATCH] Cache zip file instances and source class data
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-index eefcf79cedb6148f5c02b8077914a467f3d58b64..025a8ac22323407bf6b2a4f3e70a0409abadc7d9 100644
+index 8e8abfd701a61accbd67ca4e661d7d329fd48c0b..2dafbbd4ea22bdeeef24d0a0dbc533efc613b4e6 100644
 --- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
 +++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
-@@ -137,6 +137,7 @@ public class Fernflower implements IDecompiledData {
+@@ -138,6 +138,7 @@ public class Fernflower implements IDecompiledData {
    }
  
    public void clearContext() {

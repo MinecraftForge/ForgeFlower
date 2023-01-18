@@ -169,7 +169,7 @@ index 6b7d72b6f599aaf04f122ff38ca872f469c9727e..cdd93212560a15372002c4d927a9debc
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index d91d9faebf718192a679c436792a54c24bed8c63..2493bfcc2eed3e105f819ccc6925ea7a10bfac8c 100644
+index 8337607e067c1c7cdc803058eab4bfb0ba3c9d3c..ee6f1c77f2267fed499ee60a12ef319d8fc95e9f 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
@@ -180,7 +180,7 @@ index d91d9faebf718192a679c436792a54c24bed8c63..2493bfcc2eed3e105f819ccc6925ea7a
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -88,6 +89,7 @@ public interface IFernflowerPreferences {
+@@ -89,6 +90,7 @@ public interface IFernflowerPreferences {
      defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
  
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");

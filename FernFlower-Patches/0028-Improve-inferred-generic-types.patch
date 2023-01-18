@@ -5,7 +5,7 @@ Subject: [PATCH] Improve inferred generic types
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 2493bfcc2eed3e105f819ccc6925ea7a10bfac8c..0c1e9296f40007557be90d12daf39cb9a78df448 100644
+index ee6f1c77f2267fed499ee60a12ef319d8fc95e9f..9bad04ab4c0cee5afc2623722674e929058062f0 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 @@ -37,6 +37,7 @@ public interface IFernflowerPreferences {
@@ -16,7 +16,7 @@ index 2493bfcc2eed3e105f819ccc6925ea7a10bfac8c..0c1e9296f40007557be90d12daf39cb9
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -90,6 +91,7 @@ public interface IFernflowerPreferences {
+@@ -91,6 +92,7 @@ public interface IFernflowerPreferences {
  
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
      defaults.put(QUALIFY_INNER_CLASSES, "1");
