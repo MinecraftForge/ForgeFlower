@@ -5,18 +5,60 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index b7467530cba1d8e317500a5c213dd6013d00a369..b10e0887ea88e2bc59c26ff893cb857f44289e02 100644
+index b7467530cba1d8e317500a5c213dd6013d00a369..a095a246733384782870a1b9cac17ede8fd558dc 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -747,6 +747,8 @@ public class ClassWriter {
+@@ -117,15 +117,20 @@ public class ClassWriter {
+                 buffer.append(", ");
+               }
+ 
++              List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
++              VarType type = md_content.params[i];
++              String typeName = ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
+               if (explicitlyTyped) {
+-                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
+-                VarType type = md_content.params[i];
+-                buffer.append(ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations)));
++                buffer.append(typeName);
+                 buffer.append(' ');
+               }
+ 
+               String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+-              buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
++              if (parameterName == null) {
++                parameterName = "param" + index; // null iff decompiled with errors
++              }
++              parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(mt.getAccessFlags(), typeName, parameterName, index);
++              buffer.append(parameterName);
+ 
+               firstParameter = false;
+             }
+@@ -747,7 +752,11 @@ public class ClassWriter {
              buffer.append(' ');
  
              String parameterName = methodWrapper.varproc.getVarName(pair);
+-            buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
++            if (parameterName == null) {
++              parameterName = "param" + index; // null iff decompiled with errors
++            }
 +            parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(flags, typeName, parameterName, index);
-+
-             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
++            buffer.append(parameterName);
  
              paramCount++;
+           }
+@@ -919,7 +928,11 @@ public class ClassWriter {
+             buffer.append(" ");
+ 
+             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
+-            buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
++            if (parameterName == null) {
++              parameterName = "param" + index; // null iff decompiled with errors
++            }
++            parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(mt.getAccessFlags(), typeName, parameterName, index);
++            buffer.append(parameterName);
+ 
+             firstParameter = false;
+           }
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 index 7db5b328969a6dac49054e57b5c00c672ca4ea85..f0d59a81d1f40f95d21ff7699fd349e10d39278c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java

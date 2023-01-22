@@ -7,22 +7,22 @@ Subject: [PATCH] Add a metadata file named
 Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 51ecfceba749e63b8eb0022e4ad47c4c12b15a54..935436becc44c1cc5f9cdad3753d139aa5fa9932 100644
+index e2545c0d094a25e13efaa554704198d7fa15e0f1..eb5a603ab6ffb2277d2c12a2d5e4a141d633964e 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -747,7 +747,11 @@ public class ClassWriter {
-             buffer.append(' ');
- 
-             String parameterName = methodWrapper.varproc.getVarName(pair);
+@@ -755,7 +755,11 @@ public class ClassWriter {
+             if (parameterName == null) {
+               parameterName = "param" + index; // null iff decompiled with errors
+             }
 -            parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(flags, typeName, parameterName, index);
 +            String newParameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(flags, typeName, parameterName, index);
 +            if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0 && newParameterName.equals(parameterName)) {
 +              newParameterName = DecompilerContext.getStructContext().renameAbstractParameter(methodWrapper.methodStruct.getClassQualifiedName(), mt.getName(), mt.getDescriptor(), index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0), parameterName);
 +            }
 +            parameterName = newParameterName;
+             buffer.append(parameterName);
  
-             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
- 
+             paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 index 57c74fd4bdd195287f616c9b5138bad87b2a96da..c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java

@@ -6,10 +6,10 @@ Subject: [PATCH] Filter out generated Record getters and constructor. Make
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f584ef47261 100644
+index 8b361f06964c228b813a83c5a5bbbe8ab251233a..e4e3ae3e7c35ebf6bf9b8383d534e47a6c9cfcd8 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-@@ -350,6 +350,18 @@ public class ClassWriter {
+@@ -355,6 +355,18 @@ public class ClassWriter {
            return str.startsWith("return this." + name + "<invokedynamic>(this");
          }
        }
@@ -28,7 +28,7 @@ index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f58
      }
      return false;
    }
-@@ -676,7 +688,7 @@ public class ClassWriter {
+@@ -681,7 +693,7 @@ public class ClassWriter {
        boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
        boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
@@ -37,7 +37,7 @@ index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f58
  
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, node);
  
-@@ -728,6 +740,41 @@ public class ClassWriter {
+@@ -733,6 +745,41 @@ public class ClassWriter {
            name = node.simpleName;
            init = true;
          }
@@ -79,7 +79,7 @@ index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f58
        }
        else if (CodeConstants.CLINIT_NAME.equals(name)) {
          name = "";
-@@ -752,6 +799,7 @@ public class ClassWriter {
+@@ -757,6 +804,7 @@ public class ClassWriter {
          }
  
          buffer.append(toValidJavaIdentifier(name));
@@ -87,7 +87,7 @@ index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f58
          buffer.append('(');
  
          List<VarVersionPair> mask = methodWrapper.synthParameters;
-@@ -836,6 +884,7 @@ public class ClassWriter {
+@@ -843,6 +891,7 @@ public class ClassWriter {
              buffer.append(ExprProcessor.getCastTypeName(type, Collections.emptyList()));
            }
          }
@@ -95,7 +95,7 @@ index 6837887133f8a5dd289e65f0b0bc924900be05c6..08530f5c6ded18fa46f83b7541159f58
        }
  
        tracer.incrementCurrentSourceLine(buffer.countLines(start_index_method));
-@@ -869,7 +918,7 @@ public class ClassWriter {
+@@ -876,7 +925,7 @@ public class ClassWriter {
              BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
              TextBuffer code = root.toJava(indent + 1, codeTracer);
  
