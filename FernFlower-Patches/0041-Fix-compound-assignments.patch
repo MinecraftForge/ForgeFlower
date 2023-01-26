@@ -5,7 +5,7 @@ Subject: [PATCH] Fix compound assignments
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 6e642b683d504ade9edef4ea32c154fbd4a219c9..417f21f05257086df8f9f5974216d0e40e58c960 100644
+index 74532a087d53613065490b1bd3bf545719e4b3e7..f66e835ab7cd7b03ada0a433b1edf357f5d6efcd 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -228,6 +228,8 @@ public class MethodProcessorRunnable implements Runnable {
@@ -18,10 +18,10 @@ index 6e642b683d504ade9edef4ea32c154fbd4a219c9..417f21f05257086df8f9f5974216d0e4
      // FIXME: new edge type needed
      LabelHelper.replaceContinueWithBreak(root);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..26adff36fff4172f2a195ded8246effacd04de4e 100644
+index 4a1ad182cf4a3ac6ba57f498f87a9c3486b6f08c..5f53e116b874efa1053fdb94bb3b513b9647597b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SecondaryFunctionsHelper.java
-@@ -428,4 +428,46 @@ public final class SecondaryFunctionsHelper {
+@@ -417,4 +417,46 @@ public final class SecondaryFunctionsHelper {
  
      return null;
    }
@@ -69,10 +69,10 @@ index ed57b52d919ea3c2cb774f28a04b0893e1eb5c7f..26adff36fff4172f2a195ded8246effa
 +  }
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 0313a69f077750a99fde54677176ba2eba0ca24f..7a8bb7a852b3bf074a4df3c9539bed289434d25b 100644
+index c78c9554df9788b87028bcf181fc243db7a29f3f..58400b28b85b170d589655eae8355b5b11b4e722 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -212,4 +212,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
+@@ -213,4 +213,5 @@ public class SingleClassesTest extends SingleClassesTestBase {
  
    @Test(expected = ClassFormatException.class)
    public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }

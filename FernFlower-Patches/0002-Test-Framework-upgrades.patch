@@ -20,7 +20,7 @@ index bb303e84f33161a4b4fd40a73aa48d29981d9ef2..cc1f537e71af0748b7b97d7d8489198e
      throw new RuntimeException("not implemented");
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index c870c683cad7935d7aba141c0310ec0f0a2fdeda..272601270ea32fb5ccc4a822cd9d1b959bae9c35 100644
+index 18a820c7d4723b35f09fa4c841e8399a547acdc7..224d3636f7c9d502cc65c122f542324c1ba7028a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -430,6 +430,10 @@ public abstract class Statement implements IMatchable {
@@ -35,50 +35,47 @@ index c870c683cad7935d7aba141c0310ec0f0a2fdeda..272601270ea32fb5ccc4a822cd9d1b95
      throw new RuntimeException("not implemented");
    }
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index 4c5641fec76837a51094d4a54800d5b7475446ca..7d29c198014cbfee8092fd31461208ce58e7f775 100644
+index f8c2afde883ffe8c681d4e63821991ae82fccdaa..49cbf8407df5952f3da980e6a10f284ff2f27817 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-@@ -23,6 +23,7 @@ public class DecompilerTestFixture {
-   private File tempDir;
-   private File targetDir;
+@@ -28,6 +28,7 @@ public class DecompilerTestFixture {
+   private Path tempDir;
+   private Path targetDir;
    private TestConsoleDecompiler decompiler;
 +  private boolean cleanup = true;
  
-   public void setUp(String... optionPairs) throws IOException {
-     assertThat(optionPairs.length % 2).isEqualTo(0);
+   public void setUp(Map<String, String> customOptions) throws IOException {
+     testDataDir = Path.of("testData");
 @@ -56,7 +57,7 @@ public class DecompilerTestFixture {
-   }
  
-   public void tearDown() {
--    if (tempDir != null) {
-+    if (tempDir != null && cleanup) {
-       delete(tempDir);
+   public void tearDown() throws IOException {
+     try {
+-      if (tempDir != null) {
++      if (tempDir != null && cleanup) {
+         deleteRecursively(tempDir);
+       }
      }
-     decompiler.close();
-@@ -77,6 +78,14 @@ public class DecompilerTestFixture {
-   public ConsoleDecompiler getDecompiler() {
+@@ -81,6 +82,14 @@ public class DecompilerTestFixture {
      return decompiler;
    }
-+  
+ 
 +  public void setCleanup(boolean value) {
 +    this.cleanup = value;
 +  }
-+  
++
 +  public boolean getCleanup() {
 +    return cleanup;
 +  }
- 
-   private static boolean isTestDataDir(File dir) {
-     return dir.isDirectory() && new File(dir, "classes").isDirectory() && new File(dir, "results").isDirectory();
++
+   private static boolean isTestDataDir(Path dir) {
+     return Files.isDirectory(dir) && Files.isDirectory(dir.resolve("classes")) && Files.isDirectory(dir.resolve("results"));
+   }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index e64cf91c0674163f5c81b874e21e84da83fd264e..8c4811fe2e4c46bf87bc0b4ac7752bae5243faf1 100644
+index fc6a4427e586f51fa0bbe43cbb206809e32dfa57..89adb4e6fca7186ae849e62b98a9253de2dd29ef 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -2,27 +2,13 @@
- package org.jetbrains.java.decompiler;
- 
+@@ -4,28 +4,13 @@ package org.jetbrains.java.decompiler;
  import org.jetbrains.java.decompiler.main.DecompilerContext;
--import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
  import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
  import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 -import org.junit.After;
@@ -87,12 +84,16 @@ index e64cf91c0674163f5c81b874e21e84da83fd264e..8c4811fe2e4c46bf87bc0b4ac7752bae
  import org.junit.Test;
  import org.junit.rules.Timeout;
  
--import java.io.File;
 -import java.io.IOException;
+-import java.io.UncheckedIOException;
+-import java.nio.file.DirectoryStream;
+-import java.nio.file.Files;
+-import java.nio.file.Path;
 -import java.util.ArrayList;
--import java.util.Collections;
 -import java.util.List;
--
+ import java.util.Map;
+ 
+-import static org.assertj.core.api.Assertions.assertThat;
 -import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 -import static org.junit.Assert.assertTrue;
 -
@@ -103,75 +104,75 @@ index e64cf91c0674163f5c81b874e21e84da83fd264e..8c4811fe2e4c46bf87bc0b4ac7752bae
    /*
     * Set individual test duration time limit to 60 seconds.
     * This will help us to test bugs hanging decompiler.
-@@ -30,19 +16,14 @@ public class SingleClassesTest {
+@@ -33,19 +18,12 @@ public class SingleClassesTest {
    @Rule
    public Timeout globalTimeout = Timeout.seconds(60);
  
 -  @Before
 -  public void setUp() throws IOException {
 -    fixture = new DecompilerTestFixture();
--    fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
--                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
--                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
--                  IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
+-    fixture.setUp(Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
++  @Override
++  protected Map<String, String> getDecompilerOptions() {
++    return Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+                          IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                          IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+-                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1"));
 -  }
 -
 -  @After
--  public void tearDown() {
+-  public void tearDown() throws IOException {
 -    fixture.tearDown();
 -    fixture = null;
-+  @Override
-+  protected String[] getDecompilerOptions() {
-+    return new String[] {
-+      IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-+      IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-+      IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-+      IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
-+    };
++                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
    }
  
    @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
-@@ -226,45 +207,4 @@ public class SingleClassesTest {
+@@ -229,49 +207,4 @@ public class SingleClassesTest {
  
    @Test(expected = ClassFormatException.class)
    public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
 -
 -  private void doTest(String testFile, String... companionFiles) {
--    ConsoleDecompiler decompiler = fixture.getDecompiler();
+-    var decompiler = fixture.getDecompiler();
 -
--    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
--    assertTrue(classFile.isFile());
--    for (File file : collectClasses(classFile)) {
--      decompiler.addSource(file);
+-    var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
+-    assertThat(classFile).isRegularFile();
+-    for (var file : collectClasses(classFile)) {
+-      decompiler.addSource(file.toFile());
 -    }
 -
 -    for (String companionFile : companionFiles) {
--      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
--      assertTrue(companionClassFile.isFile());
--      for (File file : collectClasses(companionClassFile)) {
--        decompiler.addSource(file);
+-      var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
+-      assertThat(companionClassFile).isRegularFile();
+-      for (var file : collectClasses(companionClassFile)) {
+-        decompiler.addSource(file.toFile());
 -      }
 -    }
 -
 -    decompiler.decompileContext();
 -
--    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
--    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
--    assertTrue(decompiledFile.isFile());
--    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
--    assertTrue(referenceFile.isFile());
+-    var decompiledFile = fixture.getTargetDir().resolve(classFile.getFileName().toString().replace(".class", ".java"));
+-    assertThat(decompiledFile).isRegularFile();
+-    assertTrue(Files.isRegularFile(decompiledFile));
+-    var referenceFile = fixture.getTestDataDir().resolve("results/" + classFile.getFileName().toString().replace(".class", ".dec"));
+-    assertThat(referenceFile).isRegularFile();
 -    assertFilesEqual(referenceFile, decompiledFile);
 -  }
 -
--  private static List<File> collectClasses(File classFile) {
--    List<File> files = new ArrayList<>();
+-  private static List<Path> collectClasses(Path classFile) {
+-    var files = new ArrayList<Path>();
 -    files.add(classFile);
 -
--    File parent = classFile.getParentFile();
+-    var parent = classFile.getParent();
 -    if (parent != null) {
--      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
--      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
--      if (inner != null) Collections.addAll(files, inner);
+-      var glob = classFile.getFileName().toString().replace(".class", "$*.class");
+-      try (DirectoryStream<Path> inner = Files.newDirectoryStream(parent, glob)) {
+-        inner.forEach(files::add);
+-      }
+-      catch (IOException e) {
+-        throw new UncheckedIOException(e);
+-      }
 -    }
 -
 -    return files;
@@ -179,10 +180,10 @@ index e64cf91c0674163f5c81b874e21e84da83fd264e..8c4811fe2e4c46bf87bc0b4ac7752bae
  }
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..081bb55728a0e759bb510c983a56c27b4f39c4d6
+index 0000000000000000000000000000000000000000..05df2e2f7842eb444a1015c69894efc69416f55a
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTestBase.java
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,96 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -200,23 +201,26 @@ index 0000000000000000000000000000000000000000..081bb55728a0e759bb510c983a56c27b
 + */
 +package org.jetbrains.java.decompiler;
 +
-+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 +import org.junit.After;
 +import org.junit.Before;
-+import java.io.File;
 +import java.io.IOException;
++import java.io.UncheckedIOException;
++import java.nio.file.DirectoryStream;
++import java.nio.file.Files;
++import java.nio.file.Path;
 +import java.util.ArrayList;
-+import java.util.Collections;
 +import java.util.List;
++import java.util.Map;
 +
++import static org.assertj.core.api.Assertions.assertThat;
 +import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
 +import static org.junit.Assert.assertTrue;
 +
 +public class SingleClassesTestBase {
 +  protected DecompilerTestFixture fixture;
 +  
-+  protected String[] getDecompilerOptions() {
-+    return new String[] {};
++  protected Map<String, String> getDecompilerOptions() {
++    return Map.of();
 +  }
 +
 +  @Before
@@ -226,48 +230,51 @@ index 0000000000000000000000000000000000000000..081bb55728a0e759bb510c983a56c27b
 +  }
 +
 +  @After
-+  public void tearDown() {
++  public void tearDown() throws IOException {
 +    fixture.tearDown();
 +    fixture = null;
 +  }
 +
-+
 +  protected void doTest(String testFile, String... companionFiles) {
-+    ConsoleDecompiler decompiler = fixture.getDecompiler();
++    var decompiler = fixture.getDecompiler();
 +
-+    File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
-+    assertTrue(classFile.isFile());
-+    for (File file : collectClasses(classFile)) {
-+      decompiler.addSource(file);
++    var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
++    assertThat(classFile).isRegularFile();
++    for (var file : collectClasses(classFile)) {
++      decompiler.addSource(file.toFile());
 +    }
 +
 +    for (String companionFile : companionFiles) {
-+      File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
-+      assertTrue(companionClassFile.isFile());
-+      for (File file : collectClasses(companionClassFile)) {
-+        decompiler.addSource(file);
++      var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
++      assertThat(companionClassFile).isRegularFile();
++      for (var file : collectClasses(companionClassFile)) {
++        decompiler.addSource(file.toFile());
 +      }
 +    }
 +
 +    decompiler.decompileContext();
 +
-+    String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
-+    File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
-+    assertTrue(decompiledFile.isFile());
-+    File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
-+    assertTrue(referenceFile.isFile());
++    var decompiledFile = fixture.getTargetDir().resolve(classFile.getFileName().toString().replace(".class", ".java"));
++    assertThat(decompiledFile).isRegularFile();
++    assertTrue(Files.isRegularFile(decompiledFile));
++    var referenceFile = fixture.getTestDataDir().resolve("results/" + classFile.getFileName().toString().replace(".class", ".dec"));
++    assertThat(referenceFile).isRegularFile();
 +    assertFilesEqual(referenceFile, decompiledFile);
 +  }
 +
-+  private static List<File> collectClasses(File classFile) {
-+    List<File> files = new ArrayList<>();
++  private static List<Path> collectClasses(Path classFile) {
++    var files = new ArrayList<Path>();
 +    files.add(classFile);
 +
-+    File parent = classFile.getParentFile();
++    var parent = classFile.getParent();
 +    if (parent != null) {
-+      final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
-+      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
-+      if (inner != null) Collections.addAll(files, inner);
++      var glob = classFile.getFileName().toString().replace(".class", "$*.class");
++      try (DirectoryStream<Path> inner = Files.newDirectoryStream(parent, glob)) {
++        inner.forEach(files::add);
++      }
++      catch (IOException e) {
++        throw new UncheckedIOException(e);
++      }
 +    }
 +
 +    return files;

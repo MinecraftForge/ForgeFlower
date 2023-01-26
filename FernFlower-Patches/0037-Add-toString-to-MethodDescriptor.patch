@@ -5,7 +5,7 @@ Subject: [PATCH] Add toString to MethodDescriptor
 
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 8044f348e8aad96f451a47ef24f54972e171b9c7..10a2e187ab1d877e7adca38628c197183b4d8352 100644
+index 49494925b2d67b95920bb2b8c8371e886341492f..9b0d6157a3827b0b269a4e396cd91ff93bdf2261 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -19,11 +19,13 @@ import java.util.Objects;
@@ -23,7 +23,7 @@ index 8044f348e8aad96f451a47ef24f54972e171b9c7..10a2e187ab1d877e7adca38628c19718
    }
  
    public static MethodDescriptor parseDescriptor(String descriptor) {
-@@ -70,7 +72,7 @@ public final class MethodDescriptor {
+@@ -71,7 +73,7 @@ public final class MethodDescriptor {
  
      VarType ret = new VarType(descriptor.substring(parenth + 1));
  
@@ -32,7 +32,7 @@ index 8044f348e8aad96f451a47ef24f54972e171b9c7..10a2e187ab1d877e7adca38628c19718
    }
  
    public static MethodDescriptor parseDescriptor(StructMethod struct, ClassNode node) {
-@@ -155,6 +157,11 @@ public final class MethodDescriptor {
+@@ -150,6 +152,11 @@ public final class MethodDescriptor {
      return null;
    }
  

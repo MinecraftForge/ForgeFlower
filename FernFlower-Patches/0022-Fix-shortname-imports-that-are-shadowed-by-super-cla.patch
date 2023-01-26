@@ -189,7 +189,7 @@ index 8337607e067c1c7cdc803058eab4bfb0ba3c9d3c..ee6f1c77f2267fed499ee60a12ef319d
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index b744ddbb35bcc08716826324c1895ce8f860d31b..00ed5ce590551dc8cbe80199b4cdd90b6a50494c 100644
+index b2963191fe5c6e162346fc98f9cefd122da23ee2..f7e086c560b6e1e5d67d93813c91ecc70db49ce1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -200,7 +200,7 @@ index b744ddbb35bcc08716826324c1895ce8f860d31b..00ed5ce590551dc8cbe80199b4cdd90b
  import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeType;
  import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
  import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
-@@ -761,12 +762,14 @@ public class ExprProcessor implements CodeConstants {
+@@ -757,12 +758,14 @@ public class ExprProcessor implements CodeConstants {
    ) {
      List<ClassesProcessor.ClassNode> enclosingClasses = enclosingClassList();
      StringBuilder curPathBldr = new StringBuilder(type.getValue().substring(0, type.getValue().lastIndexOf('/') + 1));

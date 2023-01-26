@@ -6,7 +6,7 @@ Subject: [PATCH] Filter out generated Record getters and constructor. Make
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 8b361f06964c228b813a83c5a5bbbe8ab251233a..e4e3ae3e7c35ebf6bf9b8383d534e47a6c9cfcd8 100644
+index 422863d638ad16ced4ec94e65636652f700ad2b5..e80d0f053894394aa40332e1d13d36ff52909601 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -355,6 +355,18 @@ public class ClassWriter {
@@ -28,12 +28,12 @@ index 8b361f06964c228b813a83c5a5bbbe8ab251233a..e4e3ae3e7c35ebf6bf9b8383d534e47a
      }
      return false;
    }
-@@ -681,7 +693,7 @@ public class ClassWriter {
+@@ -680,7 +692,7 @@ public class ClassWriter {
+       boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
        boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
-       boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
--      boolean clInit = false, init = false, dInit = false;
-+      boolean clInit = false, init = false, dInit = false, compact = false;
+-      boolean clInit = false, dInit = false;
++      boolean clInit = false, dInit = false, compact = false;
  
        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, node);
  

@@ -6,7 +6,7 @@ Subject: [PATCH] Make methods hold a reference to their declaring class
 This is used in several later commits.
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index f58ee71d23ded6d1fe495b5872bd7965b4c6e61e..4e5c7b4da350020f4f69da956eda4384b86df2aa 100644
+index 470965603db2b5ffda4c2776549fcfbba5e7ee72..0a7e5ba44d82f1923dadd9f79627d91f82b1014c 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -41,7 +41,7 @@ public class StructMethod extends StructMember {
@@ -43,7 +43,7 @@ index f58ee71d23ded6d1fe495b5872bd7965b4c6e61e..4e5c7b4da350020f4f69da956eda4384
    }
  
    public void expandData(StructClass classStruct) throws IOException {
-@@ -378,4 +381,8 @@ public class StructMethod extends StructMember {
+@@ -332,4 +335,8 @@ public class StructMethod extends StructMember {
    public String toString() {
      return name;
    }

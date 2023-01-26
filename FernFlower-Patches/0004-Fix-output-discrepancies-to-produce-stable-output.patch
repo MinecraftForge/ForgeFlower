@@ -7,7 +7,7 @@ Running JVM and timestamp result in output varying between
 environments and runs.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c672ca4ea85 100644
+index 4a539357120d333d47f20f5e05b57ef4ad7b1fa8..9104ad3f1edae3deb11913bb08d101269370ca7d 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -249,6 +249,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -18,7 +18,7 @@ index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c67
            }
          }
        }
-@@ -454,7 +455,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -451,7 +452,7 @@ public class ClassesProcessor implements CodeConstants {
    }
  
  
@@ -27,7 +27,7 @@ index a45067feeedaece4546ae2dbc5148fbf9b2c0309..7db5b328969a6dac49054e57b5c00c67
      public static final int CLASS_ROOT = 0;
      public static final int CLASS_MEMBER = 1;
      public static final int CLASS_ANONYMOUS = 2;
-@@ -545,6 +546,12 @@ public class ClassesProcessor implements CodeConstants {
+@@ -542,6 +543,12 @@ public class ClassesProcessor implements CodeConstants {
        isNonSealed = nonSealed;
      }
  
@@ -134,7 +134,7 @@ index 05e6e2d720aa5812ef12c4741eab06b8ea477e0f..f9c8c6a0334512699c545c8812071947
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 7a8655702381a23063c06594aa07bdd9b5c0a8fe..bc116db0c8ad1b1312f220b9b9e22c5d7cdddad8 100644
+index 7fca17c41c49b5378614130cf3b94b4aef6d1176..09eb2ca3b49093d291aaa4fc8bb769316d5a62ac 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -218,6 +218,7 @@ public class NestedClassProcessor {
@@ -146,7 +146,7 @@ index 7a8655702381a23063c06594aa07bdd9b5c0a8fe..bc116db0c8ad1b1312f220b9b9e22c5d
          return true;
        }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba9560279de55 100644
+index 868955437f5c05d8b011671089de24aa7d5ab8cc..277e792a2856334970bafe0661582a8c8d09ad5a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -194,7 +194,7 @@ public final class DomHelper {
@@ -167,7 +167,7 @@ index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba956
  
      SequenceHelper.condenseSequences(root);
      root.buildMonitorFlags();
-@@ -467,11 +467,11 @@ public final class DomHelper {
+@@ -452,11 +452,11 @@ public final class DomHelper {
  
          boolean same = (post == head);
  
@@ -181,7 +181,7 @@ index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba956
          setHandlers.add(head);
          while (true) {
  
-@@ -616,7 +616,7 @@ public final class DomHelper {
+@@ -601,7 +601,7 @@ public final class DomHelper {
                set.removeAll(setOldNodes);
  
                if (setOldNodes.contains(key)) {
@@ -191,10 +191,10 @@ index fe2d3b14c6e48dc08831123ef80902bc3126ceca..86cac9e08f0f0d3ebd43353b64eba956
                }
                else {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 939863351be0544adc7c4079dc2dbb18be877fb9..6216a80e20d1a1bbb80c5b343b743832e0421dbc 100644
+index cf3ce3d5c4d304c8f1ee121a9781d3238f794b91..6783382a1c199ba33df1af3477d3cf5e13230b09 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -932,6 +932,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -928,6 +928,7 @@ public class ExprProcessor implements CodeConstants {
      }
  
      TextBuffer buf = new TextBuffer();
@@ -203,11 +203,11 @@ index 939863351be0544adc7c4079dc2dbb18be877fb9..6216a80e20d1a1bbb80c5b343b743832
      for (Exprent expr : lst) {
        if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-index 13d747a5ec6b961763f70b9174efeaf976336dbc..ad41b185d8c830f26b4f598a6568b3272a11d86f 100644
+index 2770c678a4572cd95bbb0d7f98fadb4bb62fcbd8..878c12b061975d4060b8a44abffa3d60d35d17a3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/FinallyProcessor.java
-@@ -480,10 +480,17 @@ public class FinallyProcessor {
-     // so remove dummy exit
+@@ -453,9 +453,16 @@ public class FinallyProcessor {
+     // `throw` in the `try` body will point directly to the dummy exit, so remove it
      startBlocks.remove(graph.getLast());
      startBlocks.removeAll(tryBlocks);
 +    List<BasicBlock> starts = new ArrayList<>(startBlocks);
@@ -218,34 +218,28 @@ index 13d747a5ec6b961763f70b9174efeaf976336dbc..ad41b185d8c830f26b4f598a6568b327
 +      }
 +    });
  
-     List<Area> lstAreas = new ArrayList<>();
- 
+     List<Area> areas = new ArrayList<>();
 -    for (BasicBlock start : startBlocks) {
 +    for (BasicBlock start : starts) {
- 
-       Area arr = compareSubgraphsEx(graph, start, catchBlocks, first, finallytype, mapLast, skippedFirst);
+       Area arr = compareSubGraphsEx(graph, start, catchBlocks, first, finallyType, mapLast, skippedFirst);
        if (arr == null) {
-@@ -506,8 +513,17 @@ public class FinallyProcessor {
-     //			DotExporter.toDotFile(graph, new File("c:\\Temp\\fern5.dot"), true);
-     //		} catch(Exception ex){ex.printStackTrace();}
+         return false;
+@@ -468,8 +475,12 @@ public class FinallyProcessor {
+       deleteArea(graph, area);
+     }
  
 +    List<Entry<BasicBlock, Boolean>> lasts = new ArrayList<>(mapLast.entrySet());
 +    // We must sort here to prevent decompile differences deriving from hash maps.
-+    Collections.sort(lasts, new Comparator<Entry<BasicBlock, Boolean>>() {
-+      @Override
-+      public int compare(Entry<BasicBlock, Boolean> o1, Entry<BasicBlock, Boolean> o2) {
-+        return o1.getKey().id - o2.getKey().id;
-+      }
-+    });
++    lasts.sort(Comparator.comparingInt(o -> o.getKey().id));
 +
-     // INFO: empty basic blocks may remain in the graph!
+     // INFO: Empty basic blocks may remain in the graph!
 -    for (Entry<BasicBlock, Boolean> entry : mapLast.entrySet()) {
 +    for (Entry<BasicBlock, Boolean> entry : lasts) {
        BasicBlock last = entry.getKey();
  
        if (entry.getValue()) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
-index fba6145dd11f851b2487c11ad2b529c94ef72c35..d7397455f8a67bb220e3236da77d0c4b14aeb1e5 100644
+index df41b33643bd48f0f5549efe0931eb489dac21c9..1416640aedb91596be42c94697c3f74a25c1229d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/LabelHelper.java
 @@ -23,7 +23,7 @@ public final class LabelHelper {
@@ -338,43 +332,42 @@ index 82ae0a25a20d2727f611d359e699d6666d1e0ae4..a86f0d2887c6c19cb1d911ec43830eb6
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index a7033f507fd9667d773977803718c08810f0d750..3edae784f56848a5697879cfef9e05130ee38d34 100644
+index caa160fdc4ff5954b0976b11d81177278ae79ab6..e6363319573d157f5878dfdd93f8e60b44facb64 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -219,7 +219,7 @@ public class ConstExprent extends Exprent {
+@@ -216,7 +216,7 @@ public class ConstExprent extends Exprent {
          else if (floatVal == Float.NEGATIVE_INFINITY) {
-           return new TextBuffer("-1.0F / 0.0F");
+           yield new TextBuffer("-1.0F / 0.0F");
          }
--        return new TextBuffer(value.toString()).append('F');
-+        return new TextBuffer(trimZeros(value.toString())).append('F');
- 
-       case CodeConstants.TYPE_DOUBLE:
+-        yield new TextBuffer(value.toString()).append('F');
++        yield new TextBuffer(trimZeros(value.toString())).append('F');
+       }
+       case CodeConstants.TYPE_DOUBLE -> {
          double doubleVal = (Double)value;
-@@ -250,15 +250,15 @@ public class ConstExprent extends Exprent {
+@@ -247,15 +247,15 @@ public class ConstExprent extends Exprent {
            }
          }
          else if (Double.isNaN(doubleVal)) {
--          return new TextBuffer("0.0 / 0.0");
-+          return new TextBuffer("0.0D / 0.0D");
+-          yield new TextBuffer("0.0 / 0.0");
++          yield new TextBuffer("0.0D / 0.0D");
          }
          else if (doubleVal == Double.POSITIVE_INFINITY) {
--          return new TextBuffer("1.0 / 0.0");
-+          return new TextBuffer("1.0D / 0.0D");
+-          yield new TextBuffer("1.0 / 0.0");
++          yield new TextBuffer("1.0D / 0.0D");
          }
          else if (doubleVal == Double.NEGATIVE_INFINITY) {
--          return new TextBuffer("-1.0 / 0.0");
-+          return new TextBuffer("-1.0D / 0.0D");
+-          yield new TextBuffer("-1.0 / 0.0");
++          yield new TextBuffer("-1.0D / 0.0D");
          }
--        return new TextBuffer(value.toString());
-+        return new TextBuffer(trimZeros(value.toString())).append('D');
- 
-       case CodeConstants.TYPE_NULL:
-         return new TextBuffer("null");
-@@ -276,6 +276,18 @@ public class ConstExprent extends Exprent {
- 
-     throw new RuntimeException("invalid constant type: " + constType);
+-        yield new TextBuffer(value.toString());
++        yield new TextBuffer(trimZeros(value.toString())).append('D');
+       }
+       case CodeConstants.TYPE_NULL -> new TextBuffer("null");
+       case CodeConstants.TYPE_OBJECT -> {
+@@ -273,6 +273,18 @@ public class ConstExprent extends Exprent {
+     };
    }
-+  
+ 
 +  // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
 +  // This trims them all down to only the necessary amount.
 +  private static String trimZeros(String value) {
@@ -386,9 +379,10 @@ index a7033f507fd9667d773977803718c08810f0d750..3edae784f56848a5697879cfef9e0513
 +        i++;
 +      return value.substring(0, i + 1);
 +  }
- 
++
    private boolean inConstantVariable(String classSignature, String variableName) {
      ClassesProcessor.ClassNode node = (ClassesProcessor.ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
+     return node.classStruct.qualifiedName.equals(classSignature) &&
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
 index cc1f537e71af0748b7b97d7d8489198e2a677cc9..9b1b3de632a63bbba1f5f7a99d5f75bf537bd171 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
@@ -445,7 +439,7 @@ index cc1f537e71af0748b7b97d7d8489198e2a677cc9..9b1b3de632a63bbba1f5f7a99d5f75bf
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
-index 53afa148cf8ae11ceeacf454673a1963d4892212..a1f931b79adb35660ee0f29b1d522214384a044f 100644
+index 3991c5131e1b49cd7ee25626aa64ad3999766ce5..70b053d4138127c772f72eca7a54a1b8b3098cbf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAConstructorSparseEx.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
@@ -466,7 +460,7 @@ index 53afa148cf8ae11ceeacf454673a1963d4892212..a1f931b79adb35660ee0f29b1d522214
        setInit.add(i);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
-index c6287d302d83548e19f51260e1e984dc991e7f86..80d6d34d3329f831e8add4a0617b8e8bf8a86006 100644
+index 4d76ee298513f0989eadc2866d7a9d1f229612ef..8cd9f1de252412494f36a847167a9b74a7dd7625 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/SSAUConstructorSparseEx.java
 @@ -68,7 +68,7 @@ public class SSAUConstructorSparseEx {
@@ -524,10 +518,10 @@ index 133d87f45ab3b057e78589a53529821e5a6a6dea..119949c8bd35082b95cbfde2b185aa2d
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index 0bdf9048e55b5d8873959ce3146b913805406fab..f9ffa3a3279fd8c3639489260a0dc4a01950c1a2 100644
+index 244898d5845029fb28126bd0c0365eec1c06f657..472faf9ad843f4d4bafdc2cf7753b67d8c34bddc 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-@@ -277,7 +277,10 @@ public class VarVersionsProcessor {
+@@ -245,7 +245,10 @@ public class VarVersionsProcessor {
      Map<Integer, Integer> mapOriginalVarIndices = new HashMap<>();
  
      // map var-version pairs on new var indexes

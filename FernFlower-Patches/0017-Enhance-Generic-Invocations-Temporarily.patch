@@ -24,10 +24,10 @@ index 33150f76d649f124bc818036b0f7c6331d5e74be..e2f36231b51e547b4aae610c8450d83b
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index f2dda05e818d680f72d73b22b56a76dd18656ece..2ce8932cb33e4881de5ed09b728781804cdced57 100644
+index 513ae5c2d5e1674694e86701e507c1e46c2f031b..cb80c8d7be08b9f3d6770541910832bb3d9a58a9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -298,11 +298,11 @@ public class FunctionExprent extends Exprent {
+@@ -278,11 +278,11 @@ public class FunctionExprent extends Exprent {
        VarType right = lstOperands.get(0).getInferredExprType(upperBound);
        VarType cast = lstOperands.get(1).getExprType();
  
@@ -41,7 +41,7 @@ index f2dda05e818d680f72d73b22b56a76dd18656ece..2ce8932cb33e4881de5ed09b72878180
            arrayDim = upperBound.getArrayDim();
            upperBound = upperBound.resizeArrayDim(0);
            right = right.resizeArrayDim(0);
-@@ -322,6 +322,15 @@ public class FunctionExprent extends Exprent {
+@@ -302,6 +302,15 @@ public class FunctionExprent extends Exprent {
              this.needsCast = false;
            }
          }
@@ -57,16 +57,7 @@ index f2dda05e818d680f72d73b22b56a76dd18656ece..2ce8932cb33e4881de5ed09b72878180
        }
        else { //TODO: Capture generics to make cast better?
          this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue());
-@@ -580,7 +589,7 @@ public class FunctionExprent extends Exprent {
-         TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
-     }
- 
--    //		return "<unknown function>";
-+    //        return "<unknown function>";
-     throw new RuntimeException("invalid function");
-   }
- 
-@@ -675,4 +684,4 @@ public class FunctionExprent extends Exprent {
+@@ -644,4 +653,4 @@ public class FunctionExprent extends Exprent {
      Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
      return type == null || this.funcType == type;
    }
@@ -74,10 +65,10 @@ index f2dda05e818d680f72d73b22b56a76dd18656ece..2ce8932cb33e4881de5ed09b72878180
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index cba6b5ab608f96de2ef6781d8c1cfec994e3a000..c1a645bfe508513263618dc04da1d66eb99e7d0e 100644
+index 7ebc36c1de0265db791b47b9558c41e303a3d7b2..28bae14b7342dd6897e638889682178248039ad7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -408,6 +408,7 @@ public class InvocationExprent extends Exprent {
+@@ -399,6 +399,7 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -85,7 +76,7 @@ index cba6b5ab608f96de2ef6781d8c1cfec994e3a000..c1a645bfe508513263618dc04da1d66e
      List<StructMethod> matches = getMatchedDescriptors();
      BitSet setAmbiguousParameters = getAmbiguousParameters(matches);
      StructMethod desc = null;
-@@ -468,7 +469,7 @@ public class InvocationExprent extends Exprent {
+@@ -459,7 +460,7 @@ public class InvocationExprent extends Exprent {
            if (stClass != null) {
              nextMethod:
              for (StructMethod mt : stClass.getMethods()) {
@@ -94,7 +85,7 @@ index cba6b5ab608f96de2ef6781d8c1cfec994e3a000..c1a645bfe508513263618dc04da1d66e
                  MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
                  if (md.params.length == descriptor.params.length) {
                    for (int x = 0; x < md.params.length; x++) {
-@@ -503,7 +504,7 @@ public class InvocationExprent extends Exprent {
+@@ -494,7 +495,7 @@ public class InvocationExprent extends Exprent {
            StructClass stClass = DecompilerContext.getStructContext().getClass(className);
            if (stClass != null) {
              for (StructMethod mt : stClass.getMethods()) {
@@ -103,7 +94,7 @@ index cba6b5ab608f96de2ef6781d8c1cfec994e3a000..c1a645bfe508513263618dc04da1d66e
                  MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
                  if (md.params.length == descriptor.params.length) {
                    if (md.params[i].getType() == CodeConstants.TYPE_OBJECT) {
-@@ -520,6 +521,22 @@ public class InvocationExprent extends Exprent {
+@@ -511,6 +512,22 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -126,7 +117,7 @@ index cba6b5ab608f96de2ef6781d8c1cfec994e3a000..c1a645bfe508513263618dc04da1d66e
  
      boolean firstParameter = true;
      for (int i = start; i < this.parameters.size(); i++) {
-@@ -684,27 +701,98 @@ public class InvocationExprent extends Exprent {
+@@ -665,27 +682,98 @@ public class InvocationExprent extends Exprent {
  
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();

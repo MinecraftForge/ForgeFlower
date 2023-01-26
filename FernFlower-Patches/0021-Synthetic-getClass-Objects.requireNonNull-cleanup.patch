@@ -5,7 +5,7 @@ Subject: [PATCH] Synthetic getClass/Objects.requireNonNull cleanup
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 6ddd7caf2f8deeb0ebbe89d17ad96bf092e66cba..b744ddbb35bcc08716826324c1895ce8f860d31b 100644
+index bc8c421206b44539c2f2da859658102f2b71af73..b2963191fe5c6e162346fc98f9cefd122da23ee2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -591,6 +591,23 @@ public class ExprProcessor implements CodeConstants {
@@ -33,10 +33,10 @@ index 6ddd7caf2f8deeb0ebbe89d17ad96bf092e66cba..b744ddbb35bcc08716826324c1895ce8
          case opc_pop2:
            if (stack.getByOffset(-1).getExprType().getStackSize() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index e1bed2f0f5f501d05f93dfa6bfcd2f2b3e76b822..6d42db459055d505604728dcac4af7bb74a9e21c 100644
+index dc3d20eed5ddcac36204fc9ed75d73c53a8c9805..efa677ae6cfdc08635eff080c7241ec086e5c945 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-@@ -73,6 +73,10 @@ public class SimplifyExprentsHelper {
+@@ -74,6 +74,10 @@ public class SimplifyExprentsHelper {
            if (changed) {
              break;
            }
@@ -47,7 +47,7 @@ index e1bed2f0f5f501d05f93dfa6bfcd2f2b3e76b822..6d42db459055d505604728dcac4af7bb
          }
  
          res |= changed;
-@@ -507,21 +511,53 @@ public class SimplifyExprentsHelper {
+@@ -508,21 +512,53 @@ public class SimplifyExprentsHelper {
      return false;
    }
  
@@ -106,7 +106,7 @@ index e1bed2f0f5f501d05f93dfa6bfcd2f2b3e76b822..6d42db459055d505604728dcac4af7bb
  
                String classname = newExpr.getNewType().getValue();
                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
-@@ -537,6 +573,27 @@ public class SimplifyExprentsHelper {
+@@ -538,6 +574,27 @@ public class SimplifyExprentsHelper {
      return false;
    }
  
@@ -135,7 +135,7 @@ index e1bed2f0f5f501d05f93dfa6bfcd2f2b3e76b822..6d42db459055d505604728dcac4af7bb
    private static boolean isConstructorInvocationRemote(List<Exprent> list, int index) {
      Exprent current = list.get(index);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index c1a645bfe508513263618dc04da1d66eb99e7d0e..e6d996ebfcd85fa0def6bc6fd1e10156fce0a44c 100644
+index 28bae14b7342dd6897e638889682178248039ad7..eda61adada8942006a5a49d5f0905ba010505fea 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
@@ -146,7 +146,7 @@ index c1a645bfe508513263618dc04da1d66eb99e7d0e..e6d996ebfcd85fa0def6bc6fd1e10156
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -163,6 +164,7 @@ public class InvocationExprent extends Exprent {
+@@ -156,6 +157,7 @@ public class InvocationExprent extends Exprent {
  
      addBytecodeOffsets(expr.bytecode);
      bootstrapArguments = expr.getBootstrapArguments();
@@ -154,7 +154,7 @@ index c1a645bfe508513263618dc04da1d66eb99e7d0e..e6d996ebfcd85fa0def6bc6fd1e10156
    }
  
    @Override
-@@ -974,6 +976,14 @@ public class InvocationExprent extends Exprent {
+@@ -955,6 +957,14 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  

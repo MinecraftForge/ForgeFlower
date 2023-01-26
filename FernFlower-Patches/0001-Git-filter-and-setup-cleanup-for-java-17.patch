@@ -308,7 +308,7 @@ index 3f5a417a01d918a21b7dcb057b2eb259ec2df475..9b15cd643468b3852b0092f7bffd3995
  \* means 0 or more times\
 diff --git a/build.gradle b/build.gradle
 deleted file mode 100644
-index efa9dfcfa2204db2314dc867ba995a6cfca37581..0000000000000000000000000000000000000000
+index 02824bca257e3bb1d20d79a898a06aa9237f1b2f..0000000000000000000000000000000000000000
 --- a/build.gradle
 +++ /dev/null
 @@ -1,26 +0,0 @@
@@ -316,8 +316,8 @@ index efa9dfcfa2204db2314dc867ba995a6cfca37581..00000000000000000000000000000000
 -apply plugin: 'java'
 -
 -compileJava {
--  sourceCompatibility '11'
--  targetCompatibility '11'
+-  sourceCompatibility '17'
+-  targetCompatibility '17'
 -}
 -
 -sourceSets {
@@ -329,7 +329,7 @@ index efa9dfcfa2204db2314dc867ba995a6cfca37581..00000000000000000000000000000000
 -dependencies {
 -  implementation 'org.jetbrains:annotations:20.1.0'
 -  testImplementation 'junit:junit:4.12'
--  testImplementation 'org.assertj:assertj-core:3.12.2'
+-  testImplementation 'org.assertj:assertj-core:3.23.1'
 -}
 -
 -jar {
@@ -683,17 +683,6 @@ z1oZy=k51*2LJZ(Ikk`8;K(9hbeF-B(c~>0hU;Gye{L8ZN*NH8Id@mP-u<kJdqbmLd
 zMeKb5hFAZC+k4_b_qu=C#=hYGO^yR`fRh0G>;Fmb8YuorjLrW&ndip8CN%_qp982r
 w1WEnz9^$&s1hkp_3#lPJQ~!HI7WYYjA7>z!`?f%npAh2%rB@vD|Lau$2O)#1n*aa+
 
-diff --git a/gradle/wrapper/gradle-wrapper.properties b/gradle/wrapper/gradle-wrapper.properties
-index 2e6e5897b5285c749d75662c65ac5d2904c37bc6..ae04661ee733431762e7ccf8ab9b7409ed44960c 100644
---- a/gradle/wrapper/gradle-wrapper.properties
-+++ b/gradle/wrapper/gradle-wrapper.properties
-@@ -1,5 +1,5 @@
- distributionBase=GRADLE_USER_HOME
- distributionPath=wrapper/dists
--distributionUrl=https\://services.gradle.org/distributions/gradle-7.3.3-bin.zip
-+distributionUrl=https\://services.gradle.org/distributions/gradle-7.5.1-bin.zip
- zipStoreBase=GRADLE_USER_HOME
- zipStorePath=wrapper/dists
 diff --git a/gradlew b/gradlew
 index c53aefaa5fc898b78c7265ea99a3bdc09349a7d0..1b6c787337ffb79f0e3cf8b1e9f00f680a959de1 100755
 --- a/gradlew

@@ -5,7 +5,7 @@ Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 959ff51c479db3f0144df9f0de5b3ef863dcdff6..0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe 100644
+index c012edd94f3f13c3bde885c992a74ce6d58eb0ee..1989a01b158570651f332cf80dca0e0baeb4153c 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -46,6 +46,7 @@ public class ClassWriter {
@@ -17,7 +17,7 @@ index 959ff51c479db3f0144df9f0de5b3ef863dcdff6..0dc28bc9d8e3b622f691939b1c8fcce9
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersion5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 804443bf66c6cc2a9cadf5ef11c44827257aaf53..a45067feeedaece4546ae2dbc5148fbf9b2c0309 100644
+index 168d7dfdeb65138ef7c26e30971738cd5161ffff..4a539357120d333d47f20f5e05b57ef4ad7b1fa8 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -88,6 +88,31 @@ public class ClassesProcessor implements CodeConstants {
@@ -53,7 +53,7 @@ index 804443bf66c6cc2a9cadf5ef11c44827257aaf53..a45067feeedaece4546ae2dbc5148fbf
                String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
                if (enclClassName == null || innerName.equals(enclClassName)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index bc8992ff40bf8655077d2c01a7038bfbbfe999c0..34be3854cad1675d54a32929d5e1fe1641f1a929 100644
+index 7abfd011cee7c1c14a1418f826a39403f75a62db..b44a78019f0717213822ef5572c5d7ecde6d4ee3 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -13,6 +13,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;

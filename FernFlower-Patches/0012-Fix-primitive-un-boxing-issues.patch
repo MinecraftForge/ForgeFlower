@@ -5,10 +5,10 @@ Subject: [PATCH] Fix primitive un/boxing issues.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 3534ca10c55713f5856163b7325e0c6e71c2c502..6ddd7caf2f8deeb0ebbe89d17ad96bf092e66cba 100644
+index e005b2941b4e76b736b8d00905726ac8500c3dc2..bc8c421206b44539c2f2da859658102f2b71af73 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-@@ -1031,12 +1031,14 @@ public class ExprProcessor implements CodeConstants {
+@@ -1027,12 +1027,14 @@ public class ExprProcessor implements CodeConstants {
  
      if (unbox) {
        // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
@@ -30,31 +30,31 @@ index 3534ca10c55713f5856163b7325e0c6e71c2c502..6ddd7caf2f8deeb0ebbe89d17ad96bf0
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index f227df9c03dd6ae3972b80ce11dc36d468addea3..f2dda05e818d680f72d73b22b56a76dd18656ece 100644
+index 0a6281872ae535dbc0569cb08b301d58b6c5c9a3..513ae5c2d5e1674694e86701e507c1e46c2f031b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -563,6 +563,19 @@ public class FunctionExprent extends Exprent {
-     }
- 
-     if (funcType <= FUNCTION_I2S) {
-+      // We can't directly cast some object types, so we need to make sure the unboxing happens.
-+      // The types seem to be inconsistant but there is no harm in forcing the unboxing when not strictly needed.
-+      // Type   | Works | Doesn't
-+      // Integer| LFD   | BCS
-+      // Long   | FD    | I
-+      // Float  | D     | IL
-+      // Double |       | ILF
-+      if (lstOperands.get(0).type == Exprent.EXPRENT_INVOCATION) {
-+        InvocationExprent inv = (InvocationExprent)lstOperands.get(0);
-+        if (inv.isUnboxingCall()) {
-+          inv.forceUnboxing(true);
+@@ -534,6 +534,19 @@ public class FunctionExprent extends Exprent {
+           .append(")");
+       default -> {
+         assert funcType <= FUNCTION_I2S;
++        // We can't directly cast some object types, so we need to make sure the unboxing happens.
++        // The types seem to be inconsistant but there is no harm in forcing the unboxing when not strictly needed.
++        // Type   | Works | Doesn't
++        // Integer| LFD   | BCS
++        // Long   | FD    | I
++        // Float  | D     | IL
++        // Double |       | ILF
++        if (lstOperands.get(0).type == Exprent.EXPRENT_INVOCATION) {
++          InvocationExprent inv = (InvocationExprent)lstOperands.get(0);
++          if (inv.isUnboxingCall()) {
++            inv.forceUnboxing(true);
++          }
 +        }
-+      }
-       return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
-         TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
-     }
+         yield wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("(" + ExprProcessor.getTypeName(
+           TYPES[funcType - FUNCTION_I2L], Collections.emptyList()) + ")");
+       }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec994e3a000 100644
+index 6eab93e5ed261b0903ae3fe4677118bfa2d1d60e..7ebc36c1de0265db791b47b9558c41e303a3d7b2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -59,6 +59,8 @@ public class InvocationExprent extends Exprent {
@@ -66,7 +66,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -263,10 +265,10 @@ public class InvocationExprent extends Exprent {
+@@ -256,10 +258,10 @@ public class InvocationExprent extends Exprent {
      }
  
      if (isStatic) {
@@ -79,7 +79,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
          return buf;
        }
  
-@@ -312,16 +314,36 @@ public class InvocationExprent extends Exprent {
+@@ -305,16 +307,36 @@ public class InvocationExprent extends Exprent {
            TextUtil.writeQualifiedSuper(buf, super_qualifier);
          }
          else if (instance != null) {
@@ -121,7 +121,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
  
            if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
              buf.append("((").append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(")");
-@@ -419,9 +441,88 @@ public class InvocationExprent extends Exprent {
+@@ -410,9 +432,88 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -211,7 +211,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
        if (mask == null || mask.get(i) == null) {
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
-@@ -455,7 +556,7 @@ public class InvocationExprent extends Exprent {
+@@ -446,7 +547,7 @@ public class InvocationExprent extends Exprent {
          */
  
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
@@ -220,7 +220,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
  
          // the last "new Object[0]" in the vararg call is not printed
          if (buff.length() > 0) {
-@@ -508,7 +609,7 @@ public class InvocationExprent extends Exprent {
+@@ -499,7 +600,7 @@ public class InvocationExprent extends Exprent {
          }
  
          if (paramType == CodeConstants.TYPE_BYTECHAR || paramType == CodeConstants.TYPE_SHORTCHAR) {
@@ -229,7 +229,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
              return true;
            }
          }
-@@ -569,6 +670,18 @@ public class InvocationExprent extends Exprent {
+@@ -550,6 +651,18 @@ public class InvocationExprent extends Exprent {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
@@ -248,7 +248,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
    private List<StructMethod> getMatchedDescriptors() {
      List<StructMethod> matches = new ArrayList<>();
      StructClass cl = DecompilerContext.getStructContext().getClass(className);
-@@ -598,6 +711,8 @@ public class InvocationExprent extends Exprent {
+@@ -579,6 +692,8 @@ public class InvocationExprent extends Exprent {
        return EMPTY_BIT_SET;
      }
  
@@ -257,7 +257,7 @@ index 104f2f112c621e3433bdbc1ce5afb05dee272833..cba6b5ab608f96de2ef6781d8c1cfec9
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
      if (mt != null) {
-@@ -607,18 +722,50 @@ public class InvocationExprent extends Exprent {
+@@ -588,18 +703,50 @@ public class InvocationExprent extends Exprent {
          for (int i = 0; i < md.params.length; i++) {
            if (!md.params[i].equals(parameters.get(i).getExprType())) {
              exact = false;

@@ -211,10 +211,10 @@ index cf03900654e427bd435ba6dc2d5a0cec8c8708e4..017d3975a3cbe06e485b65ca1b75d6c6
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index 4e64b70da8fe886801e027a7ae6c0e59f94cf62a..5b669d8b71d9601769988c41f64650926cadfc5f 100644
+index 7d44617f437ad6e78e204d56c394be5e0d5962c4..32a48812223687f21030a448926e45a3f89061cb 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-@@ -196,6 +196,9 @@ public class ContextUnit {
+@@ -193,6 +193,9 @@ public class ContextUnit {
              futures.add(executor.submit(() -> {
                DecompilerContext.setCurrentContext(clCtx.ctx);
                clCtx.classContent = decompiledData.getClassContent(clCtx.cl);
@@ -224,7 +224,7 @@ index 4e64b70da8fe886801e027a7ae6c0e59f94cf62a..5b669d8b71d9601769988c41f6465092
                DecompilerContext.setCurrentContext(null);
              }));
            }
-@@ -205,7 +208,7 @@ public class ContextUnit {
+@@ -202,7 +205,7 @@ public class ContextUnit {
  
          for (final ClassContext clCtx : toProcess) {
            if (clCtx.shouldContinue) {
@@ -233,7 +233,7 @@ index 4e64b70da8fe886801e027a7ae6c0e59f94cf62a..5b669d8b71d9601769988c41f6465092
            }
          }
  
-@@ -241,6 +244,7 @@ public class ContextUnit {
+@@ -239,6 +242,7 @@ public class ContextUnit {
      public boolean shouldContinue;
      public DecompilerContext ctx;
      String classContent;
@@ -242,10 +242,10 @@ index 4e64b70da8fe886801e027a7ae6c0e59f94cf62a..5b669d8b71d9601769988c41f6465092
      private ClassContext(StructClass cl, String entryName) {
        this.cl = cl;
 diff --git a/test/org/jetbrains/java/decompiler/MinecraftTest.java b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-index c00385f0f59014289ddb152e4dc4e908a8427fb6..a4d18cddb429e22c18519e65267366578b73bbf1 100644
+index 1f9a9dd03dab30cdb464bfc4901b9c592d558b8f..1e60f70430e50430928ac902c8dd7bfb63ef0c8c 100644
 --- a/test/org/jetbrains/java/decompiler/MinecraftTest.java
 +++ b/test/org/jetbrains/java/decompiler/MinecraftTest.java
-@@ -68,7 +68,7 @@ public class MinecraftTest  extends SingleClassesTestBase {
+@@ -65,7 +65,7 @@ public class MinecraftTest extends SingleClassesTestBase {
            }
  
            @Override

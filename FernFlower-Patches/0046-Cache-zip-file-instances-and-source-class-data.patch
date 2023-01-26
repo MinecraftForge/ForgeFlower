@@ -211,7 +211,7 @@ index 017d3975a3cbe06e485b65ca1b75d6c64d62c249..e4583691c76eee3a12c27f9e4d7538cd
      if (mappings == null || mappings.length == 0 || !DecompilerContext.getOption(IFernflowerPreferences.DUMP_CODE_LINES)) {
        return null;
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 0f3dc610ec134a438e81561ee2b15bb97edc3fb3..c3cdea305c71f1add8da3e7aed5bbfd0f54a78d9 100644
+index 80ad6c5234031d18947bebfb87eda7895ace2550..87aacfb1b80ae371754ccf86ee1dec38bc029c80 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -222,7 +222,7 @@ index 0f3dc610ec134a438e81561ee2b15bb97edc3fb3..c3cdea305c71f1add8da3e7aed5bbfd0
  import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
-@@ -153,7 +154,7 @@ public class StructContext {
+@@ -158,7 +159,7 @@ public class StructContext {
              StructClass cl = StructClass.create(new DataInputFullStream(bytes), isOwn, loader);
              classes.put(cl.qualifiedName, cl);
              unit.addClass(cl, name);
@@ -231,7 +231,7 @@ index 0f3dc610ec134a438e81561ee2b15bb97edc3fb3..c3cdea305c71f1add8da3e7aed5bbfd0
            }
            else {
              unit.addOtherEntry(file.getAbsolutePath(), name);
-@@ -246,4 +247,12 @@ public class StructContext {
+@@ -251,4 +252,12 @@ public class StructContext {
      List<String> params = this.abstractNames.get(className + ' ' + methodName + ' ' + descriptor);
      return params != null && index < params.size() ? params.get(index) : _default;
    }
@@ -295,19 +295,19 @@ index 0000000000000000000000000000000000000000..f6eabd65a54198170927ef523deb63e5
 +  }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-index 7d29c198014cbfee8092fd31461208ce58e7f775..1af0ba49459b15bcc9d6bea2f618cf396a2202b2 100644
+index 49cbf8407df5952f3da980e6a10f284ff2f27817..ab0c999a20a8a4598993baf09affe91a3cdf5fc9 100644
 --- a/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
 +++ b/test/org/jetbrains/java/decompiler/DecompilerTestFixture.java
-@@ -60,7 +60,7 @@ public class DecompilerTestFixture {
-     if (tempDir != null && cleanup) {
-       delete(tempDir);
+@@ -62,7 +62,7 @@ public class DecompilerTestFixture {
+       }
      }
--    decompiler.close();
-+    decompiler.clear();
+     finally {
+-      decompiler.close();
++      decompiler.clear();
+     }
    }
  
-   public File getTestDataDir() {
-@@ -149,7 +149,7 @@ public class DecompilerTestFixture {
+@@ -157,7 +157,7 @@ public class DecompilerTestFixture {
        }
      }
  

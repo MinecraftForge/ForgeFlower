@@ -71,7 +71,7 @@ index d0ae9a7c3b20de44cb202390cc0dfd4d690fee64..c5398222893b170023afa13fa5b6c773
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index b039480288011a5b9bdca635f7c66e85c92eb311..1c0cd6934e9f2225ff1fa40185f0a97ac9ae4daf 100644
+index 2b6448c01968ddb6bde275304e0073837d7fa575..58290caab9b84bb73291ea8af64b6897c01b162a 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -93,6 +93,7 @@ public class StructContext {

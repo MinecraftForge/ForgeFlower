@@ -44,7 +44,7 @@ index ec59ac3c399dd1609663bc9444a098285b5dc48a..33906d3a433e4421bbf41c6aed5ff566
      }
    }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index c122a3f7f937d01dbd99aefb674ad9f1d6f95d10..81fed9eaea4d73a99e87545d15171033f98db3b1 100644
+index 80f024eb8e069cc4d208a9b79dbc7edf67161ec7..fa4b5ed56fa58f2d864ea3acd758a36fa8e23e7a 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -11,7 +11,13 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -158,7 +158,7 @@ index c122a3f7f937d01dbd99aefb674ad9f1d6f95d10..81fed9eaea4d73a99e87545d15171033
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 575759dabaea87058a5a615c05cb91932cb5873b..09a5887befc045f8faef7a1c53a71387ea8ff890 100644
+index 216db28b337c729ea839415bdccc3b48a1219709..5d0ec234807e0fa186ae88e7f74059710a47bd46 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -374,7 +374,7 @@ index 575759dabaea87058a5a615c05cb91932cb5873b..09a5887befc045f8faef7a1c53a71387
                }
              }
  
-@@ -922,4 +970,41 @@ public class NestedClassProcessor {
+@@ -913,4 +961,41 @@ public class NestedClassProcessor {
        return fieldKey.hashCode() + varPair.hashCode();
      }
    }
@@ -419,7 +419,7 @@ index 575759dabaea87058a5a615c05cb91932cb5873b..09a5887befc045f8faef7a1c53a71387
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
-index 86cac9e08f0f0d3ebd43353b64eba9560279de55..038dac26540f41092afd00936954670510e16df6 100644
+index 277e792a2856334970bafe0661582a8c8d09ad5a..ceffabcd6434f5504e7aaf89878abe7012cfcaa5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
 @@ -12,6 +12,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPo
@@ -670,7 +670,7 @@ index c5ccfd1a659461646494c3796528767d0ba089c8..ef96a3f610c7fe1af746aa1d8663ba7a
  
        if (data != null && data.size() == 1) {
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index 0a437f1a324bcae5d86e60e990f35bc84ed277ce..e160dc7f1bb3c8d1bdec0a1720035803f077e1e7 100644
+index 3b10e5b29ff9e344815592e533b6b04891fe294c..a242aa9e74698b14e20e27d655a3c8ae141ee2f5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -315,7 +315,9 @@ public class ExprProcessor implements CodeConstants {
@@ -1016,7 +1016,7 @@ index 0000000000000000000000000000000000000000..04f0a2768d2a943475df28a17389407b
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
-index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041e3243269 100644
+index bbd7bd0cb42057638e765c5bb675b8d30b9b6796..9909e894e22fc8c19e05fae82b69db065b3be72d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/MergeHelper.java
 @@ -5,8 +5,13 @@ import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -1033,7 +1033,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
  import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement.LoopType;
  import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
-@@ -47,17 +52,20 @@ public final class MergeHelper {
+@@ -47,15 +52,20 @@ public final class MergeHelper {
  
          // identify a while loop
          if (matchWhile(stat)) {
@@ -1047,18 +1047,18 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
            // identify a do{}while loop
 -          matchDoWhile(stat);
 +          //matchDoWhile(stat);
-         }
- 
-         break;
-       case WHILE:
--        matchFor(stat);
++        }
++      }
++      case WHILE -> {
 +        if (!matchForEach(stat)) {
 +          matchFor(stat);
-+        }
+         }
+       }
+-      case WHILE -> matchFor(stat);
      }
  
      return (stat.getLoopType() != oldLoop);
-@@ -147,13 +155,14 @@ public final class MergeHelper {
+@@ -145,13 +155,14 @@ public final class MergeHelper {
          if (firstif.iftype == IfStatement.IFTYPE_IF) {
            if (firstif.getIfstat() == null) {
              StatEdge ifedge = firstif.getIfEdge();
@@ -1075,7 +1075,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
  
                if (stat.getConditionExprent() != null) {
                  ifexpr.getCondition().addBytecodeOffsets(stat.getConditionExprent().bytecode);
-@@ -191,7 +200,7 @@ public final class MergeHelper {
+@@ -189,7 +200,7 @@ public final class MergeHelper {
                return true;
              }
            }
@@ -1084,7 +1084,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
              StatEdge elseedge = firstif.getAllSuccessorEdges().get(0);
              if (isDirectPath(stat, elseedge.getDestination())) {
                // exit condition identified
-@@ -245,7 +254,7 @@ public final class MergeHelper {
+@@ -243,7 +254,7 @@ public final class MergeHelper {
  
                return true;
              }
@@ -1093,7 +1093,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
          }
        }
      }
-@@ -330,6 +339,8 @@ public final class MergeHelper {
+@@ -328,6 +339,8 @@ public final class MergeHelper {
          }
          else {
            preData = current.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).get(0);
@@ -1102,7 +1102,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
            preData = getLastDirectData(preData);
            if (preData != null && !preData.getExprents().isEmpty()) {
              initDoExprent = preData.getExprents().get(preData.getExprents().size() - 1);
-@@ -368,12 +379,16 @@ public final class MergeHelper {
+@@ -366,12 +379,16 @@ public final class MergeHelper {
        stat.setIncExprent(exp);
      }
  
@@ -1123,7 +1123,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
      }
    }
  
-@@ -406,14 +421,346 @@ public final class MergeHelper {
+@@ -404,14 +421,346 @@ public final class MergeHelper {
        return stat;
      }
  
@@ -1174,8 +1174,8 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
 +            }
 +          }
 +          break;
-+        }
-+      }
+         }
+       }
 +      else {
 +        break;
 +      }
@@ -1334,7 +1334,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
 +        FunctionExprent fun = (FunctionExprent)exp;
 +        if (fun.getFuncType() == FunctionExprent.FUNCTION_BOOL_NOT) {
 +          exp = fun.getLstOperands().get(0);
-         }
++        }
 +        else if (fun.getFuncType() == FunctionExprent.FUNCTION_EQ ||
 +                 fun.getFuncType() == FunctionExprent.FUNCTION_NE) {
 +          return fun.getLstOperands().get(0);
@@ -1368,8 +1368,8 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
 +      FunctionExprent func = (FunctionExprent)exp;
 +      if (func.getFuncType() == FunctionExprent.FUNCTION_CAST) {
 +        return getUncast(func.getLstOperands().get(0));
-       }
-     }
++      }
++    }
 +    return exp;
 +  }
 +
@@ -1377,7 +1377,7 @@ index ba131586bc96dc3522a1db41814102d8bdf62c8c..1cd4898cc5499c44632b7d0f3e937041
 +    exp = getUncast(exp);
 +    if (exp.type == Exprent.EXPRENT_INVOCATION) {
 +      return (InvocationExprent) exp;
-+    }
+     }
      return null;
    }
 -}
@@ -1748,10 +1748,10 @@ index 0000000000000000000000000000000000000000..9123d92be14259e0117a0bb7b06a3d09
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 0c55cfba952a92ffcefe28f12109bd40f56eaf42..8356b5b643139d6c8346070d826877c724e4f8a2 100644
+index d94561755621c6517976a763f8b9a0a4e49528e2..8d2ce0f8f4d4368f87ed596e4e76442ff97fed19 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -462,7 +462,7 @@ public class InvocationExprent extends Exprent {
+@@ -443,7 +443,7 @@ public class InvocationExprent extends Exprent {
      "charValue", "java/lang/Character"
    );
  
@@ -1760,7 +1760,7 @@ index 0c55cfba952a92ffcefe28f12109bd40f56eaf42..8356b5b643139d6c8346070d826877c7
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
-@@ -663,4 +663,4 @@ public class InvocationExprent extends Exprent {
+@@ -644,4 +644,4 @@ public class InvocationExprent extends Exprent {
  
      return true;
    }
@@ -2004,18 +2004,19 @@ index a20acdff7d3ef1415fe6c90d05b92a90cfaf0073..6f21cd6df597613099861d874bb320ef
      // 0 - success, do nothing
      // 1 - cancel iteration
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index c05f6eb84fb8d09d8842851c0c2725dff527449b..a3ef4b8b5fdb820c520a21fcd727e08e9dfe2510 100644
+index 592860d16b742ea70f85d2fe0270e2cbf5830f42..ccb7b3d9d0b38a5be9a6c9c727b4800bf815e715 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-@@ -205,6 +205,7 @@ public class FlattenStatementsHelper {
+@@ -201,7 +201,7 @@ public class FlattenStatementsHelper {
+                 }
                  sourcenode = node;
-                 break;
-               case FOR:
-+              case FOREACH:
+               }
+-              case FOR -> {
++              case FOR, FOREACH -> {
                  DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                  if (dostat.getInitExprent() != null) {
                    nodeinit.exprents = dostat.getInitExprentList();
-@@ -212,7 +213,9 @@ public class FlattenStatementsHelper {
+@@ -209,7 +209,9 @@ public class FlattenStatementsHelper {
                  graph.nodes.putWithKey(nodeinit, nodeinit.id);
  
                  DirectNode nodecond = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
@@ -2027,25 +2028,25 @@ index c05f6eb84fb8d09d8842851c0c2725dff527449b..a3ef4b8b5fdb820c520a21fcd727e08e
  
                  DirectNode nodeinc = new DirectNode(DirectNodeType.INCREMENT, stat, stat.id + "_inc");
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 2dc447272c2786a80f9638a91c95716484911fe2..0c64170a05d6675803b69284d8ee532e44212ee2 100644
+index 56f429ac8433cd5db3e5ea22ab4c3b0e8c7927f5..018d3fbdf53036db90b6c64e872098542133b630 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-@@ -103,6 +103,14 @@ public final class DoStatement extends Statement {
-         buf.append(ExprProcessor.jmpWrapper(first, indent + 1, false, tracer));
+@@ -105,6 +105,14 @@ public final class DoStatement extends Statement {
          buf.appendIndent(indent).append("}").appendLineSeparator();
          tracer.incrementCurrentSourceLine();
-+        break;
-+      case FOREACH:
+       }
++      case FOREACH -> {
 +        buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
 +        buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
 +        tracer.incrementCurrentSourceLine();
 +        buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 +        buf.appendIndent(indent).append("}").appendLineSeparator();
 +        tracer.incrementCurrentSourceLine();
++      }
      }
      return buf;
    }
-@@ -117,6 +125,10 @@ public final class DoStatement extends Statement {
+@@ -119,6 +127,10 @@ public final class DoStatement extends Statement {
          }
        case WHILE:
          lst.add(getConditionExprent());
@@ -2056,7 +2057,7 @@ index 2dc447272c2786a80f9638a91c95716484911fe2..0c64170a05d6675803b69284d8ee532e
      }
      lst.add(first);
      switch (loopType) {
-@@ -195,6 +207,7 @@ public final class DoStatement extends Statement {
+@@ -194,6 +206,7 @@ public final class DoStatement extends Statement {
      DO,
      DO_WHILE,
      WHILE,
@@ -2066,7 +2067,7 @@ index 2dc447272c2786a80f9638a91c95716484911fe2..0c64170a05d6675803b69284d8ee532e
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
-index 9d5fcfd4c907e69c52965517dfe69e3a2f82c5df..57475f98e56d87c8dbd7edc3cda7cf243f0b6b16 100644
+index 9498f3c548d18ead3bcbc076222bd5ace82b8275..e65af740228e237d3159cf4dd3398a9fe1d21199 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/Statement.java
 @@ -768,6 +768,14 @@ public abstract class Statement implements IMatchable {
@@ -2094,7 +2095,7 @@ index 9d5fcfd4c907e69c52965517dfe69e3a2f82c5df..57475f98e56d87c8dbd7edc3cda7cf24
  
    //TODO: Cleanup/cache?
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 46e405dcb94da78180efa7a8e2374392590027db..b65a7ceb11c31ab892d8bd1f6e1a30fc78aa11ab 100644
+index 49729c1d27c1a1a42904949c25c0635f6a03a736..6f8a2619c728d168431673b14f53b94ba783cf2f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -4,18 +4,28 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -2273,7 +2274,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..b65a7ceb11c31ab892d8bd1f6e1a30fc
    private Statement findFirstBlock(Statement stat, Integer varindex) {
  
      LinkedList<Statement> stack = new LinkedList<>();
-@@ -256,6 +331,7 @@ public class VarDefinitionHelper {
+@@ -250,6 +325,7 @@ public class VarDefinitionHelper {
            if (st.type == StatementType.DO) {
              DoStatement dost = (DoStatement)st;
              if (dost.getLoopType() != LoopType.FOR &&
@@ -2281,7 +2282,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..b65a7ceb11c31ab892d8bd1f6e1a30fc
                  dost.getLoopType() != LoopType.DO) {
                currVars.add(dost.getConditionExprent());
              }
-@@ -326,7 +402,7 @@ public class VarDefinitionHelper {
+@@ -320,7 +396,7 @@ public class VarDefinitionHelper {
      return res;
    }
  
@@ -2290,7 +2291,7 @@ index 46e405dcb94da78180efa7a8e2374392590027db..b65a7ceb11c31ab892d8bd1f6e1a30fc
      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
        Exprent left = ((AssignmentExprent)expr).getLeft();
        if (left.type == Exprent.EXPRENT_VAR) {
-@@ -339,4 +415,660 @@ public class VarDefinitionHelper {
+@@ -333,4 +409,660 @@ public class VarDefinitionHelper {
      }
      return false;
    }
@@ -3118,7 +3119,7 @@ index 33c4c3efcf7d9b26737717a2445bffad0db5c4c0..559c96b54667b5b9a051039fdbb3643f
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
-index 8a73c2655aa12ecfd26df4e2f4eae17145f8f3e6..f57626ccb91231c5a79ed6f955bb0b4dd650776b 100644
+index ac06d30f079427a287b62f6851f008eac39b402c..293fdc6cba46ed47259c786c940488bb1d74fba9 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarTypeProcessor.java
 @@ -193,7 +193,12 @@ public class VarTypeProcessor {
@@ -3136,7 +3137,7 @@ index 8a73c2655aa12ecfd26df4e2f4eae17145f8f3e6..f57626ccb91231c5a79ed6f955bb0b4d
          else if (exprent.type == Exprent.EXPRENT_CONST) {
            ConstExprent constExprent = (ConstExprent)exprent;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
-index 7a88cb7bc4744aac96bdaffc0ab95652d1937d25..02152730af21f255d9fa12bda1e9422159e93694 100644
+index d6a9c2a29c73d778eb383d718094b7548d14d2f3..b11ff686109fd466c3b07e853fd433e5677fbf9e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarVersionsProcessor.java
 @@ -22,7 +22,7 @@ import java.util.Map.Entry;
@@ -3157,7 +3158,7 @@ index 7a88cb7bc4744aac96bdaffc0ab95652d1937d25..02152730af21f255d9fa12bda1e94221
  
      // FIXME: advanced merging
  
-@@ -277,7 +277,8 @@ public class VarVersionsProcessor {
+@@ -245,7 +245,8 @@ public class VarVersionsProcessor {
      CounterContainer counters = DecompilerContext.getCounterContainer();
  
      final Map<VarVersionPair, Integer> mapVarPaar = new HashMap<>();
@@ -3167,7 +3168,7 @@ index 7a88cb7bc4744aac96bdaffc0ab95652d1937d25..02152730af21f255d9fa12bda1e94221
  
      // map var-version pairs on new var indexes
      List<VarVersionPair> vvps = new ArrayList<>(mapExprentMinTypes.keySet());
-@@ -298,7 +299,7 @@ public class VarVersionsProcessor {
+@@ -266,7 +267,7 @@ public class VarVersionsProcessor {
          }
  
          mapVarPaar.put(pair, newIndex);
@@ -3176,7 +3177,7 @@ index 7a88cb7bc4744aac96bdaffc0ab95652d1937d25..02152730af21f255d9fa12bda1e94221
        }
      }
  
-@@ -328,11 +329,11 @@ public class VarVersionsProcessor {
+@@ -296,11 +297,11 @@ public class VarVersionsProcessor {
      });
  
      if (previousVersionsProcessor != null) {
@@ -3192,7 +3193,7 @@ index 7a88cb7bc4744aac96bdaffc0ab95652d1937d25..02152730af21f255d9fa12bda1e94221
          value = oldValue != null ? oldValue : value;
          this.mapOriginalVarIndices.put(entry.getKey(), value);
        }
-@@ -359,7 +360,11 @@ public class VarVersionsProcessor {
+@@ -327,7 +328,11 @@ public class VarVersionsProcessor {
      typeProcessor.getFinalVariables().put(pair, finalType);
    }
  
@@ -3207,10 +3208,10 @@ index 7a88cb7bc4744aac96bdaffc0ab95652d1937d25..02152730af21f255d9fa12bda1e94221
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 80f1e91d6227fc4363b0039e13439d5838d790eb..94cedbee257faebd95ea933ab80a7d242c1ba023 100644
+index a929aca1f633a76660111010256dae0ef014f6fd..2f55882afdd1dd1b9960aa0c2a007069204797e9 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-@@ -159,4 +159,30 @@ public class StructContext {
+@@ -164,4 +164,30 @@ public class StructContext {
    public Map<String, StructClass> getClasses() {
      return classes;
    }
@@ -3556,10 +3557,10 @@ index 0000000000000000000000000000000000000000..311db9ff7f0c543b3d131f588baed0d9
 +}
 diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f8651377c
+index 0000000000000000000000000000000000000000..388e1facddbac3286eaed3dbccc3b23197daf5d6
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/LVTTest.java
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,49 @@
 +/*
 + * Copyright 2000-2014 JetBrains s.r.o.
 + *
@@ -3581,11 +3582,12 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +import org.junit.Test;
 +
 +import java.io.IOException;
++import java.util.Map;
 +
 +public class LVTTest extends SingleClassesTestBase {
 +  @Override
-+  protected String[] getDecompilerOptions() {
-+    return new String[] {
++  protected Map<String, String> getDecompilerOptions() {
++    return Map.of(
 +      IFernflowerPreferences.DECOMPILE_INNER,"1",
 +      IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES,"1",
 +      IFernflowerPreferences.ASCII_STRING_CHARACTERS,"1",
@@ -3593,7 +3595,7 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +      IFernflowerPreferences.REMOVE_SYNTHETIC, "1",
 +      IFernflowerPreferences.REMOVE_BRIDGE, "1",
 +      IFernflowerPreferences.USE_DEBUG_VAR_NAMES, "1"
-+    };
++    );
 +  }
 +
 +  @Override
@@ -3609,11 +3611,11 @@ index 0000000000000000000000000000000000000000..71d689df60a4377103777be6a408ed4f
 +  @Test public void testLoopMerging() { doTest("pkg/TestLoopMerging"); }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 8c4811fe2e4c46bf87bc0b4ac7752bae5243faf1..2018e2e548a35e13f925bf42858064e24f3f8696 100644
+index 89adb4e6fca7186ae849e62b98a9253de2dd29ef..dd0e178cc1df1c6edc9e77e3149c2b0e9bffe884 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 @@ -26,6 +26,7 @@ public class SingleClassesTest extends SingleClassesTestBase {
-     };
+                          IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
    }
  
 +  @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
