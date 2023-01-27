@@ -265,7 +265,7 @@ index cb80c8d7be08b9f3d6770541910832bb3d9a58a9..c2136584b0ae2a5c7ba34370666bd8b5
    public void getBytecodeRange(BitSet values) {
      measureBytecode(values, lstOperands);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1e3a4777f 100644
+index 01ce4f5c3d827e51934de816723ccac236ed9e18..962b7a9b85ef5fd29bce0c2953748a6cd3a87ea7 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -32,6 +32,7 @@ import org.jetbrains.java.decompiler.util.TextUtil;
@@ -424,7 +424,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +              tempMap.forEach((from, to) -> {
 +                if (!fparams.contains(from.getValue())) {
 +                  processGenericMapping(from, to, named, bounds);
-+                }
+                 }
 +              });
 +              tempMap.clear();
 +            }
@@ -443,11 +443,13 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +              Map<String, Map<VarType, VarType>> hierarchy = currentCls.classStruct.getAllGenerics();
 +              if (hierarchy.containsKey(mthCls.qualifiedName)) {
 +                hierarchy.get(mthCls.qualifiedName).forEach(genericsMap::put);
-+              }
-+            }
+               }
+             }
 +          }
 +        }
-+
+ 
+-            if (!map.isEmpty()) {
+-              ret = ret.remap(map);
 +        if (!isInvocationInstance) {
 +          upperBoundsMap.forEach((k, v) -> {
 +            if (fparams.contains(k.getValue()) && !GenericType.DUMMY_VAR.equals(v) && !genericsMap.containsKey(k)) {
@@ -572,12 +574,16 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +                    paramGenerics.add(paramType);
 +                  }
 +                  processGenericMapping(paramType, argtype, named, bounds);
-                 }
-               }
++                }
++              }
              }
-+          }
-+        }
-+
+           }
+         }
+-      }
+ 
+-      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
+-      if (desc.getSignature().returnType != _new) {
+-        return _new;
 +        upperBoundsMap.forEach((k, v) -> {
 +          if (fparams.contains(k.getValue()) && !GenericType.DUMMY_VAR.equals(v)) {
 +            processGenericMapping(k, v ,named, bounds);
@@ -586,9 +592,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +
 +        if (!genericsMap.isEmpty()) {
 +          VarType newRet = ret.remap(hierarchyMap);
- 
--            if (!map.isEmpty()) {
--              ret = ret.remap(map);
++
 +          boolean skipArgs = true;
 +          if (!fparams.isEmpty() && newRet.isGeneric()) {
 +            for (VarType genVar : ((GenericType)newRet).getAllGenericVars()) {
@@ -596,8 +600,8 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +                skipArgs = false;
 +                break;
 +              }
-             }
-           }
++            }
++          }
 +
 +          newRet = newRet.remap(genericsMap);
 +          if (newRet == null) {
@@ -630,12 +634,8 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +          if (newRet != ret && !(newRet.isGeneric() && ((GenericType)newRet).hasUnknownGenericType(named.keySet()))) {
 +            return newRet;
 +          }
-         }
--      }
- 
--      VarType _new = this.gatherGenerics(upperBound, ret, desc.getSignature().typeParameters, genericArgs);
--      if (desc.getSignature().returnType != _new) {
--        return _new;
++        }
++
 +        if (ret.isGeneric() && ((GenericType)ret).getAllGenericVars().isEmpty()) {
 +          return ret;
 +        }
@@ -723,7 +723,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (parameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -514,20 +796,32 @@ public class InvocationExprent extends Exprent {
+@@ -514,20 +796,42 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -756,11 +756,21 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
 +      }
 +    }
 +    if (desc != null && desc.getSignature() != null) {
++      Map<VarType, VarType> hierarchyMap = new HashMap<>();
++      if (!className.equals(desc.getClassQualifiedName())) {
++        StructClass mthCls = DecompilerContext.getStructContext().getClass(className);
++        if (mthCls != null) {
++          Map<String, Map<VarType, VarType>> hierarchy = mthCls.getAllGenerics();
++          if (hierarchy.containsKey(desc.getClassQualifiedName())) {
++            hierarchyMap = hierarchy.get(desc.getClassQualifiedName());
++          }
++        }
++      }
 +      Set<VarType> namedGens = getNamedGenerics().keySet();
 +      int y = 0;
 +      for (int x = start; x < types.length; x++) {
 +        if (mask == null || mask.get(x) == null) {
-+          VarType type = desc.getSignature().parameterTypes.get(y++).remap(genericsMap);
++          VarType type = desc.getSignature().parameterTypes.get(y++).remap(hierarchyMap).remap(genericsMap);
 +          if (type != null && !(type.isGeneric() && ((GenericType)type).hasUnknownGenericType(namedGens))) {
 +            types[x] = type;
 +          }
@@ -769,7 +779,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
      }
  
  
-@@ -565,6 +859,10 @@ public class InvocationExprent extends Exprent {
+@@ -565,6 +869,10 @@ public class InvocationExprent extends Exprent {
          }
          */
  
@@ -780,7 +790,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(this.parameters.get(i), types[i], buff, indent, true, ambiguous, true, true, tracer);
  
-@@ -580,8 +878,6 @@ public class InvocationExprent extends Exprent {
+@@ -580,8 +888,6 @@ public class InvocationExprent extends Exprent {
        }
      }
  
@@ -789,7 +799,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
      return buf;
    }
  
-@@ -869,6 +1165,162 @@ public class InvocationExprent extends Exprent {
+@@ -869,6 +1175,162 @@ public class InvocationExprent extends Exprent {
      return ambiguous;
    }
  
@@ -952,7 +962,7 @@ index 01ce4f5c3d827e51934de816723ccac236ed9e18..3e6ce9270be0fccd24fc247abd5fdff1
    @Override
    public void replaceExprent(Exprent oldExpr, Exprent newExpr) {
      if (oldExpr == instance) {
-@@ -981,6 +1433,19 @@ public class InvocationExprent extends Exprent {
+@@ -981,6 +1443,19 @@ public class InvocationExprent extends Exprent {
      return isSyntheticNullCheck;
    }
  

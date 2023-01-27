@@ -318,7 +318,7 @@ index d8fd9bdf784704836e69cfdd1596ae29b2732232..139ccdb55347a5d66627c1489ee73910
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 3e6ce9270be0fccd24fc247abd5fdff1e3a4777f..f6716268e432d3f7061e58b7bbdb5ecec61520c8 100644
+index 962b7a9b85ef5fd29bce0c2953748a6cd3a87ea7..ee533a7ab76350ce982406120e439919070fa18f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -162,6 +162,11 @@ public class InvocationExprent extends Exprent {
