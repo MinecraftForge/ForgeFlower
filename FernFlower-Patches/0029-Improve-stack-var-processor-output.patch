@@ -24,7 +24,7 @@ index 4713a0212ee1ae4cc269dd24f2227a91a2c9beed..9ae846d540337db99dc054ec1a43271e
  
        if (TryHelper.enhanceTryStats(root, mt)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 4fb8a34372213f8edbc240f0d5b640cae87255f9..7ff8189c79027ace17746cd11bddfb3de63f8e9a 100644
+index 866cea112a60907c3ef02160a3b6c0bac1a075ae..1b2401d38d63dcca4eb4b4d7ed24aa23da9c98fb 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -141,6 +141,9 @@ public class NestedClassProcessor {
