@@ -5,7 +5,7 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..0e98490e2b4e68eaad0fce79ce4b6e3b7d636ad5 100644
+index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..54a54ca34e7dc8222688521bd30023a543c189a9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -117,15 +117,20 @@ public class ClassWriter {
@@ -14,7 +14,7 @@ index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..0e98490e2b4e68eaad0fce79ce4b6e3b
  
 +              List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
 +              VarType type = md_content.params[i];
-+              String typeName = ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
++              String typeName = ExprProcessor.getCastTypeName(type, explicitlyTyped, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
                if (explicitlyTyped) {
 -                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
 -                VarType type = md_content.params[i];
@@ -28,7 +28,7 @@ index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..0e98490e2b4e68eaad0fce79ce4b6e3b
 +              if (parameterName == null) {
 +                parameterName = "param" + index; // null iff decompiled with errors
 +              }
-+              parameterName = methodWrapper.methodStruct.getVariableNamer().renameParameter(mt.getAccessFlags(), typeName, parameterName, index);
++              parameterName = mt.getVariableNamer().renameParameter(mt.getAccessFlags(), typeName, parameterName, index);
 +              buffer.append(parameterName);
  
                firstParameter = false;
@@ -358,6 +358,28 @@ index 0000000000000000000000000000000000000000..fc1d7d67864ab12e894fcdf0ed8e1297
 +public interface IVariableNamingFactory {
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+index 866cea112a60907c3ef02160a3b6c0bac1a075ae..4fb8a34372213f8edbc240f0d5b640cae87255f9 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
+@@ -125,7 +125,7 @@ public class NestedClassProcessor {
+         if (expr.type == Exprent.EXPRENT_NEW) {
+           NewExprent new_expr = (NewExprent)expr;
+ 
+-          VarNamesCollector enclosingCollector = new VarNamesCollector(enclosingMethod.varproc.getVarNames());
++          // VarNamesCollector enclosingCollector = new VarNamesCollector(enclosingMethod.varproc.getVarNames());
+ 
+           if (new_expr.isLambda() && lambda_class_type.equals(new_expr.getNewType())) {
+             InvocationExprent inv_dynamic = new_expr.getConstructor();
+@@ -144,7 +144,7 @@ public class NestedClassProcessor {
+                 }
+               }
+               else {
+-                mapNewNames.put(varVersion, enclosingCollector.getFreeName(method.varproc.getVarName(varVersion)));
++                // mapNewNames.put(varVersion, enclosingCollector.getFreeName(method.varproc.getVarName(varVersion)));
+               }
+ 
+               varIndex += md_content.params[i].getStackSize();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b6198e8adeb3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
