@@ -5,7 +5,7 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..0e98490e2b4e68eaad0fce79ce4b6e3b7d636ad5 100644
+index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..aa990406ef8d91838aa2d928bdfb183fe9e19333 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -117,15 +117,20 @@ public class ClassWriter {
@@ -14,7 +14,7 @@ index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..0e98490e2b4e68eaad0fce79ce4b6e3b
  
 +              List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
 +              VarType type = md_content.params[i];
-+              String typeName = ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
++              String typeName = ExprProcessor.getCastTypeName(type, explicitlyTyped, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
                if (explicitlyTyped) {
 -                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
 -                VarType type = md_content.params[i];

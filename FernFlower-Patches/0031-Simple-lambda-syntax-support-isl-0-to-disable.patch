@@ -5,7 +5,7 @@ Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 9de1e6e74f51df444b9241470619759a8d70fa47..422863d638ad16ced4ec94e65636652f700ad2b5 100644
+index 6f2f8419d41a240c6d1428be0b0ca9258f058127..d9c338ff9189953329a0812250fb494656eb749a 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -10,14 +10,19 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;

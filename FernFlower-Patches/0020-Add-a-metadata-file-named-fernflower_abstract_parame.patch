@@ -7,7 +7,7 @@ Subject: [PATCH] Add a metadata file named
 Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 045b268134f11dbd70acdcd5b91906d7925b4073..5a06aaa68ee8df9d5ff45c670b8395d6125916fa 100644
+index 410a83345e5e145962137536b95ca4f22185d678..0fb12b6d99f3c1dc7652e5ab49e36683d7a6db08 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -755,7 +755,11 @@ public class ClassWriter {
