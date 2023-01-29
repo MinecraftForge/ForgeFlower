@@ -410,7 +410,7 @@ index caa160fdc4ff5954b0976b11d81177278ae79ab6..60d8f08928e29efda0b3f406c2ccb586
 +    do {
 +      value = temp;
 +      temp = value.substring(0, value.length() - 1);
-+    } while (!temp.isEmpty() && !"-".equals(temp) && Double.parseDouble(temp + exp) == start);
++    } while (!temp.isEmpty() && !"-".equals(temp) && Float.parseFloat(temp + exp) == start);
 +
 +    if (dotIdx != -1 && value.indexOf('.') == -1) {
 +      value += ".0";
