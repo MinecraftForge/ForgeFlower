@@ -358,6 +358,19 @@ index 0000000000000000000000000000000000000000..fc1d7d67864ab12e894fcdf0ed8e1297
 +public interface IVariableNamingFactory {
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..614591114f548010b35893d5199afe4d022ee88f 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+@@ -158,7 +158,7 @@ public class ClassWrapper {
+   }
+ 
+   private static void applyDebugInfo(StructMethod mt, VarProcessor varProc, MethodWrapper methodWrapper) {
+-    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
++    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && !DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_VARNAMING)) {
+       StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
+       if (attr != null) {
+         // only param names here
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b6198e8adeb3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java

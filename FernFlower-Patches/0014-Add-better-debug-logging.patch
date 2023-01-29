@@ -18,7 +18,7 @@ index 0e98490e2b4e68eaad0fce79ce4b6e3b7d636ad5..045b268134f11dbd70acdcd5b91906d7
              methodWrapper.decompiledWithErrors = true;
            }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..9152bdbdb93f50fdd45c2ea3c353188d82efb77d 100644
+index 614591114f548010b35893d5199afe4d022ee88f..3995b9084290b8056aa60104601dabbe14c12e66 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -110,7 +110,7 @@ public class ClassWrapper {
