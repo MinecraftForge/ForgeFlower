@@ -480,7 +480,7 @@ index 13faa7fd16307e584d00bdf9f990e7cc7245babd..6cc60fd5314369cef21bd56c12e2af8e
    // getter and setter methods
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index e6363319573d157f5878dfdd93f8e60b44facb64..29cb0533a353084f83e19b565db6c0e66ab418c1 100644
+index 60d8f08928e29efda0b3f406c2ccb586814f8ae5..d10da7ef3be8c8b0c8064ed668a3134c895789ab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -52,20 +52,20 @@ public class ConstExprent extends Exprent {
@@ -508,7 +508,7 @@ index e6363319573d157f5878dfdd93f8e60b44facb64..29cb0533a353084f83e19b565db6c0e6
      super(EXPRENT_CONST);
      this.constType = constType;
      this.value = value;
-@@ -423,6 +423,11 @@ public class ConstExprent extends Exprent {
+@@ -497,6 +497,11 @@ public class ConstExprent extends Exprent {
      return boolPermitted;
    }
  

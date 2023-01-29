@@ -5,19 +5,19 @@ Subject: [PATCH] Improve inferred generic types
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index ee6f1c77f2267fed499ee60a12ef319d8fc95e9f..9bad04ab4c0cee5afc2623722674e929058062f0 100644
+index 53349248a038cea0ef82cdc2138ca93e722d1d06..a25566f0e6ba9a4f67c6412fc379874ffca92c21 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -37,6 +37,7 @@ public interface IFernflowerPreferences {
- 
+@@ -38,6 +38,7 @@ public interface IFernflowerPreferences {
+   String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
    String INCLUDE_ENTIRE_CLASSPATH = "iec";
    String QUALIFY_INNER_CLASSES = "qin";
 +  String EXPLICIT_GENERIC_ARGUMENTS = "ega";
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -91,6 +92,7 @@ public interface IFernflowerPreferences {
- 
+@@ -93,6 +94,7 @@ public interface IFernflowerPreferences {
+     defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
      defaults.put(QUALIFY_INNER_CLASSES, "1");
 +    defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
@@ -47,7 +47,7 @@ index 88b429ca3bc60303f9075eab36e279f9c58f4520..b03bcfc45ba7d58bcfc92612460c7f3d
    public int getExprentUse() {
      return array.getExprentUse() & index.getExprentUse() & Exprent.MULTIPLE_USES;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 3c78443624569bc8065ba9b4c416219fb2500530..797ca1b9c73348b0aaea39fadf712613e4fda472 100644
+index b5c62e26cb4008d2489f8d040b2703ab20184098..bed2bb3054761a5d636677c4a09718a1176fc778 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;

@@ -5,7 +5,7 @@ Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 06025ab6d1c96e8bedb91b4efcbd2e00641c477e..3c78443624569bc8065ba9b4c416219fb2500530 100644
+index 8b75314306d795371be8a4597f8712628e8383dd..b5c62e26cb4008d2489f8d040b2703ab20184098 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -48,6 +48,81 @@ public class ConstExprent extends Exprent {
@@ -125,13 +125,13 @@ index 06025ab6d1c96e8bedb91b4efcbd2e00641c477e..3c78443624569bc8065ba9b4c416219f
 -        else if (floatVal == Float.NEGATIVE_INFINITY) {
 -          yield new TextBuffer("-1.0F / 0.0F");
 -        }
--        yield new TextBuffer(trimZeros(value.toString())).append('F');
+-        yield new TextBuffer(trimFloat(Float.toString(floatVal), floatVal)).append('F');
 -      }
 +      case CodeConstants.TYPE_FLOAT -> createFloat(literal, (Float)value, tracer);
        case CodeConstants.TYPE_DOUBLE -> {
          double doubleVal = (Double)value;
          if (!literal) {
-@@ -242,8 +285,34 @@ public class ConstExprent extends Exprent {
+@@ -242,8 +285,21 @@ public class ConstExprent extends Exprent {
            else if (doubleVal == Math.E && !inConstantVariable(MATH_SIG, E)) {
              yield new FieldExprent(E, MATH_SIG, true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
            }
@@ -152,8 +152,18 @@ index 06025ab6d1c96e8bedb91b4efcbd2e00641c477e..3c78443624569bc8065ba9b4c416219f
 +          }
 +          else if (DOUBLE_CONSTANTS.containsKey(doubleVal)) {
 +            yield new TextBuffer(DOUBLE_CONSTANTS.get(doubleVal));
-+          }
+           }
+         }
+         else if (Double.isNaN(doubleVal)) {
+@@ -255,7 +311,26 @@ public class ConstExprent extends Exprent {
+         else if (doubleVal == Double.NEGATIVE_INFINITY) {
+           yield new TextBuffer("-1.0D / 0.0D");
+         }
+-        yield new TextBuffer(trimDouble(Double.toString(doubleVal), doubleVal)).append('D');
 +
++        TextBuffer doubleBuffer = new TextBuffer(trimDouble(Double.toString(doubleVal), doubleVal)).append('D');
++
++        if (!literal) {
 +          // Check for cases where a float literal has been upcasted to a double.
 +          // (for instance, double d = .01F results in 0.009999999776482582D without this)
 +          float nearestFloatVal = (float)doubleVal;
@@ -161,14 +171,19 @@ index 06025ab6d1c96e8bedb91b4efcbd2e00641c477e..3c78443624569bc8065ba9b4c416219f
 +            // Value can be represented precisely as both a float and a double.
 +            // Now check if the string representation as a float is nicer/shorter.
 +            // If they're the same, there's no point in the cast and such (e.g. don't decompile 1.0D as (double)1.0F).
-+            if (Float.toString(nearestFloatVal).length() < Double.toString(doubleVal).length()) {
++            TextBuffer floatBuffer = createFloat(literal, nearestFloatVal, tracer);
++            if (floatBuffer.length() != doubleBuffer.length()) {
 +              // Include a cast to prevent using the wrong method call in ambiguous cases.
-+              yield createFloat(literal, nearestFloatVal, tracer).prepend("(double)");
++              yield floatBuffer.prepend("(double)");
 +            }
-           }
-         }
-         else if (Double.isNaN(doubleVal)) {
-@@ -273,6 +342,72 @@ public class ConstExprent extends Exprent {
++          }
++        }
++
++        yield doubleBuffer;
+       }
+       case CodeConstants.TYPE_NULL -> new TextBuffer("null");
+       case CodeConstants.TYPE_OBJECT -> {
+@@ -273,6 +348,73 @@ public class ConstExprent extends Exprent {
      };
    }
  
@@ -227,7 +242,7 @@ index 06025ab6d1c96e8bedb91b4efcbd2e00641c477e..3c78443624569bc8065ba9b4c416219f
 +        return new TextBuffer("-1.0F / 0.0F");
 +      }
 +    }
-+    return new TextBuffer(trimZeros(Float.toString(floatVal))).append('F');
++    return new TextBuffer(trimFloat(Float.toString(floatVal), floatVal)).append('F');
 +  }
 +
 +  private TextBuffer getPiDouble(BytecodeMappingTracer tracer) {
@@ -238,6 +253,7 @@ index 06025ab6d1c96e8bedb91b4efcbd2e00641c477e..3c78443624569bc8065ba9b4c416219f
 +    // java.lang.Math doesn't have a float version of pi, unfortunately
 +    return getPiDouble(tracer).prepend("(float)");
 +  }
-   // Different JVM implementations/version display Floats and Doubles with different number of trailing zeros.
-   // This trims them all down to only the necessary amount.
-   private static String trimZeros(String value) {
++
+   // Different JVM implementations/version display Floats and Doubles with different String representations
+   // for the same thing. This trims them all down to only the necessary amount.
+   private static String trimFloat(String value, float start) {
