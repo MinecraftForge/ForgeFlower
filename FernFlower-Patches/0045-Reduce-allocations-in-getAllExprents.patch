@@ -68,10 +68,10 @@ index c713a4055dfc5aa05143a6cd856c5bd98e05c8c1..a67a38179233f983107222a963a3c766
      lst.add(right);
      return lst;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index c1443e44c5ee72ae04faa1aaedc1c7912879cc91..eb44c08fdc883f577d50d03e31d2b4ac8d4176d9 100644
+index aa922882d5abd2395921bdea4173305810d88335..bd2f432a1bed30237c71f9c483ee8942c67d989b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-@@ -186,8 +186,8 @@ public class ConstExprent extends Exprent {
+@@ -187,8 +187,8 @@ public class ConstExprent extends Exprent {
    }
  
    @Override
@@ -191,10 +191,10 @@ index e6e3e9d6f50239c716d285d64f37679bbf0ff553..e02bb03f2517be75a947175b212c3988
        lst.add(instance);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 90cfbde63ada4d96eb78c7192ed0e1fc940f5843..9c23c867139f2bdd5a15f7aae8281e69dd8d37dc 100644
+index c2136584b0ae2a5c7ba34370666bd8b5f4276aaa..2e020987da5a8d9013d12727427d56e369e00549 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-@@ -447,8 +447,9 @@ public class FunctionExprent extends Exprent {
+@@ -427,8 +427,9 @@ public class FunctionExprent extends Exprent {
    }
  
    @Override
@@ -229,10 +229,10 @@ index 18d2c40d9af0e822004f4baaa3c6b567914a7545..de3723ed7b731fc76afe15482d4caff8
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index e98c97e61097b448de85182294006fa5603db421..6961e5b7ece731f18825dee674a5e1260548dc60 100644
+index fd4fb8c060432591710e25e2941d99c538b547b6..20a42e0a68dc8974fd4fc8bd3b50deddd66d307d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-@@ -530,8 +530,7 @@ public class InvocationExprent extends Exprent {
+@@ -523,8 +523,7 @@ public class InvocationExprent extends Exprent {
    }
  
    @Override

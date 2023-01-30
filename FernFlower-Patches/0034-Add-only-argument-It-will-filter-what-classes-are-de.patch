@@ -8,7 +8,7 @@ Uses a prefix system, so -only=net/minecraft/block/ will decompile all classes i
 Useful for debugging to limit scope/runtime.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index e0c4593576ed55313de61adde1a5e175b75d0825..28bc5654aa5167f0e1e99a599d73cb6017cd7f2b 100644
+index 2c67a4fbcdf011cc91b9166f616feb27ce9dcd4c..3e168efbd10b661519a01fb48a3aabc16460f840 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -36,6 +36,7 @@ public class ClassesProcessor implements CodeConstants {

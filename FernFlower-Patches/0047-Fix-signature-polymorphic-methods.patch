@@ -5,7 +5,7 @@ Subject: [PATCH] Fix signature polymorphic methods
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index 417f21f05257086df8f9f5974216d0e40e58c960..8f5843341e46cc2117780700bacbd5d72cd8099a 100644
+index f66e835ab7cd7b03ada0a433b1edf357f5d6efcd..c825f65f521ba8c1123217aa22bc731bc91b13e7 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -193,6 +193,8 @@ public class MethodProcessorRunnable implements Runnable {

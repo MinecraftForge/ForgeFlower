@@ -5,7 +5,7 @@ Subject: [PATCH] Search generics when finding where to inject local classes.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index b531db78bf55aed572f05215033c290bbb9e05c0..9cdaa21a937fb4ec4b326a00b9be942342fd716c 100644
+index 5a52b4d9b2c4810cceeb7df3e2271a3dd6ddbe7f..df6411f0d562826605d4f9b26666836ae09597b4 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -16,8 +16,8 @@ index b531db78bf55aed572f05215033c290bbb9e05c0..9cdaa21a937fb4ec4b326a00b9be9423
  import org.jetbrains.java.decompiler.util.DotExporter;
  import org.jetbrains.java.decompiler.util.InterpreterUtil;
  
-@@ -935,9 +936,15 @@ public class NestedClassProcessor {
-         case Exprent.EXPRENT_VAR:
+@@ -925,9 +926,15 @@ public class NestedClassProcessor {
+         case Exprent.EXPRENT_VAR -> {
            VarExprent varExpr = (VarExprent)expr;
            if (varExpr.isDefinition()) {
 -            VarType varType = varExpr.getVarType();
@@ -34,7 +34,7 @@ index b531db78bf55aed572f05215033c290bbb9e05c0..9cdaa21a937fb4ec4b326a00b9be9423
 +              }
              }
            }
-       }
+         }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 index 135c633ac8ed35d6ccb4d24131395ec6d94ea566..f670f30e2f5c8e2f619d22efc4b61842692b3f11 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java

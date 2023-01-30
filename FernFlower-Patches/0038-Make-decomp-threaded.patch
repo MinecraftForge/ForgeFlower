@@ -7,7 +7,7 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 28bc5654aa5167f0e1e99a599d73cb6017cd7f2b..9776ab40a5d1a4df0fc84ace958815cbfac00dff 100644
+index 3e168efbd10b661519a01fb48a3aabc16460f840..573e8342b16e51b8c9a945b4513657c6f64f17c2 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -30,12 +30,13 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -25,7 +25,7 @@ index 28bc5654aa5167f0e1e99a599d73cb6017cd7f2b..9776ab40a5d1a4df0fc84ace958815cb
    private final Set<String> whitelist = new HashSet<>();
  
    private static class Inner {
-@@ -399,7 +400,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -396,7 +397,7 @@ public class ClassesProcessor implements CodeConstants {
      return true;
    }
  
@@ -34,7 +34,7 @@ index 28bc5654aa5167f0e1e99a599d73cb6017cd7f2b..9776ab40a5d1a4df0fc84ace958815cb
      ClassNode root = mapRootClasses.get(cl.qualifiedName);
      if (root.type != ClassNode.CLASS_ROOT) {
        return;
-@@ -408,25 +409,12 @@ public class ClassesProcessor implements CodeConstants {
+@@ -405,25 +406,12 @@ public class ClassesProcessor implements CodeConstants {
      boolean packageInfo = cl.isSynthetic() && "package-info".equals(root.simpleName);
      boolean moduleInfo = cl.hasModifier(CodeConstants.ACC_MODULE) && cl.hasAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
  
@@ -63,7 +63,7 @@ index 28bc5654aa5167f0e1e99a599d73cb6017cd7f2b..9776ab40a5d1a4df0fc84ace958815cb
          new LambdaProcessor().processClass(root);
  
          // add simple class names to implicit import
-@@ -438,7 +426,36 @@ public class ClassesProcessor implements CodeConstants {
+@@ -435,7 +423,36 @@ public class ClassesProcessor implements CodeConstants {
          new NestedClassProcessor().processClass(root, root);
  
          new NestedMemberAccess().propagateMemberAccess(root);
@@ -100,7 +100,7 @@ index 28bc5654aa5167f0e1e99a599d73cb6017cd7f2b..9776ab40a5d1a4df0fc84ace958815cb
          TextBuffer classBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
          new ClassWriter().classToJava(root, classBuffer, 0, null);
  
-@@ -448,7 +465,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -445,7 +462,7 @@ public class ClassesProcessor implements CodeConstants {
            buffer.append("package ").append(packageName).append(';').appendLineSeparator().appendLineSeparator();
          }
  
@@ -671,7 +671,7 @@ index 1e1d3bd20fe462b6df4dad18a4dea2b611376298..e9aa42e6801916d0acad2541d88b8ad7
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..4e64b70da8fe886801e027a7ae6c0e59f94cf62a 100644
+index 7b0946ed0de6af2dbe2043332650a09880027726..7d44617f437ad6e78e204d56c394be5e0d5962c4 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -14,8 +14,14 @@ import java.io.IOException;
@@ -701,7 +701,7 @@ index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..4e64b70da8fe886801e027a7ae6c0e59
              if (content != null) {
                int[] mapping = null;
                if (DecompilerContext.getOption(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING)) {
-@@ -152,13 +161,51 @@ public class ContextUnit {
+@@ -149,13 +158,51 @@ public class ContextUnit {
            }
          }
  
@@ -759,7 +759,7 @@ index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..4e64b70da8fe886801e027a7ae6c0e59
            }
          }
  
-@@ -166,6 +213,16 @@ public class ContextUnit {
+@@ -164,6 +211,16 @@ public class ContextUnit {
      }
    }
  
@@ -776,7 +776,7 @@ index c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d..4e64b70da8fe886801e027a7ae6c0e59
    public void setManifest(Manifest manifest) {
      this.manifest = manifest;
    }
-@@ -177,4 +234,18 @@ public class ContextUnit {
+@@ -175,4 +232,18 @@ public class ContextUnit {
    public List<StructClass> getClasses() {
      return classes;
    }

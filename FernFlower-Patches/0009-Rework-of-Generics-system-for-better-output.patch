@@ -34,7 +34,7 @@ index 4c4916e4cc5ccdd06dd4138dae54c31fb7f3bd34..decfe747ba2ab3643209987294ef7bcb
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd6013d00a369 100644
+index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fcc99ec5b9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -371,9 +371,14 @@ public class ClassWriter {
@@ -116,16 +116,16 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
        }
      }
      else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
-@@ -639,7 +620,7 @@ public class ClassWriter {
+@@ -638,7 +619,7 @@ public class ClassWriter {
        boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
-       boolean clInit = false, init = false, dInit = false;
+       boolean clInit = false, dInit = false;
  
 -      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 +      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, node);
  
        int flags = mt.getAccessFlags();
        if ((flags & CodeConstants.ACC_NATIVE) != 0) {
-@@ -667,28 +648,7 @@ public class ClassWriter {
+@@ -666,25 +647,7 @@ public class ClassWriter {
          appendComment(buffer, "bridge method", indent);
        }
  
@@ -140,9 +140,6 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
 -            if (mask != null) {
 -              actualParams = mask.stream().filter(Objects::isNull).count();
 -            }
--            else if (isEnum && init) {
--              actualParams -= 2;
--            }
 -            if (actualParams != descriptor.parameterTypes.size()) {
 -              String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
 -              DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
@@ -155,7 +152,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
        appendAnnotations(buffer, indent, mt);
  
        buffer.appendIndent(indent);
-@@ -729,12 +689,7 @@ public class ClassWriter {
+@@ -726,12 +689,7 @@ public class ClassWriter {
          if (init) {
            emptyTypeAnnotations.forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
          } else {
@@ -169,7 +166,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
            buffer.append(' ');
          }
  
-@@ -751,7 +706,12 @@ public class ClassWriter {
+@@ -748,7 +706,12 @@ public class ClassWriter {
          }
  
          int index = methodWrapper.varproc.getFirstParameterVarIndex();
@@ -182,7 +179,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
            if (mask == null || mask.get(i) == null) {
              if (paramCount > 0) {
                buffer.append(", ");
-@@ -768,24 +728,12 @@ public class ClassWriter {
+@@ -765,24 +728,12 @@ public class ClassWriter {
              }
  
              String typeName;
@@ -211,7 +208,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
  
              if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
                  DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-@@ -804,7 +752,7 @@ public class ClassWriter {
+@@ -801,7 +752,7 @@ public class ClassWriter {
              paramCount++;
            }
  
@@ -220,7 +217,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
          }
  
          buffer.append(')');
-@@ -814,19 +762,14 @@ public class ClassWriter {
+@@ -811,19 +762,14 @@ public class ClassWriter {
            throwsExceptions = true;
            buffer.append(" throws ");
  
@@ -243,7 +240,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
            }
          }
        }
-@@ -1054,7 +997,7 @@ public class ClassWriter {
+@@ -1051,7 +997,7 @@ public class ClassWriter {
  
      final List<TypeAnnotation> typeAnnotations = TypeAnnotation.listFrom(cd);
      if (descriptor != null) {
@@ -252,7 +249,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
          varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type,
          TypeAnnotationWriteHelper.create(typeAnnotations)
        ));
-@@ -1108,14 +1051,7 @@ public class ClassWriter {
+@@ -1105,14 +1051,7 @@ public class ClassWriter {
    private static Map.Entry<VarType, GenericFieldDescriptor> getFieldTypeData(StructField fd) {
      VarType fieldType = new VarType(fd.getDescriptor(), false);
  
@@ -268,7 +265,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
      return new AbstractMap.SimpleImmutableEntry<>(fieldType, descriptor);
    }
  
-@@ -1255,22 +1191,11 @@ public class ClassWriter {
+@@ -1249,22 +1188,11 @@ public class ClassWriter {
      }
    }
  
@@ -295,7 +292,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
      buffer.append('<');
      for (int i = 0; i < parameters.size(); i++) {
        if (i > 0) {
-@@ -1278,15 +1203,15 @@ public class ClassWriter {
+@@ -1272,15 +1200,15 @@ public class ClassWriter {
        }
        TargetInfo.TypeParameterTarget.extract(typeAnnotations, i).forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
        buffer.append(parameters.get(i));
@@ -314,7 +311,7 @@ index 0dc28bc9d8e3b622f691939b1c8fcce9a09c11fe..b7467530cba1d8e317500a5c213dd601
          }
        }
      }
-@@ -1303,4 +1228,4 @@ public class ClassWriter {
+@@ -1297,4 +1225,4 @@ public class ClassWriter {
        }
      }
    }
@@ -412,7 +409,7 @@ index 33906d3a433e4421bbf41c6aed5ff566a69a904a..c1126a2b7559e2f8a69a54ee0b7db2ce
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
-index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e71c2c502 100644
+index a242aa9e74698b14e20e27d655a3c8ae141ee2f5..e005b2941b4e76b736b8d00905726ac8500c3dc2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
 @@ -29,6 +29,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
@@ -432,7 +429,7 @@ index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e
            break;
          case opc_monitorenter:
          case opc_monitorexit:
-@@ -689,7 +690,15 @@ public class ExprProcessor implements CodeConstants {
+@@ -685,7 +686,15 @@ public class ExprProcessor implements CodeConstants {
        sb.append("void");
        return sb.toString();
      }
@@ -448,7 +445,7 @@ index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e
        String ret;
        if (getShort) {
          ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
-@@ -740,7 +749,9 @@ public class ExprProcessor implements CodeConstants {
+@@ -736,7 +745,9 @@ public class ExprProcessor implements CodeConstants {
        boolean shouldWrite = true;
        if (!enclosingClasses.isEmpty() && i != nestedTypes.size() - 1) {
          String enclosingType = enclosingClasses.remove(0).simpleName;
@@ -459,7 +456,7 @@ index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e
        }
        if (i == 0) { // first annotation can be written already
          if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
-@@ -956,6 +967,8 @@ public class ExprProcessor implements CodeConstants {
+@@ -952,6 +963,8 @@ public class ExprProcessor implements CodeConstants {
          tracer.incrementCurrentSourceLine();
        }
  
@@ -468,7 +465,7 @@ index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e
        TextBuffer content = expr.toJava(indent, tracer);
  
        if (content.length() > 0) {
-@@ -1028,7 +1041,7 @@ public class ExprProcessor implements CodeConstants {
+@@ -1024,7 +1037,7 @@ public class ExprProcessor implements CodeConstants {
        }
      }
  
@@ -478,10 +475,10 @@ index e160dc7f1bb3c8d1bdec0a1720035803f077e1e7..3534ca10c55713f5856163b7325e0c6e
      boolean cast =
        castAlways ||
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-index 1af6fc576e1528f6c06b0e493bd912b9b37edff6..e1bed2f0f5f501d05f93dfa6bfcd2f2b3e76b822 100644
+index eb96762fa2174047a3f9dcecfb8c57bf4721c11f..dc3d20eed5ddcac36204fc9ed75d73c53a8c9805 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
-@@ -721,7 +721,7 @@ public class SimplifyExprentsHelper {
+@@ -722,7 +722,7 @@ public class SimplifyExprentsHelper {
                                                                                 Arrays.asList(
                                                                                   statement.getHeadexprent().getCondition(),
                                                                                   ifExit.getValue(),
@@ -490,7 +487,7 @@ index 1af6fc576e1528f6c06b0e493bd912b9b37edff6..e1bed2f0f5f501d05f93dfa6bfcd2f2b
                statement.setExprents(data);
  
                StatEdge retEdge = ifStatement.getAllSuccessorEdges().get(0);
-@@ -767,4 +767,4 @@ public class SimplifyExprentsHelper {
+@@ -768,4 +768,4 @@ public class SimplifyExprentsHelper {
  
      return ret;
    }
@@ -836,7 +833,7 @@ index 11669fe44ea78ab7322b82c844c8b220ca1a9975..b76d5dd1f39f3ef9a2847414bcf1cc37
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index f2efd6b594b700b20814c620328753a66aea22a4..f227df9c03dd6ae3972b80ce11dc36d468addea3 100644
+index ac2b3a50e65c46ff998173335d505cdfc8a27b21..0a6281872ae535dbc0569cb08b301d58b6c5c9a3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -2,6 +2,8 @@
@@ -864,7 +861,7 @@ index f2efd6b594b700b20814c620328753a66aea22a4..f227df9c03dd6ae3972b80ce11dc36d4
  
    public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
      this(funcType, new ArrayList<>(), bytecodeOffsets);
-@@ -289,6 +291,46 @@ public class FunctionExprent extends Exprent {
+@@ -269,6 +271,46 @@ public class FunctionExprent extends Exprent {
      return exprType;
    }
  
@@ -911,17 +908,22 @@ index f2efd6b594b700b20814c620328753a66aea22a4..f227df9c03dd6ae3972b80ce11dc36d4
    @Override
    public int getExprentUse() {
      if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
-@@ -463,6 +505,9 @@ public class FunctionExprent extends Exprent {
-       case FUNCTION_NEG:
-         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
-       case FUNCTION_CAST:
+@@ -439,8 +481,12 @@ public class FunctionExprent extends Exprent {
+       case FUNCTION_BIT_NOT -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("~");
+       case FUNCTION_BOOL_NOT -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("!");
+       case FUNCTION_NEG -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
+-      case FUNCTION_CAST -> lstOperands.get(1).toJava(indent, tracer).enclose("(", ")")
+-        .append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
++      case FUNCTION_CAST -> {
 +        if (!needsCast) {
-+          return lstOperands.get(0).toJava(indent, tracer);
++          yield lstOperands.get(0).toJava(indent, tracer);
 +        }
-         return lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
-       case FUNCTION_ARRAY_LENGTH:
++        yield lstOperands.get(1).toJava(indent, tracer).enclose("(", ")").append(wrapOperandString(lstOperands.get(0), true, indent, tracer));
++      }
+       case FUNCTION_ARRAY_LENGTH -> {
          Exprent arr = lstOperands.get(0);
-@@ -603,7 +648,7 @@ public class FunctionExprent extends Exprent {
+         TextBuffer res = wrapOperandString(arr, false, indent, tracer);
+@@ -571,7 +617,7 @@ public class FunctionExprent extends Exprent {
      measureBytecode(values, lstOperands);
      measureBytecode(values);
    }
@@ -931,7 +933,7 @@ index f2efd6b594b700b20814c620328753a66aea22a4..f227df9c03dd6ae3972b80ce11dc36d4
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05dee272833 100644
+index 8d2ce0f8f4d4368f87ed596e4e76442ff97fed19..6eab93e5ed261b0903ae3fe4677118bfa2d1d60e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -19,6 +19,8 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -951,7 +953,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
  
    public InvocationExprent() {
      super(EXPRENT_INVOCATION);
-@@ -165,6 +168,55 @@ public class InvocationExprent extends Exprent {
+@@ -158,6 +161,55 @@ public class InvocationExprent extends Exprent {
      return descriptor.ret;
    }
  
@@ -1007,7 +1009,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
    @Override
    public CheckTypesResult checkExprTypeBounds() {
      CheckTypesResult result = new CheckTypesResult();
-@@ -297,6 +349,7 @@ public class InvocationExprent extends Exprent {
+@@ -290,6 +342,7 @@ public class InvocationExprent extends Exprent {
  
          if (buf.length() > 0) {
            buf.append(".");
@@ -1015,7 +1017,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
          }
  
          buf.append(name);
-@@ -333,8 +386,30 @@ public class InvocationExprent extends Exprent {
+@@ -324,8 +377,30 @@ public class InvocationExprent extends Exprent {
          isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
        }
      }
@@ -1047,7 +1049,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
  
      // omit 'new Type[] {}' for the last parameter of a vararg method call
      if (parameters.size() == descriptor.params.length && isVarArgCall()) {
-@@ -350,6 +425,34 @@ public class InvocationExprent extends Exprent {
+@@ -341,6 +416,34 @@ public class InvocationExprent extends Exprent {
        if (mask == null || mask.get(i) == null) {
          TextBuffer buff = new TextBuffer();
          boolean ambiguous = setAmbiguousParameters.get(i);
@@ -1082,7 +1084,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
  
          // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
          ExprProcessor.getCastedExprent(parameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, true, true, tracer);
-@@ -466,12 +569,11 @@ public class InvocationExprent extends Exprent {
+@@ -447,12 +550,11 @@ public class InvocationExprent extends Exprent {
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
@@ -1098,7 +1100,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
      nextMethod:
      for (StructMethod mt : cl.getMethods()) {
        if (name.equals(mt.getName())) {
-@@ -482,11 +584,19 @@ public class InvocationExprent extends Exprent {
+@@ -463,11 +565,19 @@ public class InvocationExprent extends Exprent {
                continue nextMethod;
              }
            }
@@ -1120,7 +1122,7 @@ index 8356b5b643139d6c8346070d826877c724e4f8a2..104f2f112c621e3433bdbc1ce5afb05d
  
      // check if a call is unambiguous
      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-@@ -508,7 +618,14 @@ public class InvocationExprent extends Exprent {
+@@ -489,7 +599,14 @@ public class InvocationExprent extends Exprent {
      BitSet ambiguous = new BitSet(descriptor.params.length);
      for (int i = 0; i < descriptor.params.length; i++) {
        VarType paramType = descriptor.params[i];
@@ -1272,19 +1274,19 @@ index 2fda2ba5fc05992faf891d2af14910023228c6b6..9ba49d3d3ee30e6e8db7cacd836f7f62
                  }
                }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-index 0c64170a05d6675803b69284d8ee532e44212ee2..7a54601fd2fd88d0c652384587e16c2d3f704f7e 100644
+index 018d3fbdf53036db90b6c64e872098542133b630..d58218e0baa786456f15a14ef23a8d82d466ba18 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DoStatement.java
-@@ -106,6 +106,7 @@ public final class DoStatement extends Statement {
-         break;
-       case FOREACH:
+@@ -107,6 +107,7 @@ public final class DoStatement extends Statement {
+       }
+       case FOREACH -> {
          buf.appendIndent(indent).append("for(").append(initExprent.get(0).toJava(indent, tracer));
 +        incExprent.get(0).getInferredExprType(null); //TODO: Find a better then null? For now just calls it to clear casts if needed
          buf.append(" : ").append(incExprent.get(0).toJava(indent, tracer)).append(") {").appendLineSeparator();
          tracer.incrementCurrentSourceLine();
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index b65a7ceb11c31ab892d8bd1f6e1a30fc78aa11ab..2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3 100644
+index 6f8a2619c728d168431673b14f53b94ba783cf2f..abe421340550d258edce046fc901479fa027a23e 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -24,7 +24,6 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -1295,7 +1297,7 @@ index b65a7ceb11c31ab892d8bd1f6e1a30fc78aa11ab..2c314dffc92ee5ca40ae8056c93c845f
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
  
  import java.util.*;
-@@ -993,7 +992,7 @@ public class VarDefinitionHelper {
+@@ -987,7 +986,7 @@ public class VarDefinitionHelper {
  
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null)
@@ -1493,10 +1495,10 @@ index 0b4275f57e3092623c4e462b032b418cf2bdd84b..bead2d172e27075e63f6977562988041
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 94cedbee257faebd95ea933ab80a7d242c1ba023..301737310f3d346cc2229395551d504a34cb6dbc 100644
+index 2f55882afdd1dd1b9960aa0c2a007069204797e9..85fc95d87bd7e672613f6c1beb75b2d56d1d759f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-@@ -156,6 +156,19 @@ public class StructContext {
+@@ -161,6 +161,19 @@ public class StructContext {
      }
    }
  
@@ -1578,7 +1580,7 @@ index 0d6df7e05b9b385e743c85261b77215314167989..da073261717d3583fc91b6c9c30351ce
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index 4e5c7b4da350020f4f69da956eda4384b86df2aa..e3d5edf6e78c37206e5a37abaf24efbb6eb6dfa3 100644
+index 0a7e5ba44d82f1923dadd9f79627d91f82b1014c..d48e950e7511d2a00ac9885d5dc7d4ff524bbb37 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -2,12 +2,17 @@
@@ -1642,7 +1644,7 @@ index 4e5c7b4da350020f4f69da956eda4384b86df2aa..e3d5edf6e78c37206e5a37abaf24efbb
    }
  
    public void expandData(StructClass classStruct) throws IOException {
-@@ -385,4 +401,8 @@ public class StructMethod extends StructMember {
+@@ -339,4 +355,8 @@ public class StructMethod extends StructMember {
    public String getClassQualifiedName() {
      return classQualifiedName;
    }
@@ -1693,7 +1695,7 @@ index e50983daf2a1bf6c93ec92c99221587d7c4f7c6a..11fa1a3e621221a09c0e611a7f912932
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 14aaf8e28413ccb2dda4d2d181fc79976f2b0710..8044f348e8aad96f451a47ef24f54972e171b9c7 100644
+index 7007b680a005a28a5d919e5e9e4298ed6c0ec566..49494925b2d67b95920bb2b8c8371e886341492f 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -2,14 +2,24 @@
@@ -1721,7 +1723,7 @@ index 14aaf8e28413ccb2dda4d2d181fc79976f2b0710..8044f348e8aad96f451a47ef24f54972
  
    private MethodDescriptor(VarType[] params, VarType ret) {
      this.params = params;
-@@ -63,6 +73,41 @@ public final class MethodDescriptor {
+@@ -64,6 +74,35 @@ public final class MethodDescriptor {
      return new MethodDescriptor(params, ret);
    }
  
@@ -1737,12 +1739,6 @@ index 14aaf8e28413ccb2dda4d2d181fc79976f2b0710..8044f348e8aad96f451a47ef24f54972
 +        List<VarVersionPair> sigFields = methodWrapper == null ? null : methodWrapper.synthParameters;
 +        if (sigFields != null) {
 +          actualParams = sigFields.stream().filter(Objects::isNull).count();
-+        }
-+        else if (init) {
-+          // && isEnum
-+          if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && DecompilerContext.getStructContext().getClass(struct.getClassQualifiedName()).hasModifier(CodeConstants.ACC_ENUM)) {
-+            actualParams -= 2;
-+          }
 +        }
 +        if (actualParams != sig.parameterTypes.size()) {
 +          String message = "Inconsistent generic signature in method " + struct.getName() + " " + struct.getDescriptor() + " in " + struct.getClassQualifiedName();
@@ -1763,7 +1759,7 @@ index 14aaf8e28413ccb2dda4d2d181fc79976f2b0710..8044f348e8aad96f451a47ef24f54972
    public String buildNewDescriptor(NewClassNameBuilder builder) {
      boolean updated = false;
  
-@@ -125,4 +170,4 @@ public final class MethodDescriptor {
+@@ -126,4 +165,4 @@ public final class MethodDescriptor {
      result = 31 * result + params.length;
      return result;
    }
@@ -1771,7 +1767,7 @@ index 14aaf8e28413ccb2dda4d2d181fc79976f2b0710..8044f348e8aad96f451a47ef24f54972
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index e5100010a55590d289820d91301ddb732398e3f2..d8388e50f6c88e91a0007854400e756153cdb4a6 100644
+index 30b31f5604f0c1566c536737aa7d9c61363e08c5..44d120256a8020b833567fe0f24c7b2c67caafde 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct.gen;
@@ -1791,8 +1787,8 @@ index e5100010a55590d289820d91301ddb732398e3f2..d8388e50f6c88e91a0007854400e7561
      this.type = type;
      this.arrayDim = arrayDim;
      this.value = value;
-@@ -165,7 +166,7 @@ public class VarType implements Type {  // TODO: optimize switch
-     }
+@@ -147,7 +148,7 @@ public class VarType implements Type {  // TODO: optimize switch
+     };
    }
  
 -  private static int getStackSize(int type, int arrayDim) {
@@ -1800,8 +1796,8 @@ index e5100010a55590d289820d91301ddb732398e3f2..d8388e50f6c88e91a0007854400e7561
      if (arrayDim > 0) {
        return 1;
      }
-@@ -182,7 +183,7 @@ public class VarType implements Type {  // TODO: optimize switch
-     }
+@@ -159,7 +160,7 @@ public class VarType implements Type {  // TODO: optimize switch
+     };
    }
  
 -  private static int getFamily(int type, int arrayDim) {
@@ -1809,7 +1805,7 @@ index e5100010a55590d289820d91301ddb732398e3f2..d8388e50f6c88e91a0007854400e7561
      if (arrayDim > 0) {
        return CodeConstants.TYPE_FAMILY_OBJECT;
      }
-@@ -283,6 +284,15 @@ public class VarType implements Type {  // TODO: optimize switch
+@@ -248,6 +249,15 @@ public class VarType implements Type {  // TODO: optimize switch
      return res;
    }
  
@@ -1825,9 +1821,9 @@ index e5100010a55590d289820d91301ddb732398e3f2..d8388e50f6c88e91a0007854400e7561
    @Override
    public boolean equals(Object o) {
      if (o == this) {
-@@ -429,4 +439,15 @@ public class VarType implements Type {  // TODO: optimize switch
-         throw new IllegalArgumentException("Invalid type: " + c);
-     }
+@@ -374,4 +384,15 @@ public class VarType implements Type {  // TODO: optimize switch
+       default -> throw new IllegalArgumentException("Invalid type: " + c);
+     };
    }
 +
 +  public boolean isGeneric() {
@@ -1887,7 +1883,7 @@ index a65181762765bfdc9d2ee5695f3ffa68b7768b74..2b0fdf1dad01ec62f3e21f372297c124
  }
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
-index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453ee88fb66 100644
+index 315786d5a56e2871a1d0829760b672398a17d972..16aa2ee5a55fa9ba832909cdd9f5043f5d3e7ba7 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericMain.java
 @@ -7,9 +7,9 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -1990,7 +1986,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
      if (signature.charAt(0) != '<') {
        return signature;
      }
-@@ -132,7 +140,7 @@ public final class GenericMain {
+@@ -131,7 +139,7 @@ public final class GenericMain {
        String param = value.substring(0, to);
        value = value.substring(to + 1);
  
@@ -1999,7 +1995,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
  
        while (true) {
          if (value.charAt(0) == ':') {
-@@ -141,7 +149,7 @@ public final class GenericMain {
+@@ -140,7 +148,7 @@ public final class GenericMain {
          }
  
          String bound = GenericType.getNextType(value);
@@ -2008,7 +2004,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
          value = value.substring(bound.length());
  
  
-@@ -184,83 +192,14 @@ public final class GenericMain {
+@@ -183,77 +191,14 @@ public final class GenericMain {
      }
      else if (tp == CodeConstants.TYPE_OBJECT) {
        StringBuilder sb = new StringBuilder();
@@ -2068,15 +2064,9 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
 -        typeAnnWriteHelpers.removeAll(locTypeAnnWriteHelpers);
 -        locTypeAnnWriteHelpers = writeTypeAnnotationBeforeWildCard(sb, genPar, wildcard, locTypeAnnWriteHelpers);
 -        switch (wildcard) {
--          case GenericType.WILDCARD_UNBOUND:
--            sb.append('?');
--            break;
--          case GenericType.WILDCARD_EXTENDS:
--            sb.append("? extends ");
--            break;
--          case GenericType.WILDCARD_SUPER:
--            sb.append("? super ");
--            break;
+-          case GenericType.WILDCARD_UNBOUND -> sb.append('?');
+-          case GenericType.WILDCARD_EXTENDS -> sb.append("? extends ");
+-          case GenericType.WILDCARD_SUPER -> sb.append("? super ");
 -        }
 -        locTypeAnnWriteHelpers = writeTypeAnnotationAfterWildCard(sb, genPar, locTypeAnnWriteHelpers);
 -        if (genPar != null) {
@@ -2094,7 +2084,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
      int argIndex,
      List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
    ) {
-@@ -273,9 +212,9 @@ public final class GenericMain {
+@@ -266,9 +211,9 @@ public final class GenericMain {
      }).collect(Collectors.toList());
    }
  
@@ -2106,7 +2096,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
      int wildcard,
      List<TypeAnnotationWriteHelper> typeAnnWriteHelpers
    ) {
-@@ -285,7 +224,7 @@ public final class GenericMain {
+@@ -278,7 +223,7 @@ public final class GenericMain {
          typeAnnWriteHelper.writeTo(sb);
          return false;
        }
@@ -2115,7 +2105,7 @@ index 4bf0c0ada3e92dda77bb698fcf78d232f4c2bb2d..4c35ce1fc3fface6ce485d8947a5b453
          typeAnnWriteHelper.writeTo(sb);
          return false;
        }
-@@ -293,9 +232,9 @@ public final class GenericMain {
+@@ -286,9 +231,9 @@ public final class GenericMain {
      }).collect(Collectors.toList());
    }
  
@@ -2161,7 +2151,7 @@ index eb8049193e952f7476a99188838b6c8907f49f8d..a93d250e2400a9680d7561d73cc1a69f
      this.typeParameterBounds = substitute(typeParameterBounds);
      this.parameterTypes = substitute(parameterTypes);
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
-index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a944026dfd3 100644
+index a042dd3a747f224a63a0987ff465f6259d783de4..e430a99b30757bb0ba5b8dda66e0790383ab8d75 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
 @@ -2,44 +2,49 @@
@@ -2345,7 +2335,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a94
    }
  
    private static String getNextClassSignature(String value) {
-@@ -138,11 +161,13 @@ public class GenericType implements Type {
+@@ -135,11 +158,13 @@ public class GenericType implements Type {
      return value.substring(0, index);
    }
  
@@ -2361,9 +2351,9 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a94
      while (value.length() > 0) {
        String typeStr = getNextType(value);
        int len = typeStr.length();
-@@ -160,16 +185,16 @@ public class GenericType implements Type {
-           break;
-       }
+@@ -150,16 +175,16 @@ public class GenericType implements Type {
+         default -> WILDCARD_NO;
+       };
  
 -      type.getWildcards().add(wildcard);
 -
@@ -2381,7 +2371,7 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a94
    }
  
    public static String getNextType(String value) {
-@@ -218,20 +243,134 @@ public class GenericType implements Type {
+@@ -208,20 +233,134 @@ public class GenericType implements Type {
      return value.substring(0, index + 1);
    }
  
@@ -2395,13 +2385,13 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a94
 +  @Override
 +  public VarType resizeArrayDim(int newArrayDim) {
 +    return new GenericType(getType(), newArrayDim, getValue(), parent, arguments, wildcard);
++  }
++
++  public VarType getParent() {
++    return parent;
    }
  
 -  public List<GenericType> getArguments() {
-+  public VarType getParent() {
-+    return parent;
-+  }
-+
 +  public List<VarType> getArguments() {
      return arguments;
    }
@@ -2415,10 +2405,8 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a94
 +
 +  public int getWildcard() {
 +    return wildcard;
-   }
- 
--  public List<Integer> getWildcards() {
--    return wildcards;
++  }
++
 +  public List<TypeAnnotationWriteHelper> appendCastName(final StringBuilder clsName, List<TypeAnnotationWriteHelper> typeAnnWriteHelpers) {
 +    if (parent != null && parent.isGeneric()) {
 +      typeAnnWriteHelpers = ((GenericType) parent).appendCastName(clsName, typeAnnWriteHelpers);
@@ -2488,8 +2476,10 @@ index ff1fe46b43531409fdce2151485cfc48366d3b62..077ebbd169338e0cf4db79bb75100a94
 +    buf.append(super.toString());
 +    appendTypeArguments(buf, Collections.emptyList());
 +    return buf.toString();
-+  }
-+
+   }
+ 
+-  public List<Integer> getWildcards() {
+-    return wildcards;
 +
 +  @Override
 +  public VarType remap(Map<VarType, VarType> map) {
@@ -2636,15 +2626,17 @@ index 0000000000000000000000000000000000000000..cc91edd842805b55a757c5794b4fb7dc
 +    }
 +}
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 2018e2e548a35e13f925bf42858064e24f3f8696..256f412db7806d11c41d9f48d8e3d28361e50c39 100644
+index dd0e178cc1df1c6edc9e77e3149c2b0e9bffe884..645d99f07322c311a20b5fd76a5235de6cdae74d 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -23,9 +23,11 @@ public class SingleClassesTest extends SingleClassesTestBase {
-       IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-       IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-       IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
-+      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
-     };
+@@ -23,9 +23,12 @@ public class SingleClassesTest extends SingleClassesTestBase {
+     return Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+                          IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                          IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+-                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1");
++                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
++                         IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
++);
    }
  
 +  @Test public void testGenerics() { doTest("pkg/TestGenerics"); }

@@ -5,7 +5,7 @@ Subject: [PATCH] Add better debug logging
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index a095a246733384782870a1b9cac17ede8fd558dc..e2545c0d094a25e13efaa554704198d7fa15e0f1 100644
+index aa990406ef8d91838aa2d928bdfb183fe9e19333..410a83345e5e145962137536b95ca4f22185d678 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -824,7 +824,7 @@ public class ClassWriter {
@@ -18,7 +18,7 @@ index a095a246733384782870a1b9cac17ede8fd558dc..e2545c0d094a25e13efaa554704198d7
              methodWrapper.decompiledWithErrors = true;
            }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
-index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..9152bdbdb93f50fdd45c2ea3c353188d82efb77d 100644
+index 964bff5a00b35969fa08e48ca355801fe2882ce8..0c53385b28507ef4fb0ffb2ff6c58298dc9a5bde 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 @@ -110,7 +110,7 @@ public class ClassWrapper {
@@ -31,7 +31,7 @@ index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..9152bdbdb93f50fdd45c2ea3c353188d
          isError = true;
        }
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 301737310f3d346cc2229395551d504a34cb6dbc..b039480288011a5b9bdca635f7c66e85c92eb311 100644
+index 85fc95d87bd7e672613f6c1beb75b2d56d1d759f..2b6448c01968ddb6bde275304e0073837d7fa575 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -50,7 +50,7 @@ index 301737310f3d346cc2229395551d504a34cb6dbc..b039480288011a5b9bdca635f7c66e85
      try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
        Enumeration<? extends ZipEntry> entries = archive.entries();
        while (entries.hasMoreElements()) {
-@@ -140,6 +142,7 @@ public class StructContext {
+@@ -145,6 +147,7 @@ public class StructContext {
          if (!entry.isDirectory()) {
            if (name.endsWith(".class")) {
              byte[] bytes = InterpreterUtil.getBytes(archive, entry);
@@ -59,34 +59,27 @@ index 301737310f3d346cc2229395551d504a34cb6dbc..b039480288011a5b9bdca635f7c66e85
              classes.put(cl.qualifiedName, cl);
              unit.addClass(cl, name);
 diff --git a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
-index 037cb437ee5e93941364d73e3d88c1c9f14ac517..d4e98b9aea54e04c038641e472e215fc62e496a2 100644
+index 6da1e0d2c84e9c2c102bf0ffafabddeee2dcadd0..a824d326da2bc6a2c864d2da75af11545b8cf71e 100644
 --- a/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
 +++ b/src/org/jetbrains/java/decompiler/struct/consts/ConstantPool.java
-@@ -113,7 +113,8 @@ public class ConstantPool implements NewClassNameBuilder {
+@@ -94,7 +94,8 @@ public class ConstantPool implements NewClassNameBuilder {
      int size = in.readUnsignedShort();
  
      for (int i = 1; i < size; i++) {
 -      switch (in.readUnsignedByte()) {
 +      byte tag = (byte)in.readUnsignedByte();
 +      switch (tag) {
-         case CodeConstants.CONSTANT_Utf8:
-           in.readUTF();
-           break;
-@@ -138,11 +139,17 @@ public class ConstantPool implements NewClassNameBuilder {
-         case CodeConstants.CONSTANT_Class:
-         case CodeConstants.CONSTANT_String:
-         case CodeConstants.CONSTANT_MethodType:
-+        case CodeConstants.CONSTANT_Module:
-+        case CodeConstants.CONSTANT_Package:
-           in.discard(2);
-           break;
- 
-         case CodeConstants.CONSTANT_MethodHandle:
-           in.discard(3);
-+          break;
-+
-+        default:
-+            throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
+         case CodeConstants.CONSTANT_Utf8 -> in.readUTF();
+         case CodeConstants.CONSTANT_Integer, CodeConstants.CONSTANT_Float, CodeConstants.CONSTANT_Fieldref, CodeConstants.CONSTANT_Methodref, CodeConstants.CONSTANT_InterfaceMethodref, CodeConstants.CONSTANT_NameAndType, CodeConstants.CONSTANT_Dynamic, CodeConstants.CONSTANT_InvokeDynamic ->
+           in.discard(4);
+@@ -102,8 +103,9 @@ public class ConstantPool implements NewClassNameBuilder {
+           in.discard(8);
+           i++;
+         }
+-        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType -> in.discard(2);
++        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType, CodeConstants.CONSTANT_Module, CodeConstants.CONSTANT_Package -> in.discard(2);
+         case CodeConstants.CONSTANT_MethodHandle -> in.discard(3);
++        default -> throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
        }
      }
    }

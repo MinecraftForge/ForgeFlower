@@ -5,7 +5,7 @@ Subject: [PATCH] JAD Style variable naming
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index b7467530cba1d8e317500a5c213dd6013d00a369..a095a246733384782870a1b9cac17ede8fd558dc 100644
+index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..aa990406ef8d91838aa2d928bdfb183fe9e19333 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -117,15 +117,20 @@ public class ClassWriter {
@@ -14,7 +14,7 @@ index b7467530cba1d8e317500a5c213dd6013d00a369..a095a246733384782870a1b9cac17ede
  
 +              List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
 +              VarType type = md_content.params[i];
-+              String typeName = ExprProcessor.getCastTypeName(type, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
++              String typeName = ExprProcessor.getCastTypeName(type, explicitlyTyped, TypeAnnotationWriteHelper.create(iParameterTypeAnnotations));
                if (explicitlyTyped) {
 -                List<TypeAnnotation> iParameterTypeAnnotations = TargetInfo.FormalParameterTarget.extract(parameterTypeAnnotations, i);
 -                VarType type = md_content.params[i];
@@ -60,7 +60,7 @@ index b7467530cba1d8e317500a5c213dd6013d00a369..a095a246733384782870a1b9cac17ede
              firstParameter = false;
            }
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 7db5b328969a6dac49054e57b5c00c672ca4ea85..f0d59a81d1f40f95d21ff7699fd349e10d39278c 100644
+index 9104ad3f1edae3deb11913bb08d101269370ca7d..7149145b1f3ed3583f8bbe416947a0d68de523db 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -146,6 +146,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -97,7 +97,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..f0d59a81d1f40f95d21ff7699fd349e1
    private static boolean isAnonymous(StructClass cl, StructClass enclosingCl) {
      // checking super class and interfaces
      int[] interfaces = cl.getInterfaces();
-@@ -444,6 +464,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -441,6 +461,7 @@ public class ClassesProcessor implements CodeConstants {
    private static void destroyWrappers(ClassNode node) {
      node.wrapper = null;
      node.classStruct.releaseResources();
@@ -105,7 +105,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..f0d59a81d1f40f95d21ff7699fd349e1
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -503,7 +524,7 @@ public class ClassesProcessor implements CodeConstants {
+@@ -500,7 +521,7 @@ public class ClassesProcessor implements CodeConstants {
  
        anonymousClassType = new VarType(lambda_class_name, true);
  
@@ -114,7 +114,7 @@ index 7db5b328969a6dac49054e57b5c00c672ca4ea85..f0d59a81d1f40f95d21ff7699fd349e1
        if (!is_method_reference) { // content method in the same class, check synthetic flag
          StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
          is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
-@@ -566,4 +587,4 @@ public class ClassesProcessor implements CodeConstants {
+@@ -563,4 +584,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
    }
@@ -358,8 +358,22 @@ index 0000000000000000000000000000000000000000..fc1d7d67864ab12e894fcdf0ed8e1297
 +public interface IVariableNamingFactory {
 +  public IVariableNameProvider createFactory(StructMethod structMethod);
 +}
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..964bff5a00b35969fa08e48ca355801fe2882ce8 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
+@@ -158,7 +158,8 @@ public class ClassWrapper {
+   }
+ 
+   private static void applyDebugInfo(StructMethod mt, VarProcessor varProc, MethodWrapper methodWrapper) {
+-    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
++    // Only rename parameters in the var processor if we aren't already renaming them with JAD naming
++    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && (!DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_VARNAMING) || !DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_PARAMETER_RENAMING))) {
+       StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
+       if (attr != null) {
+         // only param names here
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3..8340673d27079b96d7aee5d32d7f61af7ed80b67 100644
+index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b6198e8adeb3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,6 +2,7 @@
@@ -386,7 +400,7 @@ index 2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3..8340673d27079b96d7aee5d32d7f61af
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -849,6 +852,53 @@ public class VarDefinitionHelper {
+@@ -843,6 +846,53 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().getCast());
      }
@@ -440,7 +454,7 @@ index 2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3..8340673d27079b96d7aee5d32d7f61af
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -858,7 +908,16 @@ public class VarDefinitionHelper {
+@@ -852,7 +902,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().getLVT();
@@ -457,7 +471,7 @@ index 2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3..8340673d27079b96d7aee5d32d7f61af
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -992,7 +1051,7 @@ public class VarDefinitionHelper {
+@@ -986,7 +1045,7 @@ public class VarDefinitionHelper {
  
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null)
@@ -467,7 +481,7 @@ index 2c314dffc92ee5ca40ae8056c93c845f4f2dd6c3..8340673d27079b96d7aee5d32d7f61af
          this.cast = ExprProcessor.getCastTypeName(lvt.getVarType(), false, Collections.emptyList());
        else if (type != null)
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructMethod.java b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
-index e3d5edf6e78c37206e5a37abaf24efbb6eb6dfa3..7237f2527530d8dea8d82f934c273c980ada0682 100644
+index d48e950e7511d2a00ac9885d5dc7d4ff524bbb37..08efdbaa173380dbbc0cd30c5ec5d43b0c2cf074 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructMethod.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct;
@@ -495,7 +509,7 @@ index e3d5edf6e78c37206e5a37abaf24efbb6eb6dfa3..7237f2527530d8dea8d82f934c273c98
  
    private StructMethod(int accessFlags,
                         Map<String, StructGeneralAttribute> attributes,
-@@ -384,6 +388,17 @@ public class StructMethod extends StructMember {
+@@ -338,6 +342,17 @@ public class StructMethod extends StructMember {
      return seq;
    }
  
@@ -813,10 +827,10 @@ index 0000000000000000000000000000000000000000..a41c910e58c3c0e16e6b13a90fe9f34a
 +}
 diff --git a/test/org/jetbrains/java/decompiler/JADTest.java b/test/org/jetbrains/java/decompiler/JADTest.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..176b850d338fbfbbd65eab8405c46f35de662c7d
+index 0000000000000000000000000000000000000000..5348637179299ad07934495be8216583da36897b
 --- /dev/null
 +++ b/test/org/jetbrains/java/decompiler/JADTest.java
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,36 @@
 +/*
 + * Copyright 2000-2017 JetBrains s.r.o.
 + *
@@ -837,15 +851,17 @@ index 0000000000000000000000000000000000000000..176b850d338fbfbbd65eab8405c46f35
 +import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 +import org.junit.Test;
 +
++import java.util.Map;
++
 +public class JADTest extends SingleClassesTestBase {
 +
 +    @Override
-+    protected String[] getDecompilerOptions() {
-+      return new String[] {
++    protected Map<String, String> getDecompilerOptions() {
++      return Map.of(
 +        IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
 +        IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
 +        IFernflowerPreferences.USE_JAD_VARNAMING, "1"
-+      };
++      );
 +    }
 +
 +    @Test public void testClassFields() { doTest("pkg/TestJADNaming"); }

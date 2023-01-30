@@ -7,7 +7,7 @@ Subject: [PATCH] Add a metadata file named
 Format: ClassName MethodName Descriptor Param1[ Param2...]
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index e2545c0d094a25e13efaa554704198d7fa15e0f1..eb5a603ab6ffb2277d2c12a2d5e4a141d633964e 100644
+index 410a83345e5e145962137536b95ca4f22185d678..0fb12b6d99f3c1dc7652e5ab49e36683d7a6db08 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -755,7 +755,11 @@ public class ClassWriter {
@@ -24,7 +24,7 @@ index e2545c0d094a25e13efaa554704198d7fa15e0f1..eb5a603ab6ffb2277d2c12a2d5e4a141
  
              paramCount++;
 diff --git a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
-index 57c74fd4bdd195287f616c9b5138bad87b2a96da..c33a9aa83f61a22940b1864d6bbfcdd7ba78e38d 100644
+index 2d68b9418fcde253948cfa7ffc9c43519884ddce..7b0946ed0de6af2dbe2043332650a09880027726 100644
 --- a/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 +++ b/src/org/jetbrains/java/decompiler/struct/ContextUnit.java
 @@ -7,12 +7,16 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
@@ -70,7 +70,7 @@ index 57c74fd4bdd195287f616c9b5138bad87b2a96da..c33a9aa83f61a22940b1864d6bbfcdd7
          return;
      otherEntries.add(new String[]{fullPath, entry});
 diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
-index 1c0cd6934e9f2225ff1fa40185f0a97ac9ae4daf..bbbec18e87c940d7daa6983a9ca2b5220e7e2470 100644
+index 58290caab9b84bb73291ea8af64b6897c01b162a..1274df19dd56bf8061384af8d3db78856f836928 100644
 --- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
 +++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
 @@ -4,14 +4,18 @@ package org.jetbrains.java.decompiler.struct;
@@ -100,7 +100,7 @@ index 1c0cd6934e9f2225ff1fa40185f0a97ac9ae4daf..bbbec18e87c940d7daa6983a9ca2b522
  
    public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
      this.saver = saver;
-@@ -203,4 +208,24 @@ public class StructContext {
+@@ -208,4 +213,24 @@ public class StructContext {
  
      return false;
    }

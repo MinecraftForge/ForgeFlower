@@ -5,7 +5,7 @@ Subject: [PATCH] Simple lambda syntax support, --isl=0 to disable.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 33b0dde4582691d5e6415296a77a9be6fe2e9a01..8b361f06964c228b813a83c5a5bbbe8ab251233a 100644
+index 6f2f8419d41a240c6d1428be0b0ca9258f058127..d9c338ff9189953329a0812250fb494656eb749a 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -10,14 +10,19 @@ import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
@@ -140,16 +140,16 @@ index 9bad04ab4c0cee5afc2623722674e929058062f0..1e1d3bd20fe462b6df4dad18a4dea2b6
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
 diff --git a/test/org/jetbrains/java/decompiler/SingleClassesTest.java b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-index 9ee13f077fb092089bc874cee4dc53f918009d91..0313a69f077750a99fde54677176ba2eba0ca24f 100644
+index 16ceb1e8e47c90da72ef3039cf625eec25b68223..c78c9554df9788b87028bcf181fc243db7a29f3f 100644
 --- a/test/org/jetbrains/java/decompiler/SingleClassesTest.java
 +++ b/test/org/jetbrains/java/decompiler/SingleClassesTest.java
-@@ -23,7 +23,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
-       IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-       IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-       IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
--      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
-+      IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1",
-+      IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "0"
-     };
+@@ -24,7 +24,8 @@ public class SingleClassesTest extends SingleClassesTestBase {
+                          IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                          IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+                          IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
+-                         IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
++                         IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1",
++                         IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "0"
+ );
    }
  

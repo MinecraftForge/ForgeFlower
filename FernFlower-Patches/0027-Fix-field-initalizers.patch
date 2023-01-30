@@ -5,7 +5,7 @@ Subject: [PATCH] Fix field initalizers
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
-index 34be3854cad1675d54a32929d5e1fe1641f1a929..686298a19d1ea4df848ff1ffd737f0ae70e92722 100644
+index b44a78019f0717213822ef5572c5d7ecde6d4ee3..20d3f0391343689eb604b8b953cabb26fc90e1bd 100644
 --- a/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/InitializerProcessor.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.main;
@@ -164,7 +164,7 @@ index 34be3854cad1675d54a32929d5e1fe1641f1a929..686298a19d1ea4df848ff1ffd737f0ae
  
          for (List<Exprent> lst : lstFirst) {
            lst.remove(isAnonymous ? 0 : 1);
-@@ -273,7 +323,7 @@ public final class InitializerProcessor {
+@@ -273,14 +323,14 @@ public final class InitializerProcessor {
      }
    }
  
@@ -173,12 +173,20 @@ index 34be3854cad1675d54a32929d5e1fe1641f1a929..686298a19d1ea4df848ff1ffd737f0ae
      List<Exprent> lst = exprent.getAllExprents(true);
      lst.add(exprent);
  
-@@ -289,10 +339,65 @@ public final class InitializerProcessor {
+     for (Exprent expr : lst) {
+       switch (expr.type) {
+         case Exprent.EXPRENT_VAR -> {
+-          VarVersionPair varPair = new VarVersionPair((VarExprent)expr);
++          VarVersionPair varPair = new VarVersionPair((VarExprent) expr);
+           if (!method.varproc.getExternalVars().contains(varPair)) {
+             String varName = method.varproc.getVarName(varPair);
+             if (!varName.equals("this") && !varName.endsWith(".this")) { // FIXME: remove direct comparison with strings
+@@ -289,11 +339,63 @@ public final class InitializerProcessor {
            }
-           break;
-         case Exprent.EXPRENT_FIELD:
+         }
+         case Exprent.EXPRENT_FIELD -> {
 -          return false;
-+          FieldExprent fexpr = (FieldExprent)expr;
++          FieldExprent fexpr = (FieldExprent) expr;
 +          if (cl.hasField(fexpr.getName(), fexpr.getDescriptor().descriptorString)) {
 +            String key = InterpreterUtil.makeUniqueKey(fexpr.getName(), fexpr.getDescriptor().descriptorString);
 +            if (isStatic) {
@@ -195,13 +203,11 @@ index 34be3854cad1675d54a32929d5e1fe1641f1a929..686298a19d1ea4df848ff1ffd737f0ae
 +                return false;
 +              }
 +            }
-+          }
-+          else if (!fexpr.isStatic() && fexpr.getInstance() == null) {
++          } else if (!fexpr.isStatic() && fexpr.getInstance() == null) {
 +            return false;
 +          }
-+          break;
-+        case Exprent.EXPRENT_NEW:
-+          makeLaterFieldsInLambdaQualified((NewExprent)expr, cl, fidx);
+         }
++        case Exprent.EXPRENT_NEW -> makeLaterFieldsInLambdaQualified((NewExprent)expr, cl, fidx);
        }
      }
  

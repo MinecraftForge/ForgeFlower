@@ -5,7 +5,7 @@ Subject: [PATCH] Fixup J9 string concat
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
-index dbee9d14a323279ca226e5e6f32f0f4182d22dc9..6e642b683d504ade9edef4ea32c154fbd4a219c9 100644
+index 9ae846d540337db99dc054ec1a43271e2d41ab7d..74532a087d53613065490b1bd3bf545719e4b3e7 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
 @@ -161,6 +161,10 @@ public class MethodProcessorRunnable implements Runnable {
@@ -20,7 +20,7 @@ index dbee9d14a323279ca226e5e6f32f0f4182d22dc9..6e642b683d504ade9edef4ea32c154fb
        LabelHelper.cleanUpEdges(root);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..e44fa1ffd3929428524c31fdac14f1df2e6a6431 100644
+index d85dead7cab48a9f551cb1226ef952807a067ec8..2aa9f91fc062ba76939d915428e84f6183fb7f71 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -70,7 +70,7 @@ index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..e44fa1ffd3929428524c31fdac14f1df
  
    public static Exprent contractStringConcat(Exprent expr) {
  
-@@ -150,6 +183,7 @@ public final class ConcatenationHelper {
+@@ -151,6 +184,7 @@ public final class ConcatenationHelper {
          StringBuilder acc = new StringBuilder();
          int parameterId = 0;
          int bootstrapArgumentId = 1;
@@ -78,7 +78,7 @@ index f1f3e7c7e903dd0571c2a18f1ed976999cff99da..e44fa1ffd3929428524c31fdac14f1df
          for (int i = 0; i < recipe.length(); i++) {
            char c = recipe.charAt(i);
  
-@@ -172,13 +206,12 @@ public final class ConcatenationHelper {
+@@ -173,13 +207,12 @@ public final class ConcatenationHelper {
              if (c == TAG_ARG) {
                Exprent exprent = parameters.get(parameterId++);
  
