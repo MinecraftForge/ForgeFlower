@@ -5,7 +5,7 @@ Subject: [PATCH] Give nicer output for float and double literals
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 8b75314306d795371be8a4597f8712628e8383dd..b5c62e26cb4008d2489f8d040b2703ab20184098 100644
+index 311fe8507fba664bd4b1e627f8ffbdb4c0c97cab..da281b179a137434b55171d69266a039c7c1f6f1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -48,6 +48,81 @@ public class ConstExprent extends Exprent {

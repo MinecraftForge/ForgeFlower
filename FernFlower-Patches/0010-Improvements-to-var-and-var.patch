@@ -114,7 +114,7 @@ index 81b4c480810a2f74388a4626a4dc0c2bfc523365..f0f66146eb4ecad4ed1bbd41712cace8
            }
          }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index d10da7ef3be8c8b0c8064ed668a3134c895789ab..8b75314306d795371be8a4597f8712628e8383dd 100644
+index 56745ac71bbff7cbf8353579cd09f7482206677f..311fe8507fba664bd4b1e627f8ffbdb4c0c97cab 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -501,7 +501,12 @@ public class ConstExprent extends Exprent {
