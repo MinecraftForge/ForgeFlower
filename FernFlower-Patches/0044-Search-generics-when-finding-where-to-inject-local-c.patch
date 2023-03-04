@@ -5,7 +5,7 @@ Subject: [PATCH] Search generics when finding where to inject local classes.
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 5a52b4d9b2c4810cceeb7df3e2271a3dd6ddbe7f..df6411f0d562826605d4f9b26666836ae09597b4 100644
+index 5a52b4d9b2c4810cceeb7df3e2271a3dd6ddbe7f..52aabbb2d9c79a35555fe953b9d27253321b1f29 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -25,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -27,9 +27,9 @@ index 5a52b4d9b2c4810cceeb7df3e2271a3dd6ddbe7f..df6411f0d562826605d4f9b26666836a
 +            stack.push(varExpr.getDefinitionType());
 +            while (!stack.isEmpty()) {
 +              VarType varType = stack.pop();
-+              if (classType.equals(varType) || (varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
++              if (classType.equals(varType) || (varType != null && varType.getArrayDim() > 0 && classType.getValue().equals(varType.getValue()))) {
 +                res = true;
-+              } else if (varType.isGeneric()) {
++              } else if (varType != null && varType.isGeneric()) {
 +                ((GenericType)varType).getArguments().forEach(stack::push);
 +              }
              }
