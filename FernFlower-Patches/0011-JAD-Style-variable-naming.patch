@@ -262,10 +262,10 @@ index 0000000000000000000000000000000000000000..872ec764f11131d384e59f08c4aac955
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index bdd34f0382b06687ef7fb3237bbc96ac322bdd5c..9641d4ea515d943009e87fe180a9e8a2569e8b14 100644
+index 79108dd8772dc9444d66e6ba0cdd7f56ca382fbd..3cbbb19b4dd705f67d0b2450996f704a9e293168 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -51,6 +51,9 @@ public interface IFernflowerPreferences {
+@@ -52,6 +52,9 @@ public interface IFernflowerPreferences {
    String LINE_SEPARATOR_WIN = "\r\n";
    String LINE_SEPARATOR_UNX = "\n";
  
@@ -275,7 +275,7 @@ index bdd34f0382b06687ef7fb3237bbc96ac322bdd5c..9641d4ea515d943009e87fe180a9e8a2
    Map<String, Object> DEFAULTS = getDefaults();
  
    static Map<String, Object> getDefaults() {
-@@ -93,7 +96,9 @@ public interface IFernflowerPreferences {
+@@ -95,7 +98,9 @@ public interface IFernflowerPreferences {
      defaults.put(BANNER, "");
      defaults.put(UNIT_TEST_MODE, "0");
      defaults.put(DUMP_ORIGINAL_LINES, "0");

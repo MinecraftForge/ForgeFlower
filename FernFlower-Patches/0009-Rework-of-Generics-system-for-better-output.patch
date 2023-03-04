@@ -367,27 +367,25 @@ index 692c1b622ef7e065c9c970cf0a5289f9ca8869f5..f8c413c7b7302b201a739310677d0103
  
    private static IIdentifierRenamer loadHelper(String className, IFernflowerLogger logger) {
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 5448e7900953da79b2bc01f99fd7e8f3080148e7..bdd34f0382b06687ef7fb3237bbc96ac322bdd5c 100644
+index b509376a6dbc3780f7c14c631bf51b7fc24aa50d..79108dd8772dc9444d66e6ba0cdd7f56ca382fbd 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -35,6 +35,8 @@ public interface IFernflowerPreferences {
-   String IGNORE_INVALID_BYTECODE = "iib";
+@@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
    String VERIFY_ANONYMOUS_CLASSES = "vac";
  
+   String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
 +  String INCLUDE_ENTIRE_CLASSPATH = "iec";
-+
+ 
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-   String RENAME_ENTITIES = "ren";
-@@ -81,6 +83,8 @@ public interface IFernflowerPreferences {
-     defaults.put(IGNORE_INVALID_BYTECODE, "0");
+@@ -84,6 +85,7 @@ public interface IFernflowerPreferences {
      defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
  
+     defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
 +    defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
-+
+ 
      defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
      defaults.put(MAX_PROCESSING_METHOD, "0");
-     defaults.put(RENAME_ENTITIES, "0");
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java b/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java
 index 33906d3a433e4421bbf41c6aed5ff566a69a904a..c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/ClassWrapper.java

@@ -169,20 +169,20 @@ index 6b7d72b6f599aaf04f122ff38ca872f469c9727e..cdd93212560a15372002c4d927a9debc
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-index 8337607e067c1c7cdc803058eab4bfb0ba3c9d3c..ee6f1c77f2267fed499ee60a12ef319d8fc95e9f 100644
+index f5fb8fc913c71b38ab0bffb5479d1f49725469ff..53349248a038cea0ef82cdc2138ca93e722d1d06 100644
 --- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
 +++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
-@@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
-   String VERIFY_ANONYMOUS_CLASSES = "vac";
+@@ -37,6 +37,7 @@ public interface IFernflowerPreferences {
  
+   String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
    String INCLUDE_ENTIRE_CLASSPATH = "iec";
 +  String QUALIFY_INNER_CLASSES = "qin";
  
    String LOG_LEVEL = "log";
    String MAX_PROCESSING_METHOD = "mpm";
-@@ -89,6 +90,7 @@ public interface IFernflowerPreferences {
-     defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
+@@ -91,6 +92,7 @@ public interface IFernflowerPreferences {
  
+     defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
      defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
 +    defaults.put(QUALIFY_INNER_CLASSES, "1");
  
