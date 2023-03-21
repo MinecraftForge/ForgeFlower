@@ -5,7 +5,7 @@ Subject: [PATCH] Reduce allocations in getAllExprents
 
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
-index 982b660190ba9488c3ff62022aca0dfecbefab48..8dcde8a4d88fa068b6c2b25e00c4de1eae7253a3 100644
+index 4beaf1ee874de373d956177ece541f0ecce64dc4..7bd39cb6416fa4703bab38a04b3922d2823fe3e5 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
 @@ -26,6 +26,13 @@ public class AnnotationExprent extends Exprent {
@@ -23,7 +23,7 @@ index 982b660190ba9488c3ff62022aca0dfecbefab48..8dcde8a4d88fa068b6c2b25e00c4de1e
    public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
      TextBuffer buffer = new TextBuffer();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
-index b03bcfc45ba7d58bcfc92612460c7f3de4bab1e4..dfc36a0e0aebabd0af296ccbc385d591e5c41993 100644
+index e14e8821ea5e7642ff49b04eb4cf1e4d0aa32190..6fcc4845d6912512f52026c13a7b77d9437ce6f3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
 @@ -64,8 +64,7 @@ public class ArrayExprent extends Exprent {
@@ -54,7 +54,7 @@ index 097c10a32ed819368c48efa51866420c01584395..34d99a13692ca6a7cedc59b7d4d9de4e
    public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
      TextBuffer buffer = new TextBuffer();
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index c713a4055dfc5aa05143a6cd856c5bd98e05c8c1..a67a38179233f983107222a963a3c7664725c9ba 100644
+index ed470ffbbf57c7aea4e82174a99c8d31a097bc32..3adb833472bca27bb0d2084a1ad09061d56012fe 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -74,8 +74,7 @@ public class AssignmentExprent extends Exprent {
@@ -68,7 +68,7 @@ index c713a4055dfc5aa05143a6cd856c5bd98e05c8c1..a67a38179233f983107222a963a3c766
      lst.add(right);
      return lst;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index 6526b901bc08d5b3a21f0ee3ea31661d86d23799..8cac6350d5053b9f0b66030ca848cd9675106ba8 100644
+index df602b646b7ab2b6f13c42617634f334f828cc0e..c9d1cab8dedad63498cd003ba6aece1308b2719b 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -199,8 +199,8 @@ public class ConstExprent extends Exprent {
@@ -83,7 +83,7 @@ index 6526b901bc08d5b3a21f0ee3ea31661d86d23799..8cac6350d5053b9f0b66030ca848cd96
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index db2a53744ffeb8b0bdc7b045a822be2df1695b4e..fe9839a9301333360873df16757eab29ce6002de 100644
+index 9b9a0b4198688968201783fb804130a3312aa522..dcc98dfa3fe511a5028ed756717373f9e9e46b90 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -16,7 +16,6 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
@@ -104,7 +104,7 @@ index db2a53744ffeb8b0bdc7b045a822be2df1695b4e..fe9839a9301333360873df16757eab29
      if (value != null) {
        lst.add(value);
      }
-@@ -158,7 +156,7 @@ public class ExitExprent extends Exprent {
+@@ -157,7 +155,7 @@ public class ExitExprent extends Exprent {
      measureBytecode(values);
    }
  
@@ -169,7 +169,7 @@ index 0509360d7637650341acca72e72e49026dc535a7..1a21f128c31aff9338e3be8cf5d8c603
      throw new RuntimeException("not implemented");
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index e6e3e9d6f50239c716d285d64f37679bbf0ff553..e02bb03f2517be75a947175b212c39883d29cd65 100644
+index 34ee7377dfef29d73f4cd0e5bf53944befafbd7d..926a3d1bd1baa27879b29c7482e69acdcad042f4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -21,7 +21,6 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
@@ -191,7 +191,7 @@ index e6e3e9d6f50239c716d285d64f37679bbf0ff553..e02bb03f2517be75a947175b212c3988
        lst.add(instance);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index c2136584b0ae2a5c7ba34370666bd8b5f4276aaa..2e020987da5a8d9013d12727427d56e369e00549 100644
+index e74a3c65c126f3378a4551bc96dd82aff9dc4601..54a1becbeb480e2f021d6db8236fe8d36da745b3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -427,8 +427,9 @@ public class FunctionExprent extends Exprent {
@@ -207,7 +207,7 @@ index c2136584b0ae2a5c7ba34370666bd8b5f4276aaa..2e020987da5a8d9013d12727427d56e3
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
-index 18d2c40d9af0e822004f4baaa3c6b567914a7545..de3723ed7b731fc76afe15482d4caff83de29571 100644
+index 7c9ee0a57cd291ae20b466d70f57a8f11bf4abaa..9644863730e5cda55fa3b2556c90903c578d7408 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
 @@ -8,7 +8,6 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -229,7 +229,7 @@ index 18d2c40d9af0e822004f4baaa3c6b567914a7545..de3723ed7b731fc76afe15482d4caff8
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index fd4fb8c060432591710e25e2941d99c538b547b6..20a42e0a68dc8974fd4fc8bd3b50deddd66d307d 100644
+index 1a3bd9c6b051447ef2aca98b58ff70b3b89da52c..7f4127e65c89b2f63c94cc6a58a96ec9d2f701f0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -523,8 +523,7 @@ public class InvocationExprent extends Exprent {
@@ -243,7 +243,7 @@ index fd4fb8c060432591710e25e2941d99c538b547b6..20a42e0a68dc8974fd4fc8bd3b50dedd
        lst.add(instance);
      }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
-index 3ad223c61453159d096405bb73184644595b75a9..525a931a299f8d4ac1765160c9267a207a557894 100644
+index cd465813bc3e9076d3bbafd1c7b10c9bed0a1407..29b2c217335ce379e779f80427287de5b33d61ba 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
 @@ -6,7 +6,6 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
@@ -265,7 +265,7 @@ index 3ad223c61453159d096405bb73184644595b75a9..525a931a299f8d4ac1765160c9267a20
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 8d68274e8cb064cb94365eb36df65772f8bdb54a..9398bd0b6feaaad12cd86c9d5b85c47aa5462c9a 100644
+index 72205fbd81840cda91ca303d15758df4a2e79699..b962f9154d44bf276816bf109e6a236fec0184e1 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -270,9 +270,8 @@ public class NewExprent extends Exprent {
@@ -280,7 +280,7 @@ index 8d68274e8cb064cb94365eb36df65772f8bdb54a..9398bd0b6feaaad12cd86c9d5b85c47a
        lst.addAll(lstDims);
        lst.addAll(lstArrayElements);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
-index 105c4d951f806fffb8d42386933a7629fa61d76c..7699ea8d3139df210e69208c04eb604c26c8db22 100644
+index 11000d30cbdc93e360cb1bc96b53987bc692e3bd..048e49d62e902485ac89643350d750e7eb57995c 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
 @@ -67,8 +67,7 @@ public class SwitchExprent extends Exprent {
@@ -294,7 +294,7 @@ index 105c4d951f806fffb8d42386933a7629fa61d76c..7699ea8d3139df210e69208c04eb604c
      return lst;
    }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index f670f30e2f5c8e2f619d22efc4b61842692b3f11..8763564ef768721a913c8e96f0cd1f203289602e 100644
+index 0dd8768a10a4edb5901d3112145df58c871b68c9..e79c4571e227ad532760bdbc4ecf52030b31bfb6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -27,7 +27,6 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;

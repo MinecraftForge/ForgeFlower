@@ -5,7 +5,7 @@ Subject: [PATCH] Add toString to MethodDescriptor
 
 
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 49494925b2d67b95920bb2b8c8371e886341492f..9b0d6157a3827b0b269a4e396cd91ff93bdf2261 100644
+index 2096754661e845cfe3148d47c5c3ff914bcb0322..c033ae3122302a16f760df24110ab3dd07e39852 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -19,11 +19,13 @@ import java.util.Objects;

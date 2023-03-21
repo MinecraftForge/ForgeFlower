@@ -20,7 +20,7 @@ index 9ae846d540337db99dc054ec1a43271e2d41ab7d..74532a087d53613065490b1bd3bf5457
        LabelHelper.cleanUpEdges(root);
  
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
-index d85dead7cab48a9f551cb1226ef952807a067ec8..2aa9f91fc062ba76939d915428e84f6183fb7f71 100644
+index 5d47c847133cf0413365eddd5f1a2104b2f6ac6b..2aa9f91fc062ba76939d915428e84f6183fb7f71 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ConcatenationHelper.java
 @@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
@@ -78,12 +78,11 @@ index d85dead7cab48a9f551cb1226ef952807a067ec8..2aa9f91fc062ba76939d915428e84f61
          for (int i = 0; i < recipe.length(); i++) {
            char c = recipe.charAt(i);
  
-@@ -173,13 +207,12 @@ public final class ConcatenationHelper {
+@@ -173,12 +207,12 @@ public final class ConcatenationHelper {
              if (c == TAG_ARG) {
                Exprent exprent = parameters.get(parameterId++);
  
--              if ((exprent instanceof VarExprent) && res.isEmpty()) {
--                VarExprent varExprent = (VarExprent) exprent;
+-              if ((exprent instanceof VarExprent varExprent) && res.isEmpty()) {
 -
 -                if (!VarType.VARTYPE_STRING.equals(varExprent.getVarType())) {
 -                  // First item of concatenation is a variable and variable's type is not a String.

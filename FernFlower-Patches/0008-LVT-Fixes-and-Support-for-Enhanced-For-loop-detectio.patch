@@ -158,7 +158,7 @@ index 80f024eb8e069cc4d208a9b79dbc7edf67161ec7..fa4b5ed56fa58f2d864ea3acd758a36f
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 216db28b337c729ea839415bdccc3b48a1219709..5d0ec234807e0fa186ae88e7f74059710a47bd46 100644
+index 7d41769adee0974a02e0ef5a0518f9f9e53c8b58..bb2d0f0eb067a92472dcd8d69a0029d15c34c520 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.StructField;
@@ -374,7 +374,7 @@ index 216db28b337c729ea839415bdccc3b48a1219709..5d0ec234807e0fa186ae88e7f7405971
                }
              }
  
-@@ -913,4 +961,41 @@ public class NestedClassProcessor {
+@@ -911,4 +959,41 @@ public class NestedClassProcessor {
        return fieldKey.hashCode() + varPair.hashCode();
      }
    }
@@ -1748,7 +1748,7 @@ index 0000000000000000000000000000000000000000..9123d92be14259e0117a0bb7b06a3d09
 +}
 \ No newline at end of file
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index d94561755621c6517976a763f8b9a0a4e49528e2..8d2ce0f8f4d4368f87ed596e4e76442ff97fed19 100644
+index 3cedf46af2faa91029231205455a1df1db7be3de..6776219b98b6b244bb9deda8cffc7b8fc63e4ac6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -443,7 +443,7 @@ public class InvocationExprent extends Exprent {
@@ -1760,7 +1760,7 @@ index d94561755621c6517976a763f8b9a0a4e49528e2..8d2ce0f8f4d4368f87ed596e4e76442f
      return !isStatic && parameters.size() == 0 && className.equals(UNBOXING_METHODS.get(name));
    }
  
-@@ -644,4 +644,4 @@ public class InvocationExprent extends Exprent {
+@@ -643,4 +643,4 @@ public class InvocationExprent extends Exprent {
  
      return true;
    }
@@ -1768,7 +1768,7 @@ index d94561755621c6517976a763f8b9a0a4e49528e2..8d2ce0f8f4d4368f87ed596e4e76442f
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 4c40e5152ffca092883170401453525093da011a..2fda2ba5fc05992faf891d2af14910023228c6b6 100644
+index 2b508a172340285dff5afa73cd4d7fcbf0dfeaff..8abfd33115391d24d08d349af9a5b64b1d75c1bf 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -9,11 +9,13 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -1872,7 +1872,7 @@ index 4c40e5152ffca092883170401453525093da011a..2fda2ba5fc05992faf891d2af1491002
        MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
        if (method != null) {
          Integer originalIndex = null;
-@@ -196,6 +213,10 @@ public class VarExprent extends Exprent {
+@@ -195,6 +212,10 @@ public class VarExprent extends Exprent {
    }
  
    public VarType getVarType() {
@@ -1883,7 +1883,7 @@ index 4c40e5152ffca092883170401453525093da011a..2fda2ba5fc05992faf891d2af1491002
      VarType vt = null;
      if (processor != null) {
        vt = processor.getVarType(getVarVersionPair());
-@@ -248,6 +269,93 @@ public class VarExprent extends Exprent {
+@@ -247,6 +268,93 @@ public class VarExprent extends Exprent {
      this.stack = stack;
    }
  
@@ -2004,7 +2004,7 @@ index a20acdff7d3ef1415fe6c90d05b92a90cfaf0073..6f21cd6df597613099861d874bb320ef
      // 0 - success, do nothing
      // 1 - cancel iteration
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index 592860d16b742ea70f85d2fe0270e2cbf5830f42..ccb7b3d9d0b38a5be9a6c9c727b4800bf815e715 100644
+index 552ae9594a64c737095bc5ec095e134926c1315c..234a42e3a73426204cf3debdb9b77c28f4afbb10 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -201,7 +201,7 @@ public class FlattenStatementsHelper {
@@ -2095,7 +2095,7 @@ index 9498f3c548d18ead3bcbc076222bd5ace82b8275..e65af740228e237d3159cf4dd3398a9f
  
    //TODO: Cleanup/cache?
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 49729c1d27c1a1a42904949c25c0635f6a03a736..6f8a2619c728d168431673b14f53b94ba783cf2f 100644
+index 0113b76b89a886a96d8f1668142b008cb85ab637..f2c0589344ed69685dd3103d060109c700c7ee41 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -4,18 +4,28 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
@@ -2274,7 +2274,7 @@ index 49729c1d27c1a1a42904949c25c0635f6a03a736..6f8a2619c728d168431673b14f53b94b
    private Statement findFirstBlock(Statement stat, Integer varindex) {
  
      LinkedList<Statement> stack = new LinkedList<>();
-@@ -250,6 +325,7 @@ public class VarDefinitionHelper {
+@@ -249,6 +324,7 @@ public class VarDefinitionHelper {
            if (st.type == StatementType.DO) {
              DoStatement dost = (DoStatement)st;
              if (dost.getLoopType() != LoopType.FOR &&
@@ -2282,7 +2282,7 @@ index 49729c1d27c1a1a42904949c25c0635f6a03a736..6f8a2619c728d168431673b14f53b94b
                  dost.getLoopType() != LoopType.DO) {
                currVars.add(dost.getConditionExprent());
              }
-@@ -320,7 +396,7 @@ public class VarDefinitionHelper {
+@@ -319,7 +395,7 @@ public class VarDefinitionHelper {
      return res;
    }
  
@@ -2291,7 +2291,7 @@ index 49729c1d27c1a1a42904949c25c0635f6a03a736..6f8a2619c728d168431673b14f53b94b
      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
        Exprent left = ((AssignmentExprent)expr).getLeft();
        if (left.type == Exprent.EXPRENT_VAR) {
-@@ -333,4 +409,660 @@ public class VarDefinitionHelper {
+@@ -332,4 +408,660 @@ public class VarDefinitionHelper {
      }
      return false;
    }

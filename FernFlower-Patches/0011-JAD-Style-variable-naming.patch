@@ -60,7 +60,7 @@ index 31236841f1b4bf4f452f30d6b95f21fcc99ec5b9..aa990406ef8d91838aa2d928bdfb183f
              firstParameter = false;
            }
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 9104ad3f1edae3deb11913bb08d101269370ca7d..7149145b1f3ed3583f8bbe416947a0d68de523db 100644
+index 8173ecd04da97e5e9a8f5f9a2e309726439697e0..3398f884985021a324fc5ae6ac6a461f8e5b2f33 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -146,6 +146,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -105,15 +105,6 @@ index 9104ad3f1edae3deb11913bb08d101269370ca7d..7149145b1f3ed3583f8bbe416947a0d6
  
      for (ClassNode nd : node.nested) {
        destroyWrappers(nd);
-@@ -500,7 +521,7 @@ public class ClassesProcessor implements CodeConstants {
- 
-       anonymousClassType = new VarType(lambda_class_name, true);
- 
--      boolean is_method_reference = (content_class_name != classStruct.qualifiedName);
-+      boolean is_method_reference = !classStruct.qualifiedName.equals(content_class_name);
-       if (!is_method_reference) { // content method in the same class, check synthetic flag
-         StructMethod mt = classStruct.getMethod(content_method_name, content_method_descriptor);
-         is_method_reference = !mt.isSynthetic(); // if not synthetic -> method reference
 @@ -563,4 +584,4 @@ public class ClassesProcessor implements CodeConstants {
        public boolean is_content_method_static;
      }
@@ -373,7 +364,7 @@ index c1126a2b7559e2f8a69a54ee0b7db2ceda3d9776..964bff5a00b35969fa08e48ca355801f
        if (attr != null) {
          // only param names here
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b6198e8adeb3 100644
+index f9a7e55c108959b9696cb52cfd91aee341e40b06..b35985211d1f0488f76cbd6e87f18e3732b2d589 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -2,6 +2,7 @@
@@ -400,7 +391,7 @@ index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b619
  
  import java.util.*;
  import java.util.Map.Entry;
-@@ -843,6 +846,53 @@ public class VarDefinitionHelper {
+@@ -842,6 +845,53 @@ public class VarDefinitionHelper {
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
        typeNames.put(e.getKey(), e.getValue().getCast());
      }
@@ -454,7 +445,7 @@ index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b619
      Map<VarVersionPair, LocalVariable> lvts = new HashMap<>();
  
      for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
-@@ -852,7 +902,16 @@ public class VarDefinitionHelper {
+@@ -851,7 +901,16 @@ public class VarDefinitionHelper {
          continue;
        }
        LocalVariable lvt = e.getValue().getLVT();
@@ -471,7 +462,7 @@ index abe421340550d258edce046fc901479fa027a23e..cf7f00021cad6818e144342dcbf5b619
          varproc.setVarLVT(idx, lvt);
          lvts.put(idx, lvt);
        }
-@@ -986,7 +1045,7 @@ public class VarDefinitionHelper {
+@@ -985,7 +1044,7 @@ public class VarDefinitionHelper {
  
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null)

@@ -34,7 +34,7 @@ index 4c4916e4cc5ccdd06dd4138dae54c31fb7f3bd34..decfe747ba2ab3643209987294ef7bcb
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fcc99ec5b9 100644
+index 9b4e9fb3ab0a2f54c124c8a4c3943e6d7a5d01d2..31236841f1b4bf4f452f30d6b95f21fcc99ec5b9 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -371,9 +371,14 @@ public class ClassWriter {
@@ -179,14 +179,13 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
            if (mask == null || mask.get(i) == null) {
              if (paramCount > 0) {
                buffer.append(", ");
-@@ -765,24 +728,12 @@ public class ClassWriter {
+@@ -765,23 +728,12 @@ public class ClassWriter {
              }
  
              String typeName;
 -            boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
              List<TypeAnnotation> typeParamAnnotations = TargetInfo.FormalParameterTarget.extract(typeAnnotations, i);
--            if (paramType instanceof GenericType) {
--              GenericType genParamType = (GenericType) paramType;
+-            if (paramType instanceof GenericType genParamType) {
 -              isVarArg &= genParamType.getArrayDim() > 0;
 -              if (isVarArg) {
 -                genParamType = genParamType.decreaseArrayDim();
@@ -208,7 +207,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
  
              if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
                  DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-@@ -801,7 +752,7 @@ public class ClassWriter {
+@@ -800,7 +752,7 @@ public class ClassWriter {
              paramCount++;
            }
  
@@ -217,7 +216,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
          }
  
          buffer.append(')');
-@@ -811,19 +762,14 @@ public class ClassWriter {
+@@ -810,19 +762,14 @@ public class ClassWriter {
            throwsExceptions = true;
            buffer.append(" throws ");
  
@@ -240,7 +239,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
            }
          }
        }
-@@ -1051,7 +997,7 @@ public class ClassWriter {
+@@ -1050,7 +997,7 @@ public class ClassWriter {
  
      final List<TypeAnnotation> typeAnnotations = TypeAnnotation.listFrom(cd);
      if (descriptor != null) {
@@ -249,7 +248,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
          varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type,
          TypeAnnotationWriteHelper.create(typeAnnotations)
        ));
-@@ -1105,14 +1051,7 @@ public class ClassWriter {
+@@ -1104,14 +1051,7 @@ public class ClassWriter {
    private static Map.Entry<VarType, GenericFieldDescriptor> getFieldTypeData(StructField fd) {
      VarType fieldType = new VarType(fd.getDescriptor(), false);
  
@@ -265,7 +264,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
      return new AbstractMap.SimpleImmutableEntry<>(fieldType, descriptor);
    }
  
-@@ -1249,22 +1188,11 @@ public class ClassWriter {
+@@ -1248,22 +1188,11 @@ public class ClassWriter {
      }
    }
  
@@ -292,7 +291,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
      buffer.append('<');
      for (int i = 0; i < parameters.size(); i++) {
        if (i > 0) {
-@@ -1272,15 +1200,15 @@ public class ClassWriter {
+@@ -1271,15 +1200,15 @@ public class ClassWriter {
        }
        TargetInfo.TypeParameterTarget.extract(typeAnnotations, i).forEach(typeAnnotation -> typeAnnotation.writeTo(buffer));
        buffer.append(parameters.get(i));
@@ -311,7 +310,7 @@ index 1989a01b158570651f332cf80dca0e0baeb4153c..31236841f1b4bf4f452f30d6b95f21fc
          }
        }
      }
-@@ -1297,4 +1225,4 @@ public class ClassWriter {
+@@ -1296,4 +1225,4 @@ public class ClassWriter {
        }
      }
    }
@@ -493,7 +492,7 @@ index eb96762fa2174047a3f9dcecfb8c57bf4721c11f..dc3d20eed5ddcac36204fc9ed75d73c5
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
-index 6cc60fd5314369cef21bd56c12e2af8e4c56292d..c713a4055dfc5aa05143a6cd856c5bd98e05c8c1 100644
+index 06567749310f70d0f3263a9b2bad4588237bdda9..ed470ffbbf57c7aea4e82174a99c8d31a097bc32 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
 @@ -5,7 +5,6 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -545,7 +544,7 @@ index 6cc60fd5314369cef21bd56c12e2af8e4c56292d..c713a4055dfc5aa05143a6cd856c5bd9
  
      buffer.append(condType == CONDITION_NONE ? " = " : OPERATORS[condType]).append(res);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
-index b0c626320205e7e6fac1f8ceafdffbe89a5daf41..db2a53744ffeb8b0bdc7b045a822be2df1695b4e 100644
+index 54f6a306cd28f68879d25a536a1dea7a496a4aa3..9b9a0b4198688968201783fb804130a3312aa522 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
 @@ -10,6 +10,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -594,7 +593,7 @@ index b0c626320205e7e6fac1f8ceafdffbe89a5daf41..db2a53744ffeb8b0bdc7b045a822be2d
        }
  
        return buffer;
-@@ -141,6 +148,10 @@ public class ExitExprent extends Exprent {
+@@ -140,6 +147,10 @@ public class ExitExprent extends Exprent {
      return retType;
    }
  
@@ -774,7 +773,7 @@ index 67fc1f2beab815f0ca07ecf8a34b98fa23344749..33150f76d649f124bc818036b0f7c633
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 11669fe44ea78ab7322b82c844c8b220ca1a9975..b76d5dd1f39f3ef9a2847414bcf1cc3738b0fdae 100644
+index 379242393a83c6b3502a88c8d745a5b0bc1b5476..040e5d21985979a9686cb9fee6e3048fe87e5464 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -8,6 +8,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
@@ -823,7 +822,7 @@ index 11669fe44ea78ab7322b82c844c8b220ca1a9975..b76d5dd1f39f3ef9a2847414bcf1cc37
    @Override
    public int getExprentUse() {
      return 0; // multiple references to a field considered dangerous in a multithreaded environment, thus no Exprent.MULTIPLE_USES set here
-@@ -211,4 +235,4 @@ public class FieldExprent extends Exprent {
+@@ -210,4 +234,4 @@ public class FieldExprent extends Exprent {
  
      return true;
    }
@@ -831,7 +830,7 @@ index 11669fe44ea78ab7322b82c844c8b220ca1a9975..b76d5dd1f39f3ef9a2847414bcf1cc37
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index ac2b3a50e65c46ff998173335d505cdfc8a27b21..0a6281872ae535dbc0569cb08b301d58b6c5c9a3 100644
+index b2b26fb3f8b075182caee14d57b4cc351ffb120a..f18ef04b350a5f6d4599282aef5ea3f6e3dce778 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -2,6 +2,8 @@
@@ -906,7 +905,7 @@ index ac2b3a50e65c46ff998173335d505cdfc8a27b21..0a6281872ae535dbc0569cb08b301d58
    @Override
    public int getExprentUse() {
      if (funcType >= FUNCTION_IMM && funcType <= FUNCTION_PPI) {
-@@ -439,8 +481,12 @@ public class FunctionExprent extends Exprent {
+@@ -438,8 +480,12 @@ public class FunctionExprent extends Exprent {
        case FUNCTION_BIT_NOT -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("~");
        case FUNCTION_BOOL_NOT -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("!");
        case FUNCTION_NEG -> wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("-");
@@ -921,7 +920,7 @@ index ac2b3a50e65c46ff998173335d505cdfc8a27b21..0a6281872ae535dbc0569cb08b301d58
        case FUNCTION_ARRAY_LENGTH -> {
          Exprent arr = lstOperands.get(0);
          TextBuffer res = wrapOperandString(arr, false, indent, tracer);
-@@ -571,7 +617,7 @@ public class FunctionExprent extends Exprent {
+@@ -570,7 +616,7 @@ public class FunctionExprent extends Exprent {
      measureBytecode(values, lstOperands);
      measureBytecode(values);
    }
@@ -931,7 +930,7 @@ index ac2b3a50e65c46ff998173335d505cdfc8a27b21..0a6281872ae535dbc0569cb08b301d58
    // IMatchable implementation
    // *****************************************************************************
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 8d2ce0f8f4d4368f87ed596e4e76442ff97fed19..6eab93e5ed261b0903ae3fe4677118bfa2d1d60e 100644
+index 6776219b98b6b244bb9deda8cffc7b8fc63e4ac6..2d8abaec74b301f76fcd4149600c1da72cc9b6c4 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -19,6 +19,8 @@ import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
@@ -1137,7 +1136,7 @@ index 8d2ce0f8f4d4368f87ed596e4e76442ff97fed19..6eab93e5ed261b0903ae3fe4677118bf
            ambiguous.set(i);
            break;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 6df45768b067fd2e01ffd61bb157158cb369ad7e..2501863f7396c721a42eaab481b2c89d88209d23 100644
+index c47ae33d7d62a5049a89bb586032fc18bdc80173..2405fe08663102626f6ab007ccf5ee6c0e8922ea 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -14,7 +14,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
@@ -1219,7 +1218,7 @@ index 6df45768b067fd2e01ffd61bb157158cb369ad7e..2501863f7396c721a42eaab481b2c89d
  
            boolean firstParam = true;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 2fda2ba5fc05992faf891d2af14910023228c6b6..9ba49d3d3ee30e6e8db7cacd836f7f627ecb4b67 100644
+index 8abfd33115391d24d08d349af9a5b64b1d75c1bf..bbe17e0b2c4dcb7214e0c94cc34156e5c9f233a0 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -20,6 +20,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTypeTableAtt
@@ -1284,7 +1283,7 @@ index 018d3fbdf53036db90b6c64e872098542133b630..d58218e0baa786456f15a14ef23a8d82
          tracer.incrementCurrentSourceLine();
          buf.append(ExprProcessor.jmpWrapper(first, indent + 1, true, tracer));
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index 6f8a2619c728d168431673b14f53b94ba783cf2f..abe421340550d258edce046fc901479fa027a23e 100644
+index f2c0589344ed69685dd3103d060109c700c7ee41..f9a7e55c108959b9696cb52cfd91aee341e40b06 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -24,7 +24,6 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
@@ -1295,7 +1294,7 @@ index 6f8a2619c728d168431673b14f53b94ba783cf2f..abe421340550d258edce046fc901479f
  import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
  
  import java.util.*;
-@@ -987,7 +986,7 @@ public class VarDefinitionHelper {
+@@ -986,7 +985,7 @@ public class VarDefinitionHelper {
  
      private VarInfo(LocalVariable lvt, VarType type) {
        if (lvt != null && lvt.getSignature() != null)
@@ -1693,7 +1692,7 @@ index e50983daf2a1bf6c93ec92c99221587d7c4f7c6a..11fa1a3e621221a09c0e611a7f912932
    }
  }
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
-index 7007b680a005a28a5d919e5e9e4298ed6c0ec566..49494925b2d67b95920bb2b8c8371e886341492f 100644
+index 267eb5067594bebb435f960b912754a5a2cff9e1..2096754661e845cfe3148d47c5c3ff914bcb0322 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/MethodDescriptor.java
 @@ -2,14 +2,24 @@
@@ -1757,7 +1756,7 @@ index 7007b680a005a28a5d919e5e9e4298ed6c0ec566..49494925b2d67b95920bb2b8c8371e88
    public String buildNewDescriptor(NewClassNameBuilder builder) {
      boolean updated = false;
  
-@@ -126,4 +165,4 @@ public final class MethodDescriptor {
+@@ -125,4 +164,4 @@ public final class MethodDescriptor {
      result = 31 * result + params.length;
      return result;
    }
@@ -1765,7 +1764,7 @@ index 7007b680a005a28a5d919e5e9e4298ed6c0ec566..49494925b2d67b95920bb2b8c8371e88
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
-index 30b31f5604f0c1566c536737aa7d9c61363e08c5..44d120256a8020b833567fe0f24c7b2c67caafde 100644
+index 2d18843b486376752fa29c03cec82308e9440bf5..f4115448cfa13ba37fb1ee1795903ffb0c79a6af 100644
 --- a/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 +++ b/src/org/jetbrains/java/decompiler/struct/gen/VarType.java
 @@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct.gen;
@@ -1819,7 +1818,7 @@ index 30b31f5604f0c1566c536737aa7d9c61363e08c5..44d120256a8020b833567fe0f24c7b2c
    @Override
    public boolean equals(Object o) {
      if (o == this) {
-@@ -374,4 +384,15 @@ public class VarType implements Type {  // TODO: optimize switch
+@@ -373,4 +383,15 @@ public class VarType implements Type {  // TODO: optimize switch
        default -> throw new IllegalArgumentException("Invalid type: " + c);
      };
    }

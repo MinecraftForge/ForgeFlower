@@ -5,7 +5,7 @@ Subject: [PATCH] Fix initializers for anon and synthetic classes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassWriter.java b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
-index c012edd94f3f13c3bde885c992a74ce6d58eb0ee..1989a01b158570651f332cf80dca0e0baeb4153c 100644
+index 31f14c60939faaf73e8b971cb64c81b49decda81..9b4e9fb3ab0a2f54c124c8a4c3943e6d7a5d01d2 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassWriter.java
 @@ -46,6 +46,7 @@ public class ClassWriter {
@@ -17,7 +17,7 @@ index c012edd94f3f13c3bde885c992a74ce6d58eb0ee..1989a01b158570651f332cf80dca0e0b
      if (node.type == ClassNode.CLASS_ROOT &&
          !cl.isVersion5() &&
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 168d7dfdeb65138ef7c26e30971738cd5161ffff..4a539357120d333d47f20f5e05b57ef4ad7b1fa8 100644
+index b09304aac7771bda2dcec3ef535f9035904f3c94..8dc45a1de093a5e81ef74e034faf2041618ced99 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -88,6 +88,31 @@ public class ClassesProcessor implements CodeConstants {

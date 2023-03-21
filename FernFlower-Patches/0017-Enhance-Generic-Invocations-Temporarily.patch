@@ -24,7 +24,7 @@ index 33150f76d649f124bc818036b0f7c6331d5e74be..e2f36231b51e547b4aae610c8450d83b
          left = left.resizeArrayDim(0);
          right = right.resizeArrayDim(0);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
-index 513ae5c2d5e1674694e86701e507c1e46c2f031b..cb80c8d7be08b9f3d6770541910832bb3d9a58a9 100644
+index ec2d6931c9426913680fd2ec180483389d96ac4b..cb15c8bc3d924e99c0bf9db350e8fe102bc5f97a 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
 @@ -278,11 +278,11 @@ public class FunctionExprent extends Exprent {
@@ -57,7 +57,7 @@ index 513ae5c2d5e1674694e86701e507c1e46c2f031b..cb80c8d7be08b9f3d6770541910832bb
        }
        else { //TODO: Capture generics to make cast better?
          this.needsCast = right.getType() == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.getValue(), cast.getValue());
-@@ -644,4 +653,4 @@ public class FunctionExprent extends Exprent {
+@@ -643,4 +652,4 @@ public class FunctionExprent extends Exprent {
      Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
      return type == null || this.funcType == type;
    }
@@ -65,7 +65,7 @@ index 513ae5c2d5e1674694e86701e507c1e46c2f031b..cb80c8d7be08b9f3d6770541910832bb
 \ No newline at end of file
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 7ebc36c1de0265db791b47b9558c41e303a3d7b2..28bae14b7342dd6897e638889682178248039ad7 100644
+index d51f0eba4a80cad4159a5135b2d87b8d405c0ed9..f23110233f59728ab4b700bfc0fa2b625f0d7071 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -399,6 +399,7 @@ public class InvocationExprent extends Exprent {
