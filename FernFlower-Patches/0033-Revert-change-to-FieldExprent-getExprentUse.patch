@@ -7,7 +7,7 @@ Revert part of a change introduced upstream. https://github.com/MinecraftForge/F
 This upstream change causes local variables to not be inlined in many cases, and makes decomp very messy for the reason of 'thread safety'.
 
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index 66ea2304968dae841fdd736c81e7332c75d9ecd5..e6e3e9d6f50239c716d285d64f37679bbf0ff553 100644
+index 3099a4611a01341d3a923d84723303ed0e76741b..34ee7377dfef29d73f4cd0e5bf53944befafbd7d 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -105,7 +105,13 @@ public class FieldExprent extends Exprent {

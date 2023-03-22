@@ -23,7 +23,7 @@ index 0fb12b6d99f3c1dc7652e5ab49e36683d7a6db08..6f2f8419d41a240c6d1428be0b0ca925
        TextBuffer buffer,
        List<String> parameters,
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 7149145b1f3ed3583f8bbe416947a0d68de523db..2c67a4fbcdf011cc91b9166f616feb27ce9dcd4c 100644
+index 3398f884985021a324fc5ae6ac6a461f8e5b2f33..921b3b653743ff77dead340be940fcef759bcead 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -41,10 +41,20 @@ public class ClassesProcessor implements CodeConstants {

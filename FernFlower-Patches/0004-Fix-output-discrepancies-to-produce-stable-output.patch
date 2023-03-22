@@ -7,7 +7,7 @@ Running JVM and timestamp result in output varying between
 environments and runs.
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 4a539357120d333d47f20f5e05b57ef4ad7b1fa8..9104ad3f1edae3deb11913bb08d101269370ca7d 100644
+index 8dc45a1de093a5e81ef74e034faf2041618ced99..8173ecd04da97e5e9a8f5f9a2e309726439697e0 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -249,6 +249,7 @@ public class ClassesProcessor implements CodeConstants {
@@ -156,7 +156,7 @@ index 05e6e2d720aa5812ef12c4741eab06b8ea477e0f..f9c8c6a0334512699c545c8812071947
        }
      }
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 7fca17c41c49b5378614130cf3b94b4aef6d1176..09eb2ca3b49093d291aaa4fc8bb769316d5a62ac 100644
+index da1fc15420faf03e1afbf74c39f888a6cb9c9ce8..6e5fe5474d6878d789758a5e7791b03e5da6685e 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -218,6 +218,7 @@ public class NestedClassProcessor {
@@ -354,7 +354,7 @@ index 82ae0a25a20d2727f611d359e699d6666d1e0ae4..a86f0d2887c6c19cb1d911ec43830eb6
  
      return res;
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
-index caa160fdc4ff5954b0976b11d81177278ae79ab6..39df4ddd7afa01bba116063323630e514679a01f 100644
+index 743074d1b43f6b331cef74c94bb11a49fefbfb61..623d59228cc526cca3bbd52e95e4d493c689f133 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
 @@ -216,7 +216,7 @@ public class ConstExprent extends Exprent {

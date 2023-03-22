@@ -24,7 +24,7 @@ index 4713a0212ee1ae4cc269dd24f2227a91a2c9beed..9ae846d540337db99dc054ec1a43271e
  
        if (TryHelper.enhanceTryStats(root, mt)) {
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 866cea112a60907c3ef02160a3b6c0bac1a075ae..1b2401d38d63dcca4eb4b4d7ed24aa23da9c98fb 100644
+index fde1c3bca1b12454b6f9a692c5f870ba946a590e..95db638383c843bf01df05daf2d94240cfe5ebc8 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -141,6 +141,9 @@ public class NestedClassProcessor {
@@ -318,7 +318,7 @@ index d8fd9bdf784704836e69cfdd1596ae29b2732232..139ccdb55347a5d66627c1489ee73910
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 962b7a9b85ef5fd29bce0c2953748a6cd3a87ea7..ee533a7ab76350ce982406120e439919070fa18f 100644
+index 1661a1deb02a4caa5238b5342e5d6043e4e37b7b..4633697497baaa977d1f5451c5340eae3769472f 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -162,6 +162,11 @@ public class InvocationExprent extends Exprent {
@@ -334,7 +334,7 @@ index 962b7a9b85ef5fd29bce0c2953748a6cd3a87ea7..ee533a7ab76350ce982406120e439919
  
    @Override
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
-index 4f8602a2c55bc1be876d254346fdc38b15c5a2f5..135c633ac8ed35d6ccb4d24131395ec6d94ea566 100644
+index e7bb1eb49b73102af8f967b7d5d3dbed5a1fc86a..8807a1534a587af70c2779f2bf8f7cdf3ec9d7f2 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
 @@ -46,6 +46,7 @@ public class VarExprent extends Exprent {
@@ -353,7 +353,7 @@ index 4f8602a2c55bc1be876d254346fdc38b15c5a2f5..135c633ac8ed35d6ccb4d24131395ec6
      return var;
    }
  
-@@ -312,6 +314,14 @@ public class VarExprent extends Exprent {
+@@ -311,6 +313,14 @@ public class VarExprent extends Exprent {
      return lvt;
    }
  
@@ -564,7 +564,7 @@ index 5e1e323a6e2043d776c513e800056be200ab2971..0262a3378080ce4a283ee12a44d11e92
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index ad32facfe21c854c69c16ee51aa885b8c266d7b9..c4c7253e1062be0bae6a15dbd02678ee7c36fee7 100644
+index 13d023de573ced3cde29f9b42212051a47232733..347ba24dbcc6a530307d9a1d4eae946efa1dfac6 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
@@ -583,7 +583,7 @@ index ad32facfe21c854c69c16ee51aa885b8c266d7b9..c4c7253e1062be0bae6a15dbd02678ee
    }
  
  
-@@ -1127,4 +1129,79 @@ public class VarDefinitionHelper {
+@@ -1126,4 +1128,79 @@ public class VarDefinitionHelper {
      }
      return false;
    }

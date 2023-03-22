@@ -7,7 +7,7 @@ Subject: [PATCH] Make decomp threaded
 `-thr AUTO` to auto select, (default)
 
 diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
-index 3e168efbd10b661519a01fb48a3aabc16460f840..573e8342b16e51b8c9a945b4513657c6f64f17c2 100644
+index ff19c7105c0e6bcfa280dca8255eaf32357a2fc3..a1629d28780be9743ab816b5ffbfe664291008a3 100644
 --- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
 @@ -30,12 +30,13 @@ import org.jetbrains.java.decompiler.util.TextBuffer;

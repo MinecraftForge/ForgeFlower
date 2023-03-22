@@ -249,7 +249,7 @@ index b44a78019f0717213822ef5572c5d7ecde6d4ee3..20d3f0391343689eb604b8b953cabb26
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
-index b76d5dd1f39f3ef9a2847414bcf1cc3738b0fdae..be789c6f999339fc4d755850dfd888f600f73a45 100644
+index 040e5d21985979a9686cb9fee6e3048fe87e5464..e98b53eb94ed7f1f5c936887be8418e6637b2b43 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
 @@ -33,18 +33,24 @@ public class FieldExprent extends Exprent {
@@ -286,7 +286,7 @@ index b76d5dd1f39f3ef9a2847414bcf1cc3738b0fdae..be789c6f999339fc4d755850dfd888f6
          buf.append(DecompilerContext.getImportCollector().getNestedNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
          buf.append(".");
        }
-@@ -207,6 +213,10 @@ public class FieldExprent extends Exprent {
+@@ -206,6 +212,10 @@ public class FieldExprent extends Exprent {
      return name;
    }
  

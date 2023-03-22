@@ -749,7 +749,7 @@ index 0000000000000000000000000000000000000000..cdd05cd3d40ad85380e00ddeba7e2894
 +  }
 +}
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
-index ccb7b3d9d0b38a5be9a6c9c727b4800bf815e715..99fc1c604cadabc1f106a3be745980b1e9b3ad3f 100644
+index 234a42e3a73426204cf3debdb9b77c28f4afbb10..940d41923c8df57fd82cf4b42c2a38d523f7e0c3 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/sforms/FlattenStatementsHelper.java
 @@ -128,6 +128,13 @@ public class FlattenStatementsHelper {
@@ -888,7 +888,7 @@ index 7c83c48777e2dc683d1321fb297f89466f62e8ce..97c1d3f816dcfc21811da2097744bfe9
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
-index cf7f00021cad6818e144342dcbf5b6198e8adeb3..ad32facfe21c854c69c16ee51aa885b8c266d7b9 100644
+index b35985211d1f0488f76cbd6e87f18e3732b2d589..13d023de573ced3cde29f9b42212051a47232733 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
 @@ -110,7 +110,11 @@ public class VarDefinitionHelper {

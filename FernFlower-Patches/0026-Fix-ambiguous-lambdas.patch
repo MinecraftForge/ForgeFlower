@@ -41,7 +41,7 @@ index f7e086c560b6e1e5d67d93813c91ecc70db49ce1..c5b8af9d9047d9c06840dfcb95e18a87
 +  }
  }
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index eda61adada8942006a5a49d5f0905ba010505fea..01ce4f5c3d827e51934de816723ccac236ed9e18 100644
+index c77ac2f2e4f8936c131f932940878fab9f5c2eb8..165a152ea68e6b6580a9064bd1f4a4d39677f972 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -791,7 +791,8 @@ public class InvocationExprent extends Exprent {
@@ -95,7 +95,7 @@ index eda61adada8942006a5a49d5f0905ba010505fea..01ce4f5c3d827e51934de816723ccac2
  
          MethodDescriptor md = MethodDescriptor.parseDescriptor(mtt.getDescriptor());
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
-index 2501863f7396c721a42eaab481b2c89d88209d23..5ee4fb58a5687a0e26558fbc4fdaa989695bc6fa 100644
+index 2405fe08663102626f6ab007ccf5ee6c0e8922ea..049bf247002da65a90392f054ad2c57a04ebae81 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
 @@ -5,6 +5,8 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -133,7 +133,7 @@ index 2501863f7396c721a42eaab481b2c89d88209d23..5ee4fb58a5687a0e26558fbc4fdaa989
          }
        }
      }
-@@ -511,4 +515,17 @@ public class NewExprent extends Exprent {
+@@ -510,4 +514,17 @@ public class NewExprent extends Exprent {
    public void setEnumConst(boolean enumConst) {
      this.enumConst = enumConst;
    }

@@ -135,7 +135,7 @@ index dc3d20eed5ddcac36204fc9ed75d73c53a8c9805..efa677ae6cfdc08635eff080c7241ec0
    private static boolean isConstructorInvocationRemote(List<Exprent> list, int index) {
      Exprent current = list.get(index);
 diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
-index 28bae14b7342dd6897e638889682178248039ad7..eda61adada8942006a5a49d5f0905ba010505fea 100644
+index f23110233f59728ab4b700bfc0fa2b625f0d7071..c77ac2f2e4f8936c131f932940878fab9f5c2eb8 100644
 --- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 +++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
 @@ -61,6 +61,7 @@ public class InvocationExprent extends Exprent {
@@ -154,7 +154,7 @@ index 28bae14b7342dd6897e638889682178248039ad7..eda61adada8942006a5a49d5f0905ba0
    }
  
    @Override
-@@ -955,6 +957,14 @@ public class InvocationExprent extends Exprent {
+@@ -954,6 +956,14 @@ public class InvocationExprent extends Exprent {
      return bootstrapArguments;
    }
  

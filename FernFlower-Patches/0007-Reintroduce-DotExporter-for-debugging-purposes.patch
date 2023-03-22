@@ -5,7 +5,7 @@ Subject: [PATCH] Reintroduce DotExporter for debugging purposes
 
 
 diff --git a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
-index 8126a50cf043593c0a041ea8942971f12cf4f090..216db28b337c729ea839415bdccc3b48a1219709 100644
+index 327a6e64f06d7ef60dc1bb3139aab490a2f7c2df..7d41769adee0974a02e0ef5a0518f9f9e53c8b58 100644
 --- a/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 +++ b/src/org/jetbrains/java/decompiler/main/rels/NestedClassProcessor.java
 @@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
