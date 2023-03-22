@@ -29,9 +29,9 @@ dependencies {
     testImplementation 'net.minecraftforge:DiffPatch:2.0.5:all'
 }
 
-// Default all standard Java compile tasks to Java 17
+// Default all standard Java compile tasks to Java 8
 java.toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
+    languageVersion = JavaLanguageVersion.of(8)
 }
 
 tasks.withType(JavaCompile) {
