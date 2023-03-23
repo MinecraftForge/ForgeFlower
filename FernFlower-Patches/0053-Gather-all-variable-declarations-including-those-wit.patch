@@ -1,0 +1,128 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 5 Nov 2015 20:36:11 -0800
+Subject: [PATCH] Gather all variable declarations including those without LVTs
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 726edd7aeab41647414952e0a0a6c8cb52674816..164ddb5639ed92ae8bcab25a62713211d2e904fe 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.vars;
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
++import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+@@ -31,6 +32,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ 
+ import java.util.*;
+ import java.util.Map.Entry;
+@@ -421,36 +423,43 @@ public class VarDefinitionHelper {
+   }
+ 
+   private void propogateLVTs(Statement stat) {
+-    if (varproc.getLVT() == null) {
+-      return;
+-    }
+-
+     MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+-    Map<VarVersionPair, LVTVariable> types = new HashMap<VarVersionPair, LVTVariable>();
++    Map<VarVersionPair, VarInfo> types = new HashMap<VarVersionPair, VarInfo>();
+ 
+     int index = 0;
+     if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
+-      types.put(new VarVersionPair(index, 0), varproc.getLVT().getCandidates(index++).get(0));
++      types.put(new VarVersionPair(index, 0), new VarInfo(varproc.getLVT().getCandidates(index++).get(0), new VarType(mt.getClassStruct().qualifiedName)));
+     }
+ 
+     for (VarType var : md.params) {
+       List<LVTVariable> vars = varproc.getLVT().getCandidates(index);
+       if (vars != null) {
+-        types.put(new VarVersionPair(index, 0), vars.get(0));
++        types.put(new VarVersionPair(index, 0), new VarInfo(vars.get(0), var));
+       }
+       index += var.stackSize;
+     }
+ 
+     findTypes(stat, types);
+ 
+-    for (Entry<VarVersionPair, LVTVariable> e : types.entrySet()) {
+-      varproc.setVarLVT(e.getKey(), e.getValue());
++    //renameTypes(types);
++
++    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
++      if (e.getValue().lvt != null) {
++        varproc.setVarLVT(e.getKey(), e.getValue().lvt);
++      }
+     }
+ 
+-    applyTypes(stat, types);
++    Map<VarVersionPair, LVTVariable> lvts = new HashMap<VarVersionPair, LVTVariable>();
++    for (Entry<VarVersionPair, VarInfo> e : types.entrySet()) {
++      if (e.getValue().lvt != null) {
++        lvts.put(e.getKey(), e.getValue().lvt);
++      }
++    }
++
++    applyTypes(stat, lvts);
+   }
+ 
+-  private void findTypes(Statement stat, Map<VarVersionPair, LVTVariable> types) {
++  private void findTypes(Statement stat, Map<VarVersionPair, VarInfo> types) {
+     if (stat == null) {
+       return;
+     }
+@@ -476,27 +485,40 @@ public class VarDefinitionHelper {
+     }
+   }
+ 
+-  private void findTypes(Exprent exp, Map<VarVersionPair, LVTVariable> types) {
++  private void findTypes(Exprent exp, Map<VarVersionPair, VarInfo> types) {
+     List<Exprent> lst = exp.getAllExprents(true);
+     lst.add(exp);
+ 
+     for (Exprent exprent : lst) {
+       if (exprent.type == Exprent.EXPRENT_VAR) {
+         VarExprent var = (VarExprent)exprent;
+-        if (var.getLVT() == null) {
+-          continue;
+-        }
+         VarVersionPair ver = new VarVersionPair(var);
+         if (var.isDefinition()) {
+-          types.put(ver, var.getLVT());
++          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
+         }
+         else if (!types.containsKey(ver)) {
+-          types.put(ver, var.getLVT());
++          types.put(ver, new VarInfo(var.getLVT(), var.getVarType()));
+         }
+       }
+     }
+   }
+ 
++  private static class VarInfo {
++    LVTVariable lvt;
++    String cast;
++    private VarInfo(LVTVariable lvt, VarType type) {
++      if (lvt != null && lvt.getSig() != null) {
++        cast = ExprProcessor.getCastTypeName(GenericType.parse(lvt.getSig()));
++      }
++      else if (lvt != null) {
++        cast = ExprProcessor.getCastTypeName(lvt.getVarType());
++      }
++      else {
++        cast = ExprProcessor.getCastTypeName(type);
++      }
++    }
++  }
++
+ 
+   private void applyTypes(Statement stat, Map<VarVersionPair, LVTVariable> types) {
+     if (stat == null || types.size() == 0) {

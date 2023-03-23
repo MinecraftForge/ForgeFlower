@@ -1,0 +1,241 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Curle <curle@gemwire.uk>
+Date: Thu, 29 Apr 2021 00:13:35 +0100
+Subject: [PATCH] Add Java 9 classes to fix classpath oddities.
+
+
+diff --git a/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c21b75cdf2afbca3076fcaf4a36bc53c344b8e40
+--- /dev/null
++++ b/java9/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+@@ -0,0 +1,77 @@
++// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
++package org.jetbrains.java.decompiler.util;
++
++import java.lang.module.*;
++import java.nio.ByteBuffer;
++import java.io.File;
++import java.io.IOException;
++import java.util.HashSet;
++import java.util.Optional;
++import java.util.Set;
++
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
++import org.jetbrains.java.decompiler.struct.StructContext;
++
++public class ClasspathScanner {
++
++    public static void addAllClasspath(StructContext ctx) {
++    Set<String> found = new HashSet<String>();
++    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
++    for (String prop : props) {
++        if (prop == null)
++          continue;
++
++        for (final String path : prop.split(File.pathSeparator)) {
++          File file = new File(path);
++          if (found.contains(file.getAbsolutePath()))
++            continue;
++
++          if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
++            DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
++            ctx.addSpace(file, false);
++            found.add(file.getAbsolutePath());
++          }
++        }
++      }
++
++      addAllModulePath(ctx);
++    }
++
++    private static void addAllModulePath(StructContext ctx) {
++      for (ModuleReference module : ModuleFinder.ofSystem().findAll()) {
++        String name = module.descriptor().name();
++        try {
++          ModuleReader reader = module.open();
++          DecompilerContext.getLogger().writeMessage("Reading Module: " + name, Severity.INFO);
++          reader.list().forEach(cls -> {
++            if (!cls.endsWith(".class") || cls.contains("module-info.class"))
++              return;
++
++            DecompilerContext.getLogger().writeMessage("  " + cls, Severity.INFO);
++            try {
++              Optional<ByteBuffer> bb = reader.read(cls);
++              if (!bb.isPresent()) {
++                DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, Severity.ERROR);
++                return;
++              }
++
++              byte[] data;
++              if (bb.get().hasArray()) {
++                data = bb.get().array();
++              } else {
++                data = new byte[bb.get().remaining()];
++                bb.get().get(data);
++              }
++              ctx.addData(name, cls, data, false);
++            } catch (IOException e) {
++              DecompilerContext.getLogger().writeMessage("    Error Reading Class: " + cls, e);
++            }
++          });
++          reader.close();
++        } catch (IOException e) {
++          DecompilerContext.getLogger().writeMessage("Error loading module " + name, e);
++        }
++      }
++    }
++}
+\ No newline at end of file
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index bc92f349c0d49038f113fd3cd11e9a52fd2763a1..ed5d519846fe1ec39efa711288d27c7709c363f6 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -27,6 +27,7 @@ import org.jetbrains.java.decompiler.struct.IDecompiledData;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
++import org.jetbrains.java.decompiler.util.ClasspathScanner;
+ import org.jetbrains.java.decompiler.util.JADNameProvider;
+ 
+ import java.io.File;
+@@ -45,9 +46,13 @@ public class Fernflower implements IDecompiledData {
+     DecompilerContext.setCounterContainer(new CounterContainer());
+     
+     DecompilerContext.setStructContext(structContext);
++    String vendor = System.getProperty("java.vendor", "missing vendor");
++    String javaVersion = System.getProperty("java.version", "missing java version");
++    String jvmVersion = System.getProperty("java.vm.version", "missing jvm version");
++    logger.writeMessage(String.format("JVM info: %s - %s - %s", vendor, javaVersion, jvmVersion), IFernflowerLogger.Severity.INFO);
+ 
+     if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
+-      addAllClasspath();
++      ClasspathScanner.addAllClasspath(structContext);
+     }
+   }
+ 
+@@ -101,26 +106,4 @@ public class Fernflower implements IDecompiledData {
+       return null;
+     }
+   }
+-
+-  private void addAllClasspath() {
+-    Set<String> found = new HashSet<String>();
+-    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
+-    for (String prop : props) {
+-      if (prop == null)
+-        continue;
+-
+-      for (final String path : prop.split(File.pathSeparator)) {
+-        File file = new File(path);
+-        if (found.contains(file.getAbsolutePath()))
+-          continue;
+-
+-        // only add .class files from classpath
+-        if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
+-          DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
+-          structContext.addSpace(file, false);
+-          found.add(file.getAbsolutePath());
+-        }
+-      }
+-    }
+-  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index a154193f9b9f698873c62af08d1211d0e79b8ae4..5106daba215d0bf458bf57db4f4209b6b7a08070 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -213,4 +213,17 @@ public class StructContext {
+     List<String> params = this.abstractNames.get(className + ' ' + methodName + ' ' + descriptor);
+     return params != null && index < params.size() ? params.get(index) : _default;
+   }
++
++  public void addData(String path, String cls, byte[] data, boolean isOwn) throws IOException {
++        ContextUnit unit = units.get(path);
++        if (unit == null) {
++          unit = new ContextUnit(ContextUnit.TYPE_FOLDER, path, cls, isOwn, saver, decompiledData);
++          units.put(path, unit);
++        }
++
++        StructClass cl = new StructClass(new DataInputFullStream(data), isOwn, loader);
++        classes.put(cl.qualifiedName, cl);
++        unit.addClass(cl, cls);
++        loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(path, cls, data));
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
+index d75c93deecbdd8c43a5f9d1a2a7a7f4e7e13e8cf..9b82853162f9d0a55dc14c59c774ec65090079b2 100644
+--- a/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
++++ b/src/org/jetbrains/java/decompiler/struct/lazy/LazyLoader.java
+@@ -144,7 +144,7 @@ public class LazyLoader {
+ 
+   public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
+     Link link = mapClassLinks.get(qualifiedClassName);
+-    return link == null ? null : getClassStream(link.externalPath, link.internalPath);
++    return link == null ? null : link.data != null ? new DataInputFullStream(link.data) : getClassStream(link.externalPath, link.internalPath);
+   }
+ 
+   public static void skipAttributes(DataInputFullStream in) throws IOException {
+@@ -163,11 +163,20 @@ public class LazyLoader {
+     public final int type;
+     public final String externalPath;
+     public final String internalPath;
++    public final byte[] data;
++
++    public Link(String externalPath, String internalPath, byte[] data) {
++      this.type = CLASS;
++      this.externalPath = externalPath;
++      this.internalPath = internalPath;
++      this.data = data;
++    }
+ 
+     public Link(int type, String externalPath, String internalPath) {
+       this.type = type;
+       this.externalPath = externalPath;
+       this.internalPath = internalPath;
++      this.data = null;
+     }
+   }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..1374a39daccc44d64945487c2934c4f86651f856
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+@@ -0,0 +1,35 @@
++package org.jetbrains.java.decompiler.util;
++
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
++import org.jetbrains.java.decompiler.struct.StructContext;
++
++import java.io.File;
++import java.util.HashSet;
++import java.util.Set;
++
++public class ClasspathScanner {
++    //TODO: Look into caching the metadata grabbed from the context info?
++    //J9 destroys the classpath so we need to scan this differently. We take advantage of MultiRelease jars to do this.
++    public static void addAllClasspath(StructContext ctx) {
++      Set<String> found = new HashSet<String>();
++      String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
++      for (String prop : props) {
++        if (prop == null)
++          continue;
++
++        for (final String path : prop.split(File.pathSeparator)) {
++          File file = new File(path);
++          if (found.contains(file.getAbsolutePath()))
++            continue;
++
++          if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
++            DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, IFernflowerLogger.Severity.INFO);
++            ctx.addSpace(file, false);
++            found.add(file.getAbsolutePath());
++          }
++        }
++      }
++    }
++}
++

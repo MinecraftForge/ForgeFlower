@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Wed, 28 Oct 2015 23:45:40 -0700
+Subject: [PATCH] Stabelize a few areas on Java 8. Notibly the exit mapper.
+ Fixes the decompile differences between J6/7 and J8.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index 16d778867677249c16b38fcfbca16618b1fa4ac0..9bcd3ba461d73cb139bca4fc0756130d0e20a6de 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -253,8 +253,10 @@ public class MethodProcessorRunnable implements Runnable {
+     for (Object obj : root.getSequentialObjects()) {
+       if (obj instanceof Statement) {
+         printStatement((Statement)obj, "  ",varProc);
++      } else if (obj == null) {
++          System.out.println("  null");
+       } else {
+-        System.out.println("  " + obj.getClass().getSimpleName());
++          System.out.println("  " + obj.getClass().getSimpleName());
+       }
+     }
+     if (root instanceof RootStatement) {
+@@ -292,7 +294,7 @@ public class MethodProcessorRunnable implements Runnable {
+     int start = values.nextSetBit(0);
+     int end = values.length()-1;
+ 
+-    System.out.print(indent + "{" + statement.type + "}:" + statement.id + " (" + start + ", " + end + ") " + statement.getClass().getSimpleName());
++    System.out.print(indent + "{" + statement.getClass().getSimpleName() + "}:" + statement.id + " (" + start + ", " + end + ") " + statement.getClass().getSimpleName());
+     if (statement.type == Statement.TYPE_DO) {
+         System.out.print(" t:"+((DoStatement)statement).getLooptype());
+     } else if (statement.type == Statement.TYPE_BASICBLOCK) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+index 7434b14c7c6d2d9ff2a10f66c9da848cf25b3a9e..3c5a86d8ecb45644c65b4507cdf87d91b8aaa1c3 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/DomHelper.java
+@@ -484,7 +484,7 @@ public class DomHelper {
+ 
+         boolean same = (post == head);
+ 
+-        HashSet<Statement> setNodes = new LinkedHashSet<Statement>();
++        LinkedHashSet<Statement> setNodes = new LinkedHashSet<Statement>();
+         HashSet<Statement> setPreds = new HashSet<Statement>();
+ 
+         // collect statement nodes
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+index dc9789593e86b85d293c7620e4255fa9bafe3e81..722d6cb6c9ad3d18212e127787287d9fc504ad7d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/GeneralStatement.java
+@@ -21,7 +21,6 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import java.util.Collection;
+ import java.util.HashSet;
+ import java.util.LinkedHashSet;
+-import java.util.Set;
+ 
+ public class GeneralStatement extends Statement {
+ 
+@@ -40,7 +39,7 @@ public class GeneralStatement extends Statement {
+     first = head;
+     stats.addWithKey(head, head.id);
+ 
+-    Set<Statement> set = new LinkedHashSet<Statement>(statements);
++    LinkedHashSet<Statement> set = new LinkedHashSet<Statement>(statements);
+     set.remove(head);
+ 
+     for (Statement st : set) {

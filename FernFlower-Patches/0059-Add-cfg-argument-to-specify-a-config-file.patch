@@ -1,0 +1,100 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: sciwhiz12 <sciwhiz12@sciwhiz12.tk>
+Date: Thu, 4 Feb 2021 01:58:45 +0800
+Subject: [PATCH] Add -cfg argument, to specify a config file
+
+Used to specify a text file which contains additional command line arguments, which will be added in place of the -cfg argument.
+
+diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+index 06f3b1d3b135a30441cb68e2a7a33eddeaa40a1c..ae6aee3c81c8a9aff3bf13af9ac4b3d8c8c1e2b4 100644
+--- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
++++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+@@ -23,9 +23,13 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.io.*;
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.nio.file.Paths;
+ import java.util.*;
+ import java.util.jar.JarOutputStream;
+ import java.util.jar.Manifest;
++import java.util.stream.Stream;
+ import java.util.zip.ZipEntry;
+ import java.util.zip.ZipFile;
+ import java.util.zip.ZipOutputStream;
+@@ -34,6 +38,38 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+ 
+   @SuppressWarnings("UseOfSystemOutOrSystemErr")
+   public static void main(String[] args) {
++    List<String> params = new ArrayList<>();
++    for (int x = 0; x < args.length; x++) {
++      if (args[x].startsWith("-cfg")) {
++        String path = null;
++        if (args[x].startsWith("-cfg=")) {
++          path = args[x].substring(5);
++        }
++        else if (args.length > x+1) {
++          path = args[++x];
++        }
++        else {
++          System.out.println("Must specify a file when using -cfg argument.");
++          return;
++        }
++        Path file = Paths.get(path);
++        if (!Files.exists(file)) {
++          System.out.println("error: missing config '" + path + "'");
++          return;
++        }
++        try (Stream<String> stream = Files.lines(file)) {
++          stream.forEach(params::add);
++        } catch (IOException e) {
++          System.out.println("error: Failed to read config file '" + path + "'");
++          throw new RuntimeException(e);
++        }
++      }
++      else {
++        params.add(args[x]);
++      }
++    }
++    args = params.toArray(new String[params.size()]);
++
+     if (args.length < 2) {
+       System.out.println(
+         "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
+@@ -86,12 +122,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+     PrintStreamLogger logger = new PrintStreamLogger(System.out);
+     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
+ 
+-    for (File source : lstSources) {
+-      decompiler.addSpace(source, true);
+-    }
+     for (File library : lstLibraries) {
+       decompiler.addSpace(library, false);
+     }
++    for (File source : lstSources) {
++      decompiler.addSpace(source, true);
++    }
+ 
+     decompiler.decompileContext();
+   }
+diff --git a/src/org/jetbrains/java/decompiler/struct/StructContext.java b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+index 7bfb139ede3087d6a04975eacc48ac31b3fa9c00..93f8cc7ac1c178de4f2cc1fe86db82c1784b416f 100644
+--- a/src/org/jetbrains/java/decompiler/struct/StructContext.java
++++ b/src/org/jetbrains/java/decompiler/struct/StructContext.java
+@@ -107,6 +107,7 @@ public class StructContext {
+       catch (IOException ex) {
+         String message = "Corrupted archive file: " + file;
+         DecompilerContext.getLogger().writeMessage(message, ex);
++        throw new RuntimeException(ex);
+       }
+       if (isArchive) {
+         return;
+@@ -134,6 +135,7 @@ public class StructContext {
+         catch (IOException ex) {
+           String message = "Corrupted class file: " + file;
+           DecompilerContext.getLogger().writeMessage(message, ex);
++          throw new RuntimeException(ex);
+         }
+       }
+       else {

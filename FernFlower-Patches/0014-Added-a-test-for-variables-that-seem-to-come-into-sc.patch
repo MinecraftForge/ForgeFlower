@@ -1,0 +1,58 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Thu, 13 Aug 2015 22:57:55 -0700
+Subject: [PATCH] Added a test for variables that seem to come into scope if we
+ remove VarVersionsProcessor.simpleMerge
+
+
+diff --git a/testData/classes/pkg/TestLVT.class b/testData/classes/pkg/TestLVT.class
+index d8a5829d4f6504567ecf46bf65167047e41cd291..1cf6286f2a679368b301d408c928d93ed4eecf48 100644
+GIT binary patch
+delta 224
+zcmeC+J;KLz>ff$?3=9lL3~3v=v{}sAb5lz)@>3GI7_1qhc^K>%Vi*}%G+Z>p*z9-C
+z1c6y>_8%b(Mh3=2Aa()bq{+rC>Ws{rqggbV>e(0=8Q6hFmNKvcAp?Uvp9jC!CI%CA
+z&E#ziQ6dbn9wH3!2!V}2B}@!lKvE8@O%}+LV_;#BXW(T}U=U<bWDsRg0*WXza0AsS
+lFffCRWZ(hHg7nEUBr+rcEo5PkW=ICIm>D=38B)MfsQ}<yCF%eG
+
+delta 36
+scmX@Y*TKtm>ff$?3=9lL4AC38v{@$Sv8XaKZJxrS!NkhIz{C&*0Mu#;EC2ui
+
+diff --git a/testData/results/TestLVT.dec b/testData/results/TestLVT.dec
+index b1b7e2e3d96ae555cb0fec2901968fb1b366b2a5..d161f07ae5441548e45707f96b8a7c485be0aeee 100644
+--- a/testData/results/TestLVT.dec
++++ b/testData/results/TestLVT.dec
+@@ -23,7 +23,14 @@ public class TestLVT {
+          String spam = scope1a + scope2 + scope2a + i + noise;
+          System.out.println(spam);
+       }
+-        
+    }
+-}
+ 
++   public void methoda() {
++      double a = 0.0D;
++      double b = 1.0D;
++      System.out.println(a + b);
++      a = 0.1D;
++      b = 1.1D;
++      System.out.println(a + b);
++   }
++}
+diff --git a/testData/src/pkg/TestLVT.java b/testData/src/pkg/TestLVT.java
+index 05b5228e223eb20be14622126efdb7461c0e1bdf..9a462728bd07fca82b96a7511882523f4a172b55 100644
+--- a/testData/src/pkg/TestLVT.java
++++ b/testData/src/pkg/TestLVT.java
+@@ -24,4 +24,13 @@ public class TestLVT {
+             System.out.println(spam);
+         }
+     }
++    
++    public void methoda() {
++    	double a = 0D;
++    	double b = 1D;
++    	System.out.println(a+b);
++    	a = 0.1D;
++    	b = 1.1D;
++    	System.out.println(a+b);
++    }
+ }

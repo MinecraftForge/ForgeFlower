@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Curle <curle@gemwire.uk>
+Date: Fri, 18 Dec 2020 23:31:08 +0000
+Subject: [PATCH] Set StructContext early
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index 320e250ce1fe0eeca0194b296a3944cc710127bc..bc92f349c0d49038f113fd3cd11e9a52fd2763a1 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -43,6 +43,8 @@ public class Fernflower implements IDecompiledData {
+     structContext = new StructContext(saver, this, new LazyLoader(provider));
+     DecompilerContext.initContext(options,logger);
+     DecompilerContext.setCounterContainer(new CounterContainer());
++    
++    DecompilerContext.setStructContext(structContext);
+ 
+     if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
+       addAllClasspath();
+@@ -57,7 +59,6 @@ public class Fernflower implements IDecompiledData {
+     classesProcessor = new ClassesProcessor(structContext);
+ 
+     DecompilerContext.setClassProcessor(classesProcessor);
+-    DecompilerContext.setStructContext(structContext);
+ 
+     structContext.saveContext();
+   }

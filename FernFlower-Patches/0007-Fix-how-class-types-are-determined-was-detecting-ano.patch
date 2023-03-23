@@ -1,0 +1,190 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Mon, 3 Aug 2015 15:07:46 -0700
+Subject: [PATCH] Fix how class types are determined, was detecting anon
+ classes as member classes.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+index b3e9d81eaa3a4d86e4714adf2f8e007af831d670..7f75a0cf9dd0e58fcf8c3e3c6bfa56678f7b1dfe 100644
+--- a/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
++++ b/src/org/jetbrains/java/decompiler/main/ClassesProcessor.java
+@@ -31,7 +31,10 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+ import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
++import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute.InnerClassInfo;
+ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+@@ -62,18 +65,37 @@ public class ClassesProcessor {
+           StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttributes().getWithKey("InnerClasses");
+           if (inner != null) {
+ 
+-            for (int i = 0; i < inner.getClassEntries().size(); i++) {
+-
+-              int[] entry = inner.getClassEntries().get(i);
+-              String[] strEntry = inner.getStringEntries().get(i);
++            for (InnerClassInfo entry : inner.getEntries()) {
+               Object[] arr = new Object[4]; // arr[0] not used
+-              String innerName = strEntry[0];
++              String innerName = entry.inner_class;
+ 
+               // nested class type
+-              arr[2] = entry[1] == 0 ? (entry[2] == 0 ? ClassNode.CLASS_ANONYMOUS : ClassNode.CLASS_LOCAL) : ClassNode.CLASS_MEMBER;
++              if (entry.inner_class != null) {
++                if (entry.inner_name == null) {
++                  arr[2] = ClassNode.CLASS_ANONYMOUS;
++                }
++                else {
++                  StructClass in = context.getClass(entry.inner_class);
++                  if (in == null) { // A referenced library that was not added to the context, make assumptions
++                    arr[2] = ClassNode.CLASS_MEMBER;
++                  }
++                  else {
++                    StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttributes().getWithKey("EnclosingMethod");
++                    if (attr != null && attr.getMethodName() != null) {
++                      arr[2] = ClassNode.CLASS_LOCAL;
++                    }
++                    else {
++                      arr[2] = ClassNode.CLASS_MEMBER;
++                    }
++                  }
++                }
++              }
++              else { // This should never happen as inner_class and outer_class are NOT optional, make assumptions
++                arr[2] = ClassNode.CLASS_MEMBER;
++              }
+ 
+               // original simple name
+-              String simpleName = strEntry[2];
++              String simpleName = entry.inner_name;
+               String savedName = mapNewSimpleNames.get(innerName);
+ 
+               if (savedName != null) {
+@@ -90,12 +112,12 @@ public class ClassesProcessor {
+               arr[1] = simpleName;
+ 
+               // original access flags
+-              arr[3] = entry[3];
++              arr[3] = entry.access;
+ 
+               // enclosing class
+               String enclClassName;
+-              if (entry[1] != 0) {
+-                enclClassName = strEntry[1];
++              if (entry.outer_class != null) {
++                enclClassName = entry.outer_class;
+               }
+               else {
+                 enclClassName = cl.qualifiedName;
+@@ -163,13 +185,13 @@ public class ClassesProcessor {
+               StructClass scl = superNode.classStruct;
+               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttributes().getWithKey("InnerClasses");
+ 
+-              if (inner == null || inner.getStringEntries().isEmpty()) {
++              if (inner == null || inner.getEntries().isEmpty()) {
+                 DecompilerContext.getLogger().writeMessage(superClass + " does not contain inner classes!", IFernflowerLogger.Severity.WARN);
+                 continue;
+               }
+ 
+-              for (int i = 0; i < inner.getStringEntries().size(); i++) {
+-                String nestedClass = inner.getStringEntries().get(i)[0];
++              for (InnerClassInfo info : inner.getEntries()) {
++                String nestedClass = info.inner_class;
+                 if (!setNestedClasses.contains(nestedClass)) {
+                   continue;
+                 }
+diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java
+index 5969487904608fb01550965dedfa43e4184c22c4..ecef5588a52318a40849f9ac4ae27e2bb1723000 100644
+--- a/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java
++++ b/src/org/jetbrains/java/decompiler/struct/attr/StructInnerClassesAttribute.java
+@@ -23,10 +23,21 @@ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+ 
+-public class StructInnerClassesAttribute extends StructGeneralAttribute {
++/*
++ * InnerClasses_attribute {
++ *   u2 attribute_name_index;
++ *   u4 attribute_length;
++ *   u2 number_of_classes;
++ *   {   u2 inner_class_info_index;
++ *       u2 outer_class_info_index;
++ *       u2 inner_name_index;
++ *       u2 inner_class_access_flags;
++ *   } classes[number_of_classes];
++ * }
++ */
+ 
+-  private List<int[]> classEntries;
+-  private List<String[]> stringEntries;
++public class StructInnerClassesAttribute extends StructGeneralAttribute {
++  private List<InnerClassInfo> entries;
+ 
+   @Override
+   public void initContent(ConstantPool pool) throws IOException {
+@@ -34,39 +45,36 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
+ 
+     int len = data.readUnsignedShort();
+     if (len > 0) {
+-      classEntries = new ArrayList<int[]>(len);
+-      stringEntries = new ArrayList<String[]>(len);
++      entries = new ArrayList<InnerClassInfo>();
+ 
+       for (int i = 0; i < len; i++) {
+-        int[] classEntry = new int[4];
+-        for (int j = 0; j < 4; j++) {
+-          classEntry[j] = data.readUnsignedShort();
+-        }
+-        classEntries.add(classEntry);
+-
+-        // inner name, enclosing class, original simple name
+-        String[] stringEntry = new String[3];
+-        stringEntry[0] = pool.getPrimitiveConstant(classEntry[0]).getString();
+-        if (classEntry[1] != 0) {
+-          stringEntry[1] = pool.getPrimitiveConstant(classEntry[1]).getString();
+-        }
+-        if (classEntry[2] != 0) {
+-          stringEntry[2] = pool.getPrimitiveConstant(classEntry[2]).getString();
+-        }
+-        stringEntries.add(stringEntry);
++        entries.add(new InnerClassInfo(data, pool));
+       }
+     }
+     else {
+-      classEntries = Collections.emptyList();
+-      stringEntries = Collections.emptyList();
++      entries = Collections.emptyList();
+     }
+   }
+ 
+-  public List<int[]> getClassEntries() {
+-    return classEntries;
++  public List<InnerClassInfo> getEntries() {
++    return entries;
+   }
+ 
+-  public List<String[]> getStringEntries() {
+-    return stringEntries;
++  public static class InnerClassInfo {
++    public String inner_class;
++    public String outer_class;
++    public String inner_name;
++    public int access;
++
++    private InnerClassInfo(DataInputStream data, ConstantPool pool) throws IOException {
++        this.inner_class = readString(pool, data.readUnsignedShort());
++        this.outer_class = readString(pool, data.readUnsignedShort());
++        this.inner_name  = readString(pool, data.readUnsignedShort());
++        this.access = data.readUnsignedShort();
++    }
++
++    private String readString(ConstantPool pool, int index) {
++        return index == 0 ? null : pool.getPrimitiveConstant(index).getString();
++    }
+   }
+ }

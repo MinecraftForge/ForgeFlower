@@ -1,0 +1,852 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Lex Manos <LexManos@gmail.com>
+Date: Thu, 6 Aug 2015 12:18:10 -0700
+Subject: [PATCH] Convert Exprent.bytecode to a BitMap, as it gives better
+ speed and functionality. Added method to gather bytecode markers for every
+ exporession. Allows us to get the bytecode offsets for an entire block of
+ code.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
+index e25cca2cba4c642d1068d61555f53b51185c72e5..f84778424e5591c31809e1a50bce1263a1390f08 100644
+--- a/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
++++ b/src/org/jetbrains/java/decompiler/main/collectors/BytecodeMappingTracer.java
+@@ -55,10 +55,10 @@ public class BytecodeMappingTracer {
+     }
+   }
+ 
+-  public void addMapping(Set<Integer> bytecode_offsets) {
++  public void addMapping(BitSet bytecode_offsets) {
+     if (bytecode_offsets != null) {
+-      for (Integer bytecode_offset : bytecode_offsets) {
+-        addMapping(bytecode_offset);
++      for (int i = bytecode_offsets.nextSetBit(0); i >= 0; i = bytecode_offsets.nextSetBit(i+1)) {
++        addMapping(i);
+       }
+     }
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 205b1876758155132600148f61f641b64e42369c..f33e438c8297887d41b7438402efe4974412265a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -336,7 +336,11 @@ public class ExprProcessor implements CodeConstants {
+ 
+       Instruction instr = seq.getInstr(i);
+       Integer bytecode_offset = block.getOldOffset(i);
+-      Set<Integer> bytecode_offsets = bytecode_offset >= 0 ? Collections.singleton(bytecode_offset) : null;
++      BitSet bytecode_offsets = null;
++      if (bytecode_offset >= 0) {
++        bytecode_offsets = new BitSet();
++        bytecode_offsets.set(bytecode_offset);
++      }
+ 
+       switch (instr.opcode) {
+         case opc_aconst_null:
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+index ddf68652e6f09ca7d333e1383406b9f49bb783d7..106a90493d2bb5a2c442caa64a63f69bb8999f85 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/SimplifyExprentsHelper.java
+@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
+ 
+ import java.util.ArrayList;
+ import java.util.Arrays;
++import java.util.BitSet;
+ import java.util.HashMap;
+ import java.util.HashSet;
+ import java.util.List;
+@@ -52,7 +53,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ public class SimplifyExprentsHelper {
+ 
+   static final MatchEngine class14Builder = new MatchEngine();
+-  
++
+   private final boolean firstInvocation;
+ 
+   public SimplifyExprentsHelper(boolean firstInvocation) {
+@@ -777,7 +778,7 @@ public class SimplifyExprentsHelper {
+       IfStatement stif = (IfStatement)stat;
+ 
+       Exprent ifheadexpr = stif.getHeadexprent();
+-      Set<Integer> ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
++      BitSet ifheadexpr_bytecode = (ifheadexpr == null ? null : ifheadexpr.bytecode);
+ 
+       if (stif.iftype == IfStatement.IFTYPE_IFELSE) {
+         Statement ifstat = stif.getIfstat();
+@@ -892,47 +893,47 @@ public class SimplifyExprentsHelper {
+           "   exprent type:var index:$var$\n" +
+           "   exprent type:field name:$fieldname$\n" +
+           " statement type:sequence statsize:2\n" +
+-          "  statement type:trycatch\n" +  
++          "  statement type:trycatch\n" +
+           "   statement type:basicblock exprsize:1\n" +
+           "    exprent type:assignment\n" +
+           "     exprent type:var index:$var$\n" +
+           "     exprent type:invocation invclass:java/lang/Class signature:forName(Ljava/lang/String;)Ljava/lang/Class;\n" +
+           "      exprent position:0 type:constant consttype:string constvalue:$classname$\n" +
+           "   statement type:basicblock exprsize:1\n" +
+-          "    exprent type:exit exittype:throw\n" + 
+-          "  statement type:basicblock exprsize:1\n" + 
+-          "   exprent type:assignment\n" + 
++          "    exprent type:exit exittype:throw\n" +
++          "  statement type:basicblock exprsize:1\n" +
++          "   exprent type:assignment\n" +
+           "    exprent type:field name:$fieldname$ ret:$field$\n" +
+           "    exprent type:var index:$var$"
+         );
+   }
+-  
++
+   private static boolean collapseInlinedClass14(Statement stat) {
+ 
+     boolean ret = class14Builder.match(stat);
+     if(ret) {
+-      
++
+       String class_name = (String)class14Builder.getVariableValue("$classname$");
+       AssignmentExprent assfirst = (AssignmentExprent)class14Builder.getVariableValue("$assignfield$");
+       FieldExprent fieldexpr = (FieldExprent)class14Builder.getVariableValue("$field$");
+ 
+       assfirst.replaceExprent(assfirst.getRight(), new ConstExprent(VarType.VARTYPE_CLASS, class_name, null));
+-      
++
+       List<Exprent> data = new ArrayList<Exprent>();
+       data.addAll(stat.getFirst().getExprents());
+ 
+       stat.setExprents(data);
+ 
+       SequenceHelper.destroyAndFlattenStatement(stat);
+-      
++
+       ClassWrapper wrapper = (ClassWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_WRAPPER);
+       if (wrapper != null) {
+         wrapper.getHiddenMembers().add(InterpreterUtil.makeUniqueKey(fieldexpr.getName(), fieldexpr.getDescriptor().descriptorString));
+       }
+-      
++
+     }
+-    
++
+     return ret;
+   }
+-  
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
+index 905bc212fcb375c98f4ee8a7fefc7a20a1450664..0560ae60b9bde48d503f439461fa2f6cfdafc10a 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AnnotationExprent.java
+@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
++import java.util.BitSet;
+ import java.util.List;
+ 
+ public class AnnotationExprent extends Exprent {
+@@ -99,4 +100,10 @@ public class AnnotationExprent extends Exprent {
+            InterpreterUtil.equalLists(parNames, ann.parNames) &&
+            InterpreterUtil.equalLists(parValues, ann.parValues);
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, parValues);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
+index 8f7269b63e0329f39d43ab80e8d67dadd93c48e9..ebbcab0c33258846968279eccb49c9675d3e2974 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ArrayExprent.java
+@@ -23,8 +23,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class ArrayExprent extends Exprent {
+ 
+@@ -32,7 +32,7 @@ public class ArrayExprent extends Exprent {
+   private Exprent index;
+   private final VarType hardType;
+ 
+-  public ArrayExprent(Exprent array, Exprent index, VarType hardType, Set<Integer> bytecodeOffsets) {
++  public ArrayExprent(Exprent array, Exprent index, VarType hardType, BitSet bytecodeOffsets) {
+     super(EXPRENT_ARRAY);
+     this.array = array;
+     this.index = index;
+@@ -121,4 +121,11 @@ public class ArrayExprent extends Exprent {
+   public Exprent getIndex() {
+     return index;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, array);
++    measureBytecode(values, index);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
+index af95d15ac9eb41fc13c15b08397a0db55548792d..82305f3df4267a7a01511681530c9714bb9111d5 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssertExprent.java
+@@ -18,6 +18,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ import org.jetbrains.java.decompiler.main.TextBuffer;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ 
++import java.util.BitSet;
+ import java.util.List;
+ 
+ public class AssertExprent extends Exprent {
+@@ -51,4 +52,10 @@ public class AssertExprent extends Exprent {
+ 
+     return buffer;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, parameters);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+index 95ebdc5d1bd967c32eb4c7bd34e701de699afd1c..efc64b9d98005572eb9752e36d472f7a65358203 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/AssignmentExprent.java
+@@ -27,8 +27,8 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class AssignmentExprent extends Exprent {
+ 
+@@ -52,7 +52,7 @@ public class AssignmentExprent extends Exprent {
+   private Exprent right;
+   private int condType = CONDITION_NONE;
+ 
+-  public AssignmentExprent(Exprent left, Exprent right, Set<Integer> bytecodeOffsets) {
++  public AssignmentExprent(Exprent left, Exprent right, BitSet bytecodeOffsets) {
+     super(EXPRENT_ASSIGNMENT);
+     this.left = left;
+     this.right = right;
+@@ -178,6 +178,14 @@ public class AssignmentExprent extends Exprent {
+            condType == as.getCondType();
+   }
+ 
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, left);
++    measureBytecode(values, right);
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // getter and setter methods
+   // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index 627a4c081bdd39dc0fd3f8607809d8fe679b65fd..43f29f5320b158feb567b4327e3487c1ea3748e9 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -48,15 +48,15 @@ public class ConstExprent extends Exprent {
+   private final Object value;
+   private final boolean boolPermitted;
+ 
+-  public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
++  public ConstExprent(int val, boolean boolPermitted, BitSet bytecodeOffsets) {
+     this(guessType(val, boolPermitted), new Integer(val), boolPermitted, bytecodeOffsets);
+   }
+ 
+-  public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
++  public ConstExprent(VarType constType, Object value, BitSet bytecodeOffsets) {
+     this(constType, value, false, bytecodeOffsets);
+   }
+ 
+-  private ConstExprent(VarType constType, Object value, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
++  private ConstExprent(VarType constType, Object value, boolean boolPermitted, BitSet bytecodeOffsets) {
+     super(EXPRENT_CONST);
+     this.constType = constType;
+     this.value = value;
+@@ -411,6 +411,11 @@ public class ConstExprent extends Exprent {
+     return boolPermitted;
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+index 7b4a5ac4750ed627d1db5ae735eaa2acca5f3ac6..fd1491f3b31fc17716d715b8b2b76cf3b846bdc6 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ExitExprent.java
+@@ -31,8 +31,8 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class ExitExprent extends Exprent {
+ 
+@@ -43,7 +43,7 @@ public class ExitExprent extends Exprent {
+   private Exprent value;
+   private final VarType retType;
+ 
+-  public ExitExprent(int exitType, Exprent value, VarType retType, Set<Integer> bytecodeOffsets) {
++  public ExitExprent(int exitType, Exprent value, VarType retType, BitSet bytecodeOffsets) {
+     super(EXPRENT_EXIT);
+     this.exitType = exitType;
+     this.value = value;
+@@ -154,25 +154,31 @@ public class ExitExprent extends Exprent {
+   public VarType getRetType() {
+     return retType;
+   }
+-  
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, value);
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+ 
+     if(!super.match(matchNode, engine)) {
+       return false;
+     }
+-    
++
+     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_EXITTYPE);
+     if(type != null) {
+       if(this.exitType != type.intValue()) {
+         return false;
+       }
+     }
+-    
++
+     return true;
+   }
+-  
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index 5f2cb56a85b9ac61141de1c17b457e5847eb8fff..db839fe5e35da590ce5ebae6cb4122f60e89219d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -16,6 +16,7 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.Collection;
+ import java.util.Collections;
+ import java.util.Comparator;
+@@ -36,7 +37,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchEngine;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode;
+ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+ 
+-public class Exprent implements IMatchable {
++public abstract class Exprent implements IMatchable {
+ 
+   public static final int MULTIPLE_USES = 1;
+   public static final int SIDE_EFFECTS_FREE = 2;
+@@ -59,7 +60,7 @@ public class Exprent implements IMatchable {
+ 
+   public final int type;
+   public final int id;
+-  public Set<Integer> bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
++  public BitSet bytecode = null;  // offsets of bytecode instructions decompiled to this exprent
+ 
+   public Exprent(int type) {
+     this.type = type;
+@@ -132,14 +133,29 @@ public class Exprent implements IMatchable {
+ 
+   public void replaceExprent(Exprent oldExpr, Exprent newExpr) { }
+ 
+-  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
+-    if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
++  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
++    if (bytecodeOffsets != null) {
+       if (bytecode == null) {
+-        bytecode = new HashSet<Integer>(bytecodeOffsets);
+-      }
+-      else {
+-        bytecode.addAll(bytecodeOffsets);
++        bytecode = new BitSet();
+       }
++      bytecode.or(bytecodeOffsets);
++    }
++  }
++
++  public abstract void getBytecodeRange(BitSet values);
++
++  protected void measureBytecode(BitSet values) {
++    if (bytecode != null)
++      values.or(bytecode);
++  }
++  protected static void measureBytecode(BitSet values, Exprent exprent) {
++    if (exprent != null)
++      exprent.getBytecodeRange(values);
++  }
++  protected static void measureBytecode(BitSet values, List<Exprent> list) {
++    if (list != null && !list.isEmpty()) {
++      for (Exprent e : list)
++        e.getBytecodeRange(values);
+     }
+   }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+index 4ac8123ddc7cbef7771ea0a06c425193614bcd95..fdc9cec54252976b63964d039875e0229ff93172 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FieldExprent.java
+@@ -34,8 +34,8 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.TextUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class FieldExprent extends Exprent {
+ 
+@@ -45,11 +45,11 @@ public class FieldExprent extends Exprent {
+   private Exprent instance;
+   private final FieldDescriptor descriptor;
+ 
+-  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
++  public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
+     this(cn.elementname, cn.classname, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
+   }
+ 
+-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
++  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets) {
+     super(EXPRENT_FIELD);
+     this.name = name;
+     this.classname = classname;
+@@ -185,31 +185,37 @@ public class FieldExprent extends Exprent {
+   public String getName() {
+     return name;
+   }
+-  
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, instance);
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+ 
+     if(!super.match(matchNode, engine)) {
+       return false;
+     }
+-    
++
+     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_FIELD_NAME);
+     if(rule != null) {
+       if(rule.isVariable()) {
+         if(!engine.checkAndSetVariableValue((String)rule.value, this.name)) {
+           return false;
+         }
+-      } else { 
++      } else {
+         if(!rule.value.equals(this.name)) {
+           return false;
+         }
+       }
+     }
+-    
++
+     return true;
+   }
+-  
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index 48206a7b2cc49aa710eb4f8754a0d01e8e9d2924..e8edbd5f0cfa8c61b3af2a1b1b2256fbe6a7aa00 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -198,7 +198,7 @@ public class FunctionExprent extends Exprent {
+   private VarType implicitType;
+   private final List<Exprent> lstOperands;
+ 
+-  public FunctionExprent(int funcType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
++  public FunctionExprent(int funcType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
+     this(funcType, new ArrayList<Exprent>(), bytecodeOffsets);
+ 
+     if (funcType >= FUNCTION_BIT_NOT && funcType <= FUNCTION_PPI && funcType != FUNCTION_CAST && funcType != FUNCTION_INSTANCEOF) {
+@@ -214,7 +214,7 @@ public class FunctionExprent extends Exprent {
+     }
+   }
+ 
+-  public FunctionExprent(int funcType, List<Exprent> operands, Set<Integer> bytecodeOffsets) {
++  public FunctionExprent(int funcType, List<Exprent> operands, BitSet bytecodeOffsets) {
+     super(EXPRENT_FUNCTION);
+     this.funcType = funcType;
+     this.lstOperands = operands;
+@@ -222,7 +222,7 @@ public class FunctionExprent extends Exprent {
+     addBytecodeOffsets(bytecodeOffsets);
+   }
+ 
+-  public FunctionExprent(int funcType, Exprent operand, Set<Integer> bytecodeOffsets) {
++  public FunctionExprent(int funcType, Exprent operand, BitSet bytecodeOffsets) {
+     this(funcType, new ArrayList<Exprent>(1), bytecodeOffsets);
+     lstOperands.add(operand);
+   }
+@@ -587,6 +587,12 @@ public class FunctionExprent extends Exprent {
+     return VarType.VARTYPE_INT;
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, lstOperands);
++    measureBytecode(values);
++  }
++
+   // *****************************************************************************
+   // getter and setter methods
+   // *****************************************************************************
+@@ -606,25 +612,25 @@ public class FunctionExprent extends Exprent {
+   public void setImplicitType(VarType implicitType) {
+     this.implicitType = implicitType;
+   }
+-  
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+ 
+     if(!super.match(matchNode, engine)) {
+       return false;
+     }
+-    
++
+     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
+     if(type != null) {
+       if(this.funcType != type.intValue()) {
+         return false;
+       }
+     }
+-    
++
+     return true;
+   }
+-  
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
+index 059270fe5c7532cf7d30045cb30b02fc78954aa4..84ac9e7bcdd6b05fd1d39c12c34d6dfd281a4f64 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/IfExprent.java
+@@ -75,7 +75,7 @@ public class IfExprent extends Exprent {
+ 
+   private Exprent condition;
+ 
+-  public IfExprent(int ifType, ListStack<Exprent> stack, Set<Integer> bytecodeOffsets) {
++  public IfExprent(int ifType, ListStack<Exprent> stack, BitSet bytecodeOffsets) {
+     this(null, bytecodeOffsets);
+ 
+     if (ifType <= IF_LE) {
+@@ -93,7 +93,7 @@ public class IfExprent extends Exprent {
+     }
+   }
+ 
+-  private IfExprent(Exprent condition, Set<Integer> bytecodeOffsets) {
++  private IfExprent(Exprent condition, BitSet bytecodeOffsets) {
+     super(EXPRENT_IF);
+     this.condition = condition;
+ 
+@@ -146,4 +146,10 @@ public class IfExprent extends Exprent {
+   public void setCondition(Exprent condition) {
+     this.condition = condition;
+   }
++
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, condition);
++    measureBytecode(values);
++  }
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+index 4e73f0649a7d85aa59756a3634bceae61e3d59fe..7cf83bedc432341a0af7ed0d895abdea919bee75 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/InvocationExprent.java
+@@ -20,7 +20,6 @@ import java.util.BitSet;
+ import java.util.Collections;
+ import java.util.List;
+ import java.util.Map.Entry;
+-import java.util.Set;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
+@@ -74,7 +73,7 @@ public class InvocationExprent extends Exprent {
+     super(EXPRENT_INVOCATION);
+   }
+ 
+-  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamicInvocationType, Set<Integer> bytecodeOffsets) {
++  public InvocationExprent(int opcode, LinkConstant cn, ListStack<Exprent> stack, int dynamicInvocationType, BitSet bytecodeOffsets) {
+     this();
+ 
+     name = cn.elementname;
+@@ -420,6 +419,13 @@ public class InvocationExprent extends Exprent {
+            InterpreterUtil.equalLists(lstParameters, it.getLstParameters());
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, lstParameters);
++    measureBytecode(values, instance);
++    measureBytecode(values);
++  }
++
+   public List<Exprent> getLstParameters() {
+     return lstParameters;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
+index 0ece9aa0fb30c42b9942c3a14bb280ee32f57a29..bd9207fe85915240d5626e2be88923fc08f042d1 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/MonitorExprent.java
+@@ -20,8 +20,8 @@ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class MonitorExprent extends Exprent {
+ 
+@@ -31,7 +31,7 @@ public class MonitorExprent extends Exprent {
+   private final int monType;
+   private Exprent value;
+ 
+-  public MonitorExprent(int monType, Exprent value, Set<Integer> bytecodeOffsets) {
++  public MonitorExprent(int monType, Exprent value, BitSet bytecodeOffsets) {
+     super(EXPRENT_MONITOR);
+     this.monType = monType;
+     this.value = value;
+@@ -80,6 +80,12 @@ public class MonitorExprent extends Exprent {
+            InterpreterUtil.equalObjects(value, me.getValue());
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, value);
++    measureBytecode(values);
++  }
++
+   public int getMonType() {
+     return monType;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+index 51137cc3c2f5756e688d910ed405cccb935ab0d8..1e87201c8322b8c9d6db16a89ecab56fdb0df85d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/NewExprent.java
+@@ -34,9 +34,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.ListStack;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.Collections;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class NewExprent extends Exprent {
+ 
+@@ -49,11 +49,11 @@ public class NewExprent extends Exprent {
+   private boolean lambda;
+   private boolean enumConst;
+ 
+-  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, Set<Integer> bytecodeOffsets) {
++  public NewExprent(VarType newType, ListStack<Exprent> stack, int arrayDim, BitSet bytecodeOffsets) {
+     this(newType, getDimensions(arrayDim, stack), bytecodeOffsets);
+   }
+ 
+-  public NewExprent(VarType newType, List<Exprent> lstDims, Set<Integer> bytecodeOffsets) {
++  public NewExprent(VarType newType, List<Exprent> lstDims, BitSet bytecodeOffsets) {
+     super(EXPRENT_NEW);
+     this.newType = newType;
+     this.lstDims = lstDims;
+@@ -476,6 +476,14 @@ public class NewExprent extends Exprent {
+            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values, lstArrayElements);
++    measureBytecode(values, lstDims);
++    measureBytecode(values, constructor);
++    measureBytecode(values);
++  }
++
+   public InvocationExprent getConstructor() {
+     return constructor;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
+index fd7711231a0dfa49697f2908852bea89a33ebeb9..c2065c1673f3a86cee9c2e707d328becb3d90100 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/SwitchExprent.java
+@@ -22,15 +22,15 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+-import java.util.Set;
+ 
+ public class SwitchExprent extends Exprent {
+ 
+   private Exprent value;
+   private List<List<ConstExprent>> caseValues = new ArrayList<List<ConstExprent>>();
+ 
+-  public SwitchExprent(Exprent value, Set<Integer> bytecodeOffsets) {
++  public SwitchExprent(Exprent value, BitSet bytecodeOffsets) {
+     super(EXPRENT_SWITCH);
+     this.value = value;
+ 
+@@ -112,6 +112,22 @@ public class SwitchExprent extends Exprent {
+     return InterpreterUtil.equalObjects(value, sw.getValue());
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    if (caseValues != null && !caseValues.isEmpty()) {
++      for (List<ConstExprent> l : caseValues) {
++        if (l != null && !l.isEmpty()) {
++          for (Exprent e : l) {
++            if (e != null)
++              e.getBytecodeRange(values);
++          }
++        }
++      }
++    }
++    measureBytecode(values, value);
++    measureBytecode(values);
++  }
++
+   public Exprent getValue() {
+     return value;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index 4436cb50105342836d5bf278477efd43bbafefde..f0719331904f4db44a7ff8b1db2ad6f80512b01f 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -33,6 +33,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ 
+ import java.util.ArrayList;
++import java.util.BitSet;
+ import java.util.List;
+ 
+ public class VarExprent extends Exprent {
+@@ -120,6 +121,11 @@ public class VarExprent extends Exprent {
+            InterpreterUtil.equalObjects(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
+   }
+ 
++  @Override
++  public void getBytecodeRange(BitSet values) {
++    measureBytecode(values);
++  }
++
+   public int getIndex() {
+     return index;
+   }
+@@ -184,31 +190,31 @@ public class VarExprent extends Exprent {
+   public void setStack(boolean stack) {
+     this.stack = stack;
+   }
+-  
++
+   // *****************************************************************************
+   // IMatchable implementation
+   // *****************************************************************************
+-  
++
+   public boolean match(MatchNode matchNode, MatchEngine engine) {
+ 
+     if(!super.match(matchNode, engine)) {
+       return false;
+     }
+-    
++
+     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_VAR_INDEX);
+     if(rule != null) {
+       if(rule.isVariable()) {
+         if(!engine.checkAndSetVariableValue((String)rule.value, this.index)) {
+           return false;
+         }
+-      } else { 
++      } else {
+         if(this.index != Integer.valueOf((String)rule.value).intValue()) {
+           return false;
+         }
+       }
+     }
+-    
++
+     return true;
+   }
+-  
++
+ }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
+index ba8218263a2b293825c4875f972c67d36baeba80..30a7a8ff1ba852dbe1b522c4b99e5efd638ac1da 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/stats/DummyExitStatement.java
+@@ -15,6 +15,7 @@
+  */
+ package org.jetbrains.java.decompiler.modules.decompiler.stats;
+ 
++import java.util.BitSet;
+ import java.util.Collection;
+ import java.util.HashSet;
+ import java.util.Set;
+@@ -23,20 +24,18 @@ import java.util.Set;
+  * @author egor
+  */
+ public class DummyExitStatement extends Statement {
+-  public Set<Integer> bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
++  public BitSet bytecode = null;  // offsets of bytecode instructions mapped to dummy exit
+ 
+   public DummyExitStatement() {
+     type = Statement.TYPE_DUMMYEXIT;
+   }
+ 
+-  public void addBytecodeOffsets(Collection<Integer> bytecodeOffsets) {
++  public void addBytecodeOffsets(BitSet bytecodeOffsets) {
+     if (bytecodeOffsets != null && !bytecodeOffsets.isEmpty()) {
+       if (bytecode == null) {
+-        bytecode = new HashSet<Integer>(bytecodeOffsets);
+-      }
+-      else {
+-        bytecode.addAll(bytecodeOffsets);
++        bytecode = new BitSet();
+       }
++      bytecode.or(bytecodeOffsets);
+     }
+   }
+ }

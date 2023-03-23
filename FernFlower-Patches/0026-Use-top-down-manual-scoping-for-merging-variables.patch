@@ -1,0 +1,519 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: cpw <cpw@weeksfamily.ca>
+Date: Wed, 16 Sep 2015 00:49:12 -0400
+Subject: [PATCH] Use top down manual scoping for merging variables.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index 7abcec8a356fa92f2bc18bf2dc24fc3defac3a38..5cb5f90885d6c1c748aaa4be4082b6690061f949 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -19,13 +19,13 @@ import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.AssignmentExprent;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+-import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+-import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+ import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructMethod;
+@@ -34,7 +34,6 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
+ 
+ import java.util.*;
+ import java.util.Map.Entry;
+-import java.util.AbstractMap.SimpleImmutableEntry;
+ 
+ public class VarDefinitionHelper {
+ 
+@@ -47,12 +46,16 @@ public class VarDefinitionHelper {
+ 
+   private final VarProcessor varproc;
+ 
+-  public VarDefinitionHelper(Statement root, StructMethod mt, VarProcessor varproc) {
++  private final Statement root;
++  private final StructMethod mt;
+ 
++  public VarDefinitionHelper(Statement root, StructMethod mt, VarProcessor varproc) {
+     mapVarDefStatements = new HashMap<Integer, Statement>();
+     mapStatementVars = new HashMap<Integer, HashSet<Integer>>();
+     implDefVars = new HashSet<Integer>();
+     this.varproc = varproc;
++    this.root = root;
++    this.mt = mt;
+ 
+     VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
+ 
+@@ -94,8 +97,6 @@ public class VarDefinitionHelper {
+       vc.addName("this");
+     }
+ 
+-    mergeVars(root);
+-
+     // catch variables are implicitly defined
+     LinkedList<Statement> stack = new LinkedList<Statement>();
+     stack.add(root);
+@@ -129,15 +130,9 @@ public class VarDefinitionHelper {
+   public void setVarDefinitions() {
+     VarNamesCollector vc = DecompilerContext.getVarNamesCollector();
+ 
+-    Map<Statement,Map<Integer,VarExprent>> trackingMap = new HashMap<Statement,Map<Integer,VarExprent>>();
+     for (Entry<Integer, Statement> en : mapVarDefStatements.entrySet()) {
+       Statement stat = en.getValue();
+-      if (!trackingMap.containsKey(stat)) {
+-          trackingMap.put(stat, new HashMap<Integer,VarExprent>());
+-      }
+-      Map<Integer, VarExprent> scopedMap = trackingMap.get(stat);
+       Integer index = en.getKey();
+-      int newindex = varproc.getRemapped(index);
+       setupLVTs(stat);
+ 
+       if (implDefVars.contains(index)) {
+@@ -152,7 +147,7 @@ public class VarDefinitionHelper {
+         DoStatement dstat = (DoStatement)stat;
+         if (dstat.getLooptype() == DoStatement.LOOP_FOR) {
+ 
+-          if (dstat.getInitExprent() != null && setDefinition(dstat.getInitExprent(), index, scopedMap)) {
++          if (dstat.getInitExprent() != null && setDefinition(dstat.getInitExprent(), index)) {
+             continue;
+           }
+           else {
+@@ -194,12 +189,7 @@ public class VarDefinitionHelper {
+       // search for the first assignement to var [index]
+       int addindex = 0;
+       for (Exprent expr : lst) {
+-
+-        if (scopedMap.containsKey(newindex)) {
+-            defset = true;
+-            break;
+-        }
+-        if (setDefinition(expr, index, scopedMap)) {
++        if (setDefinition(expr, index)) {
+           defset = true;
+           break;
+         }
+@@ -225,13 +215,17 @@ public class VarDefinitionHelper {
+         if (varproc.getLVT() != null) {
+           Map<Integer, LVTVariable> vars = varproc.getLVT().getVars(stat);
+           if (vars.containsKey(var.getIndex())) {
+-              var.setLVT(vars.get(var.getIndex()));
++            var.setLVT(vars.get(var.getIndex()));
+           }
+         }
+ 
+         lst.add(addindex, var);
+       }
+     }
++if (mt.getName().equals("func_180655_c")){
++    System.out.println("asdf");
++}
++    mergeVars(root);
+   }
+ 
+ 
+@@ -370,14 +364,13 @@ public class VarDefinitionHelper {
+     return res;
+   }
+ 
+-  private static boolean setDefinition(Exprent expr, Integer index, Map<Integer,VarExprent> stats) {
++  private static boolean setDefinition(Exprent expr, Integer index) {
+     if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
+       Exprent left = ((AssignmentExprent)expr).getLeft();
+       if (left.type == Exprent.EXPRENT_VAR) {
+         VarExprent var = (VarExprent)left;
+         if (var.getIndex() == index.intValue()) {
+           var.setDefinition(true);
+-          stats.put(index, var);
+           return true;
+         }
+       }
+@@ -430,105 +423,305 @@ public class VarDefinitionHelper {
+     }
+   }
+ 
+-  private void mergeVars(Statement stat) {
+-    Map<VarVersionPair, VarVersionPair> remaps = new HashMap<VarVersionPair, VarVersionPair>();
+-    mergeVars(stat, remaps);
+-    if (!remaps.isEmpty()) {
+-      for (Entry<VarVersionPair, VarVersionPair> entry : remaps.entrySet()) {
+-        VarVersionPair end = entry.getKey();
+-        while (remaps.containsKey(end)) {
+-          end = remaps.get(end);
+-        }
+-        remaps.put(entry.getKey(), end);
++  private VPPEntry mergeVars(Statement stat) {
++    Map<Integer, VarVersionPair> parent = new HashMap<Integer, VarVersionPair>(); // Always empty dua!
++    MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
++
++    int index = 0;
++    if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
++      parent.put(index, new VarVersionPair(index++, 0));
++    }
++
++    for (VarType var : md.params) {
++      parent.put(index, new VarVersionPair(index, 0));
++      index += var.stackSize;
++    }
++
++    Map<VarVersionPair, VarVersionPair> blacklist = new HashMap<VarVersionPair, VarVersionPair>();
++    VPPEntry remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
++    VPPEntry ast = remap;
++    while (remap != null) {
++      //System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
++      if (!remapVar(stat, remap.getKey(), remap.getValue())) {
++        blacklist.put(remap.getKey(), remap.getValue());
++      }
++      remap = mergeVars(stat, parent, new HashMap<Integer, VarVersionPair>(), blacklist);
++      if (ast.equals(remap)){
++          System.currentTimeMillis();
+       }
+-      remapVar(remaps, stat);
+     }
++    return null;
+   }
+-  private void mergeVars(Statement stat, Map<VarVersionPair, VarVersionPair> remaps) {
++
++  private VPPEntry mergeVars(Statement stat, Map<Integer, VarVersionPair> parent, Map<Integer, VarVersionPair> leaked, Map<VarVersionPair, VarVersionPair> blacklist) {
++    Map<Integer, VarVersionPair> this_vars = new HashMap<Integer, VarVersionPair>();
++    if (parent.size() > 0)
++      this_vars.putAll(parent);
++
++    if (stat.getVarDefinitions().size() > 0) {
++      for (int x = 0; x < stat.getVarDefinitions().size(); x++) {
++        Exprent exp = stat.getVarDefinitions().get(x);
++        if (exp.type == Exprent.EXPRENT_VAR) {
++          VarExprent var = (VarExprent)exp;
++          int index = varproc.getRemapped(var.getIndex());
++          if (this_vars.containsKey(index)) {
++            stat.getVarDefinitions().remove(x);
++            return new VPPEntry(var, this_vars.get(index));
++          }
++          this_vars.put(index, new VarVersionPair(var));
++          leaked.put(index, new VarVersionPair(var));
++        }
++      }
++    }
++
++    Map<Integer, VarVersionPair> scoped = null;
++    switch (stat.type) { // These are the type of statements that leak vars
++      case Statement.TYPE_BASICBLOCK:
++      case Statement.TYPE_GENERAL:
++      case Statement.TYPE_ROOT:
++      case Statement.TYPE_SEQUENCE:
++        scoped = leaked;
++    }
++
+     if (stat.getExprents() == null) {
+       for (Object obj : stat.getSequentialObjects()) {
+         if (obj instanceof Statement) {
+-          mergeVars((Statement)obj, remaps);
++          Statement st = (Statement)obj;
++
++          //Map<VarVersionPair, VarVersionPair> blacklist_n = new HashMap<VarVersionPair, VarVersionPair>();
++          Map<Integer, VarVersionPair> leaked_n = new HashMap<Integer, VarVersionPair>();
++          VPPEntry remap = mergeVars(st, this_vars, leaked_n, blacklist);
++
++          if (remap != null) {
++            return remap;
++          }
++          /* TODO: See if we can optimize and only go up till needed.
++          while (remap != null) {
++            System.out.println("Remapping: " + remap.getKey() + " -> " + remap.getValue());
++            VarVersionPair var = parent.get(varproc.getRemapped(remap.getValue().var));
++            if (remap.getValue().equals(var)) { //Drill up to original declaration.
++              return remap;
++            }
++            if (!remapVar(stat, remap.getKey(), remap.getValue())) {
++              blacklist_n.put(remap.getKey(), remap.getValue());
++            }
++            leaked_n.clear();
++            remap = mergeVars(st, this_vars, leaked_n, blacklist_n);
++          }
++          */
++
++          if (leaked_n.size() > 0) {
++            if (stat.type == Statement.TYPE_IF) {
++              IfStatement ifst = (IfStatement)stat;
++              if (obj == ifst.getIfstat() || obj == ifst.getElsestat()) {
++                leaked_n.clear(); // Force no leaking at the end of if blocks
++                // We may need to do this for Switches as well.. But havent run into that issue yet...
++              }
++              else if (obj == ifst.getFirst()) {
++                leaked.putAll(leaked_n); //First is outside the scope so leak!
++              }
++            }
++            this_vars.putAll(leaked_n);
++          }
+         }
+-        else if (obj instanceof AssignmentExprent) {
+-          checkAssignment((AssignmentExprent)obj, remaps);
++        else if (obj instanceof Exprent) {
++          VPPEntry ret = processExprent((Exprent)obj, this_vars, scoped, blacklist);
++          if (ret != null) {
++            return ret;
++          }
+         }
+       }
+     }
+     else {
+       for (Exprent exp : stat.getExprents()) {
+-        if (exp instanceof AssignmentExprent) {
+-          checkAssignment((AssignmentExprent)exp, remaps);
++        VPPEntry ret = processExprent(exp, this_vars, scoped, blacklist);
++        if (ret != null) {
++          return ret;
+         }
+       }
+     }
++    return null; // We made it with no remaps!!!!!!!
+   }
+ 
+-  private void checkAssignment(AssignmentExprent exp, Map<VarVersionPair, VarVersionPair> remaps) {
+-    if (exp.getLeft().type != Exprent.EXPRENT_VAR) {
+-      return;
++  private VPPEntry processExprent(Exprent exp, Map<Integer, VarVersionPair> this_vars, Map<Integer, VarVersionPair> leaked, Map<VarVersionPair, VarVersionPair> blacklist) {
++    VarExprent var = null;
++
++    if (exp.type == Exprent.EXPRENT_ASSIGNMENT) {
++      AssignmentExprent ass = (AssignmentExprent)exp;
++      if (ass.getLeft().type != Exprent.EXPRENT_VAR) {
++        return null;
++      }
++
++      var = (VarExprent)ass.getLeft();
++    }
++    else if (exp.type == Exprent.EXPRENT_VAR) {
++      var = (VarExprent)exp;
++    }
++
++    if (var == null) {
++      return null;
+     }
+ 
+-    VarExprent left = (VarExprent)exp.getLeft();
+-    int index = varproc.getRemapped(left.getIndex());
++    if (!var.isDefinition()) {
++      return null;
++    }
+ 
+-    for (Exprent e : exp.getRight().getAllExprents(true)) {
+-      if (e.type == Exprent.EXPRENT_VAR) {
+-          VarExprent right = (VarExprent)e;
+-        if (varproc.getRemapped(right.getIndex()) == index) {
+-          if (!left.equals(right) && left.getIndex() > right.getIndex()) {
+-            remaps.put(new VarVersionPair(left), new VarVersionPair(right));
+-          }
+-          return;
+-        }
++    int index = varproc.getRemapped(var.getIndex());
++    VarVersionPair new_ = this_vars.get(index);
++    if (new_ != null) {
++      VarVersionPair old = new VarVersionPair(var);
++      VarVersionPair black = blacklist.get(old);
++      if (black == null || !black.equals(new_)) {
++        return new VPPEntry(var, this_vars.get(index));
+       }
+     }
+-  }
++    this_vars.put(index, new VarVersionPair(var));
+ 
+-  private void remapVar(Map<VarVersionPair, VarVersionPair> remap, Statement stat) {
+-    if (remap == null || stat == null) {
+-      return;
++    if (leaked != null) {
++      leaked.put(index, new VarVersionPair(var));
+     }
+ 
++    return null;
++  }
++
++  private boolean remapVar(Statement stat, VarVersionPair from, VarVersionPair to) {
++    if (from.equals(to))
++      throw new IllegalArgumentException("Shit went wrong: " + from);
++    boolean success = false;
+     if (stat.getExprents() == null) {
+       for (Object obj : stat.getSequentialObjects()) {
+         if (obj instanceof Statement) {
+-          remapVar(remap, (Statement)obj);
++          success |= remapVar((Statement)obj, from, to);
+         }
+         else if (obj instanceof Exprent) {
+-          remapVar(remap, (Exprent)obj);
++          if (remapVar((Exprent)obj, from, to)) {
++            success = true;
++          }
+         }
+       }
+     }
+     else {
+-      for (Exprent exp : stat.getExprents()) {
+-        remapVar(remap, exp);
++      boolean remapped = false;
++      for (int x = 0; x < stat.getExprents().size(); x++) {
++        Exprent exp = stat.getExprents().get(x);
++        if (remapVar(exp, from, to)) {
++          remapped = true;
++          if (exp.type == Exprent.EXPRENT_VAR) {
++            if (!((VarExprent)exp).isDefinition()) {
++              stat.getExprents().remove(x);
++              x--;
++            }
++          }
++        }
+       }
++      success |= remapped;
+     }
++    return success;
+   }
+ 
+-  private void remapVar(Map<VarVersionPair, VarVersionPair> remap, Exprent exprent) {
+-    if (exprent == null) {
+-      return;
++  private boolean remapVar(Exprent exprent, VarVersionPair from, VarVersionPair to) {
++    if (exprent == null) { // Sometimes there are null exprents?
++      return false;
+     }
+     List<Exprent> lst = exprent.getAllExprents(true);
+     lst.add(exprent);
+     Map<VarVersionPair, VarType> mapExprentMinTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMinTypes();
++    Map<VarVersionPair, VarType> mapExprentMaxTypes = varproc.getVarVersions().getTypeProcessor().getMapExprentMaxTypes();
++
++    boolean remapped = false;
+ 
+     for (Exprent expr : lst) {
+-      if (expr.type == Exprent.EXPRENT_VAR) {
++      if (expr.type == Exprent.EXPRENT_ASSIGNMENT) {
++        AssignmentExprent ass = (AssignmentExprent)expr;
++        if (ass.getLeft().type == Exprent.EXPRENT_VAR && ass.getRight().type == Exprent.EXPRENT_CONST) {
++          VarVersionPair left = new VarVersionPair((VarExprent)ass.getLeft());
++          if (!left.equals(from) && !left.equals(to)) {
++            continue;
++          }
++
++          ConstExprent right = (ConstExprent)ass.getRight();
++          if (right.getConstType() == VarType.VARTYPE_NULL) {
++              continue;
++          }
++          VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
++                                         mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
++
++          if (merged == null) { // Types incompatible, do not merge
++            continue;
++          }
++
++          right.setConstType(merged);
++        }
++      }
++      else if (expr.type == Exprent.EXPRENT_VAR) {
+         VarExprent var = (VarExprent)expr;
+         VarVersionPair old = new VarVersionPair(var);
+-        VarVersionPair new_ = remap.get(old);
+-        if (new_ != null) {
+-          VarType firstMinType = mapExprentMinTypes.get(old);
+-          VarType secondMinType = mapExprentMinTypes.get(new_);
+-          var.setIndex(new_.var);
+-          var.setVersion(new_.version);
+-          VarType type = VarType.getCommonSupertype(firstMinType, secondMinType);
+-          mapExprentMinTypes.put(new_, type);
++        if (!old.equals(from)) {
++          continue;
++        }
++        VarType merged = getMergedType(mapExprentMinTypes.get(from), mapExprentMinTypes.get(to),
++                                       mapExprentMaxTypes.get(from), mapExprentMaxTypes.get(to));
++        if (merged == null) { // Types incompatible, do not merge
++          continue;
++        }
++
++        var.setIndex(to.var);
++        var.setVersion(to.version);
++        var.setVarType(merged);
++        if (var.isDefinition()) {
++          var.setDefinition(false);
++        }
++        mapExprentMinTypes.put(to, merged);
++        remapped = true;
++      }
++    }
++    return remapped;
++  }
++
++  private VarType getMergedType(VarType firstMin, VarType secondMin, VarType firstMax, VarType secondMax) {
++    if (firstMin != null && firstMin.equals(secondMin)) {
++      return firstMin; // Short circuit this for simplicities sake
++    }
++    VarType type = firstMin == null ? secondMin : (secondMin == null ? firstMin : VarType.getCommonSupertype(firstMin, secondMin));
++    if (type == null || firstMin == null || secondMin == null) {
++      return null; // no common supertype, skip the remapping
++    }
++    if (type.typeFamily == CodeConstants.TYPE_FAMILY_OBJECT) {
++      if (firstMax != null && secondMax != null) {
++        type = VarType.getCommonMinType(firstMax, secondMax);
++      } else if (firstMin.arrayDim != secondMin.arrayDim) {
++        return null; // Don't merge is arrays don't match.
++      } else {
++        type = VarType.getCommonMinType(firstMin, secondMin);
++        // couldn't find a sane common supertype, we're not gonna be able to merge
++        if (type == null || type == VarType.VARTYPE_NULL) {
++          return null;
+         }
+       }
+     }
++    return type;
++  }
++
++  //Helper classes because Java is dumb and doesn't have a Pair<K,V> class
++  private static class SimpleEntry<K, V> implements Entry<K, V> {
++    private K key;
++    private V value;
++    public SimpleEntry(K key, V value) {
++      this.key = key;
++      this.value = value;
++    }
++    @Override public K getKey() { return key; }
++    @Override public V getValue() { return value; }
++    @Override
++    public V setValue(V value) {
++      V tmp = this.value;
++      this.value = value;
++      return tmp;
++    }
++  }
++  private static class VPPEntry extends SimpleEntry<VarVersionPair, VarVersionPair> {
++    public VPPEntry(VarExprent key, VarVersionPair value) {
++        super(new VarVersionPair(key), value);
++    }
+   }
+ }
+\ No newline at end of file
+diff --git a/test/org/jetbrains/java/decompiler/LVTTest.java b/test/org/jetbrains/java/decompiler/LVTTest.java
+index d2a8f1c20c8a7954d4ba22d17fc1584d3bd4a3ca..52428c70df9fe4166129c11eacd4d19c2d7196e3 100644
+--- a/test/org/jetbrains/java/decompiler/LVTTest.java
++++ b/test/org/jetbrains/java/decompiler/LVTTest.java
+@@ -35,10 +35,20 @@ public class LVTTest extends SingleClassesTestBase {
+         super.setUp();
+         fixture.cleanup = false;
+     }
+-  @Test public void testMatch1() { doTest("pkg/TestPPMM"); }
++//  @Test public void testMatch1() { doTest("pkg/TestPPMM"); }
+ //  @Test public void testMatchLM() { doTest("pkg/TestLexManosLVT"); }
+ //  @Test public void testMatch1() { doTest("pkg/TestLVT"); }
+ //  @Test public void testMatch2() { doTest("pkg/TestLVTScoping"); }
+ //  @Test public void testMCWorld() { doTest("net/minecraft/world/World"); }
+ //  @Test public void testMCGuiCmdBlock() { doTest("net/minecraft/client/gui/GuiCommandBlock"); }
++
++//  @Test public void testMCWorld() { doTest("net/minecraft/world/World"); }
++
++//  @Test public void testMCGuiCmdBlock() { doTest("net/minecraft/client/gui/GuiCommandBlock"); }
++
++//  @Test public void testMCBlockFence() { doTest("net/minecraft/block/BlockFence"); }
++
++//  @Test public void testMCAbstractTexture() { doTest("net/minecraft/client/multiplayer/ServerAddress"); }
++//  @Test public void testMCAbstractTexture() { doTest("net/minecraft/client/resources/AbstractResourcePack"); }
++  @Test public void testMCGuiShareToLan() { doTest("net/minecraft/client/gui/GuiShareToLan"); }
+ }
