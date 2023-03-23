@@ -3,7 +3,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'eclipse'
 apply plugin: 'net.minecraftforge.gradleutils'
 
-archivesBaseName = 'forgeflower'
+archivesBaseName = 'forgeflowerlegacy'
 ext {
     CHANGELOG = rootProject.file('build/changelog.txt')
 }

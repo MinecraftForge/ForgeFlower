@@ -43,7 +43,3 @@ project(':ForgeFlower') {
 
 if (tasks.findByName('eclipse') == null) tasks.create('eclipse')
 tasks.findByName('eclipse').dependsOn('applyPatches', 'ForgeFlower:eclipse')
-
-changelog {
-    fromMergeBase()
-}
