@@ -1,0 +1,112 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LexManos <LexManos@gmail.com>
+Date: Tue, 12 Sep 2023 21:32:42 -0700
+Subject: [PATCH] Allow banner to be specified as a file.
+
+
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index 2dafbbd4ea22bdeeef24d0a0dbc533efc613b4e6..d21429cb72128d43f8888c91c09ef4f3322645aa 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.util.ClasspathScanner;
+ 
+ import java.io.File;
+ import java.util.HashMap;
++import java.util.List;
+ import java.util.Locale;
+ import java.util.Map;
+ 
+@@ -168,11 +169,14 @@ public class Fernflower implements IDecompiledData {
+     }
+   }
+ 
++  @SuppressWarnings("unchecked")
+   @Override
+   public String getClassContent(StructClass cl) {
+     try {
+       TextBuffer buffer = new TextBuffer(ClassesProcessor.AVERAGE_CLASS_SIZE);
+-      buffer.append(DecompilerContext.getProperty(IFernflowerPreferences.BANNER).toString());
++      for (var line : ((List<String>)DecompilerContext.getProperty(IFernflowerPreferences.BANNER))) {
++        buffer.append(line).appendLineSeparator();
++      }
+       classProcessor.writeClass(cl, buffer);
+       return buffer.toString();
+     }
+diff --git a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+index 1172775610851755373694f48903594af615f816..e1fc94a808240bbf92d63650a86ddf73fe317776 100644
+--- a/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
++++ b/src/org/jetbrains/java/decompiler/main/decompiler/ConsoleDecompiler.java
+@@ -5,6 +5,7 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.Fernflower;
+ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+ import org.jetbrains.java.decompiler.util.InterpreterUtil;
+ import org.jetbrains.java.decompiler.util.ZipFileCache;
+@@ -68,12 +69,38 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+     List<File> sources = new ArrayList<>();
+     List<File> libraries = new ArrayList<>();
+     Set<String> whitelist = new HashSet<>();
++    List<String> banner = new ArrayList<>();
+ 
+     boolean isOption = true;
+     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
+       String arg = args[i];
+ 
+-      if (isOption && arg.length() > 5 && arg.charAt(0) == '-' && arg.charAt(4) == '=') {
++      if (arg.startsWith("-banner")) {
++        String path = null;
++        if (args[i].startsWith("-banner=")) {
++          path = args[i].substring(8);
++        }
++        else if (args.length > i + 1) {
++          path = args[++i];
++        }
++        else {
++          System.out.println("Must specify a file when using -banner argument.");
++          return;
++        }
++        Path file = Paths.get(path);
++        if (!Files.exists(file)) {
++          System.out.println("error: missing banner file '" + path + "'");
++          return;
++        }
++        try (Stream<String> stream = Files.lines(file)) {
++          stream.forEach(banner::add);
++        } catch (IOException e) {
++          System.out.println("error: Failed to read banner file '" + path + "'");
++          throw new RuntimeException(e);
++        }
++        mapOptions.put(IFernflowerPreferences.BANNER, banner);
++      }
++      else if (isOption && arg.length() > 5 && arg.charAt(0) == '-' && arg.charAt(4) == '=') {
+         String value = arg.substring(5);
+         if ("true".equalsIgnoreCase(value)) {
+           value = "1";
+@@ -82,7 +109,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
+           value = "0";
+         }
+ 
+-        mapOptions.put(arg.substring(1, 4), value);
++        String key = arg.substring(1, 4);
++        if (IFernflowerPreferences.BANNER.equals(key))
++          mapOptions.put(key, Arrays.asList(value));
++        else
++          mapOptions.put(arg.substring(1, 4), value);
+       }
+       else {
+         isOption = false;
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 2a5d4e6285a08d313ff3ba97ec07d1765d5db923..698c682dcf587e7e81a05175e1d7d348f4675e49 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -107,7 +107,7 @@ public interface IFernflowerPreferences {
+     defaults.put(RENAME_ENTITIES, "0");
+     defaults.put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
+     defaults.put(INDENT_STRING, "   ");
+-    defaults.put(BANNER, "");
++    defaults.put(BANNER, Collections.emptyList());
+     defaults.put(UNIT_TEST_MODE, "0");
+     defaults.put(DUMP_ORIGINAL_LINES, "0");
+     defaults.put(USE_JAD_VARNAMING, "0");
