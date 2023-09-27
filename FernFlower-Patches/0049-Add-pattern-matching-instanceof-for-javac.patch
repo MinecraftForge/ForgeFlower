@@ -1,0 +1,402 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: coehlrich <coehlrich@users.noreply.github.com>
+Date: Sat, 19 Mar 2022 18:04:13 +1300
+Subject: [PATCH] Add pattern matching instanceof for javac
+
+
+diff --git a/src/org/jetbrains/java/decompiler/code/CodeConstants.java b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
+index 2c5cb42f61d96c40d52603f02600a9097a645eb9..dd47dc25ac6ad93943f2ecce81b4fbdaaa83d481 100644
+--- a/src/org/jetbrains/java/decompiler/code/CodeConstants.java
++++ b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
+@@ -17,6 +17,9 @@ public interface CodeConstants {
+   int BYTECODE_JAVA_11 = 55;
+   int BYTECODE_JAVA_12 = 56;
+   int BYTECODE_JAVA_13 = 57;
++  int BYTECODE_JAVA_14 = 58;
++  int BYTECODE_JAVA_15 = 59;
++  int BYTECODE_JAVA_16 = 60;
+ 
+   // ----------------------------------------------------------------------
+   // VARIABLE TYPES
+diff --git a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
+index 8bbe04c2f404b6c43a6a216bf2a99d3b69a2ad93..c7f6c900e420487c2edae99c69779c0883b2a66a 100644
+--- a/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
++++ b/src/org/jetbrains/java/decompiler/main/DecompilerContext.java
+@@ -19,6 +19,7 @@ public class DecompilerContext {
+   public static final String CURRENT_CLASS = "CURRENT_CLASS";
+   public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
+   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
++  public static final String CURRENT_METHOD = "CURRENT_METHOD";
+   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
+   public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
+   public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
+diff --git a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+index 1de3ccd0d3966f82bd07d0b45e1692f6c22348db..a56c1121b7e0138a469b7a348dfae1dd56217824 100644
+--- a/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
++++ b/src/org/jetbrains/java/decompiler/main/rels/MethodProcessorRunnable.java
+@@ -73,6 +73,7 @@ public class MethodProcessorRunnable implements Runnable {
+   }
+ 
+   public static RootStatement codeToJava(StructClass cl, StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
++    DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD, mt);
+     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
+ 
+     mt.expandData(cl);
+@@ -191,6 +192,10 @@ public class MethodProcessorRunnable implements Runnable {
+       if (InlineSingleBlockHelper.inlineSingleBlocks(root)) {
+         continue;
+       }
++      
++      if (cl.isVersion(CodeConstants.BYTECODE_JAVA_16)) {
++        PatternMatchInstanceofHelper.checkInstanceof(root, mt, cl);
++      }
+ 
+       // this has to be done last so it does not screw up the formation of for loops
+       if (MergeHelper.makeDoWhileLoops(root)) {
+@@ -230,6 +235,7 @@ public class MethodProcessorRunnable implements Runnable {
+ 
+     mt.releaseResources();
+ 
++    DecompilerContext.setProperty(DecompilerContext.CURRENT_METHOD, null);
+     return root;
+   }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/PatternMatchInstanceofHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/PatternMatchInstanceofHelper.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..106696264cc692997829ca4538b62842c3c5df62
+--- /dev/null
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/PatternMatchInstanceofHelper.java
+@@ -0,0 +1,193 @@
++package org.jetbrains.java.decompiler.modules.decompiler;
++
++import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.main.DecompilerContext;
++import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
++import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
++import org.jetbrains.java.decompiler.modules.decompiler.stats.Statements;
++import org.jetbrains.java.decompiler.struct.StructClass;
++import org.jetbrains.java.decompiler.struct.StructMethod;
++import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
++import org.jetbrains.java.decompiler.struct.gen.VarType;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
++
++import java.util.*;
++import java.util.stream.Collectors;
++
++public class PatternMatchInstanceofHelper {
++
++  public static void checkInstanceof(RootStatement stat, StructMethod mt, StructClass cl) {
++    boolean found = makePatternMatchInstanceof(stat, stat, cl, mt);
++    if (found) {
++      // Make if statements that can be choices into choices
++      StackVarsProcessor processor = new StackVarsProcessor();
++      processor.simplifyStackVars(stat, mt, cl);
++
++      // merge the ifs
++      while (IfHelper.mergeAllIfs(stat)) {
++      }
++
++      // Remove unneccessary returns and labels
++      LabelHelper.cleanUpEdges(stat);
++      LabelHelper.identifyLabels(stat);
++    }
++  }
++
++  private static boolean makePatternMatchInstanceof(RootStatement root, Statement stat, StructClass cl, StructMethod mt) {
++    boolean found = false;
++    if (stat instanceof IfStatement) {
++      IfStatement ifStat = (IfStatement) stat;
++      Exprent condition = ifStat.getHeadexprent().getCondition();
++      if (condition.type == Exprent.EXPRENT_FUNCTION) {
++        FunctionExprent wrapper = (FunctionExprent) condition;
++        if (wrapper.getFuncType() == FunctionExprent.FUNCTION_NE) {
++          List<Exprent> wrapperOperands = wrapper.getLstOperands();
++          if (wrapperOperands.get(1).type == Exprent.EXPRENT_CONST) {
++            ConstExprent checkExprent = (ConstExprent) wrapperOperands.get(1);
++            if (checkExprent.getConstType().type == CodeConstants.TYPE_BOOLEAN && checkExprent.getIntValue() == 0 && wrapperOperands.get(0).type == Exprent.EXPRENT_FUNCTION) {
++              FunctionExprent instanceofExprent = (FunctionExprent) wrapperOperands.get(0);
++              if (instanceofExprent.getFuncType() == FunctionExprent.FUNCTION_INSTANCEOF && instanceofExprent.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
++                Object instanceofType = ((ConstExprent) instanceofExprent.getLstOperands().get(1)).getConstType().value;
++                Statement inner = ifStat.getIfstat();
++                if (inner == null) {
++                  inner = ifStat.getIfEdge().getDestination();
++                }
++                Statement first = Statements.findFirstData(inner);
++                VarExprent castFrom = (VarExprent) instanceofExprent.getLstOperands().get(0);
++                if (first != null && !first.getExprents().isEmpty() && first.getExprents().get(0).type == Exprent.EXPRENT_ASSIGNMENT) {
++                  AssignmentExprent assignment = (AssignmentExprent) first.getExprents().get(0);
++                  if (assignment.getRight().type == Exprent.EXPRENT_FUNCTION && assignment.getLeft().type == Exprent.EXPRENT_VAR) {
++                    FunctionExprent cast = (FunctionExprent) assignment.getRight();
++                    if (cast.getFuncType() == FunctionExprent.FUNCTION_CAST && ((ConstExprent) cast.getLstOperands().get(1)).getConstType().value.equals(instanceofType) && cast.getLstOperands().get(0).equals(castFrom)) {
++                      VarExprent definition = (VarExprent) assignment.getLeft();
++                      if (!isVarUsed(root, definition, ifStat) && canUseInstanceof(castFrom, definition, mt)) {
++                        first.getExprents().remove(0);
++                        instanceofExprent.getLstOperands().add(definition);
++                        found = true;
++
++                        List<Exprent> beforeIf = ifStat.getFirst().getExprents();
++                        if (beforeIf != null && !beforeIf.isEmpty() && isNotInLocalVariables(castFrom, definition, mt)) {
++                          Exprent lastBeforeIf = beforeIf.get(beforeIf.size() - 1);
++                          if (lastBeforeIf.type == Exprent.EXPRENT_ASSIGNMENT && !isVarUsed(ifStat.getParent(), castFrom, ifStat.getHeadexprent(), lastBeforeIf)) {
++                            AssignmentExprent assignmentFrom = (AssignmentExprent) lastBeforeIf;
++                            if (assignmentFrom.getLeft().type == Exprent.EXPRENT_VAR && ((VarExprent) assignmentFrom.getLeft()).getIndex() == castFrom.getIndex()) {
++                              if (assignmentFrom.getRight().type != Exprent.EXPRENT_FUNCTION || !((FunctionExprent) assignmentFrom.getRight()).doesCast()) {
++                                instanceofExprent.getLstOperands().set(0, assignmentFrom.getRight());
++                                beforeIf.remove(beforeIf.size() - 1);
++                              }
++                            }
++                          }
++                        }
++                      }
++                    }
++                  }
++                }
++              }
++            }
++          }
++        }
++      }
++    }
++    for (Statement sub : stat.getStats()) {
++      found |= makePatternMatchInstanceof(root, sub, cl, mt);
++    }
++    return found;
++  }
++  
++  private static boolean isVarUsed(Statement stat, VarExprent search, Object... excluded) {
++    if (stat.getExprents() == null) {
++      for (Object o : stat.getSequentialObjects()) {
++        if (o instanceof Statement) {
++          Statement subStat = (Statement) o;
++          if (!contains(excluded, subStat) && isVarUsed(subStat, search, excluded)) {
++            return true;
++          }
++        } else if (o instanceof Exprent) {
++          Exprent exp = (Exprent) o;
++          if (!contains(excluded, exp) && search.isVarReferenced(exp, search)) {
++            return true;
++          }
++        }
++      }
++    } else {
++      for (Exprent exp : stat.getExprents()) {
++        if (!contains(excluded, exp) && search.isVarReferenced(exp, search)) {
++          return true;
++        }
++      }
++    }
++    return false;
++  }
++  
++  private static boolean contains(Object[] array, Object contains) {
++    for (Object test : array) {
++      if (test == contains) {
++        return true;
++      }
++    }
++    return false;
++  }
++
++  // returns false if the local variable table doesn't exist or the original index
++  // isn't known
++  private static boolean isNotInLocalVariables(VarExprent fromEx, VarExprent toEx, StructMethod mt) {
++    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
++      Integer originalIndex = fromEx.getProcessor().getVarOriginalIndex(fromEx.getIndex());
++      if (originalIndex != null) {
++        StructLocalVariableTableAttribute variableTable = mt.getLocalVariableAttr();
++        if (variableTable != null && variableTable.getDescriptor(originalIndex, fromEx.bytecode == null ? -1 : fromEx.bytecode.length()) == null) {
++          return true;
++        }
++      }
++    }
++    return false;
++  }
++
++  private static boolean canUseInstanceof(VarExprent fromEx, VarExprent toEx, StructMethod mt) {
++    VarType from = fromEx.getDefinitionType();
++    VarType to = toEx.getDefinitionType();
++
++    if (isNotInLocalVariables(fromEx, toEx, mt)) {
++      return true;
++    }
++
++    if (!to.isGeneric() || ((GenericType) to).getArguments().stream().allMatch((arg) -> arg == null || arg.isGeneric() && ((GenericType) arg).getWildcard() == GenericType.WILDCARD_UNBOUND)) {
++      return true;
++    }
++    
++    if (!DecompilerContext.getStructContext().instanceOf(to.value, from.value)) {
++      return false;
++    }
++
++    VarType superType = GenericType.getGenericSuperType(to, from);
++    if (!GenericType.areArgumentsAssignable(from, superType, new HashMap<>())) {
++      return false;
++    }
++
++    StructClass toCl = DecompilerContext.getStructContext().getClass(to.value);
++    Map<String, Map<VarType, VarType>> allGenerics = toCl.getAllGenerics();
++    Set<VarType> inFrom = allGenerics.containsKey(from.value) ? toCl.getAllGenerics().get(from.value).values()
++        .stream()
++        .filter((var) -> var.isGeneric())
++        .flatMap((var) -> ((GenericType) var).getAllGenericVars().stream())
++        .collect(Collectors.toSet()) : Collections.EMPTY_SET;
++
++    Map<VarType, VarType> generics = new HashMap<>();
++    toCl.getSignature().genericType.mapGenVarsTo((GenericType) to, generics);
++
++    for (VarType gen : generics.keySet()) {
++      if (!inFrom.contains(gen)) {
++        VarType toType = generics.get(gen);
++        if (toType != null && (!toType.isGeneric() || ((GenericType) toType).getWildcard() != GenericType.WILDCARD_UNBOUND)) {
++          return false;
++        }
++      }
++    }
++
++    return true;
++  }
++
++}
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index 4a696f53b52d3a577b7a1258c37e40996952b576..493a78e3dd3cd1dec32aeb424ccb1be0978f3b10 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -101,23 +101,14 @@ public abstract class Exprent implements IMatchable {
+ 
+   public final List<Exprent> getAllExprents(boolean recursive) {
+     List<Exprent> lst = new ArrayList<>();
+-    getAllExprents(recursive, lst);
+-
+-    return lst;
+-  }
+-
+-  private List<Exprent> getAllExprents(boolean recursive, List<Exprent> list) {
+-    int start = list.size();
+-    getAllExprents(list);
+-    int end = list.size();
+-
++    getAllExprents(lst);
+     if (recursive) {
+-      for (int i = end - 1; i >= start; i--) {
+-        list.get(i).getAllExprents(true, list);
++      for (int i = 0; i < lst.size(); i++) {
++        lst.addAll(i + 1, lst.get(i).getAllExprents(false));
+       }
+     }
+ 
+-    return list;
++    return lst;
+   }
+ 
+   public Set<VarVersionPair> getAllVariables() {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index 16c0279e2aaa1dd5ba1d1db7b844b347502079c8..0327278dbf7ae2c543c33fecd15f9fe5f72683b8 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -554,7 +554,7 @@ public class FunctionExprent extends Exprent {
+       case FUNCTION_MMI:
+         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("--");
+       case FUNCTION_INSTANCEOF:
+-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
++        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(lstOperands.size() > 2 ? 2 : 1), true, indent, tracer));
+       case FUNCTION_LCMP: // shouldn't appear in the final code
+         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
+                  .append(", ")
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+index abe36c09953b0e2656e43be18ecdeec2c5f6393d..66328b51f01be523f3931d1376bdd3830c11fc35 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/VarExprent.java
+@@ -169,7 +169,13 @@ public class VarExprent extends Exprent {
+         return getVarType();
+       }
+ 
+-      MethodWrapper method = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
++      StructMethod method;
++      MethodWrapper methodWrapper = ((MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER));
++      if (methodWrapper != null) {
++        method = methodWrapper.methodStruct;
++      } else {
++        method = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
++      }
+       if (method != null) {
+         Integer originalIndex = null;
+         if (processor != null) {
+@@ -180,7 +186,7 @@ public class VarExprent extends Exprent {
+           // first try from signature
+           if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+             StructLocalVariableTypeTableAttribute attr =
+-              method.methodStruct.getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
++              method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
+             if (attr != null) {
+               String signature = attr.getSignature(originalIndex, visibleOffset);
+               if (signature != null) {
+@@ -193,7 +199,7 @@ public class VarExprent extends Exprent {
+           }
+ 
+           // then try from descriptor
+-          StructLocalVariableTableAttribute attr = method.methodStruct.getLocalVariableAttr();
++          StructLocalVariableTableAttribute attr = method.getLocalVariableAttr();
+           if (attr != null) {
+             String descriptor = attr.getDescriptor(originalIndex, visibleOffset);
+             if (descriptor != null) {
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+index b2c2139ab5c9c2d3aa235b3e2eb6cb5bb409a24e..06074225b690030991b423c67af6b55deb060c78 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/vars/VarDefinitionHelper.java
+@@ -138,6 +138,7 @@ public class VarDefinitionHelper {
+   public void setVarDefinitions() {
+     VarNamesCollector vc = varproc.getVarNamesCollector();
+ 
++    vars:
+     for (Entry<Integer, Statement> en : mapVarDefStatements.entrySet()) {
+       Statement stat = en.getValue();
+       Integer index = en.getKey();
+@@ -176,6 +177,17 @@ public class VarDefinitionHelper {
+             }
+           }
+         }
++      } else if (stat.type == Statement.TYPE_IF) {
++        IfStatement ifStat = (IfStatement) stat;
++        for (Exprent exp : ifStat.getHeadexprent().getAllExprents(true)) {
++          if (exp.type == Exprent.EXPRENT_FUNCTION) {
++            FunctionExprent function = (FunctionExprent) exp;
++            if (function.getFuncType() == FunctionExprent.FUNCTION_INSTANCEOF && function.getLstOperands().size() > 2 && ((VarExprent) function.getLstOperands().get(2)).getIndex() == index.intValue()) {
++              ((VarExprent) function.getLstOperands().get(2)).setDefinition(true);
++              continue vars;
++            }
++          }
++        }
+       }
+ 
+       Statement first = findFirstBlock(stat, index);
+@@ -195,6 +207,7 @@ public class VarDefinitionHelper {
+ 
+       // search for the first assignment to var [index]
+       int addindex = 0;
++      outer:
+       for (Exprent expr : lst) {
+         if (setDefinition(expr, index)) {
+           defset = true;
+@@ -203,6 +216,19 @@ public class VarDefinitionHelper {
+         else {
+           boolean foundvar = false;
+           for (Exprent exp : expr.getAllExprents(true)) {
++            // special case for pattern matching instanceof in choice
++            if (exp.type == Exprent.EXPRENT_FUNCTION) {
++              FunctionExprent function = (FunctionExprent) exp;
++              if (function.getFuncType() == FunctionExprent.FUNCTION_INSTANCEOF && function.getLstOperands().size() > 2) {
++                VarExprent varExp = (VarExprent) function.getLstOperands().get(2);
++                if (varExp.getIndex() == index) {
++                  varExp.setDefinition(true);
++                  defset = true;
++                  break outer;
++                }
++              }
++            }
++            
+             if (exp.type == Exprent.EXPRENT_VAR && ((VarExprent)exp).getIndex() == index) {
+               foundvar = true;
+               break;
