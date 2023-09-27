@@ -1,0 +1,371 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: zml <zml@stellardrift.ca>
+Date: Sat, 2 Apr 2022 23:57:57 -0700
+Subject: [PATCH] Add jrt option to load classes from a specific JVM
+
+This allows decompiling classes targeting any Java version while running on a Java 17 JVM
+
+diff --git a/README.md b/README.md
+index 4621cadc55b0814bf7f20fc5fff482b7756b5c6c..10c2f59c572a5db8255681799111e5be9a34422f 100644
+--- a/README.md
++++ b/README.md
+@@ -70,6 +70,7 @@ The rest of options can be left as they are: they are aimed at professional reve
+ - qin (1): Whether to always qualify inner class references. If this is false, inner class names can be shortened depending on location
+ - ind: indentation string (default is 3 spaces)
+ - log (INFO): a logging level, possible values are TRACE, INFO, WARN, ERROR
++- jrt (): The path to a java runtime to add to the classpath, or `1` or `current` to add the java runtime of the active JVM to the classpath.
+ 
+ ### Renaming identifiers
+ 
+diff --git a/src/org/jetbrains/java/decompiler/code/CodeConstants.java b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
+index 6cfc20f9776e118e546510253c8664c442a3146d..da9aee95eae740e96f80711562de26e2fae853b6 100644
+--- a/src/org/jetbrains/java/decompiler/code/CodeConstants.java
++++ b/src/org/jetbrains/java/decompiler/code/CodeConstants.java
+@@ -69,6 +69,8 @@ public interface CodeConstants {
+   int ACC_FINAL = 0x0010;
+   int ACC_SYNCHRONIZED = 0x0020;
+   int ACC_OPEN = 0x0020;
++  int ACC_TRANSITIVE = 0x0020;
++  int ACC_STATIC_PHASE = 0x0040; // modules
+   int ACC_NATIVE = 0x0100;
+   int ACC_ABSTRACT = 0x0400;
+   int ACC_STRICT = 0x0800;
+diff --git a/src/org/jetbrains/java/decompiler/main/Fernflower.java b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+index 8b584e8c70735f94bfa368f62adc56eb79b7e6fd..f417b3405fcc577af6a0d8724692737d983845b2 100644
+--- a/src/org/jetbrains/java/decompiler/main/Fernflower.java
++++ b/src/org/jetbrains/java/decompiler/main/Fernflower.java
+@@ -107,6 +107,13 @@ public class Fernflower implements IDecompiledData {
+ 
+     if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
+       ClasspathScanner.addAllClasspath(structContext);
++    } else if (!DecompilerContext.getProperty(IFernflowerPreferences.INCLUDE_JAVA_RUNTIME).toString().isEmpty()) {
++      final String javaRuntime = DecompilerContext.getProperty(IFernflowerPreferences.INCLUDE_JAVA_RUNTIME).toString();
++      if (javaRuntime.equalsIgnoreCase("current") || javaRuntime.equalsIgnoreCase("1")) {
++        ClasspathScanner.addRuntime(structContext);
++      } else {
++        ClasspathScanner.addRuntime(structContext, new File(javaRuntime));
++      }
+     }
+   }
+ 
+diff --git a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+index 2a5d4e6285a08d313ff3ba97ec07d1765d5db923..08152bcbde5562a2fb6e8509e79b2d566be44bf4 100644
+--- a/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
++++ b/src/org/jetbrains/java/decompiler/main/extern/IFernflowerPreferences.java
+@@ -36,6 +36,7 @@ public interface IFernflowerPreferences {
+   String VERIFY_ANONYMOUS_CLASSES = "vac";
+ 
+   String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
++  String INCLUDE_JAVA_RUNTIME = "jrt";
+   String INCLUDE_ENTIRE_CLASSPATH = "iec";
+   String QUALIFY_INNER_CLASSES = "qin";
+   String EXPLICIT_GENERIC_ARGUMENTS = "ega";
+@@ -96,6 +97,7 @@ public interface IFernflowerPreferences {
+     defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
+ 
+     defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "1");
++    defaults.put(INCLUDE_JAVA_RUNTIME, "");
+     defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
+     defaults.put(QUALIFY_INNER_CLASSES, "1");
+     defaults.put(EXPLICIT_GENERIC_ARGUMENTS, "0");
+diff --git a/src/org/jetbrains/java/decompiler/struct/attr/StructModuleAttribute.java b/src/org/jetbrains/java/decompiler/struct/attr/StructModuleAttribute.java
+index 9fd6f89ddb90e1b348078a0615f3808007cc5aa4..fd1cf8a82a419524143e95d147c33e5f9773dca7 100644
+--- a/src/org/jetbrains/java/decompiler/struct/attr/StructModuleAttribute.java
++++ b/src/org/jetbrains/java/decompiler/struct/attr/StructModuleAttribute.java
+@@ -1,13 +1,17 @@
+ // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ package org.jetbrains.java.decompiler.struct.attr;
+ 
++import org.jetbrains.java.decompiler.code.CodeConstants;
+ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+ import org.jetbrains.java.decompiler.util.DataInputFullStream;
+ 
+ import java.io.IOException;
++import java.lang.module.ModuleDescriptor;
+ import java.util.ArrayList;
+ import java.util.Collections;
++import java.util.EnumSet;
+ import java.util.List;
++import java.util.Set;
+ 
+ public class StructModuleAttribute extends StructGeneralAttribute {
+   public String moduleName;
+@@ -38,6 +42,65 @@ public class StructModuleAttribute extends StructGeneralAttribute {
+     this.provides = readProvides(data, pool);
+   }
+ 
++  public ModuleDescriptor asDescriptor() {
++    var mods = EnumSet.noneOf(ModuleDescriptor.Modifier.class);
++    if ((this.moduleFlags & CodeConstants.ACC_OPEN) != 0) mods.add(ModuleDescriptor.Modifier.OPEN);
++    if ((this.moduleFlags & CodeConstants.ACC_SYNTHETIC) != 0) mods.add(ModuleDescriptor.Modifier.SYNTHETIC);
++    if ((this.moduleFlags & CodeConstants.ACC_MANDATED) != 0) mods.add(ModuleDescriptor.Modifier.MANDATED);
++
++    var builder = ModuleDescriptor.newModule(this.moduleName, mods);
++    if (moduleVersion != null) builder.version(moduleVersion);
++
++    for (final var requires : this.requires) {
++      var rMods = EnumSet.noneOf(ModuleDescriptor.Requires.Modifier.class);
++      if ((requires.flags & CodeConstants.ACC_TRANSITIVE) != 0) rMods.add(ModuleDescriptor.Requires.Modifier.TRANSITIVE);
++      if ((requires.flags & CodeConstants.ACC_STATIC_PHASE) != 0) rMods.add(ModuleDescriptor.Requires.Modifier.STATIC);
++      if ((requires.flags & CodeConstants.ACC_SYNTHETIC) != 0) rMods.add(ModuleDescriptor.Requires.Modifier.SYNTHETIC);
++      if ((requires.flags & CodeConstants.ACC_MANDATED) != 0) rMods.add(ModuleDescriptor.Requires.Modifier.MANDATED);
++      if (requires.moduleVersion != null) {
++        builder.requires(rMods, requires.moduleName, ModuleDescriptor.Version.parse(requires.moduleVersion));
++      } else {
++        builder.requires(rMods, requires.moduleName);
++      }
++    }
++
++    for (final var exports : this.exports) {
++      var eMods = EnumSet.noneOf(ModuleDescriptor.Exports.Modifier.class);
++      if ((exports.flags & CodeConstants.ACC_SYNTHETIC) != 0) eMods.add(ModuleDescriptor.Exports.Modifier.SYNTHETIC);
++      if ((exports.flags & CodeConstants.ACC_MANDATED) != 0) eMods.add(ModuleDescriptor.Exports.Modifier.MANDATED);
++      if (exports.exportToModules.isEmpty()) {
++        builder.exports(eMods, exports.packageName.replace('/', '.'));
++      } else {
++        builder.exports(eMods, exports.packageName.replace('/', '.'), Set.copyOf(exports.exportToModules));
++      }
++    }
++
++    for (final var opens : this.opens) {
++      var oMods = EnumSet.noneOf(ModuleDescriptor.Opens.Modifier.class);
++      if ((opens.flags & CodeConstants.ACC_SYNTHETIC) != 0) oMods.add(ModuleDescriptor.Opens.Modifier.SYNTHETIC);
++      if ((opens.flags & CodeConstants.ACC_MANDATED) != 0) oMods.add(ModuleDescriptor.Opens.Modifier.MANDATED);
++
++      if (opens.opensToModules.isEmpty()) {
++        builder.opens(oMods, opens.packageName.replace('/', '.'));
++      } else {
++        builder.opens(oMods, opens.packageName.replace('/', '.'), Set.copyOf(opens.opensToModules));
++      }
++    }
++
++    for (final var uses : this.uses) {
++      builder.uses(uses.replace('/', '.'));
++    }
++
++    for (final var provides : this.provides) {
++      builder.provides(
++        provides.interfaceName.replace('/', '.'),
++        provides.implementationNames.stream().map(name -> name.replace('/', '.')).toList()
++      );
++    }
++
++    return builder.build();
++  }
++
+   public List<RequiresEntry> readRequires(DataInputFullStream data, ConstantPool pool) throws IOException {
+     int requiresCount = data.readUnsignedShort();
+     if (requiresCount <= 0) return Collections.emptyList();
+diff --git a/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+index db77a2c0b166372142e10cbafdcdaa6e1c4de9b8..a68a62e26f5ac28e3d9feb89a751975ec992cff8 100644
+--- a/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
++++ b/src/org/jetbrains/java/decompiler/util/ClasspathScanner.java
+@@ -2,19 +2,29 @@
+ package org.jetbrains.java.decompiler.util;
+ 
+ import java.lang.module.*;
++import java.net.URI;
++import java.nio.file.FileSystem;
++import java.nio.file.FileSystems;
++import java.nio.file.Files;
++import java.nio.file.Path;
+ import java.io.File;
+ import java.io.IOException;
+ import java.io.InputStream;
+ import java.util.ArrayList;
++import java.util.Collections;
+ import java.util.HashSet;
+ import java.util.List;
++import java.util.Map;
+ import java.util.Set;
++import java.util.stream.Stream;
+ 
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.extern.IContextSource;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
++import org.jetbrains.java.decompiler.struct.StructClass;
+ import org.jetbrains.java.decompiler.struct.StructContext;
++import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+ 
+ public class ClasspathScanner {
+ 
+@@ -52,20 +62,58 @@ public class ClasspathScanner {
+       }
+     }
+ 
+-    static class ModuleContextSource implements IContextSource, AutoCloseable {
+-      private final ModuleReference ref;
+-      private final ModuleReader reader;
++    // https://openjdk.java.net/jeps/220 for runtime image structure and JRT filesystem
+ 
+-      public ModuleContextSource(final ModuleReference ref) throws IOException {
++    public static void addRuntime(final StructContext ctx) {
++      try {
++        ctx.addSpace(new JavaRuntimeContextSource(null), false);
++      } catch (final IOException ex) {
++        DecompilerContext.getLogger().writeMessage("Failed to open current java runtime for inspection", ex);
++      }
++    }
++
++    public static void addRuntime(final StructContext ctx, final File javaHome) {
++      if (new File(javaHome, "lib/jrt-fs.jar").isFile()) {
++        // Java 9+
++        try {
++          ctx.addSpace(new JavaRuntimeContextSource(javaHome), false);
++        } catch (final IOException ex) {
++          DecompilerContext.getLogger().writeMessage("Failed to open java runtime at " + javaHome, ex);
++        }
++        return;
++      } else if (javaHome.exists()) {
++        // legacy runtime, add all jars from the lib and jre/lib folders
++        boolean anyAdded = false;
++        final List<File> jrt = new ArrayList<>();
++        Collections.addAll(jrt, new File(javaHome, "jre/lib").listFiles());
++        Collections.addAll(jrt, new File(javaHome, "lib").listFiles());
++        for (final File lib : jrt) {
++          if (lib.isFile() && lib.getName().endsWith(".jar")) {
++            ctx.addSpace(lib, false);
++            anyAdded = true;
++          }
++        }
++        if (anyAdded) return;
++      }
++
++      // does not exist
++      DecompilerContext.getLogger().writeMessage("Unable to detect a java runtime at " + javaHome, IFernflowerLogger.Severity.ERROR);
++    }
++
++    static abstract class ModuleBasedContextSource implements IContextSource {
++      private final ModuleDescriptor ref;
++
++      public ModuleBasedContextSource(final ModuleDescriptor ref) {
+         this.ref = ref;
+-        this.reader = ref.open();
+       }
+ 
+       @Override
+       public String getName() {
+-        return "module " + this.ref.descriptor().toNameAndVersion();
++        return "module " + this.ref.toNameAndVersion();
+       }
+ 
++      protected abstract Stream<String> entryNames() throws IOException;
++
+       @Override
+       public Entries getEntries() {
+         final List<Entry> classNames = new ArrayList<>();
+@@ -73,7 +121,7 @@ public class ClasspathScanner {
+         final List<Entry> otherEntries = new ArrayList<>();
+ 
+         try {
+-          this.reader.list().forEach(name -> {
++          this.entryNames().forEach(name -> {
+             if (name.endsWith("/")) {
+               directoryNames.add(name.substring(0, name.length() - 1));
+             } else if (name.endsWith(CLASS_SUFFIX)) {
+@@ -88,6 +136,20 @@ public class ClasspathScanner {
+ 
+         return new Entries(classNames, directoryNames, otherEntries);
+       }
++    }
++
++    static class ModuleContextSource extends ModuleBasedContextSource implements AutoCloseable {
++      private final ModuleReader reader;
++
++      public ModuleContextSource(final ModuleReference ref) throws IOException {
++        super(ref.descriptor());
++        this.reader = ref.open();
++      }
++
++      @Override
++      public Stream<String> entryNames() throws IOException {
++        return this.reader.list();
++      }
+ 
+       @Override
+       public InputStream getInputStream(String resource) throws IOException {
+@@ -99,4 +161,83 @@ public class ClasspathScanner {
+         this.reader.close();
+       }
+     }
++
++    static final class JavaRuntimeModuleContextSource extends ModuleBasedContextSource {
++      private Path module;
++
++      JavaRuntimeModuleContextSource(final ModuleDescriptor descriptor, final Path moduleRoot) {
++        super(descriptor);
++        this.module = moduleRoot;
++      }
++
++      @Override
++      public InputStream getInputStream(String resource) throws IOException {
++        return Files.newInputStream(this.module.resolve(resource));
++      }
++
++      @Override
++      protected Stream<String> entryNames() throws IOException {
++        try (final var dir = Files.walk(this.module)) {
++          return dir.map(it -> this.module.relativize(it).toString()).toList().stream();
++        }
++      }
++    }
++
++    static final class JavaRuntimeContextSource implements IContextSource, AutoCloseable {
++      private final String identifier;
++      private final FileSystem jrtFileSystem;
++
++      public JavaRuntimeContextSource(final File javaHome) throws IOException {
++        final var url = URI.create("jrt:/");
++        if (javaHome == null) {
++          this.identifier = "current";
++          this.jrtFileSystem = FileSystems.newFileSystem(url, Map.of());
++        } else {
++          this.identifier = javaHome.getAbsolutePath();
++          this.jrtFileSystem = FileSystems.newFileSystem(url, Map.of("java.home", javaHome.getAbsolutePath()));
++        }
++      }
++
++      @Override
++      public String getName() {
++        return "Java runtime " + this.identifier;
++      }
++
++      @Override
++      public Entries getEntries() {
++        // One child source for every module in the runtime
++        final List<IContextSource> children = new ArrayList<>();
++        try {
++        final List<Path> modules = Files.list(this.jrtFileSystem.getPath("modules")).toList();
++        for (final Path module : modules) {
++          ModuleDescriptor descriptor;
++          try (final InputStream is = Files.newInputStream(module.resolve("module-info.class"))) {
++            var clazz = StructClass.create(new DataInputFullStream(is.readAllBytes()), false);
++            var moduleAttr = clazz.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
++            if (moduleAttr == null) continue;
++
++            descriptor = moduleAttr.asDescriptor();
++          } catch (final IOException ex) {
++            continue;
++          }
++          children.add(new JavaRuntimeModuleContextSource(descriptor, module));
++        }
++
++          return new Entries(List.of(), List.of(), List.of(), children);
++        } catch (final IOException ex) {
++          DecompilerContext.getLogger().writeMessage("Failed to read modules from runtime " + this.identifier, ex);
++          return Entries.EMPTY;
++        }
++      }
++
++      @Override
++      public InputStream getInputStream(String resource) throws IOException {
++        return null; // all resources are part of a child provider
++      }
++
++      @Override
++      public void close() throws IOException {
++        this.jrtFileSystem.close();
++      }
++    }
+ }
