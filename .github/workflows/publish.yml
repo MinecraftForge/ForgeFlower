@@ -2,7 +2,11 @@ name: Publish
 
 on:
   push:
-    branches: [ "*" ]
+    branches: [ 'master' ]
+    paths-ignore:
+      - '.github/workflows/**'
+      - 'docs/**'
+      - 'README.md'
 
 permissions:
   contents: read
