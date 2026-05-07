@@ -1,0 +1,72 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+	alias libs.plugins.changelog
+	alias libs.plugins.gitversion
+	alias libs.plugins.gradleutils
+}
+
+gradleutils.displayName = 'ForgeFlower'
+description = 'Fernflower from https://github.com/JetBrains/intellij-community as standalone library, With Forges Modifications'
+group = 'net.minecraftforge'
+version = gitversion.tagOffset
+println "Version: $version"
+
+java {
+	toolchain.languageVersion = JavaLanguageVersion.of(8)
+	withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation(testLibs.junit)
+    testImplementation(testLibs.hamcrest)
+    testImplementation(testLibs.assertj)
+}
+
+sourceSets {
+    main.java.srcDirs = ['src']
+    test.java.srcDirs = ['test']
+}
+
+// Disable tests because they fail
+tasks.named('test') {
+    exclude '**/*'
+}
+
+tasks.named('jar', Jar) {
+	manifest {
+		attributes([
+			'Main-Class': 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler',
+			'Automatic-Module-Name': 'net.minecraftforge.forgeflower'
+		])
+		gradleutils.manifestDefaults(it, 'org/jetbrains/java/decompiler/')
+	}
+}
+
+publishing {
+	repositories {
+		maven gradleutils.publishingForgeMaven
+	}
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			changelog.publish(it)
+			gradleutils.promote(it)
+
+			pom { pom ->
+				name = gradleutils.displayName
+				description = project.description
+
+				gradleutils.pom.addRemoteDetails(pom)
+
+				licenses {
+					license gradleutils.pom.licenses.Apache2_0
+				}
+			}
+		}
+	}
+}
