@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -207,6 +208,38 @@ public class JADNameProvider implements IVariableNameProvider {
     @Override
     public IVariableNameProvider createFactory(StructMethod method) {
       return new JADNameProvider(method);
+    }
+  }
+
+   public static class MCPNameProviderFactory implements IVariableNamingFactory {
+    @Override
+    public IVariableNameProvider createFactory(StructMethod method) {
+      return new MCPNameProvider(method);
+    }
+
+    private static class MCPNameProvider extends JADNameProvider {
+      private static final Pattern p = Pattern.compile("func_(\\d+)_.*");
+      private final StructMethod wrapper;
+
+      public MCPNameProvider(StructMethod wrapper)
+      {
+        super(wrapper);
+        this.wrapper = wrapper;
+      }
+
+      @Override
+      public String renameAbstractParameter(String abstractParam, int index)
+      {
+        String result = abstractParam;
+        if ((wrapper.getAccessFlags() & CodeConstants.ACC_ABSTRACT) != 0) {
+          String methName = wrapper.getName();
+          Matcher m = p.matcher(methName);
+          if (m.matches()) {
+            result = String.format("p_%s_%d_", m.group(1), index);
+          }
+        }
+        return result;
+      }
     }
   }
 }

@@ -17,10 +17,13 @@ package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.main.IdentityRenamerFactory;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.JADNameProvider;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -38,36 +41,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
-
     List<String> params = new ArrayList<String>();
     for (int x = 0; x < args.length; x++) {
-      if (args[x].startsWith("-cfg")) {
-        String path = null;
-        if (args[x].startsWith("-cfg=")) {
-          path = args[x].substring(5);
-        }
-        else if (args.length > x+1) {
-          path = args[++x];
-        }
-        else {
-          System.out.println("Must specify a file when using -cfg argument.");
-          return;
-        }
-        Path file = Paths.get(path);
-        if (!Files.exists(file)) {
-          System.out.println("error: missing config '" + path + "'");
-          return;
-        }
-        try (Stream<String> stream = Files.lines(file)) {
-          stream.forEach(params::add);
-        } catch (IOException e) {
-          System.out.println("error: Failed to read config file '" + path + "'");
-          throw new RuntimeException(e);
-        }
-      }
-      else {
+      if ("-cfg".equals(args[x]))
+        handleParamsFile(params, nextArg("cfg", ++x, args));
+      else if (args[x].startsWith("-cfg="))
+        handleParamsFile(params, args[x].substring(5));
+      else
         params.add(args[x]);
-      }
     }
     args = params.toArray(new String[params.size()]);
 
@@ -100,9 +81,14 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       else {
         isOption = false;
 
-        if (arg.startsWith("-e=")) {
+        if (arg.startsWith("-e="))
           addPath(lstLibraries, arg.substring(3));
-        }
+        else if ("--var-renamer".equals(arg))
+          handleVariableRenamer(mapOptions, nextArg("var-renamer", ++i, args));
+        else if (arg.startsWith("--var-renamer="))
+          handleVariableRenamer(mapOptions, arg.substring(14));
+        else if ("--disable-buffer-casts".equals(arg))
+          mapOptions.put(DecompilerContext.DISABLE_BUFFER_CASTS, "1");
         else {
           addPath(lstSources, arg);
         }
@@ -131,6 +117,41 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
 
     decompiler.decompileContext();
+  }
+
+  private static String nextArg(String name, int i, String[] args) {
+    if (args.length <= i)
+      throw new IllegalArgumentException("You must specify a value when using \"-" + name + "\"");
+    return args[i];
+  }
+
+  private static void handleParamsFile(List<String> params, String path) {
+    Path file = Paths.get(path);
+    if (!Files.exists(file))
+      throw new IllegalArgumentException("error: missing config '" + path + "'");
+    try (Stream<String> stream = Files.lines(file)) {
+      stream.forEach(params::add);
+    } catch (IOException e) {
+      throw new RuntimeException("error: Failed to read config file '" + path + "'", e);
+    }
+  }
+
+  private static void handleVariableRenamer(Map<String, Object> options, String value) {
+    IVariableNamingFactory instance = null;
+    if ("jad".equals(value))
+      instance = new JADNameProvider.JADNameProviderFactory();
+    else if ("mcp".equals(value))
+      instance = new JADNameProvider.MCPNameProviderFactory();
+    else if ("none".equals(value))
+      instance = new IdentityRenamerFactory();
+    else {
+      try {
+        instance = Class.forName(value).asSubclass(IVariableNamingFactory.class).newInstance();
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Error loading renamer factory class", e);
+      }
+    }
+    options.put(DecompilerContext.RENAMER_FACTORY_INSTANCE, instance);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

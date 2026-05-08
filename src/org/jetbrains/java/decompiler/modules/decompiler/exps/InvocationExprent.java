@@ -338,8 +338,12 @@ public class InvocationExprent extends Exprent {
           }
           //Java 9+ adds some overrides to java/nio/Buffer's subclasses that alter the return types.
           //This isn't properly handled by the compiler. So explicit casts are needed to retain J8 compatibility.
-          else if (JAVA_NIO_BUFFER.equals(descriptor.ret) && !JAVA_NIO_BUFFER.equals(rightType)
-              && DecompilerContext.getStructContext().instanceOf(rightType.value, JAVA_NIO_BUFFER.value)) {
+          else if (
+            !DecompilerContext.getOption(DecompilerContext.DISABLE_BUFFER_CASTS)
+            && JAVA_NIO_BUFFER.equals(descriptor.ret)
+            && !JAVA_NIO_BUFFER.equals(rightType)
+            && DecompilerContext.getStructContext().instanceOf(rightType.value, JAVA_NIO_BUFFER.value)
+          ) {
               buf.append("((").append(ExprProcessor.getCastTypeName(JAVA_NIO_BUFFER)).append(")").append(res).append(")");
           }
           else {
