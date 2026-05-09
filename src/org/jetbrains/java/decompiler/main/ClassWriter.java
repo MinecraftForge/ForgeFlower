@@ -731,7 +731,14 @@ public class ClassWriter {
             buffer.append(' ');
             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
             if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) {
-                parameterName = methodWrapper.methodStruct.getRenamer().renameAbstractParameter(parameterName, index);
+              String newParameterName = methodWrapper.methodStruct.getRenamer().renameAbstractParameter(parameterName, index);
+              if (!newParameterName.equals(parameterName)) {
+                parameterName = newParameterName;
+              } else {
+                String clsName = methodWrapper.methodStruct.getClassStruct().qualifiedName;
+                int bytecodeIndex = index - (((flags & CodeConstants.ACC_STATIC) == 0) ? 1 : 0);
+                DecompilerContext.getStructContext().renameAbstractParameter(clsName, mt.getName(), mt.getDescriptor(), bytecodeIndex, parameterName);
+              }
             }
             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 
@@ -995,6 +1002,19 @@ public class ClassWriter {
     put(CodeConstants.ACC_SYNCHRONIZED, "synchronized");
     put(CodeConstants.ACC_NATIVE, "native");
   }};
+
+  public static String getModifiers(int flags) {
+    String ret = "";
+    for (Map.Entry<Integer, String> entry :  MODIFIERS.entrySet()) {
+      if ((flags & entry.getKey()) != 0) {
+        if (!ret.isEmpty())
+          ret += ' ' + entry.getValue();
+        else
+          ret = entry.getValue();
+      }
+    }
+    return ret;
+  }
 
   private static final int CLASS_ALLOWED =
     CodeConstants.ACC_PUBLIC | CodeConstants.ACC_PROTECTED | CodeConstants.ACC_PRIVATE | CodeConstants.ACC_ABSTRACT |

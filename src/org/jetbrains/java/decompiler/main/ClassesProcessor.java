@@ -48,9 +48,29 @@ public class ClassesProcessor {
 
   private final Map<String, ClassNode> mapRootClasses = new HashMap<String, ClassNode>();
 
+  private static class Inner {
+    private String simpleName;
+    private int type;
+    private int accessFlags;
+    private String source;
+
+    private static boolean equal(Inner o1, Inner o2) {
+      return o1.type == o2.type && o1.accessFlags == o2.accessFlags && InterpreterUtil.equalObjects(o1.simpleName, o2.simpleName);
+    }
+
+    @Override
+    public String toString() {
+      return simpleName + " " + ClassWriter.getModifiers(accessFlags) + " " + getType() + " " + source;
+    }
+
+    private String getType() {
+      return type == ClassNode.CLASS_ANONYMOUS ? "ANONYMOUS" : type == ClassNode.CLASS_LAMBDA ? "LAMBDA" : type == ClassNode.CLASS_LOCAL ? "LOCAL" : type == ClassNode.CLASS_MEMBER ? "MEMBER" : type == ClassNode.CLASS_ROOT ? "ROOT" : "UNKNOWN(" + type +")";
+    }
+  }
+
   public ClassesProcessor(StructContext context) {
 
-    Map<String, Object[]> mapInnerClasses = new HashMap<String, Object[]>();
+    Map<String, Inner> mapInnerClasses = new HashMap<String, Inner>();
     Map<String, Set<String>> mapNestedClassReferences = new HashMap<String, Set<String>>();
     Map<String, Set<String>> mapEnclosingClassReferences = new HashMap<String, Set<String>>();
     Map<String, String> mapNewSimpleNames = new HashMap<String, String>();
@@ -66,32 +86,35 @@ public class ClassesProcessor {
           if (inner != null) {
 
             for (InnerClassInfo entry : inner.getEntries()) {
-              Object[] arr = new Object[4]; // arr[0] not used
+              Inner rec = new Inner();
+              rec.type = entry.outer_class != null ? ClassNode.CLASS_MEMBER : entry.inner_name != null ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
+
               String innerName = entry.inner_class;
+              rec.source = cl.qualifiedName;
 
               // nested class type
               if (entry.inner_class != null) {
                 if (entry.inner_name == null) {
-                  arr[2] = ClassNode.CLASS_ANONYMOUS;
+                  rec.type = ClassNode.CLASS_ANONYMOUS;
                 }
                 else {
                   StructClass in = context.getClass(entry.inner_class);
                   if (in == null) { // A referenced library that was not added to the context, make assumptions
-                    arr[2] = ClassNode.CLASS_MEMBER;
+                    rec.type = ClassNode.CLASS_MEMBER;
                   }
                   else {
                     StructEnclosingMethodAttribute attr = (StructEnclosingMethodAttribute)in.getAttributes().getWithKey("EnclosingMethod");
                     if (attr != null && attr.getMethodName() != null) {
-                      arr[2] = ClassNode.CLASS_LOCAL;
+                      rec.type = ClassNode.CLASS_LOCAL;
                     }
                     else {
-                      arr[2] = ClassNode.CLASS_MEMBER;
+                      rec.type = ClassNode.CLASS_MEMBER;
                     }
                   }
                 }
               }
               else { // This should never happen as inner_class and outer_class are NOT optional, make assumptions
-                arr[2] = ClassNode.CLASS_MEMBER;
+                rec.type = ClassNode.CLASS_MEMBER;
               }
 
               // original simple name
@@ -109,10 +132,10 @@ public class ClassesProcessor {
                 }
               }
 
-              arr[1] = simpleName;
+              rec.simpleName = simpleName;
 
               // original access flags
-              arr[3] = entry.access;
+              rec.accessFlags = entry.access;
 
               // enclosing class
               String enclClassName;
@@ -127,13 +150,18 @@ public class ClassesProcessor {
                 StructClass enclosing_class = context.getClasses().get(enclClassName);
                 if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
 
-                  Object[] arrOld = mapInnerClasses.get(innerName);
-                  if (arrOld == null) {
-                    mapInnerClasses.put(innerName, arr);
+                  Inner existingRec = mapInnerClasses.get(innerName);
+                  if (existingRec == null) {
+                    mapInnerClasses.put(innerName, rec);
                   }
-                  else if (!InterpreterUtil.equalObjectArrays(arrOld, arr)) {
+                  else if (!Inner.equal(existingRec, rec)) {
                     String message = "Inconsistent inner class entries for " + innerName + "!";
                     DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+                    int oldPriority = existingRec.source.equals(innerName) ? 1 : existingRec.source.equals(enclClassName) ? 2 : 3;
+                    int newPriority = rec.source.equals(innerName) ? 1 : rec.source.equals(enclClassName) ? 2 : 3;
+                    if (newPriority < oldPriority) {
+                      mapInnerClasses.put(innerName, rec);
+                    }
                   }
 
                   // reference to the nested class
@@ -206,15 +234,15 @@ public class ClassesProcessor {
                   continue;
                 }
 
-                Object[] arr = mapInnerClasses.get(nestedClass);
+                Inner rec = mapInnerClasses.get(nestedClass);
 
                 //if ((Integer)arr[2] == ClassNode.CLASS_MEMBER) {
                   // FIXME: check for consistent naming
                 //}
 
-                nestedNode.type = (Integer)arr[2];
-                nestedNode.simpleName = (String)arr[1];
-                nestedNode.access = (Integer)arr[3];
+                nestedNode.type = rec.type;
+                nestedNode.simpleName = rec.simpleName;
+                nestedNode.access = rec.accessFlags;
 
                 if (nestedNode.type == ClassNode.CLASS_ANONYMOUS) {
                   StructClass cl = nestedNode.classStruct;

@@ -1,1 +1,22 @@
-rootProject.name = "fernflower"
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
+rootProject.name = 'forgeflower'
+
+
+dependencyResolutionManagement.versionCatalogs.register('libs') {
+    plugin 'licenser',    'net.minecraftforge.licenser'    version '1.2.0'
+    plugin 'gradleutils', 'net.minecraftforge.gradleutils' version '3.3.21'
+    plugin 'gitversion',  'net.minecraftforge.gitversion'  version '3.1.7'
+    plugin 'changelog',   'net.minecraftforge.changelog'   version '3.1.3'
+    plugin 'shadow',      'com.gradleup.shadow'            version '9.2.2'
+}
+    
+dependencyResolutionManagement.versionCatalogs.register('testLibs') {
+    library 'junit',            'junit',        'junit'            version '4.12'
+    
+    library 'hamcrest-core',    'org.hamcrest', 'hamcrest-core'    version '1.3'
+    library 'hamcrest-library', 'org.hamcrest', 'hamcrest-library' version '1.3'
+    bundle('hamcrest', ['hamcrest-core', 'hamcrest-library'])
+}

@@ -17,10 +17,13 @@ package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.main.IdentityRenamerFactory;
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.JADNameProvider;
 
 import java.io.*;
 import java.util.*;
@@ -34,6 +37,17 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void main(String[] args) {
+    List<String> params = new ArrayList<String>();
+    for (int x = 0; x < args.length; x++) {
+      if ("-cfg".equals(args[x]))
+        handleParamsFile(params, nextArg("cfg", ++x, args));
+      else if (args[x].startsWith("-cfg="))
+        handleParamsFile(params, args[x].substring(5));
+      else
+        params.add(args[x]);
+    }
+    args = params.toArray(new String[params.size()]);
+
     if (args.length < 2) {
       System.out.println(
         "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
@@ -63,9 +77,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       else {
         isOption = false;
 
-        if (arg.startsWith("-e=")) {
+        if (arg.startsWith("-e="))
           addPath(lstLibraries, arg.substring(3));
-        }
+        else if ("--var-renamer".equals(arg))
+          handleVariableRenamer(mapOptions, nextArg("var-renamer", ++i, args));
+        else if (arg.startsWith("--var-renamer="))
+          handleVariableRenamer(mapOptions, arg.substring(14));
         else {
           addPath(lstSources, arg);
         }
@@ -78,7 +95,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
 
     File destination = new File(args[args.length - 1]);
-    if (!destination.isDirectory()) {
+    if (!destination.isDirectory() && (lstSources.size() > 1 || !lstSources.get(0).isFile())) {
       System.out.println("error: destination '" + destination + "' is not a directory");
       return;
     }
@@ -94,6 +111,52 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
 
     decompiler.decompileContext();
+  }
+  private static String nextArg(String name, int i, String[] args) {
+    if (args.length <= i)
+      throw new IllegalArgumentException("You must specify a value when using \"-" + name + "\"");
+    return args[i];
+  }
+
+  private static void handleParamsFile(List<String> params, String path) {
+    File file = new File(path);
+    if (!file.exists())
+      throw new IllegalArgumentException("error: missing config '" + path + "'");
+    BufferedReader buffer = null;
+    try {
+      buffer = new BufferedReader(new FileReader(file));
+      for (String line; (line = buffer.readLine()) != null; ) {
+        params.add(line);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("error: Failed to read config file '" + path + "'", e);
+    } finally {
+      if (buffer != null) {
+        try {
+          buffer.close();
+        } catch (IOException e) {
+          throw new RuntimeException("error: Failed to close config file '" + path + "'", e);
+        }
+      }
+    }
+  }
+
+  private static void handleVariableRenamer(Map<String, Object> options, String value) {
+    IVariableNamingFactory instance = null;
+    if ("jad".equals(value))
+      instance = new JADNameProvider.JADNameProviderFactory();
+    else if ("mcp".equals(value))
+      instance = new JADNameProvider.MCPNameProviderFactory();
+    else if ("none".equals(value))
+      instance = new IdentityRenamerFactory();
+    else {
+      try {
+        instance = Class.forName(value).asSubclass(IVariableNamingFactory.class).newInstance();
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Error loading renamer factory class", e);
+      }
+    }
+    options.put(DecompilerContext.RENAMER_FACTORY_INSTANCE, instance);
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -123,7 +186,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   protected ConsoleDecompiler(File destination, Map<String, Object> options, IFernflowerLogger logger) {
     root = destination;
-    fernflower = new Fernflower(this, this, options, logger);
+    fernflower = new Fernflower(this, root.isDirectory() ? this : new SingleFileSaver(destination), options, logger);
   }
 
   public void addSpace(File file, boolean isOwn) {

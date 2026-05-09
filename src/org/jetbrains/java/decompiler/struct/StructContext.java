@@ -17,14 +17,18 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -37,6 +41,7 @@ public class StructContext {
   private final LazyLoader loader;
   private final Map<String, ContextUnit> units = new HashMap<String, ContextUnit>();
   private final Map<String, StructClass> classes = new HashMap<String, StructClass>();
+  private final Map<String, List<String>> abstractNames = new HashMap<String, List<String>>();
 
   public StructContext(IResultSaver saver, IDecompiledData decompiledData, LazyLoader loader) {
     this.saver = saver;
@@ -185,5 +190,25 @@ public class StructContext {
 
   public Map<String, StructClass> getClasses() {
     return classes;
+  }
+
+  public void loadAbstractMetadata(String string) {
+    for (String line : string.split("\n")) {
+      String[] pts = line.split(" ");
+      if (pts.length < 4) //class method desc [args...]
+        continue;
+      GenericMethodDescriptor desc = GenericMain.parseMethodSignature(pts[2]);
+      List<String> params = new ArrayList<String>();
+      for (int x = 0; x < pts.length - 3; x++) {
+        for (int y = 0; y < desc.params.get(x).stackSize; y++)
+          params.add(pts[x+3]);
+      }
+      this.abstractNames.put(pts[0] + ' '+ pts[1] + ' ' + pts[2], params);
+    }
+  }
+
+  public String renameAbstractParameter(String className, String methodName, String descriptor, int index, String _default) {
+    List<String> params = this.abstractNames.get(className + ' ' + methodName + ' ' + descriptor);
+    return params != null && index < params.size() ? params.get(index) : _default;
   }
 }

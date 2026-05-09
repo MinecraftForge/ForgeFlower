@@ -39,6 +39,8 @@ public class DecompilerContext {
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
   public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
   public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
+  public static final String RENAMER_FACTORY_INSTANCE = "RENAMER_FACTORY_INSTANCE";
+  public static final String DISABLE_BUFFER_CASTS = "DISABLE_BUFFER_CASTS";
 
   private static final ThreadLocal<DecompilerContext> currentContext = new ThreadLocal<DecompilerContext>();
 
@@ -65,7 +67,10 @@ public class DecompilerContext {
     currentContext.set(new DecompilerContext(properties));
     setLogger(logger);
     // Default a no-op renamer factory if none is provided
-    if (DecompilerContext.getProperty(RENAMER_FACTORY) != null) {
+    if (DecompilerContext.getProperty(RENAMER_FACTORY_INSTANCE) != null) {
+      currentContext.get().renamerFactory = (IVariableNamingFactory)DecompilerContext.getProperty(RENAMER_FACTORY_INSTANCE);
+    }
+    else if (DecompilerContext.getProperty(RENAMER_FACTORY) != null) {
       try {
         currentContext.get().renamerFactory = Class.forName((String) DecompilerContext.getProperty(RENAMER_FACTORY)).asSubclass(IVariableNamingFactory.class).newInstance();
       } catch (Exception e) {
