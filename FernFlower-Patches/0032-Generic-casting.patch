@@ -1,0 +1,216 @@
+From 508578a560459cce74c090afa70f9d360406bf73 Mon Sep 17 00:00:00 2001
+From: Justin <jrd2558@gmail.com>
+Date: Tue, 21 May 2019 15:05:12 -0700
+Subject: [PATCH] Generic casting
+
+
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+index 1759538..93e136d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/ExprProcessor.java
+@@ -895,7 +895,8 @@ public class ExprProcessor implements CodeConstants {
+       castAlways ||
+       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
+       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+-      (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
++      (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType)) ||
++      (leftType.isGeneric() && rightType.type != CodeConstants.TYPE_NULL && (exprent.type != Exprent.EXPRENT_NEW || !((NewExprent)exprent).isLambda()) && !GenericType.isAssignable(rightType, leftType));
+ 
+     boolean castLambda = !cast && exprent.type == Exprent.EXPRENT_NEW && !leftType.equals(rightType) &&
+                           lambdaNeedsCast(leftType, (NewExprent)exprent);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+index 861d9f1..20fb675 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/ConstExprent.java
+@@ -97,6 +97,7 @@ public class ConstExprent extends Exprent {
+   }
+ 
+   private VarType constType;
++  private VarType genericConstType = null;
+   private final Object value;
+   private final boolean boolPermitted;
+ 
+@@ -160,6 +161,11 @@ public class ConstExprent extends Exprent {
+     return constType;
+   }
+ 
++  @Override
++  public VarType getInferredExprType(VarType upperBound) {
++    return genericConstType != null ? genericConstType : getExprType();
++  }
++
+   @Override
+   public int getExprentUse() {
+     return Exprent.MULTIPLE_USES | Exprent.SIDE_EFFECTS_FREE;
+@@ -177,6 +183,9 @@ public class ConstExprent extends Exprent {
+     tracer.addMapping(bytecode);
+ 
+     if (constType.type != CodeConstants.TYPE_NULL && value == null) {
++      if (genericConstType != null) {
++        return new TextBuffer(ExprProcessor.getCastTypeName(genericConstType));
++      }
+       return new TextBuffer(ExprProcessor.getCastTypeName(constType));
+     }
+ 
+@@ -524,6 +533,14 @@ public class ConstExprent extends Exprent {
+     }
+   }
+ 
++  public VarType getGenericConstType() {
++    return this.genericConstType;
++  }
++
++  public void setGenericConstType(VarType genericConstType) {
++    this.genericConstType = genericConstType;
++  }
++
+   private static boolean isPrintableAscii(int c) {
+     return c >= 32 && c < 127;
+   }
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+index 34d6e3a..77cfa4d 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/Exprent.java
+@@ -293,6 +293,9 @@ public abstract class Exprent implements IMatchable {
+           needsCast = false;
+         }
+       }
++      else if (!needsCast && right.type != CodeConstants.TYPE_NULL) {
++        needsCast = !GenericType.isAssignable(right, left);
++      }
+ 
+       if (arrayDim != 0) {
+         left = left.resizeArrayDim(arrayDim);
+diff --git a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+index 1da5acf..7e674d4 100644
+--- a/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
++++ b/src/org/jetbrains/java/decompiler/modules/decompiler/exps/FunctionExprent.java
+@@ -4,6 +4,8 @@
+ package org.jetbrains.java.decompiler.modules.decompiler.exps;
+ 
+ import org.jetbrains.java.decompiler.code.CodeConstants;
++import org.jetbrains.java.decompiler.struct.StructClass;
++import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
+ import org.jetbrains.java.decompiler.util.TextBuffer;
+ import org.jetbrains.java.decompiler.main.DecompilerContext;
+ import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+@@ -328,12 +330,24 @@ public class FunctionExprent extends Exprent {
+           }
+         }
+         else {
+-            this.needsCast = right.type == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.value, upperBound.value);
++          this.needsCast = right.type == CodeConstants.TYPE_NULL || !GenericType.isAssignable(right, upperBound);
+         }
+       }
+       else { //TODO: Capture generics to make cast better?
+         this.needsCast = right.type == CodeConstants.TYPE_NULL || !DecompilerContext.getStructContext().instanceOf(right.value, cast.value);
+       }
++
++      if (this.needsCast && upperBound != null && upperBound.isGeneric()) {
++        GenericType genUB = (GenericType)upperBound;
++        StructClass cls = DecompilerContext.getStructContext().getClass(cast.value);
++        if (DecompilerContext.getStructContext().instanceOf(cast.value, right.value) && cls != null && cls.getSignature() != null && cls.getSignature().fparameters.size() == genUB.getArguments().size()) {
++          ((ConstExprent)lstOperands.get(1)).setGenericConstType(new GenericType(cast.type, cast.arrayDim, cast.value, null, genUB.getArguments(), GenericType.WILDCARD_NO));
++        }
++        else {
++          ((ConstExprent)lstOperands.get(1)).setGenericConstType(upperBound);
++        }
++        return ((ConstExprent)lstOperands.get(1)).getGenericConstType();
++      }
+     }
+     else if (funcType == FUNCTION_IIF) {
+       // TODO return common generic type?
+diff --git a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
+index 57a170c..d0ce393 100644
+--- a/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
++++ b/src/org/jetbrains/java/decompiler/struct/gen/generics/GenericType.java
+@@ -411,6 +411,86 @@ public class GenericType extends VarType {
+     return true;
+   }
+ 
++  public static boolean isAssignable(VarType from, VarType to) {
++    if (from.arrayDim != to.arrayDim) {
++        return false;
++    }
++
++    if (from.type == CodeConstants.TYPE_OBJECT && from.type == to.type) {
++      if (!DecompilerContext.getStructContext().instanceOf(from.value, to.value)) {
++        return false;
++      }
++    }
++    else if (!from.equals(to)) {
++      return false;
++    }
++
++    if (to.isGeneric() && !from.value.equals(to.value)) {
++      VarType _new = getGenericSuperType(from, to);
++
++      if (from != _new) {
++        from = _new;
++      }
++    }
++
++    return areArgumentsAssignable(from, to);
++  }
++
++  public static boolean areArgumentsAssignable(VarType from, VarType to) {
++    if (from.isGeneric() && to.isGeneric()) {
++      GenericType genFrom = (GenericType)from;
++      GenericType genTo = (GenericType)to;
++
++      if (genFrom.arguments.size() != genTo.arguments.size()) {
++        return genFrom.arguments.isEmpty() || genTo.arguments.isEmpty();
++      }
++
++      for (int i = 0; i < genFrom.arguments.size(); ++i) {
++        VarType f = genFrom.arguments.get(i);
++        VarType t = genTo.arguments.get(i);
++
++        if (t == null) {
++          continue;
++        }
++
++        int tWild = t.isGeneric() ? ((GenericType)t).wildcard : WILDCARD_NO;
++
++        if (f == null) {
++          if (t.type == CodeConstants.TYPE_GENVAR || tWild != WILDCARD_EXTENDS) {
++            return false;
++          }
++          continue;
++        }
++
++        int fWild = f.isGeneric() ? ((GenericType)f).wildcard : WILDCARD_NO;
++
++        if (tWild == WILDCARD_EXTENDS) {
++          if (fWild == WILDCARD_SUPER || !DecompilerContext.getStructContext().instanceOf(f.value, t.value)) {
++            return false;
++          }
++        }
++        else if (tWild == WILDCARD_SUPER) {
++          if (fWild == WILDCARD_EXTENDS || !DecompilerContext.getStructContext().instanceOf(t.value, f.value)) {
++            return false;
++          }
++        }
++        else if (tWild == WILDCARD_NO && fWild != tWild && genFrom.wildcard == genTo.wildcard) {
++          return false;
++        }
++        else if (!f.value.equals(t.value)) {
++          return false;
++        }
++
++        if (!areArgumentsAssignable(f, t)) {
++          return false;
++        }
++      }
++    }
++
++    return true;
++  }
++
++
+   public List<GenericType> getAllGenericVars() {
+     List<GenericType> ret = new ArrayList<>();
+ 
+-- 
+2.17.2 (Apple Git-113)
+
